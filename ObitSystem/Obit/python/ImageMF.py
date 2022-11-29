@@ -484,7 +484,7 @@ def PFitSpec (inImage, err, antSize=0.0, nOrder=1, corAlpha=0.0):
 def PFitSpec2 (inImage, outImage, err, nterm=2, \
                refFreq=None, maxChi2=2.0, doError=False, doBrokePow=False, \
                calFract=None, doPBCor=False, PBmin=None, antSize=None, \
-               corAlpha=0.0, minWt=0.5, doTab=False):
+               corAlpha=0.0, minWt=0.5, doTab=False, minFlux=0.0, Weights=None):
     """
     Fit spectrum to each pixel of an ImageMF writing a new cube
 
@@ -514,7 +514,15 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
     * corAlpha  = Spectral index correction to apply before fitting
     * minWt     = min. fract of possible weight per pixel
     * doTab     = Use tabulated beam if available
-    """
+    * minFlux   = Min. broadband flux density to attempt a spectral fit.
+                  If nonzero, then all flux densities are the weighted average
+                  and only any fitted spectral indices and errors are output.
+                  default 0
+    * Weights   = OBIT_float (?,1,1 per channel) 
+                  if given, use these weights rather than 1/rms^2
+                  NOTE: 1/sqrt(sum(weights)) should give the broadband RMS!
+                  Default None.
+   """
     ################################################################
     inImage.List.set("nterm",      nterm,      ttype='long')
     inImage.List.set("maxChi2",    maxChi2,    ttype='float')
@@ -523,6 +531,7 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
     inImage.List.set("doPBCor",    doPBCor,    ttype='boolean')
     inImage.List.set("corAlpha" ,  corAlpha,   ttype='float')
     inImage.List.set("minWt",      minWt,      ttype='float')
+    inImage.List.set("minFlux",    minFlux,    ttype='float')
     inImage.List.set("doTab"  ,    doTab,      ttype='boolean')
     if refFreq:
         inImage.List.set("refFreq",  refFreq,  ttype='double')
@@ -531,7 +540,9 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
     if PBmin:
         inImage.List.set("PBmin",    PBmin,    ttype='float')
     if antSize:
-        inImage.List.set("antSize",   antSize, ttype='float')
+        inImage.List.set("antSize",  antSize,  ttype='float')
+    if Weights:
+        inImage.List.set("Weights",  Weights,  ttype='float')
 
     Obit.ImageMFFitSpec2(inImage.me, outImage.me, err.me)
     # end PFitSpec2

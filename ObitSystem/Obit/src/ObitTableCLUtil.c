@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -256,7 +256,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitInfoType type;
   ofloat *rec, solInt, t0, sumTime;
   ofloat lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0, curSource=1.0, curFQID=0.0;
-  olong iRow, i, ia, lrec, maxant, highVer;
+  olong iRow, i, ia, maxant, highVer;
   olong  nTime, SubA=-1, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numTerm, numAnt;
   gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT];
@@ -280,7 +280,6 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
     retCode = ObitUVOpen (inUV, access, err);
     if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
   }
-  lrec = inUV->myDesc->lrec;
   t0 = -1.0e20;
 
   /* Delete output table if extant */
@@ -570,11 +569,11 @@ ObitTableCL* ObitTableCLGetDummyNX (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitIOAccess access;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat solInt, t1, t2, delta;
+  ofloat solInt, t1, delta;
   olong iRow, oRow, nTime, i, ia, iT, highVer;
   oint numPol, numIF, numTerm, numAnt;
   gboolean doCalSelect;
-  ObitIOCode retCode, iretCode;
+  ObitIOCode iretCode;
   gchar *tname;
   gchar *routine = "ObitTableCLGetDummyNX";
  
@@ -591,7 +590,7 @@ ObitTableCL* ObitTableCLGetDummyNX (ObitUV *inUV, ObitUV *outUV, olong ver,
 
   /* open UV data to fully instantiate if not already open */
   if ((inUV->myStatus==OBIT_Inactive) || (inUV->myStatus==OBIT_Defined)) {
-    retCode = ObitUVOpen (inUV, access, err);
+    ObitUVOpen (inUV, access, err);
     if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
   }
 
@@ -700,7 +699,6 @@ ObitTableCL* ObitTableCLGetDummyNX (ObitUV *inUV, ObitUV *outUV, olong ver,
 
     /* Timerange */
     t1 = NXRow->Time-0.5*NXRow->TimeI;
-    t2 = NXRow->Time+0.5*NXRow->TimeI;
 
     /* Scan info */
     row->SourID = NXRow->SourID;  /* Source */

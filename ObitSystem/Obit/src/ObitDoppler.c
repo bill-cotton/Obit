@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2015                                          */
+/*;  Copyright (C) 2012-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -375,10 +375,9 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   union ObitInfoListEquiv InfoReal; 
-  olong numAnt, numBL;
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
-  olong suba, lastSourceID, curSourceID, lastSubA;
+  olong curSourceID, lastSubA;
   gchar *today=NULL;
   ofloat *tmpVis=NULL, uvwScale=1.0;
   ofloat *inBuffer, *outBuffer, *Spectrum, shift;
@@ -432,10 +431,6 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
   if (today) g_free(today);
   
-  suba    = 1;
-  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt+1))/2;  /* Include auto correlations */
-
   /* test open output */
   oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
   /* If this didn't work try OBIT_IO_ReadWrite */
@@ -494,7 +489,6 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
 
   /* Initialize things */
-  lastSourceID = -1;
   curSourceID  = 0;
   outDesc->numVisBuff = 0;
   inBuffer  = inUV->buffer;   /* Local copy of buffer pointer */
@@ -695,7 +689,7 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Cleanup */
  cleanup:
-  if (tmpVis) g_free(tmpVis); tmpVis = NULL;
+  if (tmpVis) {g_free(tmpVis);} tmpVis = NULL;
   /* close files */
   iretCode = ObitUVClose (inUV, err);
   oretCode = ObitUVClose (outUV, err);
@@ -1231,7 +1225,7 @@ static void rdmove (olong  yeari, olong yearf, olong mo, olong nda,
 	     odouble ra, odouble d, 
 	     odouble* delr, odouble* deld, odouble* dc ) 
 {
-  odouble    snd, csd, tnd,csr, snr, al, to, t, zetao, z, theta, am,
+  odouble    snd, csd, tnd,csr, snr, al, to, t, theta, 
     an, alam, snl, csl, omega, arg, dlong, doblq;  
   
   snd = sin (d);
@@ -1251,17 +1245,17 @@ static void rdmove (olong  yeari, olong yearf, olong mo, olong nda,
   to = (yeari - 1900) / 100.0;
   t = ((yearf - yeari) + al / 365.2421988) / 100.0;
 
-  /* zetao is a precessional angle */
-  zetao = (2304.250 + 1.396 * to) * t + 0.302 * t*t + 0.018 * t*t*t;
+  /* zetao is a precessional angle 
+  zetao = (2304.250 + 1.396 * to) * t + 0.302 * t*t + 0.018 * t*t*t;*/
 
-  /* ditto for z */
-  z = zetao + 0.791 * t*t;
+  /* ditto for z 
+  z = zetao + 0.791 * t*t;*/
 
   /* and theta */
   theta = (2004.682 - 0.853 * to) * t - 0.426 * t*t - 0.042 * t*t*t;
 
   /* am and an are the m and n  precessional numbers */
-  am = (zetao + z) * 4.848136811e-6;
+  /*am = (zetao + z) * 4.848136811e-6;*/
   an = theta * 4.848136811e-6;
 
   /* alam is an approximate mean longitude for sun (radians) */
@@ -1313,7 +1307,7 @@ static void rdmove (olong  yeari, olong yearf, olong mo, olong nda,
  * \param  year  Year
  * \return Julian date of begining of year
  */
-static olong julDay (year) {
+static olong julDay (olong year) {
   olong    julda, yearm1, ic;
   
   yearm1 = year-1;
@@ -1340,7 +1334,7 @@ static void ACShift (ObitCArray  *Spectrum,  ObitCArray  *Work,
 		     olong sideband, olong nchan, ofloat shift, olong doSmo)
 {
   ofloat dela, rfact, arg, xre, xim, norm, *spectrum, *work;
-  olong   nfrq, nfrq2, i, n2, jf, jbin, ntrans, fftdir;
+  olong   nfrq, nfrq2, i, n2, jf, jbin;
   olong pos[2] = {0, 0};
   
   nfrq = nchan;
@@ -1350,8 +1344,6 @@ static void ACShift (ObitCArray  *Spectrum,  ObitCArray  *Work,
 
   /* reflect spectrum */
   nfrq2  = nfrq * 2;
-  ntrans = nfrq;
-  fftdir = -1;
   ObitFFTC2C (FFTFor, Spectrum, Work);
 
   /* determine shift parms */
@@ -1379,7 +1371,6 @@ static void ACShift (ObitCArray  *Spectrum,  ObitCArray  *Work,
   } /* end loop   L200 */;
 
   /* transform back to spectrum */
-  fftdir = -fftdir;
   ObitFFTC2C (FFTRev, Work, Spectrum);
 
   /* normalize */
@@ -1413,7 +1404,7 @@ static void CCShift (ObitCArray *Spectrum,  ObitCArray *Work,
 		     olong sideband, olong nchan, ofloat shift)
 {
   ofloat  del, del1, cd, sd, c, s, store, norm, temp1, temp2, *spectrum, *work;
-  olong   nfrq, nxcf, kstart, kstop, k, kk, ll, fftdir, i;
+  olong   nfrq, nxcf, kstart, kstop, k, kk, ll, i;
   olong pos[2] = {0, 0};
 
   nfrq = nchan;
@@ -1432,7 +1423,6 @@ static void CCShift (ObitCArray *Spectrum,  ObitCArray *Work,
   }
 
   /* transform to xcf */
-  fftdir = -sideband;
   /* call fourg (Spectrum, nxcf, fftdir, work); */
   /* Direction depends on sideband */
   if (sideband>0) 
@@ -1490,7 +1480,6 @@ static void CCShift (ObitCArray *Spectrum,  ObitCArray *Work,
 
   /* fft back to spectrum */
   /* fftdir determines which sideband will end  up in first half of Spectrum */
-  fftdir = sideband;
   /* Direction depends on sideband */
   if (sideband>0) 
     ObitFFTC2C (FFTRev, Work, Spectrum);
@@ -1517,7 +1506,7 @@ static ofloat CalcShift (ObitDoppler *doppler, olong ant1, olong ant2,
   ObitUVDesc *uvDesc = doppler->uvdata->myDesc;
   gboolean newSource=FALSE;
   olong isou, i;
-  gchar *source, timeStr[20];
+  gchar *source, timeStr[32];
   gchar *routine = "CalcShift";
 
   /* Need to calculate year and doy of reference? */

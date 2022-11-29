@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2016                                          */
+/*;  Copyright (C) 2014-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -419,8 +419,7 @@ void ObitSkyModelVMPolnInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   olong iver;
-  gboolean btemp;
-  olong itemp, numAntList;
+  olong numAntList;
   ObitTableList *list=NULL;
   ObitTableAN *TableAN=NULL;
   ObitTableCC *CCTable = NULL;
@@ -442,13 +441,13 @@ void ObitSkyModelVMPolnInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   in->saveDoCalSelect = FALSE;
   ObitInfoListGetTest(uvdata->info, "doCalSelect", &type, dim, &in->saveDoCalSelect);
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  btemp = FALSE;
-  /*ObitInfoListAlwaysPut (uvdata->info, "doCalSelect", OBIT_bool, dim, &btemp);*/
+  /*btemp = FALSE;
+    ObitInfoListAlwaysPut (uvdata->info, "doCalSelect", OBIT_bool, dim, &btemp);*/
   in->saveDoCalib = 0;
   ObitInfoListGetTest(uvdata->info, "doCalib", &type, dim, &in->saveDoCalib);
   dim[0] = dim[1] = dim[2] = 1;
-  itemp = -1;
-  /*ObitInfoListAlwaysPut (uvdata->info, "doCalib", OBIT_long, dim, &itemp);*/
+  /*itemp = -1;
+    ObitInfoListAlwaysPut (uvdata->info, "doCalib", OBIT_long, dim, &itemp);*/
   strncpy (in->saveStokes, "    ", 4);
   ObitInfoListGetTest(uvdata->info, "Stokes", &type, dim, in->saveStokes);
   dim[0] = 4; dim[1] = dim[2] = 1;
@@ -564,7 +563,7 @@ void ObitSkyModelVMPolnInitMod (ObitSkyModel* inn, ObitUV *uvdata,
     for (iver=1; iver<=in->numAntList; iver++) { 
       in->AntList[iver-1] = ObitAntennaListUnref(in->AntList[iver-1]);
     }
-    if (in->AntList) g_free(in->AntList); in->AntList = NULL;
+    if (in->AntList) {g_free(in->AntList);} in->AntList = NULL;
     in->AntList = g_malloc0((numAntList)*sizeof(ObitAntennaList*));
   }
   in->numAntList = numAntList;
@@ -1378,9 +1377,9 @@ gboolean ObitSkyModelVMPolnLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata
     /* Find anything */
     gotSome = gotSome || (ncomp>0);
     /* Cleanup */
-    if (specCorr) g_free(specCorr); specCorr = NULL;
-    if (fitSigma) g_free(fitSigma); fitSigma = NULL;
-    if (fitParms) g_free(fitParms); fitParms = NULL;
+    if (specCorr) {g_free(specCorr);} specCorr = NULL;
+    if (fitSigma) {g_free(fitSigma);} fitSigma = NULL;
+    if (fitParms) {g_free(fitParms);} fitParms = NULL;
   } /* End loop over model Stokes types */
 
   /* Point in->comps at Stokes I model */
@@ -1419,7 +1418,7 @@ void ObitSkyModelVMPolnInit  (gpointer inn)
   in->RS   = in->RD   = in->LS   = in->LD  = NULL;
   in->RSc  = in->RDc  = in->LSc  = in->LDc = NULL;
   in->CX   = in->CY   = in->SX   = in->SY  = NULL;
-  in->CXc  = in->CYc  = in->SYc  = in->SYc = NULL;
+  in->CXc  = in->CYc  = in->SXc  = in->SYc = NULL;
   in->numAntList   = 0;
   in->numAnt       = 0;
   in->PDrefAnt     = -999;
@@ -1446,19 +1445,19 @@ void ObitSkyModelVMPolnClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  if (in->isEVLA)      g_free(in->isEVLA);      in->isEVLA      = NULL;
-  if (in->specIndexI)  g_free(in->specIndexI);  in->specIndexI  = NULL;
-  if (in->specIndexQ)  g_free(in->specIndexQ);  in->specIndexQ  = NULL;
-  if (in->specIndexU)  g_free(in->specIndexU);  in->specIndexU  = NULL;
-  if (in->specIndexV)  g_free(in->specIndexV);  in->specIndexV  = NULL;
-  if (in->startIComp)  g_free(in->startIComp);  in->startIComp  = NULL;
-  if (in->startQComp)  g_free(in->startQComp);  in->startQComp  = NULL;
-  if (in->startUComp)  g_free(in->startUComp);  in->startUComp  = NULL;
-  if (in->startVComp)  g_free(in->startVComp);  in->startVComp  = NULL;
-  if (in->endIComp)    g_free(in->endIComp);    in->endIComp    = NULL;
-  if (in->endQComp)    g_free(in->endQComp);    in->endQComp    = NULL;
-  if (in->endUComp)    g_free(in->endUComp);    in->endUComp    = NULL;
-  if (in->endVComp)    g_free(in->endVComp);    in->endVComp    = NULL;
+  if (in->isEVLA)      {g_free(in->isEVLA);}      in->isEVLA      = NULL;
+  if (in->specIndexI)  {g_free(in->specIndexI);}  in->specIndexI  = NULL;
+  if (in->specIndexQ)  {g_free(in->specIndexQ);}  in->specIndexQ  = NULL;
+  if (in->specIndexU)  {g_free(in->specIndexU);}  in->specIndexU  = NULL;
+  if (in->specIndexV)  {g_free(in->specIndexV);}  in->specIndexV  = NULL;
+  if (in->startIComp)  {g_free(in->startIComp);}  in->startIComp  = NULL;
+  if (in->startQComp)  {g_free(in->startQComp);}  in->startQComp  = NULL;
+  if (in->startUComp)  {g_free(in->startUComp);}  in->startUComp  = NULL;
+  if (in->startVComp)  {g_free(in->startVComp);}  in->startVComp  = NULL;
+  if (in->endIComp)    {g_free(in->endIComp);}    in->endIComp    = NULL;
+  if (in->endQComp)    {g_free(in->endQComp);}    in->endQComp    = NULL;
+  if (in->endUComp)    {g_free(in->endUComp);}    in->endUComp    = NULL;
+  if (in->endVComp)    {g_free(in->endVComp);}    in->endVComp    = NULL;
   in->VMIComps  = ObitFArrayUnref(in->VMIComps);
   in->VMQComps  = ObitFArrayUnref(in->VMQComps);
   in->VMUComps  = ObitFArrayUnref(in->VMUComps);
@@ -1494,8 +1493,8 @@ void ObitSkyModelVMPolnClear (gpointer inn)
     g_free(in->LSc); in->LSc = NULL;
     g_free(in->LDc); in->LDc = NULL;
   }
-  if (in->PPRL) g_free(in->PPRL); in->PPRL = NULL;
-  if (in->PPLR) g_free(in->PPLR); in->PPLR = NULL;
+  if (in->PPRL) {g_free(in->PPRL);} in->PPRL = NULL;
+  if (in->PPLR) {g_free(in->PPLR);} in->PPLR = NULL;
   if (in->CX) {
     for (i=0; i<in->numUVChan; i++ ) {
       if (in->CX[i])  g_free(in->CX[i]);
@@ -1516,8 +1515,8 @@ void ObitSkyModelVMPolnClear (gpointer inn)
     g_free(in->CYc); in->CYc = NULL;
     g_free(in->SYc); in->SYc = NULL;
   }
-  if (in->PPXY) g_free(in->PPXY); in->PPXY = NULL;
-  if (in->PPYX) g_free(in->PPYX); in->PPYX = NULL;
+  if (in->PPXY) {g_free(in->PPXY);} in->PPXY = NULL;
+  if (in->PPYX) {g_free(in->PPYX);} in->PPYX = NULL;
     
   /* Thread stuff */
   if (in->threadArgs) {
@@ -1554,7 +1553,7 @@ void  ObitSkyModelVMPolnGetInput (ObitSkyModel* inn, ObitErr *err)
   gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong *iptr, num;
   ObitInfoType type;
-  union ObitInfoListEquiv InfoReal; 
+  /*union ObitInfoListEquiv InfoReal; */
   gchar *routine = "ObitSkyModelVMPolnGetInput";
 
   /* error checks */
@@ -1562,7 +1561,8 @@ void  ObitSkyModelVMPolnGetInput (ObitSkyModel* inn, ObitErr *err)
   if (err->error) return;
   g_assert (ObitSkyModelVMPolnIsA(in));
   if (!ObitInfoListIsA(in->info)) return;
-  InfoReal.itg = 0;type = OBIT_oint;
+  /*InfoReal.itg = 0;*/
+  type = OBIT_oint;
 
   /* Call base class version */
   ObitSkyModelVMGetInput (inn, err);
@@ -1725,12 +1725,13 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 
   olong iVis, iIF, iChannel, iStoke, iComp;
   olong lrec, nrparm, naxis[2], channel;
-  olong startPoln, numberPoln, jincs, startChannel, numberChannel;
+  olong jincs, startChannel, numberChannel;
   olong lstartChannel, lstartIF, lim, ifq;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
-  olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVpoln;
+  olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan;
   olong ilocu, ilocv, ilocw, iloct, suba, it1, it2, ant1, ant2;
-  olong lcompI, lcompQ, lcompU, lcompV, ncompI, ncompQ, ncompU, ncompV;
+  olong lcompI, lcompQ, lcompU, lcompV, ncompQ, ncompU, ncompV;
+  /*olong ncompI, nUVpoln, numberPoln, startPoln, */
   olong mcomp, mcompI, mcompQ, mcompU, mcompV;
   ofloat *visData, *IData, *QData=NULL, *UData=NULL, *VData=NULL;
   ofloat *idata, *qdata, *udata, *vdata, *fscale, exparg;
@@ -1747,7 +1748,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
   ofloat FazArrI[FazArrSize], FazArrQ[FazArrSize];
   ofloat FazArrU[FazArrSize], FazArrV[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
-  ofloat cosSumPA, sinSumPA, cosDifPA, sinDifPA;
+  ofloat cosSumPA, sinSumPA; /*, cosDifPA, sinDifPA;*/
   ofloat model[8], stokes[8], u, v, w;
   olong it, jt, itcnt=0, qtcnt=0, utcnt=0, vtcnt=0, itab=0, qtab=0, utab=0, vtab=0;
   odouble *freqArr;
@@ -1772,9 +1773,9 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
   numberChannel = MAX (1, in->numberChannelPB);
   nUVchan       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocf];
   jincf         = uvdata->myDesc->incf;
-  startPoln     = in->startPoln-1;
-  numberPoln    = in->numberPoln;
-  nUVpoln       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocs];
+  /*startPoln     = in->startPoln-1;*/
+  /*numberPoln    = in->numberPoln;*/
+  /*nUVpoln       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocs];*/
   jincs         = uvdata->myDesc->incs;  /* increment in real array */
   /* Increments in frequency tables */
   if (uvdata->myDesc->jlocif>=0) {
@@ -1794,7 +1795,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
   naxis[0] = 0; naxis[1] = 0; 
   IData = ObitFArrayIndex(in->VMIComps, naxis);
   lcompI = in->comps->naxis[0];   /* Length of row in comp table */
-  ncompI = in->comps->naxis[1];   /* Number of components */
+  /*ncompI = in->comps->naxis[1];    Number of components */
   mcompI = in->numIComp;           /* Actual number */
   mcomp  = mcompI;
   if (in->VMQComps) QData = ObitFArrayIndex(in->VMQComps, naxis);
@@ -1861,8 +1862,8 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
       /* Baseline sum and difference of parallactic angles */
       cosSumPA = largs->cosPA[ant1]*largs->cosPA[ant2] - largs->sinPA[ant1]*largs->sinPA[ant2];
       sinSumPA = largs->sinPA[ant1]*largs->cosPA[ant2] + largs->cosPA[ant1]*largs->sinPA[ant2];
-      cosDifPA = largs->cosPA[ant1]*largs->cosPA[ant2] + largs->sinPA[ant1]*largs->sinPA[ant2];
-      sinDifPA = largs->sinPA[ant1]*largs->cosPA[ant2] - largs->cosPA[ant1]*largs->sinPA[ant2];
+      /*cosDifPA = largs->cosPA[ant1]*largs->cosPA[ant2] + largs->sinPA[ant1]*largs->sinPA[ant2];*/
+      /*sinDifPA = largs->sinPA[ant1]*largs->cosPA[ant2] - largs->cosPA[ant1]*largs->sinPA[ant2];*/
       
       /* Loop over IFs */
       channel = lstartIF* nUVchan + lstartChannel; /* UV Channel */
@@ -2622,7 +2623,7 @@ static olong PolnMFFreqInfo (ObitSkyModelVMPoln *in, ObitImage *image, ObitUV *u
   ObitInfoType type;
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar keyword[12];
+  gchar keyword[16];
 
   *forceDFT = FALSE;   /* In case */
   ObitInfoListGetTest(image->myDesc->info, "NSPEC", &type, dim, &nSpec);
@@ -2712,7 +2713,7 @@ static void digestPDTable (ObitSkyModelVMPoln *in, ObitUV *uvdata, olong PDVer, 
   ObitTablePD *PDTab;
   ObitTablePDRow *PDRow=NULL;
   ObitUVDesc *uvDesc=uvdata->myDesc;
-  dcomplex ct1, ct2, Jp, Jm;
+  dcomplex ct1, ct2, Jp;
   /* dcomplex PRref, PLref;*/
   gboolean haveRLPhase;
   ofloat PD, root2;
@@ -2720,7 +2721,7 @@ static void digestPDTable (ObitSkyModelVMPoln *in, ObitUV *uvdata, olong PDVer, 
 
   /* Complex constants */
   COMPLEX_SET (Jp,  0.0, 1.0);
-  COMPLEX_SET (Jm,  0.0,-1.0);
+  /*COMPLEX_SET (Jm,  0.0,-1.0);*/
 
   /* Get table */
   PDTab = newObitTablePDValue ("Instrum", (ObitData*)uvdata, &PDVer, 
@@ -2896,7 +2897,8 @@ static void calcModel (VMPolnFTFuncArg* arg, olong ant1, olong ant2,
   dcomplex PPRL, PPLR, PPXY, PPYX;
   dcomplex PA1, PA2, PA1c, PA2c, ct1;
   dcomplex S[4], VRR, VRL, VLR, VLL, MC1, MC2, MC3, MC4;
-  dcomplex VXX, VYY, VXY, VYX, Jp, Jm, SPA, DPA, SPAc, DPAc;
+  dcomplex VXX, VYY, VXY, VYX, SPA, DPA, SPAc, DPAc;
+  /* dcomplex Jp, Jm, */
   dcomplex SM1, SM2, SM3, SM4;
 
   /* Stokes model as RR,RL,LR,LL */
@@ -3015,8 +3017,8 @@ static void calcModel (VMPolnFTFuncArg* arg, olong ant1, olong ant2,
     COMPLEX_SET (PPXY, in->PPXY[iChan].real, in->PPXY[iChan].imag);
     COMPLEX_SET (PPYX, in->PPYX[iChan].real, in->PPYX[iChan].imag);
 
-    COMPLEX_SET (Jp,  0.0, 1.0);
-    COMPLEX_SET (Jm,  0.0,-1.0);
+    /*COMPLEX_SET (Jp,  0.0, 1.0);
+      COMPLEX_SET (Jm,  0.0,-1.0);*/
     /* Sum and difference or parallactic angle */
     COMPLEX_SET(SPA, arg->cosPA[ant1]*arg->cosPA[ant2] - arg->sinPA[ant1]*arg->sinPA[ant2],
 	  	     arg->sinPA[ant1]*arg->cosPA[ant2] + arg->cosPA[ant1]*arg->sinPA[ant2]);

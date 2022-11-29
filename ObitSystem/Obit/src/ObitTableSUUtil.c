@@ -106,7 +106,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
       Obit_traceback_val (err, routine,in->name, retCode);
     }
     /* Blank fill Source to dim[0], in temp2Name */
-    for (i=0; i<dim[0]; i++) temp2Name[i] = ' ';  temp2Name[i] = 0;
+    for (i=0; i<dim[0]; i++) {temp2Name[i] = ' ';}  temp2Name[i] = 0;
     l = MIN (in->myDesc->repeat[in->SourceCol], strlen(row->Source));
     for (i=0; i<l; i++)  temp2Name[i] = row->Source[i];
     temp2Name[i] = 0;  /* to be sure terminated */
@@ -114,7 +114,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
     /* loop through inlist and check if it matches */
     match = FALSE;
     for (i=0; i<dim[1]; i++) {
-      for (j=0; j<dim[0]; j++) tempName[j] = ' '; tempName[j] = 0;
+      for (j=0; j<dim[0]; j++) {tempName[j] = ' ';} tempName[j] = 0;
       /* get blank padded name from list */
       for (j=0; j<dim[0]; j++) {
 	if (inlist[i*dim[0]+j]==0) break;  /* only values in string */
@@ -186,7 +186,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
       gotSome = gotSome || (outlist[i]>=0);
       if (cross[i]<0) {/* Not found */
 	/* get name from list */
-	for (j=0; j<dim[0]; j++) tempName[j] = inlist[i*dim[0]+j]; tempName[j] = 0;
+	for (j=0; j<dim[0]; j++) {tempName[j] = inlist[i*dim[0]+j];} tempName[j] = 0;
 	/* Have an initial '-'? */
 	if (tempName[0]=='-') for (j=0; j<dim[0]; j++) tempName[j]= tempName[j+1]; /* remove '-' */
 	

@@ -71,7 +71,8 @@ void ObitTableFSPrint (ObitTableFS *in, ObitImage *image, FILE  *prtFile,
   gchar rast[19], decst[19], field[9];
   ofloat epeak, errra, errdec, errmaj, errmin, errpa, minSNR;
   odouble glat, glong;
-  ofloat beam[3], beamas[2], xcell, flux, eflux;
+  ofloat beam[3], xcell, flux, eflux;
+  /*ofloat beamas[2]; */
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   union ObitInfoListEquiv InfoReal; 
@@ -108,8 +109,8 @@ void ObitTableFSPrint (ObitTableFS *in, ObitImage *image, FILE  *prtFile,
   beam[0] = image->myDesc->beamMaj / xcell;  /* cells */
   beam[1] = image->myDesc->beamMin / xcell;
   beam[2] = image->myDesc->beamPA * DG2RAD;
-  beamas[0] = image->myDesc->beamMaj * 3600.0;  /* asec */
-  beamas[1] = image->myDesc->beamMin * 3600.0;
+  /*beamas[0] = image->myDesc->beamMaj * 3600.0;   asec */
+  /*beamas[1] = image->myDesc->beamMin * 3600.0;*/
 
   fprintf (prtFile,"\n Listing of fitted FS table values\n");
   fprintf (prtFile,"Fitted sizes in asec, Peak in mJy, Velocity in km/s\n");
@@ -134,7 +135,7 @@ void ObitTableFSPrint (ObitTableFS *in, ObitImage *image, FILE  *prtFile,
     maj = row->MajorAxis * 3600.0;
     min = row->MinorAxis * 3600.0;
     pa  = fmod(row->PosAngle, 360.0);
-    for (i=0; i<8; i++) field[i] = row->Field[i]; field[i] = 0;
+    for (i=0; i<8; i++) {field[i] = row->Field[i];} field[i] = 0;
 
     /* Galactic coord */
     glat  = row->Dec2000;
@@ -752,7 +753,8 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
   olong mxbad, ibad, jbad, maxbad, tnobad, *badrow=NULL;
   odouble dist2, ramax, dismax, tramax, bestRA, bestDec;
   gboolean isbad, toss1, want1;
-  olong fooey, bestRow, irow, jrow, orow, nrow, iold, ocount;
+  olong bestRow, irow, jrow, orow, nrow, iold, ocount;
+  /* olong fooey, */
   gchar Field[9];
   gchar *routine = "ObitTableFSRedun";
   
@@ -870,7 +872,7 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
     bestZ   = row->CenterZ;
 
     inWant = irow;  /* keep track or desired output row */
-    fooey  = irow;  /* Wah? */
+    /*    fooey  = irow;   Wah? */
 
     /* Search following table entries within RA window */
     for (jrow=irow+1; jrow<=erow; jrow++) {
@@ -925,7 +927,7 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
 	/* Use this new one? */
 	if (want1) {
 	  inWant = jrow;  /* keep track or desired output row */
-	  fooey = jrow;
+	  /*fooey = jrow;*/
 	  bestRA  = row2->Ra2000;   /* Now proven otherwise */
 	  bestDec = row2->Dec2000;
 	  bestRow = jrow;

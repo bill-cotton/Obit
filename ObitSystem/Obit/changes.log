@@ -5218,3 +5218,54 @@ Summary:Limited restart of MFImage, GSL version 2, Cleanup, Bug fixes
   Obit/src/ObitDConCleanVisLine.c
       various; use member nPar where nArgs is inappropriate.
 14 Oct. 2022, svn 644
+
+Summary: Cleanup, Bug fixes
+  Obit/TDF/RMSyn.TDF
+    cleanup doc.
+  ObitView/ObitView.c ObitView/include/textfile.h ObitView/src:
+    aboutbox.c AIPSfilebox.c blinkbox.c color.c control.c drawbox.c
+    FStrng.c graph.c helpbox.c Image2Pix.c imagedisp.c infobox.c
+    logger.c lookpos.c markpos.c menu.c moviebox.c optionbox.c
+    poslabel.c requestbox.c scrolltext.c taskmessagebox.c 
+    taskmessage.c textfile.c toolbox.c
+    Cleanup compiler complaints
+  Obit/src:
+    ObitAIPSDir.c ObitTableAN.c ObitTableFSUtil.c ObitTableMC.c ObitTableTY.c
+    ObitALMACalAtm.c ObitTableAT.c ObitTableGC.c ObitTableMF.c ObitTableVL.c
+    ObitDoppler.c ObitTableBL.c ObitTableHistory.c ObitTableNI.c ObitTableVLUtil.c
+    ObitFile.c ObitTableBP.c ObitTableIDI_ANTENNA.c ObitTableNIUtil.c ObitTableVZ.c
+    ObitIOImageFITS.c ObitTable.c ObitTableIDI_ARRAY_GEOMETRY.c ObitTableNX.c ObitTableWX.c
+    ObitIonCal.c ObitTableCC.c ObitTableIDI_BANDPASS.c ObitTableOB.c 
+    ObitMultiProc.c ObitTableCCUtil.c ObitTableIDI_CALIBRATION.c ObitTableOF.c ObitThread.h
+    ObitParser.c  ObitTableCD.c ObitTableIDI_FLAG.c ObitTableOT.c ObitUVCalBandpass.c
+    ObitPrinter.c ObitTableCL.c ObitTableIDI_FREQUENCY.c ObitTablePC.c ObitUVCalBaseline.c
+    ObitSDMData.c ObitTableCLUtil.cObitTableIDI_GAIN_CURVE.c ObitTablePD.c ObitUVCalCalibrate.c
+    ObitSkyModelMF.c ObitTableCP.c ObitTableIDI_INTERFEROMETER_MODEL.c ObitTablePO.c ObitUVCalFlag.c
+    ObitSkyModelVMBeam.c ObitTableCQ.c ObitTableIDI_PHASE_CAL.c ObitTablePS.c ObitUVCalPolarization.c
+    ObitSkyModelVMBeamMF.c ObitTableCT.c ObitTableIDI_SOURCE.c ObitTablePT.c ObitUVDesc.c
+    ObitSkyModelVM.c ObitTableDesc.c ObitTableIDI_SYSTEM_TEMPERATURE.c ObitTableSN.c ObitUVGSolveWB.c
+    ObitSkyModelVMIon.c ObitTableFG.c ObitTableIDI_UV_DATA.c ObitTableSNUtil.c ObitUVPeelUtil.c
+    ObitSkyModelVMPoln.c ObitTableFQ.c ObitTableIDI_WEATHER.c ObitTableSU.c ObitUVRFIXize.c
+    ObitSkyModelVMSquint.c ObitTableFQUtil.c  ObitTableIM.c ObitTableSUUtil.c ObitUVSel.c
+    ObitSwPower.c ObitTableFS.c ObitTableList.c ObitTableSY.c ObitUVSoln.c
+      Cleanup compiler bitches
+  Obit/src/ObitThread.c Obit/include/ObitThread.h:
+     Upgrade to more modern gthreads
+  Obit/TDF/MKXPhase.TDF Obit/tasks/MKXPhase.c:
+     Write Dummy (1,0) BP table if the input has no data.
+  Obit/src/ObitImageUtil.c
+     Make sure beams get gridded when new facet added.
+  Obit/src/ObitTableCCUtil.c
+     MakeCCSortStruct: Fix data type argument to ObitMemAlloc0Name
+  Obit/src/ObitTableCC.c
+     Close: Trap bad nrow, <-1, >50,000,000
+  Obit/src/ObitDConCleanVisMF.c 
+     MFResetSkyModel: fix bug writing random numbers in no. row of CC table
+  Obit/TDF/MFImage.TDF
+     Give UVITaper example for MeerKAT
+  Obit/python/ImageMF.py Obit/src/ObitImageMF.c
+     FitSpec2: Options to control fitting weights, SI fitting
+  Obit/include/ObitSpectrumFitDef.h Obit/include/ObitSpectrumFit.h Obit/src/ObitSpectrumFit.c
+     Mostly NLFit: changes to support FitSpec2 changes
+29 Nov. 2022, svn 645
+

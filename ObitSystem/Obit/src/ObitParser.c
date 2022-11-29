@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -100,7 +100,7 @@ ObitIOCode ObitParserParse(gchar *infile, ObitInfoList *list, ObitErr *err)
 
   /* Cleanup */
   myFile = ObitFileUnref(myFile);
-  if (data) g_free(data); data = NULL; /* release storage */
+  if (data) {g_free(data);} data = NULL; /* release storage */
  
   return retCode;
 } /* end ObitParserParse */
@@ -163,7 +163,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
     }
   }
   j = 0;
-  for (i=i1; i<i2; i++) name[j++] = line[i]; name[j] = 0;
+  for (i=i1; i<i2; i++) {name[j++] = line[i];} name[j] = 0;
 
   /* Type code */
   i1 = -1;
@@ -176,7 +176,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
     }
   }
   j = 0;
-  for (i=i1; i<i2; i++) typeStr[j++] = line[i]; typeStr[j] = 0;
+  for (i=i1; i<i2; i++) {typeStr[j++] = line[i];} typeStr[j] = 0;
 
   /* Interprete type */
   if (!strncmp (typeStr, "Str", 3)) {
@@ -205,7 +205,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
     if ((i1>0) && ((line[i]==',') || (line[i]==')'))) { /* end of dimension */
       i2 = i;
       j = 0;
-      for (i=i1; i<i2; i++) temp[j++] = line[i]; temp[j] = 0;
+      for (i=i1; i<i2; i++) {temp[j++] = line[i];} temp[j] = 0;
       nread = sscanf (temp, "%d", &itemp);
       dim[idim++] = itemp;
       if (nread!=1) {
@@ -275,7 +275,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
       i1 = MAX (0, i1);
       if (dim[1]>1) { /* string array */
 	carray[iout] = g_malloc0(sizeof(gchar)*(dim[0]+1));
-	for (i=0; i<dim[0]; i++)  carray[iout][i] = ' '; carray[iout][i] = 0;
+	for (i=0; i<dim[0]; i++)  {carray[iout][i] = ' ';} carray[iout][i] = 0;
 	for (i=i1; i<MIN(dim[0],strlen(line)); i++)  carray[iout][j++] = line[i];
 	iout++;
       } else { /* Single string */
@@ -323,7 +323,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 
 	/* copy to temp */
 	j = 0;
-	for (i=i1; i<i2; i++) temp[j++] = line[i]; temp[j] = 0;
+	for (i=i1; i<i2; i++) {temp[j++] = line[i];} temp[j] = 0;
 	/* get value */
 	nread = sscanf (temp, "%d", &itemp);
 	idata[iout++] = itemp;
@@ -404,7 +404,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 	
 	/* copy to temp */
 	j = 0;
-	for (i=i1; i<i2; i++) temp[j++] = line[i]; temp[j] = 0;
+	for (i=i1; i<i2; i++) {temp[j++] = line[i];} temp[j] = 0;
 	
 	/* get value */
 	nread = sscanf (temp, "%f", &ftemp);
@@ -454,7 +454,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 	
 	/* copy to temp */
 	j = 0;
-	for (i=i1; i<i2; i++) temp[j++] = line[i]; temp[j] = 0;
+	for (i=i1; i<i2; i++) {temp[j++] = line[i];} temp[j] = 0;
 	
 	/* get value */
 	nread = sscanf (temp, "%lf", &dtemp);

@@ -282,7 +282,6 @@ void ObitIOImageFITSRename (ObitIO *in, ObitInfoList *info,
  */
 void ObitIOImageFITSZap (ObitIOImageFITS *in, ObitErr *err)
 {
-  ObitIOCode retCode = OBIT_IO_SpecErr;
   int status = 0;
   gchar tempStr[201];
   gchar *routine = "ObitIOImageFITSZap";
@@ -294,7 +293,7 @@ void ObitIOImageFITSZap (ObitIOImageFITS *in, ObitErr *err)
 
   /* Close if still open */
   if ((in->myStatus==OBIT_Modified) || (in->myStatus==OBIT_Active)) {
-    retCode = ObitIOImageFITSClose (in, err);
+    ObitIOImageFITSClose (in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 
@@ -387,7 +386,6 @@ ObitIOCode ObitIOImageFITSOpen (ObitIOImageFITS *in, ObitIOAccess access,
   ObitInfoType type;
   gchar tempStr[201];
   ObitImageDesc* desc;
-  ObitImageSel* sel;
   gchar *routine = "ObitIOImageFITSOpen";
 
   /* error checks */
@@ -399,7 +397,6 @@ ObitIOCode ObitIOImageFITSOpen (ObitIOImageFITS *in, ObitIOAccess access,
   errno = 0;  /* reset any system error */
 
   desc = in->myDesc; /* descriptor pointer */
-  sel  = in->mySel;  /* selector pointer */
 
 
   /* get instructions from info */
@@ -2089,30 +2086,30 @@ HISTORY AIPS   IMAGE ITYPE=2 XPOFF=  0.00000000E+00 YPOFF=  0.00000000E+00
     if (status==0) {
       if (!strncmp ("HISTORY AIPS   CLEAN BMAJ", card, 25)) {
 	/* Parse card */
-	for (j=0,i=26; i<38; i++) temp[j++] = card[i]; temp[j] = 0;
+	for (j=0,i=26; i<38; i++) {temp[j++] = card[i];} temp[j] = 0;
 	sscanf (temp, "%f", &ftemp);
 	desc->beamMaj = (ofloat)ftemp;
-	for (j=0,i=44; i<56; i++) temp[j++] = card[i]; temp[j] = 0;
+	for (j=0,i=44; i<56; i++) {temp[j++] = card[i];} temp[j] = 0;
 	sscanf (temp, "%f", &ftemp);
 	desc->beamMin = (ofloat)ftemp;
-	for (j=0,i=61; i<68; i++) temp[j++] = card[i]; temp[j] = 0;
+	for (j=0,i=61; i<68; i++) {temp[j++] = card[i];} temp[j] = 0;
 	sscanf (temp, "%f", &ftemp);
 	desc->beamPA = (ofloat)ftemp;
 	gotBeam = TRUE;
       } else if (!strncmp ("HISTORY AIPS   CLEAN NITER", card, 26)) {
-	for (j=0,i=27; i<36; i++) temp[j++] = card[i]; temp[j] = 0;
+	for (j=0,i=27; i<36; i++) {temp[j++] = card[i];} temp[j] = 0;
 	sscanf (temp, "%ld", &ltemp);
 	desc->niter = (olong)ltemp;
       } else if (!strncmp ("HISTORY AIPS   IMAGE ITYPE=", card, 27)) {
 	/* Parse card */
-	for (j=0,i=27; i<29; i++) temp[j++] = card[i]; temp[j] = 0;
+	for (j=0,i=27; i<29; i++) {temp[j++] = card[i];} temp[j] = 0;
 	sscanf (temp, "%ld", &ltemp);
 	desc->do3D = ltemp==2;
 	got3D = TRUE;
-	for (j=0,i=35; i<52; i++) temp[j++] = card[i]; temp[j] = 0;
+	for (j=0,i=35; i<52; i++) {temp[j++] = card[i];} temp[j] = 0;
 	sscanf (temp, "%f", &ftemp);
 	desc->xPxOff = (ofloat)ftemp;
-	for (j=0,i=58; i<75; i++) temp[j++] = card[i]; temp[j] = 0;
+	for (j=0,i=58; i<75; i++) {temp[j++] = card[i];} temp[j] = 0;
 	sscanf (temp, "%f", &ftemp);
 	desc->yPxOff = (ofloat)ftemp;
       }
@@ -2224,7 +2221,8 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
 			       ObitErr *err)
 {
   char keywrd[FLEN_KEYWORD], value[FLEN_VALUE], commnt[FLEN_COMMENT+1];
-  char *first, *last, *anF, *aT, dtype, svalue[FLEN_VALUE];
+  char *first, *last, *aT, dtype, svalue[FLEN_VALUE];
+  /* char *anF, */
   olong i, j, l;
   olong ivalue;
   int  k, status=0, keys, morekeys;
@@ -2291,7 +2289,7 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
 	  
 	  break;
 	case 'L':  /* logical 'T', 'F' */
-	  anF   = index (value,'F'); /* Logical */
+	  /*anF   = index (value,'F');  Logical */
 	  aT    = index (value,'T'); /* Logical */
 	  bvalue = FALSE;
 	  if (aT!=NULL) bvalue = TRUE;

@@ -77,11 +77,11 @@ ObitTableBP* MakeBPTable (ObitUV* inData,  olong bchan, olong echan,
 /* Dump current phases to BP table */
 void DumpBP(ObitTableBP* BPTable, ofloat *phase,  olong souId, ofloat time, 
 	    olong bchan, olong echan, olong nif, olong numAnt, olong refAnt, ObitErr* err);
-/* Update  BP table */
-ObitTableBP* UpdateBPTable (ObitUV* inData, olong BPver, ObitUV* outData, 
-			    ofloat time, olong bchan, olong echan, olong nif, 
-			    ofloat *phase, ofloat RLPhase, ofloat RM, olong refAnt,
-			    ObitErr *err);
+/* Fake output */
+void Fakem (ObitInfoList* myInput, ObitInfoList* myOutput, ObitUV* outData, ObitErr* err);
+/* Fake dummy BP table */
+void FakeBP(ObitTableBP* BPTable, olong souId, ofloat time, olong bchan, olong echan, 
+	    olong nif, olong numAnt, olong refAnt, ObitErr* err);
 
 
 /* Program globals */
@@ -97,6 +97,7 @@ gchar **FITSdirs=NULL;          /* List of FITS data directories */
 ObitInfoList *myInput  = NULL;  /* Input parameter list */
 ObitInfoList *myOutput = NULL;  /* Output parameter list */
 olong  souNo=0;                 /* Single source number */
+gboolean fakeBP=FALSE;          /* Fake BP table if no input? */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -132,7 +133,7 @@ int main ( int argc, char **argv )
   inData = getInputData (myInput, err);
   if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
-  /* Get output uvdata (for AIPS FG table) */
+  /* Get output uvdata (for AIPS BP table) */
   outData = setOutputUV (myInput, inData, err);
   if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
@@ -143,9 +144,16 @@ int main ( int argc, char **argv )
   avgData =  TimeAverage(myInput, inData, err);
   if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
-  /* Do channel solutions, convert to BP table */
-  XYBandpassCal(myInput, avgData, outData, err);
-  if (err->error) {ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;}
+  /* Anything to work with? */
+  if (avgData && (avgData->myDesc->nvis>20)) {
+    /* Do channel solutions, convert to BP table */
+    XYBandpassCal(myInput, avgData, outData, err);
+    if (err->error) {ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;}
+  } else { 
+    /* NADA - fake BP */
+    Fakem (myInput, myOutput, outData, err);
+    if (err->error) {ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;}
+  } /* end if data or fake it */
 
   /* Write history */
   MKXPhaseHistory (myInput, outData, err); 
@@ -302,6 +310,10 @@ ObitInfoList* MKXPhaseIn (int argc, char **argv, ObitErr *err)
   /* Initialize output */
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+
+  /* Initial fakeBP for history */
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
+  ObitInfoListPut (list, "fakeBP", OBIT_bool, dim, &fakeBP, err);
 
   return list;
 } /* end MKXPhaseIn */
@@ -513,14 +525,17 @@ ObitInfoList* defaultInputs(ObitErr *err)
 ObitInfoList* defaultOutputs(ObitErr *err)
 {
   ObitInfoList *out = newObitInfoList();
-  /*  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-      ofloat ftemp;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  /*    ofloat ftemp;
       gchar *routine = "defaultOutputs";"*/
 
   /* error checks */
   if (err->error) return out;
 
-  /* add parser items - nothing */
+  /* add parser items - fakeBP */
+  dim[0] = dim[1] = 1;
+  ObitInfoListAlwaysPut (out, "fakeBP", OBIT_bool, dim, &fakeBP);
+
   return out;
 } /* end defaultOutputs */
 
@@ -764,7 +779,7 @@ void MKXPhaseHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "outFile",  "outDisk", "outName", "outClass", "outSeq", 
     "Sources","timeRange",  "BChan", "EChan",  "ChWid", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "Antennas",  "refAnt", "BPSoln", "nThreads",
+    "Antennas",  "refAnt", "BPSoln", "nThreads", "fakeBP", 
    NULL};
   gchar *routine = "MKXPhaseHistory";
 
@@ -1169,6 +1184,139 @@ cleanup:
   BPRow = ObitTableBPRowUnref(BPRow);
   if (refPhase) g_free(refPhase);
 }  /* end DumpBP */
+
+/**
+ * Write dummy (all (1,0)) BP table
+ * \param myInput  Input parameters on InfoList    
+ * \param myOutput Output parameters on InfoList    
+ * \param outData  UV Data to be to Get BP table
+ * \param err    ObitErr stack for reporting problems.
+ * \return time averaged visibility data
+ */
+void Fakem (ObitInfoList* myInput, ObitInfoList* myOutput, ObitUV* outData, ObitErr* err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitTableBP *BPTable=NULL;
+  olong souId=-1, nchan, bchan=1, echan, nif, numAnt, ver,  npol=2, refAnt=0;
+  ofloat time = 0.0;
+  gchar *routine = "Fakem";
+
+  /* error checks */
+  if (err->error) return;
+
+  /* Indicate fake */
+  fakeBP = TRUE;
+  ObitInfoListAlwaysPut (myOutput, "fakeBP", OBIT_bool, dim, &fakeBP);
+  ObitInfoListAlwaysPut (myInput,  "fakeBP", OBIT_bool, dim, &fakeBP);
+  Obit_log_error(err, OBIT_InfoWarn,"%s: No data, writing a dummy BP table",routine);
+
+  ObitUVGetSubA (outData, err);
+  numAnt  = outData->myDesc->numAnt[0];/* actually highest antenna number */
+  /* Range of channels -  really ALL */
+  nchan = outData->myDesc->inaxes[outData->myDesc->jlocf];
+  ObitInfoListGetTest (myInput, "BChan", &type, dim, &bchan); 
+  if (bchan<=0) bchan = 1;
+  ObitInfoListGetTest (myInput, "EChan", &type, dim, &echan); 
+  if (echan<=0) echan = nchan;
+  echan = MIN (echan, nchan);
+  nif = 1;
+  if (outData->myDesc->jlocif>=0) 
+    nif = outData->myDesc->inaxes[outData->myDesc->jlocif];
+
+  /* Create output BP table */
+   ver = 0;
+  ObitInfoListGetTest(myInput, "BPSoln",  &type, dim, &ver);
+  BPTable = newObitTableBPValue ("Temp BP", (ObitData*)outData, &ver,
+			       OBIT_IO_WriteOnly, npol, nif, nchan, err);
+  if (err->error) goto cleanup;
+
+    
+  FakeBP(BPTable, souId, time, bchan, echan, nif, numAnt, refAnt, err);
+  if (err->error) goto cleanup;
+ cleanup:
+  BPTable = ObitTableBPUnref(BPTable );
+ } /* end Fakem */
+/** 
+ * Write fake solution interval phases (0) to BP table
+ * \param BPTable BP table to write
+ * \param souId   Source Id.
+ * \param time    Time in days to write entry
+ * \param bchan   First channel calibrated
+ * \param echan   Highest channel calibrated
+ * \param nif     Number of IFs
+ * \param numAnt  Number of antennas
+ * \param refAnt  Reference antenna, if >0 then subtract from all other antennas
+ * \param err     ObitErr stack for reporting problems.
+ */
+void FakeBP(ObitTableBP* BPTable, olong souId, ofloat time, olong bchan, olong echan, 
+	    olong nif, olong numAnt, olong refAnt, ObitErr* err)
+{
+  ObitIOCode retCode = OBIT_IO_OK;
+  ObitTableBPRow *BPRow=NULL;
+  olong iant, orow, nchan, npol=2, ichan, iif;
+  olong jndx;
+  gchar *routine = "FakeBP";
+
+  /* error checks */
+  if (err->error) return;
+
+  nchan   = (echan-bchan+1);
+
+  /* Open BP table */
+  retCode = ObitTableBPOpen (BPTable, OBIT_IO_ReadWrite, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine, BPTable->name);
+  BPRow = newObitTableBPRow(BPTable);
+  ObitTableBPSetRow (BPTable, BPRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, BPTable->name);
+
+  /* Intitial values */
+  BPTable->numAnt     = numAnt;
+  BPRow->BW           = 0.0;
+  BPRow->ChanShift[0] = 0.0;
+  BPRow->ChanShift[1] = 0.0;
+  BPRow->RefAnt1      = refAnt;
+  BPRow->RefAnt2      = refAnt;
+  BPRow->SubA         = 0;
+  BPRow->FreqID       = 0;
+  /* Loop over antennas  */
+  for (iant=1; iant<=numAnt; iant++) {
+    /* Set time, antenna etc.*/
+    BPRow->Time   = time;
+    BPRow->antNo  = iant;
+    BPRow->SourID = souNo;
+
+    /* loop over IFs */
+    for (iif=0; iif<nif; iif++) {
+      BPRow->Weight1[iif] = 1.0;
+      if (npol>1) BPRow->Weight2[iif] = 1.0;
+      
+      /* Channel Loop */
+      for (ichan=bchan; ichan<=echan; ichan++) {
+	jndx = iif*nchan + ichan -1;
+	BPRow->Real1[jndx]   = 1.0;
+	BPRow->Imag1[jndx]   = 0.0;
+	if (npol>1) {   /* There better be or this is pretty pointless */
+	  BPRow->Real2[jndx] = 1.0;
+	  BPRow->Imag2[jndx] = 0.0;
+	}
+      } /* end channel loop */
+    } /* end IF Loop */
+
+    /* Write output table */
+    orow = -1;
+    retCode = ObitTableBPWriteRow (BPTable, orow, BPRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  } /* end loop over antennas */
+
+  /* Close BP table */
+cleanup:
+  retCode = ObitTableBPClose (BPTable, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine, BPTable->name);
+  BPRow = ObitTableBPRowUnref(BPRow);
+}  /* end FakeBP */
 
 /** 
  * Create Bandpass table

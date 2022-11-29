@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -362,7 +362,7 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   ObitInfoListAlwaysPut(uvdata->info, "do3D", OBIT_bool, dim, &in->do3D);
 
   /* index array for fields */
-  if (in->fieldIndex) g_free(in->fieldIndex); in->fieldIndex = NULL;
+  if (in->fieldIndex) {g_free(in->fieldIndex);} in->fieldIndex = NULL;
   in->fieldIndex = g_malloc0(in->mosaic->numberImages*sizeof(olong));
 
   /* Is a point model being used? */
@@ -551,7 +551,7 @@ void ObitSkyModelVMIonShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
   in->uRotTab  = ObitFArrayUnref(in->uRotTab);
   in->ZernX    = ObitFArrayUnref(in->ZernX);
   in->ZernY    = ObitFArrayUnref(in->ZernY);
-  if (in->fieldIndex) g_free(in->fieldIndex); in->fieldIndex = NULL;
+  if (in->fieldIndex) {g_free(in->fieldIndex);} in->fieldIndex = NULL;
 
   /* Delete NI data */
   in->NITable  = ObitTableNIUnref(in->NITable);
@@ -965,12 +965,12 @@ void ObitSkyModelVMIonClear (gpointer inn)
 void  ObitSkyModelVMIonGetInput (ObitSkyModel* inn, ObitErr *err)
 {
   ObitSkyModelVMIon *in = (ObitSkyModelVMIon*)inn;
-  ObitInfoType type;
-  /* gint32 i, dim[MAXINFOELEMDIM];
+  /* ObitInfoType type;
+     gint32 i, dim[MAXINFOELEMDIM];
      ofloat rtemp[10];
      olong itemp, *iptr, num;
-     gchar tempStr[5];*/
-  union ObitInfoListEquiv InfoReal; 
+     gchar tempStr[5];
+     union ObitInfoListEquiv InfoReal; */
   gchar *routine = "ObitSkyModelVMIonGetInput";
 
   /* error checks */
@@ -978,7 +978,7 @@ void  ObitSkyModelVMIonGetInput (ObitSkyModel* inn, ObitErr *err)
   if (err->error) return;
   g_assert (ObitSkyModelVMIonIsA(in));
   if (!ObitInfoListIsA(in->info)) return;
-  InfoReal.itg = 0;type = OBIT_oint;
+  /*InfoReal.itg = 0;type = OBIT_oint;*/
 
   /* Call base class version */
   ObitSkyModelVMGetInput (inn, err);

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -512,18 +512,18 @@ ObitUVCalBandpassSUnref (ObitUVCalBandpassS *in)
   in->BPTableRow = ObitTableBPRowUnref((ObitTableBPRow*)in->BPTableRow);
   
   
-  if (in->BPApply)      g_free(in->BPApply);  in->BPApply   = NULL;
-  if (in->BPPrior)      g_free(in->BPPrior);  in->BPPrior   = NULL;
-  if (in->BPFollow)     g_free(in->BPFollow); in->BPFollow  = NULL;
-  if (in->PriorAntTime) g_free(in->PriorAntTime); in->PriorAntTime  = NULL;
-  if (in->FollowAntTime) g_free(in->FollowAntTime); in->FollowAntTime  = NULL;
-  if (in->PriorSolnWt)  g_free(in->PriorSolnWt);  in->PriorSolnWt  = NULL;
-  if (in->FollowSolnWt) g_free(in->FollowSolnWt); in->FollowSolnWt  = NULL;
-  if (in->isVLBA)       g_free(in->isVLBA); in->isVLBA = NULL;
-  if(in->BPWork1)       g_free(in->BPWork1); in->BPWork1 = NULL;
-  if(in->BPWork2)       g_free(in->BPWork2); in->BPWork2 = NULL;
-  if(in->BPWork3)       g_free(in->BPWork3); in->BPWork3 = NULL;
-  if(in->BPWork4)       g_free(in->BPWork4); in->BPWork4 = NULL;
+  if (in->BPApply)      {g_free(in->BPApply);}  in->BPApply   = NULL;
+  if (in->BPPrior)      {g_free(in->BPPrior);}  in->BPPrior   = NULL;
+  if (in->BPFollow)     {g_free(in->BPFollow);} in->BPFollow  = NULL;
+  if (in->PriorAntTime) {g_free(in->PriorAntTime);} in->PriorAntTime  = NULL;
+  if (in->FollowAntTime){g_free(in->FollowAntTime);} in->FollowAntTime  = NULL;
+  if (in->PriorSolnWt)  {g_free(in->PriorSolnWt);}  in->PriorSolnWt  = NULL;
+  if (in->FollowSolnWt) {g_free(in->FollowSolnWt);} in->FollowSolnWt  = NULL;
+  if (in->isVLBA)       {g_free(in->isVLBA);} in->isVLBA = NULL;
+  if(in->BPWork1)       {g_free(in->BPWork1);} in->BPWork1 = NULL;
+  if(in->BPWork2)       {g_free(in->BPWork2);} in->BPWork2 = NULL;
+  if(in->BPWork3)       {g_free(in->BPWork3);} in->BPWork3 = NULL;
+  if(in->BPWork4)       {g_free(in->BPWork4);} in->BPWork4 = NULL;
   in->ACFFTFor  =    ObitFFTUnref(in->ACFFTFor);
   in->ACFFTRev  =    ObitFFTUnref(in->ACFFTRev);    
   in->CCFFTFor  =    ObitFFTUnref(in->ACFFTFor);
@@ -994,7 +994,7 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	  for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 50 */
 	    in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;
 	    if (in->numPol >= 2) 
-	      in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;
+	      {in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;}
 	    indx = lenEntryAnt * (iant) +  lenEntry * (iif-in->bIF);
 	    for (j=0; j<lenEntryPoln; j++) in->BPPrior[indx+j]  = in->BPFollow[indx+j];
 	  } /* end IF loop  L50:  */;
@@ -1049,7 +1049,7 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	  for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 70 */
 	    in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;
 	    if (in->numPol >= 2) 
-	      in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;
+	      {in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;}
 	    indx = lenEntryAnt * (iant) +  lenEntry * (iif-in->bIF);
 	    for (j=0; j<lenEntryPoln; j++) in->BPPrior[indx+j]  = in->BPFollow[indx+j];
 	  } /* end IF loop  L70:  */

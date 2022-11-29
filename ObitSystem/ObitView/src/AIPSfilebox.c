@@ -1,7 +1,7 @@
 /* $Id$  */
 /* AIPS image selection box for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2013
+*  Copyright (C) 2013,2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -62,33 +62,33 @@ static void AFBOpenButCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!value) /* error */
     {MessageShow ("Error reading requested directory");
     return;}
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
 
   /* Save info from dialog */
   FStrngFill (AFBdia.AIPS_dir, value);
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   value =   XmTextFieldGetString (AFBdia.nameT);
   FStrngFill (AFBdia.AName, value);
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   value =   XmTextFieldGetString (AFBdia.classT);
   FStrngFill (AFBdia.AClass, value);
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   value =   XmTextFieldGetString (AFBdia.seqT);
   if (!sscanf (value, "%d", &temp))
     { /* error */
       MessageShow ("Error reading requested sequence");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
   AFBdia.ASeq = temp;
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   value =   XmTextFieldGetString (AFBdia.userT);
   if (!sscanf (value, "%d", &temp))
     { /* error */
       MessageShow ("Error reading AIPS user number");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
   AFBdia.AUser = temp;
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
 
   /* make it disappear but still exist */
   XtPopdown(AFBdia.dialog);
@@ -138,12 +138,12 @@ static void NewADirCB (Widget text_w, XtPointer clientData, XtPointer callData)
 
   /* Bail if initial message */
   if (!strncmp (value, "specify AIPS ", 12)) 
-    {if (value) XtFree(value); return;}
+    {if (value) {XtFree(value);} return;}
 
   /* Better be a full path - feeble test */
   if ((value[0]!='/') && (value[1]!='/')) {
     MessageShow ("You must specify a full path");
-    if (value) XtFree(value); return;
+    if (value) {XtFree(value);} return;
   }
 
   /* OK, save directory name */
@@ -152,17 +152,17 @@ static void NewADirCB (Widget text_w, XtPointer clientData, XtPointer callData)
   if (value[strlen(value)-1]!='/') sprintf(line,"%s/", value);
   else sprintf(line,"%s", value);
   FStrngFill (AFBdia.AIPS_dir, line);
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
 
   /* Get user number */
   value =   XmTextFieldGetString (AFBdia.userT);
   if (!sscanf (value, "%d", &temp))
     { /* error */
       MessageShow ("Error reading AIPS user number");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
   AFBdia.AUser = temp;
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
 
   /* Set directory */
   disk = 1;
@@ -193,7 +193,7 @@ static void NewADirCB (Widget text_w, XtPointer clientData, XtPointer callData)
 	/*fprintf (stderr, "%s\n", line);   DEBUG */
 	item = XmStringCreateLocalized (line);
 	XmListAddItem (AFBdia.SList, item, position++);
-	if (item) XmStringFree (item);item = NULL;
+	if (item) {XmStringFree (item);} item = NULL;
   } /* end if image */
       g_free (entry);
     } /* end if exists */
@@ -481,7 +481,7 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
     (XtPointer)"File/Open AIPS");*/
   AFBdia.Help = HelpButton;
 
-  if (label)    XmStringFree(label);    label  = NULL;
+  if (label)    {XmStringFree(label);}    label  = NULL;
   
   /* set it up */
   XtManageChild (AFBdia.SList);

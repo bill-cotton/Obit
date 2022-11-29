@@ -35,7 +35,7 @@ char *FileName;            /* file name */
 char *directory;           /* file directory */
 unsigned char Buffer[TEXTBUFFER_SIZE];/* I/O buffer */
 FILE *file;                /* file pointer for write */
-gzFile *zFile;             /* zlib file for reading */
+gzFile zFile;              /* zlib file for reading */
 int  Good;                 /* file properly selected */
 int  HitEOF;               /* if 1 then read an EOF else 0 */
 int  State;                /* State=0=> not open, 1=> read, 2=write */

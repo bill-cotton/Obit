@@ -1,7 +1,7 @@
 /* $Id$  */
 /* image blink control box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2011
+*  Copyright (C) 1996,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -111,7 +111,7 @@ void BlinkLabelDwell(void)
   XtVaSetValues(BlinkDia.DwellScrollLabel, 
 		XmNlabelString,   WierdString,
 		NULL);
-  if (WierdString) XmStringFree(WierdString); WierdString = NULL;
+  if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
 } /* end BlinkLabelDwell */
 
 /**
@@ -329,7 +329,7 @@ void BlinkBlinkCB (Widget parent, XtPointer clientData, XtPointer callData)
 						       XmNtopWidget,     BlinkDia.DwellScroll,
 						       XmNleftAttachment,  XmATTACH_FORM,
 						       NULL);
-  if (WierdString) XmStringFree(WierdString); WierdString = NULL;
+  if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
   BlinkLabelDwell();
   
   /* Quit button */

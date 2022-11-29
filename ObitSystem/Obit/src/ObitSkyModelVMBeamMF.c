@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2021                                          */
+/*;  Copyright (C) 2011-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1120,8 +1120,8 @@ void ObitSkyModelVMBeamMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
 
 
   /* Cleanup arrays */
-  if (in->specFreq)  g_free(in->specFreq);  in->specFreq = NULL;
-  if (in->specIndex) g_free(in->specIndex); in->specIndex = NULL;
+  if (in->specFreq)  {g_free(in->specFreq);}  in->specFreq = NULL;
+  if (in->specIndex) {g_free(in->specIndex);} in->specIndex = NULL;
   
   /* Call parent shutdown */
   ObitSkyModelVMBeamShutDownMod(inn, uvdata, err);
@@ -1709,16 +1709,16 @@ void ObitSkyModelVMBeamMFClear (gpointer inn)
     if ((in->RLgaini!=NULL) && (in->RLgaini[i]!=NULL)) g_free(in->RLgaini[i]);
     if ((in->LRgaini!=NULL) && (in->LRgaini[i]!=NULL)) g_free(in->LRgaini[i]);
   }
-  if (in->Rgain)   g_free(in->Rgain);   in->Rgain  = NULL;
-  if (in->Lgain)   g_free(in->Lgain);   in->Lgain  = NULL;
-  if (in->RLgain)  g_free(in->RLgain);  in->RLgain  = NULL;
-  if (in->LRgain)  g_free(in->LRgain);  in->LRgain  = NULL;
-  if (in->Rgaini)  g_free(in->Rgaini);  in->Rgaini = NULL;
-  if (in->Lgaini)  g_free(in->Lgaini);  in->Lgaini = NULL;
-  if (in->RLgaini) g_free(in->RLgaini); in->RLgaini = NULL;
-  if (in->LRgaini) g_free(in->LRgaini); in->LRgaini = NULL;
-  if (in->numPlane) g_free(in->numPlane);in->numPlane = NULL;
-  if (in->AntType)     g_free(in->AntType);    in->AntType     = NULL;
+  if (in->Rgain)   {g_free(in->Rgain);}   in->Rgain  = NULL;
+  if (in->Lgain)   {g_free(in->Lgain);}   in->Lgain  = NULL;
+  if (in->RLgain)  {g_free(in->RLgain);}  in->RLgain  = NULL;
+  if (in->LRgain)  {g_free(in->LRgain);}  in->LRgain  = NULL;
+  if (in->Rgaini)  {g_free(in->Rgaini);}  in->Rgaini = NULL;
+  if (in->Lgaini)  {g_free(in->Lgaini);}  in->Lgaini = NULL;
+  if (in->RLgaini) {g_free(in->RLgaini);} in->RLgaini = NULL;
+  if (in->LRgaini) {g_free(in->LRgaini);} in->LRgaini = NULL;
+  if (in->numPlane){g_free(in->numPlane);}in->numPlane = NULL;
+  if (in->AntType) {g_free(in->AntType);}    in->AntType     = NULL;
   in->BeamShape = ObitBeamShapeUnref(in->BeamShape);
   for (i=0; i<in->numAntType; i++) {
     in->RXBeam[i]    = ObitImageInterpUnref(in->RXBeam[i]);
@@ -5096,7 +5096,7 @@ static ObitTableCC* getPBCCTab (ObitSkyModelVMBeamMF* in, ObitUV* uvdata,
   odouble Angle=0.0;
   gpointer fitArg=NULL;
   olong irow, row, i, iterm, nterm, offset, nSpec, tiver;
-  gchar keyword[12];
+  gchar keyword[16];
   gchar *routine = "ObitSkyModelVMBeamMF:getPBCCTab";
 
   /* error checks */

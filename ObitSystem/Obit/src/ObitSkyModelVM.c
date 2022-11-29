@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2016                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -557,7 +557,6 @@ gboolean ObitSkyModelVMLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
 {
   ObitSkyModelVM *in = (ObitSkyModelVM*)inn;
   gboolean gotSome = FALSE;
-  ObitIOCode retCode = OBIT_IO_SpecErr;
   olong ndim, naxis[2];
   ofloat *table, const2, ccrot, ssrot, cpa, spa, uvrot, xmaj, xmin;
   ofloat dxyzc[3], xxoff, yyoff, zzoff;
@@ -565,7 +564,6 @@ gboolean ObitSkyModelVMLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
   
   /* error checks */
   if (err->error) return gotSome;
-  retCode = OBIT_IO_OK;
 
   gotSome = (in->pointFlux * in->factor!=0.0);  /* Non zero model? */
   if (!gotSome) return gotSome;
@@ -1184,7 +1182,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
   ofloat *visData, *ccData, *data, *fscale;
   ofloat modReal, modImag;
   ofloat amp, arg, freq2, freqFact, wt=0.0, temp;
-  odouble tx, ty, tz, sumReal, sumImag, *freqArr;
+  odouble tx, ty, tz, sumReal, sumImag;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
@@ -1247,7 +1245,6 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 
   /* Get pointer for frequency correction tables */
   fscale = uvdata->myDesc->fscale;
-  freqArr = uvdata->myDesc->freqArr;
 
   /* Loop over vis in buffer */
   lrec    = uvdata->myDesc->lrec;         /* Length of record */

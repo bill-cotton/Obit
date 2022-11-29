@@ -1,7 +1,7 @@
 /* $Id$ */
 /* lookup position from index, Equinox dialog boxes for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1998,2002-2008
+*  Copyright (C) 1996,1998,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -86,7 +86,7 @@ int ReadLookRA (Widget w)
     {MessageShow ("Error reading RA for Lookup Position");
      return 1;}
   iNumRead = sscanf (value, "%d %d %f", &h, &m, &s);
-  if (value) XtFree(value); value = NULL;
+  if (value){ XtFree(value);} value = NULL;
   bOK = 0;
   if (iNumRead==3) bOK = !hmsra(h, m, s, &ra);
   if (!bOK)
@@ -124,7 +124,7 @@ int ReadLookDec (Widget w)
   for (i=0;i<20;i++) 
     {if (value[i]=='-') bSouth=1; 
      if (value[i]==0) break;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   if (iNumRead==3) bOK = !dmsdec(d, m, s, &dec);
   if (!bOK)
    { /* error */
@@ -160,11 +160,11 @@ void LookupCancelButCB (Widget filebox, XtPointer clientData,
  */
 void LookupOKButCB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  olong iRet, bOK, iX, iY, iScroll, samefile;
+  olong iRet, bOK, iX, iY, iScroll;
   ofloat xp, yp;
   odouble ra, dec;
   gchar ctype[5], indexfilename[120], FITSfilename[120], fullFITSname[120];
-  gchar szErrMess[120];
+  gchar szErrMess[180];
   /*Display *dpy = XtDisplay(w);*/
   ImageDisplay *IDdata = (ImageDisplay*)clientData;
   ObitImageDesc *desc;
@@ -195,7 +195,6 @@ void LookupOKButCB (Widget w, XtPointer clientData, XtPointer callData)
     MessageShow (szErrMess); return;}
   
   /* load new image */
-  samefile = 0;
   FStrngFill(image[CurImag].FileName, fullFITSname);
   image[CurImag].DataType = OBIT_IO_FITS;    /* FITS */
   image[CurImag].reLoad   = TRUE;            /* Force load */
@@ -264,7 +263,7 @@ void LookupOKButCB (Widget w, XtPointer clientData, XtPointer callData)
 void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 {
   Widget form, toplabel, label1, label2;
-  Widget sep1, sep2;
+  Widget sep1; /* sep2;*/
   Widget OKButton, CancelButton;
   XmString     RA=NULL, Dec=NULL, label=NULL, equstr=NULL;
   XmString     wierdstring = NULL;
@@ -306,7 +305,7 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
     wierdstring = XmStringCreateSimple (valuestr);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (look.equlab, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     
     /* RA */
     look.ra = 0.0;
@@ -421,13 +420,14 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					NULL);
   
   /* separator */
-  sep2 = XtVaCreateManagedWidget ("sep2", xmSeparatorWidgetClass,
-				  form, 
-				  XmNwidth,           180,
-				  XmNtopAttachment, XmATTACH_WIDGET,
-				  XmNtopWidget,     look.data2,
-				  XmNleftAttachment,  XmATTACH_FORM,
-				  NULL);
+  /*sep2 = */
+  XtVaCreateManagedWidget ("sep2", xmSeparatorWidgetClass,
+			   form, 
+			   XmNwidth,           180,
+			   XmNtopAttachment, XmATTACH_WIDGET,
+			   XmNtopWidget,     look.data2,
+			   XmNleftAttachment,  XmATTACH_FORM,
+			   NULL);
   /* Cancel button */
   CancelButton = XtVaCreateManagedWidget ("Cancel", xmPushButtonWidgetClass, 
 					  form, 
@@ -448,10 +448,10 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   XtAddCallback (OKButton, XmNactivateCallback, LookupOKButCB, 
 		 (XtPointer)IDdata);
   
-  if (equstr) XmStringFree(equstr); equstr = NULL;
-  if (label) XmStringFree(label); label = NULL;
-  if (RA) XmStringFree(RA); RA = NULL;
-  if (Dec) XmStringFree(Dec); Dec = NULL;
+  if (equstr) {XmStringFree(equstr);} equstr = NULL;
+  if (label)  {XmStringFree(label);}  label = NULL;
+  if (RA)     {XmStringFree(RA);}     RA = NULL;
+  if (Dec)    {XmStringFree(Dec);}    Dec = NULL;
   
   /* set it up */
   XtManageChild (look.dialog);
@@ -488,9 +488,9 @@ olong LookPosRead(FILE *hFile, gchar *fname, odouble *ra, odouble *dec,
   olong h, d, rm, dm, iNumByte, iNumRead;
   ofloat rs, ds;
   olong bRAOK, bDecOK, bOK, bSouth, i;
-  gchar szLine[120], szErrMess[120];
+  gchar szLine[152], szErrMess[180];
   
-  if (!fgets (szLine, 120, hFile)) {
+  if (!fgets (szLine, 150, hFile)) {
     /*   error or EOF */
     if (ferror(hFile)) *iErr = 2;  /* Check if error */
     fclose(hFile);  /* close */
@@ -508,7 +508,7 @@ olong LookPosRead(FILE *hFile, gchar *fname, odouble *ra, odouble *dec,
     
     /* southern declination? look for minus sign*/
     bSouth = 0;
-    for (i=5;i<120;i++) 
+    for (i=5;i<150;i++) 
       {if (szLine[i]=='-') bSouth=1; 
       if (szLine[i]==0) break; }
     if (bSouth && (*dec>0.0)) *dec = -*dec;
@@ -541,7 +541,7 @@ olong LookPosFile (gchar* indexfilename, gchar* FITSfilename)
   olong iNumByte, iNumRead, bOK, bFound, prio, last_prio;
   odouble ra, dec, last_dist, dist;
   ofloat equinox, delt_ra, delt_dec, ra_test, dec_test;
-  gchar  dummy[20], szLine[120], fname[120], szErrMess[120];
+  gchar  dummy[20], szLine[152], fname[120], szErrMess[180];
   FILE   *hFile;
   
   iErr = 0;
@@ -556,7 +556,7 @@ olong LookPosFile (gchar* indexfilename, gchar* FITSfilename)
     return 1;}
   
   /* read index equinox */
-  if (!fgets (szLine, 120, hFile)) {
+  if (!fgets (szLine, 150, hFile)) {
     /*   error or EOF */
     fclose(hFile);  /* close */
     MessageShow ("Error reading equinox from index table");
@@ -735,10 +735,10 @@ void SetEquCB (Widget parent, XtPointer clientData, XtPointer callData)
   XtAddCallback (CancelButton, XmNactivateCallback, EquiSetCancelButCB, 
 		 (XtPointer)IDdata);
   
-  if (label) XmStringFree(label); label = NULL;
-  if (defau) XmStringFree(defau); defau = NULL;
-  if (J2000) XmStringFree(J2000); J2000 = NULL;
-  if (B1950) XmStringFree(B1950); B1950 = NULL;
+  if (label) {XmStringFree(label);} label = NULL;
+  if (defau) {XmStringFree(defau);} defau = NULL;
+  if (J2000) {XmStringFree(J2000);} J2000 = NULL;
+  if (B1950) {XmStringFree(B1950);} B1950 = NULL;
   
   /* set it up */
   XtManageChild (equ.dialog);

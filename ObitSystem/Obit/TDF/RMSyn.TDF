@@ -157,9 +157,9 @@ Parameters:
   doDecon.....Do CLEAN deconvolution in each pixel?
   doRestor....Restore CLEANed pixels?
   doBeam......If True & doDecon, write the restoring beam in 
-              real=pixel [1,1], imag=[2,1] of Amp output.
-	      dirty beam real=pixel [3,1], imag=[4,1]
- minFlux.....Minimum CLEAN level (Jy/bm)
+              pixel [1,1] of Amp  and phase output.
+	      dirty beam in pixel [1,1] of A&P outputs.
+  minFlux.....Minimum CLEAN level (Jy/bm)
   niter.......Maximum number of CLEAN cycles (max. 1000)
   gain........Loop gain for CLEAN.
   Alpha.......If != 0.0 then correct Q,U data by spectral index 

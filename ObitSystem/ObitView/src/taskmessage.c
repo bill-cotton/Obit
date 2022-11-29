@@ -1,7 +1,7 @@
 /* $Id:  $ */
 /* Obit task message window routines  */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2009
+*  Copyright (C) 2009,2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -24,6 +24,7 @@
 #include "taskmessage.h"
 #include "taskmessagebox.h"
 #include "obitmess.h"
+#include "XMLRPCTaskMessServer.h"
 #include <stdio.h> 
 
 /**

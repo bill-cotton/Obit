@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -314,17 +314,17 @@ ObitUVCalFlagSUnref (ObitUVCalFlagS *in)
   if (in==NULL) return in;;
   in->FGTable    = ObitTableFGUnref((ObitTableFG*)in->FGTable);
   in->FGTableRow = ObitTableFGRowUnref((ObitTableFGRow*)in->FGTableRow);
-  if (in->flagSour)    g_free(in->flagSour);    in->flagSour  = NULL;
-  if (in->flagAnt)     g_free(in->flagAnt);     in->flagAnt   = NULL;
-  if (in->flagBase)    g_free(in->flagBase);    in->flagBase  = NULL;
-  if (in->flagSubA)    g_free(in->flagSubA);    in->flagSubA  = NULL;
-  if (in->flagFQID)    g_free(in->flagFQID);    in->flagFQID  = NULL;
-  if (in->flagBIF)     g_free(in->flagBIF);     in->flagBIF   = NULL;
-  if (in->flagEIF)     g_free(in->flagEIF);     in->flagEIF   = NULL;
-  if (in->flagBChan)   g_free(in->flagBChan);   in->flagBChan = NULL;
-  if (in->flagEChan)   g_free(in->flagEChan);   in->flagEChan = NULL;
-  if (in->flagPol)     g_free(in->flagPol);     in->flagPol   = NULL;
-  if (in->flagEndTime) g_free(in->flagEndTime); in->flagEndTime = NULL;
+  if (in->flagSour)    {g_free(in->flagSour);}    in->flagSour  = NULL;
+  if (in->flagAnt)     {g_free(in->flagAnt);}     in->flagAnt   = NULL;
+  if (in->flagBase)    {g_free(in->flagBase);}    in->flagBase  = NULL;
+  if (in->flagSubA)    {g_free(in->flagSubA);}    in->flagSubA  = NULL;
+  if (in->flagFQID)    {g_free(in->flagFQID);}    in->flagFQID  = NULL;
+  if (in->flagBIF)     {g_free(in->flagBIF);}     in->flagBIF   = NULL;
+  if (in->flagEIF)     {g_free(in->flagEIF);}     in->flagEIF   = NULL;
+  if (in->flagBChan)   {g_free(in->flagBChan);}   in->flagBChan = NULL;
+  if (in->flagEChan)   {g_free(in->flagEChan);}   in->flagEChan = NULL;
+  if (in->flagPol)     {g_free(in->flagPol);}     in->flagPol   = NULL;
+  if (in->flagEndTime) {g_free(in->flagEndTime);} in->flagEndTime = NULL;
   if (in->thArgArr) {
     KillCalFlagFuncArgs (in->nThArg, in->thArgArr);
     in->thArgArr = NULL;
@@ -384,7 +384,6 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
   olong   ndrop, mdrop, a1, a2, it;
   olong irow,  i, limit4, nwords;
   gboolean done, dropall, warn;
-  ObitIOCode retCode;
   ObitTableFG *FGTable = NULL;
   ObitTableFGRow *FGTableRow = NULL;
   gchar tString[25];
@@ -479,7 +478,7 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
   limit4 = MAX (1, in->LastRowRead+1);
   for (i= limit4; i<=in->numRow; i++) { /* loop 360 */
     irow = i;
-    retCode = ObitTableFGReadRow (FGTable, irow, FGTableRow, err);
+    ObitTableFGReadRow (FGTable, irow, FGTableRow, err);
     if (err->error) Obit_traceback_msg (err, routine, "FG Table");
     if (FGTableRow->status < 0) continue; /* entry flagged? */
     in->LastRowRead = i-1;  /* may try this one again */

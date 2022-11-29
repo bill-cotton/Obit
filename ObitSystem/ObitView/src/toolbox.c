@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Toolbox panel functions for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998,2002-3013
+*  Copyright (C) 1998,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -177,7 +177,7 @@ Widget MakeToolbox(Widget mainWindow, Widget topWidget, XtPointer data)
   XtManageChild (toolbox);
   
   /* delete temporary strings */
-  if (label) XmStringFree(label); label = NULL;
+  if (label) {XmStringFree(label);} label = NULL;
   
   return toolbox;
 } /* end MakeToolbox */

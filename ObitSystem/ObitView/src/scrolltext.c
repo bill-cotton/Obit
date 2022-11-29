@@ -226,14 +226,14 @@ int ScrollTextKill( ScrollTextPtr STextPtr)
   for (loop=0; loop<MAX_LINE; loop++) 
     {if (STextPtr->lines[loop]) {g_free (STextPtr->lines[loop]);
     STextPtr->lines[loop]=NULL;}}
-  if (STextPtr->Title) g_free (STextPtr->Title); STextPtr->Title=NULL;
+  if (STextPtr->Title) {g_free (STextPtr->Title);} STextPtr->Title=NULL;
   
   /* release graphics context */
   if (STextPtr->gc) XtReleaseGC (STextPtr->ScrollBox, STextPtr->gc);
   
   /* kill da wabbit */
   XtDestroyWidget (STextPtr->ScrollBox);
-  if (STextPtr) g_free(STextPtr); STextPtr=NULL;/* done with this */
+  if (STextPtr) {g_free(STextPtr);} STextPtr=NULL;/* done with this */
   
   return 1;
 } /* end ScrollTextKill */

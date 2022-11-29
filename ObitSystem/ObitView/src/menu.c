@@ -1,7 +1,7 @@
 /* $Id$ */
 /* menu routines for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyight (C) 1996,1997,2002-2014
+*  Copyight (C) 1996,1997,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -447,8 +447,8 @@ void FileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
     return; /* error */
   if (!FITS_dir) FITS_dir = MakeFStrng(" ");
   FStrngFill (FITS_dir, directory);
-  if (filename) XtFree(filename); filename = NULL; 
-  if (directory) XtFree(directory); directory = NULL;
+  if (filename)  {XtFree(filename);}  filename = NULL; 
+  if (directory) {XtFree(directory);} directory = NULL;
   
   /* Shazam disappear and die */
 #ifndef KEEP_FILE_DIALOG  /* option to let it hang around */
@@ -542,11 +542,11 @@ void AFileCancelCB (Widget filebox, XtPointer clientData, XtPointer callData)
 void OpenCB (Widget w, XtPointer clientData, XtPointer callData)
 {
   Widget       filebox;
-  ImageDisplay *IDdata;
+  /*ImageDisplay *IDdata;*/
   XmString     wierdstring = NULL;
   Arg          wargs[5]; 
   
-  IDdata = (ImageDisplay *)clientData;
+  /*IDdata = (ImageDisplay *)clientData;*/
   FITSLoadDone=FALSE;  /* global, Has requested FITS image been loaded? */
 
   if (FITS_Box) {
@@ -566,7 +566,7 @@ void OpenCB (Widget w, XtPointer clientData, XtPointer callData)
     wierdstring = XmStringCreateLocalized (FITS_dir->sp);
     XtSetArg (wargs[0], XmNdirectory, wierdstring);
     XtSetValues (filebox, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   }
   /* Shazam appear: */
   XtManageChild (filebox);
@@ -658,14 +658,14 @@ void MenuMarkZoom (int number)
       XtVaSetValues(Zoom_w[loop], 
 		    XmNlabelString,  wierdstring,
 		    NULL);
-      if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+      if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     }
   /* set the specified one */
   wierdstring = XmStringCreateLocalized (set[number]);
   XtVaSetValues(Zoom_w[number], 
 		XmNlabelString,  wierdstring,
 		NULL);
-  if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+  if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
 } /* end MenuMarkZoom */
 
 /**
@@ -685,7 +685,7 @@ void MenuMarkLogger (int onoff)
     return;
   
   XtVaSetValues(File_w[5], XmNlabelString,  wierdstring, NULL);
-  if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+  if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
 } /* end MenuMarkLogger */
 
 /**
@@ -720,8 +720,8 @@ void CopyOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
 /*      sprintf (szErrMess, "to %s", filename); */
 /*      MessageShow (szErrMess); */
  /*   } */
-  if (FileName) KillFStrng (FileName); FileName = NULL;
-  if (filename) XtFree(filename); filename = NULL;
+  if (FileName) {KillFStrng (FileName);} FileName = NULL;
+  if (filename) {XtFree(filename);}      filename = NULL;
   
   /* Shazam disappear and die */
   XtUnmanageChild (filebox); 
@@ -742,7 +742,7 @@ void CopyOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
 void SaveAsCB (Widget w, XtPointer clientData, XtPointer callData)
 {
   Widget       filebox;
-  ImageDisplay *IDdata;
+  /*ImageDisplay *IDdata;*/
   XmString     wierdstring;
   Arg          wargs[5]; 
 
@@ -750,7 +750,7 @@ void SaveAsCB (Widget w, XtPointer clientData, XtPointer callData)
   MessageShow ("Save As not yet implemented");
   return;
   
-  IDdata = (ImageDisplay *)clientData;
+  /*IDdata = (ImageDisplay *)clientData;*/
   
   filebox = (Widget) XmCreateFileSelectionDialog (w, "save_as", NULL, 0);
   XtAddCallback (filebox, XmNokCallback, CopyOKCB, clientData);
@@ -764,7 +764,7 @@ void SaveAsCB (Widget w, XtPointer clientData, XtPointer callData)
 				      XmSTRING_DEFAULT_CHARSET);
     XtSetArg (wargs[0], XmNdirectory, wierdstring);
     XtSetValues (filebox, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   }
   /* Shazam appear: */
   XtManageChild (filebox);

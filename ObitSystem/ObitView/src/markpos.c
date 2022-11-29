@@ -1,7 +1,7 @@
 /* $Id$ */
 /* mark position dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2016
+*  Copyright (C) 1996,1997,1999,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -89,7 +89,7 @@ int ReadPosRA (Widget w)
   strncpy (ctype, image[CurImag].myDesc->ctype[0], 4);
   toHours = (!strncmp(ctype, "RA", 2)) || (!strncmp(ctype, "LL", 2));
   iNumRead = sscanf (value, "%d %d %f", &h, &m, &s);
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   bOK = 0;
   mark.bPixel = 0; /* is this a pixel number rather than a real coordinate? */
   /* Deal with just a single value for pixel number */
@@ -137,7 +137,7 @@ int ReadPosDec (Widget w)
   for (i=0;i<20;i++) 
     {if (value[i]=='-') bSouth=1; 
     if (value[i]==0) break;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   /* Deal with just a single value for pixel number */
   if (iNumRead==1) {
     bOK = 1;
@@ -179,7 +179,7 @@ int ReadPosRADec (Widget w)
   for (i=0;i<strlen(value);i++) 
     {if (value[i]=='-') bSouth=1; 
     if (value[i]==0) break;}
- if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   bOK = 0;
   mark.bPixel = 0; /* is this a pixel number rather than a real coordinate? */
   /* Deal with just a single value for pixel number */
@@ -236,7 +236,7 @@ int ReadPosSize (Widget w)
     {MessageShow("Error reading cross size for Mark Position");
     return 1;}
   iNumRead = sscanf (value, "%d %d", &iInner, &iOuter);
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   if (iNumRead!=2)
     { /* error */
       MessageShow("Error reading cross size for Mark Position");
@@ -281,8 +281,8 @@ void PosFileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
   MarkPosFromFile (filename, IDdata);
   
   /*clean up */
-  if (filename) XtFree(filename); filename = NULL;
-  if (directory) XtFree(directory); directory = NULL;
+  if (filename)  {XtFree(filename);}  filename = NULL;
+  if (directory) {XtFree(directory);} directory = NULL;
   
   /* make it disappear but still exist */
   XtPopdown (XtParent (filebox)); 
@@ -305,11 +305,9 @@ void PosFileCancelCB (Widget filebox, XtPointer clientData, XtPointer callData)
  */
 void PosFileButCB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  ImageDisplay *IDdata;
   XmString     wierdstring;
   Arg          wargs[5]; 
   
-  IDdata = (ImageDisplay *)clientData;
   
   mark.posfilebox = (Widget) XmCreateFileSelectionDialog (w, "filebox", 
 							  NULL, 0);
@@ -322,7 +320,7 @@ void PosFileButCB (Widget w, XtPointer clientData, XtPointer callData)
     wierdstring = XmStringCreateSimple (mark_dir->sp);
     XtSetArg (wargs[0], XmNdirectory, wierdstring);
     XtSetValues (mark.posfilebox, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   }
   /* Shazam appear: */
   XtManageChild (mark.posfilebox);
@@ -569,21 +567,21 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
     wierdstring = XmStringCreateSimple (valuestr);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (mark.equlab, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     
     /* set RA, Dec labels from FITS file info */
     strncpy (ctype, image[CurImag].myDesc->ctype[0], 4); ctype[4] = 0;
-    if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+    if (ctype[2]=='-') {ctype[2]=' ';} if (ctype[3]=='-') {ctype[3]=' ';}
     wierdstring = XmStringCreateSimple (ctype);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (mark.label1, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     strncpy (ctype, image[CurImag].myDesc->ctype[1], 4); ctype[4] = 0;
-    if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+    if (ctype[2]=='-') {ctype[2]=' ';} if (ctype[3]=='-') {ctype[3]=' ';}
     wierdstring = XmStringCreateSimple (ctype);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (mark.label2, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     
     
     /* Position */
@@ -674,10 +672,10 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   
   /* set labels from FITS file info */
   strncpy (ctype, image[CurImag].myDesc->ctype[0], 4); ctype[4] = 0;
-  if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+  if (ctype[2]=='-') {ctype[2]=' ';} if (ctype[3]=='-') {ctype[3]=' ';}
   RA = XmStringCreateSimple (ctype);
   strncpy (ctype, image[CurImag].myDesc->ctype[1], 4); ctype[4] = 0;
-  if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+  if (ctype[2]=='-') {ctype[2]=' ';} if (ctype[3]=='-') {ctype[3]=' ';}
   Dec = XmStringCreateSimple (ctype);
   
   /* RA */
@@ -844,11 +842,11 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					 NULL);
   XtAddCallback (SwapButton, XmNactivateCallback, SwapMarkOKButCB, (XtPointer)IDdata);
 
-  if (label) XmStringFree(label); label = NULL;
-  if (equstr) XmStringFree(equstr); equstr = NULL;
-  if (RA) XmStringFree(RA); RA = NULL;
-  if (Dec) XmStringFree(Dec); Dec = NULL;
-  if (sizestr) XmStringFree(sizestr); sizestr = NULL;
+  if (label)   {XmStringFree(label);}   label = NULL;
+  if (equstr)  {XmStringFree(equstr);}  equstr = NULL;
+  if (RA)      {XmStringFree(RA);}      RA = NULL;
+  if (Dec)     {XmStringFree(Dec);}     Dec = NULL;
+  if (sizestr) {XmStringFree(sizestr);} sizestr = NULL;
   
   /* set it up */
   XtManageChild (mark.dialog);
@@ -923,21 +921,21 @@ int MarkPosXML (char *pos)
     wierdstring = XmStringCreateSimple (valuestr);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (mark.equlab, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     
     /* set RA, Dec labels from FITS file info */
     strncpy (ctype, image[CurImag].myDesc->ctype[0], 4); ctype[4] = 0;
-    if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+    if (ctype[2]=='-') {ctype[2]=' ';} if (ctype[3]=='-') {ctype[3]=' ';}
     wierdstring = XmStringCreateSimple (ctype);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (mark.label1, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     strncpy (ctype, image[CurImag].myDesc->ctype[1], 4); ctype[4] = 0;
-    if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+    if (ctype[2]=='-') {ctype[2]=' ';} if (ctype[3]=='-') {ctype[3]=' ';}
     wierdstring = XmStringCreateSimple (ctype);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (mark.label2, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     
     /* Position - write pos to RA text box, blanks to dec */
     XmTextSetString (mark.data1, pos);
@@ -1002,10 +1000,10 @@ int MarkPosXML (char *pos)
   
   /* set labels from FITS file info */
   strncpy (ctype, image[CurImag].myDesc->ctype[0], 4); ctype[4] = 0;
-  if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+  if (ctype[2]=='-') {ctype[2]=' ';} if (ctype[3]=='-') {ctype[3]=' ';}
   RA = XmStringCreateSimple (ctype);
   strncpy (ctype, image[CurImag].myDesc->ctype[1], 4); ctype[4] = 0;
-  if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+  if (ctype[2]=='-') {ctype[2]=' ';} if (ctype[3]=='-') {ctype[3]=' ';}
   Dec = XmStringCreateSimple (ctype);
   
   /* RA */
@@ -1172,11 +1170,11 @@ int MarkPosXML (char *pos)
 					 NULL);
   XtAddCallback (SwapButton, XmNactivateCallback, SwapMarkOKButCB, (XtPointer)IDdata);
 
-  if (label) XmStringFree(label); label = NULL;
-  if (equstr) XmStringFree(equstr); equstr = NULL;
-  if (RA) XmStringFree(RA); RA = NULL;
-  if (Dec) XmStringFree(Dec); Dec = NULL;
-  if (sizestr) XmStringFree(sizestr); sizestr = NULL;
+  if (label)   {XmStringFree(label);}   label = NULL;
+  if (equstr)  {XmStringFree(equstr);}  equstr = NULL;
+  if (RA)      {XmStringFree(RA);}      RA = NULL;
+  if (Dec)     {XmStringFree(Dec);}     Dec = NULL;
+  if (sizestr) {XmStringFree(sizestr);} sizestr = NULL;
   
   /* set it up */
   XtManageChild (mark.dialog);
@@ -1223,10 +1221,10 @@ int MarkPosRead(FILE *hFile, ImageData *ImageDesc, ofloat *xpix,
   ofloat rs, ds, xp, yp;
   odouble ra, dec;
   gboolean bRAOK, bDecOK, bOK, bSouth;
-  gchar szLine[120],szErrMess[120],  ctype[5];
+  gchar szLine[152],szErrMess[180],  ctype[5];
   ObitImageDesc *desc;
  
-  if (!fgets (szLine, 120, hFile)) {
+  if (!fgets (szLine, 150, hFile)) {
     /*   error or EOF */
     if (ferror(hFile)) *iErr = 2;  /* Check if error */
     fclose(hFile);  /* close */

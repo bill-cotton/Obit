@@ -1,7 +1,7 @@
 /* $Id$ */
 /*   Graphics overlay plane functions */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005
+*  Copyright (C) 2005,2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -326,13 +326,13 @@ void GphCSetCB (Widget parent, XtPointer clientData, XtPointer callData)
   XtAddCallback (CancelButton, XmNactivateCallback, GphCSetCancelButCB, 
 		 (XtPointer)IDdata);
   
-  if (label)   XmStringFree(label);   label   = NULL;
-  if (magenta) XmStringFree(magenta); magenta = NULL;
-  if (yellow)  XmStringFree(yellow);  yellow  = NULL;
-  if (red)     XmStringFree(red);     red     = NULL;
-  if (cyan)    XmStringFree(cyan);    cyan    = NULL;
-  if (blue)    XmStringFree(blue);    blue    = NULL;
-  if (green)   XmStringFree(green);   green   = NULL;
+  if (label)   {XmStringFree(label);}   label   = NULL;
+  if (magenta) {XmStringFree(magenta);} magenta = NULL;
+  if (yellow)  {XmStringFree(yellow);}  yellow  = NULL;
+  if (red)     {XmStringFree(red);}     red     = NULL;
+  if (cyan)    {XmStringFree(cyan);}    cyan    = NULL;
+  if (blue)    {XmStringFree(blue);}    blue    = NULL;
+  if (green)   {XmStringFree(green);}   green   = NULL;
   
   /* set it up */
   XtManageChild (GphColData.dialog);

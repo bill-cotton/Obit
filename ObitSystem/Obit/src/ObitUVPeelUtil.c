@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2015                                          */
+/*;  Copyright (C) 2007-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -139,7 +139,7 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
   g_assert (ObitUVIsA(inUV));
 
   /* Initialize output - In case, free old ncomp */
-  if (*ncomp!=NULL) g_free(*ncomp); *ncomp = NULL;
+  if (*ncomp!=NULL) {g_free(*ncomp);} *ncomp = NULL;
   *nfield = myClean->mosaic->numberImages;  /* Keep track of components not peeled */
   *ncomp = g_malloc0((*nfield)*sizeof(olong));
 
@@ -213,7 +213,7 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
     peelCCTable = ObitTableCCUnref(peelCCTable);
     outCCTable  = ObitTableCCUnref(outCCTable);
   } /* end loop copying peeled CCs */
-  if (peeled) g_free(peeled); peeled = NULL;  /* Done with array */
+  if (peeled) {g_free(peeled);} peeled = NULL;  /* Done with array */
 
 } /* end ObitUVPeelUtilLoop */
 
@@ -356,7 +356,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     mosaicClass = (const ObitImageMosaicClassInfo*)myClean->mosaic->ClassInfo;
     tmpMosaic = mosaicClass->ObitImageMosaicMaxField (myClean->mosaic, PeelFlux, 
 						      ignore, &peelField, err);
-    if (ignore) g_free(ignore); ignore = NULL;
+    if (ignore) {g_free(ignore);} ignore = NULL;
     if (err->error) Obit_traceback_val (err, routine, myClean->name, peeled);
     if (tmpMosaic==NULL) goto DonePeel;
 
@@ -387,8 +387,8 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     dim[0] = myClean->nfield; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myClean->skyModel->info, "BComp", OBIT_long, dim, bcomp);
     ObitInfoListAlwaysPut (myClean->skyModel->info, "EComp", OBIT_long, dim, ecomp);
-    if (bcomp) g_free(bcomp); bcomp = NULL;
-    if (ecomp) g_free(ecomp); ecomp = NULL;
+    if (bcomp) {g_free(bcomp);} bcomp = NULL;
+    if (ecomp) {g_free(ecomp);} ecomp = NULL;
 
     /* Need all stokes */
     dim[0] = 4;
@@ -819,7 +819,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
  */
 void Convert2Dto3D (ObitImage *image,ofloat ccShift[2],  ObitErr* err)
 {
-  ofloat xPxOff, yPxOff, xCen, yCen, xShift, yShift, xPix, yPix;
+  ofloat xPxOff, yPxOff, xShift, yShift, xPix, yPix;
   odouble ra, dec;
   olong nx, ny, CCVer, noParms, irow;
   ObitTableCC *CCTable=NULL;
@@ -850,8 +850,6 @@ void Convert2Dto3D (ObitImage *image,ofloat ccShift[2],  ObitErr* err)
   /* Old image stuff */
   nx   = image->myDesc->inaxes[0];
   ny   = image->myDesc->inaxes[1];
-  xCen = image->myDesc->crpix[0];
-  yCen = image->myDesc->crpix[1];
   xPix = 1.0 + nx/2.0;
   yPix = 1.0 + ny/2.0;
   ObitSkyGeomWorldPos(xPix, yPix, 

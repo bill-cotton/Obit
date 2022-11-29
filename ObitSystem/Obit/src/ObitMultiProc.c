@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008,2009                                          */
+/*;  Copyright (C) 2008,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -353,8 +353,8 @@ void ObitMultiProcStart (ObitInfoList *myInput, ObitErr *err)
   oint *itemp, i, j, nURL;
   olong pgmNumber, port;
   ObitInfoList *taskList=NULL;
-  gchar tempURL[300], cmd_line[300], host[300], taskFile[300];
-  gboolean OK, local=FALSE;
+  gchar tempURL[300], cmd_line[1024], host[300], taskFile[300];
+  gboolean local=FALSE;
   ObitFile *parmFile=NULL;
   gint status;
   gchar        *taskParms[] = {  /* task parameters */
@@ -443,9 +443,9 @@ void ObitMultiProcStart (ObitInfoList *myInput, ObitErr *err)
       ObitReturnDumpRetCode (0, taskFile, taskList, err);  
       if (err->error) Obit_traceback_msg (err, routine, "Writing FuncContainer input");
       sprintf (cmd_line, "scp -q %s %s:/tmp/FuncContainerInput%d.tmp", taskFile, host, pgmNumber);
-      /* DEBUG */
-      fprintf (stderr, "%s\n", cmd_line);
-      OK = g_spawn_command_line_sync (cmd_line, NULL, NULL, &status, NULL);
+      /* DEBUG 
+      fprintf (stderr, "%s\n", cmd_line);*/
+      g_spawn_command_line_sync (cmd_line, NULL, NULL, &status, NULL);
     } /* end write task parameters */
 
     /* set command line */
@@ -957,9 +957,8 @@ static gboolean spawn (ObitThread *thread, const gchar *cmd_line)
 static gpointer ThreadSpawn (gpointer arg)
 {
   ObitMultiProcAPFuncArg *larg = (ObitMultiProcAPFuncArg*)arg;
-  gboolean OK;
 
-  OK = g_spawn_command_line_sync (larg->cmd_line, NULL, NULL, &larg->status, NULL);
+  g_spawn_command_line_sync (larg->cmd_line, NULL, NULL, &larg->status, NULL);
   fprintf (stderr, "Starting asynchronous process failed\n");
 
   return NULL;

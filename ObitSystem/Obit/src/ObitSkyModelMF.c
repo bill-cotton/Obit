@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -927,10 +927,10 @@ void ObitSkyModelMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   }
 
   /* Cleanup arrays */
-  if (in->specFreq)    g_free(in->specFreq);    in->specFreq   = NULL;
-  if (in->specFreqLo)  g_free(in->specFreqLo);  in->specFreqLo = NULL;
-  if (in->specFreqHi)  g_free(in->specFreqHi);  in->specFreqHi = NULL;
-  if (in->specIndex)   g_free(in->specIndex);   in->specIndex  = NULL;
+  if (in->specFreq)    {g_free(in->specFreq);}    in->specFreq   = NULL;
+  if (in->specFreqLo)  {g_free(in->specFreqLo);}  in->specFreqLo = NULL;
+  if (in->specFreqHi)  {g_free(in->specFreqHi);}  in->specFreqHi = NULL;
+  if (in->specIndex)   {g_free(in->specIndex);}   in->specIndex  = NULL;
 #if HAVE_GPU==1  /*  GPU? */
   in->GPUSkyModel = ObitGPUSkyModelUnref (in->GPUSkyModel);
 #endif /* HAVE_GPU */
@@ -1971,7 +1971,7 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
   olong hiVis      = largs->last;
   ObitErr *err     = largs->err;
 
-  olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp, mcomp, nspec;
+  olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp, mcomp;
   olong lrec, nrparm, naxis[2];
   olong startPoln, numberPoln, jincs, startChannel, numberChannel;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
@@ -1979,7 +1979,7 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
   olong ilocu, ilocv, ilocw;
   ofloat *visData, *ccData, *data, *fscale;
   ofloat modReal, modImag, logNuONu0;
-  ofloat amp, arg, freq2, freqFact, wt=0.0, temp, fourpisq;
+  ofloat amp, arg, freqFact, wt=0.0, temp, fourpisq;
 #define FazArrSize 256  /* Size of the amp/phase/sine/cosine arrays */
 #if HAVE_AVX512==1
   __attribute__((aligned(32))) ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
@@ -1995,8 +1995,8 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
   ofloat VecL[FazArrSize], VecM[FazArrSize], VecN[FazArrSize];
 #endif
   gboolean OK;
-  olong it, jt, itcnt, ifq, itab, jtcnt, lim;
-  odouble sumReal, sumImag, *freqArr, *freqIF;
+  olong it, itcnt, ifq, itab, jtcnt, lim;
+  odouble sumReal, sumImag, *freqArr;
   odouble u, v, w;
   gchar *routine = "ThreadSkyModelMFFTDFT";
 
@@ -2019,7 +2019,6 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
   lcomp = in->comps->naxis[0];  /* Length of row in comp table */
   ncomp = in->comps->naxis[1];  /* number of components */
   if (ncomp<=0) goto finish; /* Anything? */
-  nspec = in->nSpec;
 
   /* Count number of actual components */
   mcomp = 0;
@@ -2072,7 +2071,6 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
   /* Get pointer for frequency correction tables */
   fscale  = uvdata->myDesc->fscale;
   freqArr = uvdata->myDesc->freqArr;
-  freqIF  = uvdata->myDesc->freqIF;
 
   /* Loop over vis in buffer */
   lrec    = uvdata->myDesc->lrec;         /* Length of record */
@@ -2167,7 +2165,6 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  break;
 	case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
 	  /* From the AIPSish QGASUB.FOR  */
-	  freq2 = freqFact*freqFact;    /* Frequency factor squared */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
 	    lim = MIN (mcomp, it+FazArrSize);
@@ -2199,7 +2196,6 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_GaussModTSpec:     /* Gaussian on sky + tabulated spectrum*/
-	  freq2 = freqFact*freqFact;    /* Frequency factor squared */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
 	    lim = MIN (mcomp, it+FazArrSize);
@@ -2586,8 +2582,7 @@ gpointer ThreadSkyModelMFFTGrid (gpointer args)
   ofloat freqFact, wt=0.0, temp;
   ofloat dxyzc[3],  uvw[3], ut, vt, rt, it, fblank = ObitMagicF();
   ofloat umat[3][3], pmat[3][3], rmat[3][3], dmat[3][3];
-  ofloat PC, cosPC, sinPC, konst, maprot, uvrot, ssrot, ccrot;
-  odouble *freqArr;
+  ofloat PC, cosPC, sinPC, maprot, uvrot, ssrot, ccrot;
   gboolean doRot, doConjg, isBad, do3Dmul, doPC;
   gchar *routine = "ThreadSkyModelMFFTGrid";
 
@@ -2629,7 +2624,6 @@ gpointer ThreadSkyModelMFFTGrid (gpointer args)
 
   /* Get pointer for frequency correction tables */
   fscale  = uvDesc->fscale;
-  freqArr = uvDesc->freqArr;
 
   /* Field specific stuff */
   imDesc = in->mosaic->images[field]->myDesc; /* Image descriptor */
@@ -2638,7 +2632,6 @@ gpointer ThreadSkyModelMFFTGrid (gpointer args)
   uvrot  = ObitUVDescRotate(uvDesc);
   ssrot = sin (DG2RAD * (uvrot - maprot));
   ccrot = cos (DG2RAD * (uvrot - maprot));
-  konst = DG2RAD * 2.0 * G_PI;
 
   /* Which way does RA go with pixel? */
   if (imDesc->cdelt[imDesc->jlocr]>0.0) flip = -1;
@@ -3932,10 +3925,10 @@ void ObitSkyModelMFClear (gpointer inn)
       in->myInterps[k] = ObitCInterpolateUnref(in->myInterps[k]);
     g_free(in->myInterps);
   }
-  if (in->specFreq)    g_free(in->specFreq);    in->specFreq   = NULL;
-  if (in->specFreqLo)  g_free(in->specFreqLo);  in->specFreqLo = NULL;
-  if (in->specFreqHi)  g_free(in->specFreqHi);  in->specFreqHi = NULL;
-  if (in->specIndex)   g_free(in->specIndex);   in->specIndex  = NULL;
+  if (in->specFreq)    {g_free(in->specFreq);}    in->specFreq   = NULL;
+  if (in->specFreqLo)  {g_free(in->specFreqLo);}  in->specFreqLo = NULL;
+  if (in->specFreqHi)  {g_free(in->specFreqHi);}  in->specFreqHi = NULL;
+  if (in->specIndex)   {g_free(in->specIndex);}   in->specIndex  = NULL;
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

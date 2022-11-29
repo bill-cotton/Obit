@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -156,7 +156,7 @@ ObitTableList* ObitTableListCopy  (ObitTableList *in, ObitTableList *out,
     /* derive object name */
     outName = g_strconcat ("Copy: ",in->name,NULL);
     out = newObitTableList(outName);
-    if (outName) g_free(outName); outName = NULL;
+    if (outName) {g_free(outName);} outName = NULL;
   }
 
   /* deep copy any base class members */

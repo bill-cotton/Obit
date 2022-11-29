@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -359,18 +359,17 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   ObitTableSNRow *row=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong i, nif, npoln, iAnt, numBL, SNver;
-  olong nextVisBuf, iSNRow, numFreq, cntGood=0, cntPoss=0, cntBad=0;
+  olong i, nif, iAnt, SNver;
+  olong nextVisBuf, iSNRow, cntGood=0, cntPoss=0, cntBad=0;
   oint numPol, numIF, numAnt, suba, minno, prtlv, mode;
   ofloat solInt, snrmin, uvrang[2], wtuv, FractOK, minOK=0.1;
   olong itemp, kday, khr, kmn, ksec;
   ofloat *antwt=NULL, fblank = ObitMagicF();
-  gboolean avgpol, dol1, empty;
-  gboolean done, good, avgIF, oldSN, *gotAnt;
+  gboolean avgpol, empty;
+  gboolean done, avgIF, oldSN, *gotAnt;
   gchar soltyp[5], solmod[5];
   odouble timex;
   olong sid;
-  ObitIOCode retCode;
   gchar *tname, *ModeStr[] = {"A&P", "P", "P!A"};
   gchar *routine = "ObitUVGSolveWBCal";
   
@@ -402,7 +401,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   ObitInfoListGetTest(in->info, "minOK", &type, dim, &minOK);
 
   /* open UV data  */
-  retCode = ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
+  ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outSoln);
   
   /* Update frequency tables on inUV */
@@ -433,9 +432,9 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
 				numPol, numIF, err);
   g_free (tname);
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outSoln);
-  if (inUV->myDesc->jlocf>=0)
+  /*if (inUV->myDesc->jlocf>=0)
     numFreq  = inUV->myDesc->inaxes[inUV->myDesc->jlocf];
-  else numFreq  = 1;
+    else numFreq  = 1;*/
 
   /* If SN table previously existed, deselect values about to be redetermined. 
      get information from selector on inUV */
@@ -457,7 +456,6 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   numAnt = inUV->myDesc->numAnt[suba-1];
   antwt  = g_malloc0(numAnt*sizeof(ofloat));
   gotAnt = g_malloc0(numAnt*sizeof(gboolean));
-  numBL  = (numAnt * (numAnt-1)) / 2;
 
   /* Get parameters from inUV */
   avgpol = FALSE;
@@ -487,7 +485,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   ObitInfoListGetTest(in->info, "prtLv", &type, dim, &prtlv);
   
   /* Digest SOLMODE and SOLTYPE */
-  dol1 = !strncmp(soltyp, "L1",2);
+  /*dol1 = !strncmp(soltyp, "L1",2);*/
   mode = 2;  /* Delay in P!A mode */
   if (prtlv>=1) {
     Obit_log_error(err, OBIT_InfoErr, "Calibrate delay in %s mode", ModeStr[mode]);
@@ -504,11 +502,11 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
  
   /* Averaging of data? */
   nif = numIF;
-  npoln = numPol;
-  if (avgpol) npoln = 1;
+  /*npoln = numPol;
+    if (avgpol) npoln = 1;*/
   
   /* Open output table */
-  retCode = ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
+  ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
   if (err->error) goto cleanup;
   /* Anything already there? */
   empty = outSoln->myDesc->nrow==0;
@@ -603,7 +601,6 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
     iSNRow = -1;
     for (iAnt= 0; iAnt<numAnt; iAnt++) {
       if (gotAnt[iAnt]) {
-	good = FALSE; /* Until proven */
 	row->antNo  = iAnt+1; 
 	if (in->scanData->avgIF)
 	    row->MBDelay1 = -in->antDelay[iAnt*numIF*numPol]; 
@@ -618,7 +615,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
 	    row->Delay1[i]  = fblank;
 	  }
 	  row->RefAnt1[i] = in->refAnt;
-	  if (row->Weight1[i]>0.0) {good = TRUE; cntGood++;}
+	  if (row->Weight1[i]>0.0) {cntGood++;}
 	  if (row->Weight1[i]<=0.0) cntBad++;    /* DEBUG */
 	}
 	if (numPol>1) {
@@ -635,11 +632,11 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
 	      row->Delay2[i]  = fblank;
 	    }
 	    row->RefAnt2[i] = in->refAnt;
-	    if (row->Weight2[i]>0.0) {good = TRUE; cntGood++;}
+	    if (row->Weight2[i]>0.0) {cntGood++;}
 	    if (row->Weight2[i]<=0.0) cntBad++; 
 	  }
 	}
-	retCode = ObitTableSNWriteRow (outSoln, iSNRow, row, err);
+	ObitTableSNWriteRow (outSoln, iSNRow, row, err);
 	if (err->error) goto cleanup;
       } /* end if gotant */
     }
@@ -660,7 +657,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   }
 
   /* Close output table */
-  retCode = ObitTableSNClose (outSoln, err);
+  ObitTableSNClose (outSoln, err);
   if (err->error) goto cleanup;
   
   /* Give success rate */
@@ -912,7 +909,7 @@ SetupFitter (ObitUVGSolveWB *in, ObitUV *inUV, ObitErr* err)
   /* Check for list - zero terminated list */
   if (ObitInfoListGetP(in->info, "refAnts",  &type, dim, (gpointer)&refAnts)) {
     in->refAnts = g_malloc0((dim[0]+1)*sizeof(olong));
-    for (i=0; i<dim[0]; i++) in->refAnts[i] = refAnts[i]; in->refAnts[i] = 0;
+    for (i=0; i<dim[0]; i++) {in->refAnts[i] = refAnts[i];} in->refAnts[i] = 0;
     /* make sure at least one non zero */
     if (in->refAnts[0]==0) in->refAnts[0] = in->refAnt;
   } else { /* Use single antenna list */
@@ -1206,9 +1203,9 @@ calcSNR (ObitUVGSolveWB *in, ofloat snrmin, gboolean *gotAnt, olong prtlv,
 	 ObitErr *err) 
 {
   BaselineData *BLData;
-  olong   iAnt1, iAnt2, loop, nprt, *count=NULL, nval, offset, ip, jp;
+  olong   iAnt1, iAnt2, loop, *count=NULL, nval, offset, ip, jp;
   ofloat  zr, zi, zzr, zzi, prtsnr;
-  ofloat  *wtArray, *phArray, phase1, phase2, phase, amp2, ph1, ph2;
+  ofloat  *wtArray, *phArray, phase1, phase, amp2, ph1, ph2;
   ofloat *sumwt=NULL, *snr=NULL;
   olong  npoln, ipoln, iIF, iFreq, iAnt, indx, *error=NULL;
 
@@ -1233,7 +1230,6 @@ calcSNR (ObitUVGSolveWB *in, ofloat snrmin, gboolean *gotAnt, olong prtlv,
   for (ipoln=0; ipoln<npoln; ipoln++) {
     
     /* Zero sums, counts etc. */
-    nprt = 0;
     for (loop=0; loop<in->scanData->maxAnt; loop++) { /* loop 10 */
       snr[loop]   = 0.0;
       sumwt[loop] = 0.0;
@@ -1251,7 +1247,6 @@ calcSNR (ObitUVGSolveWB *in, ofloat snrmin, gboolean *gotAnt, olong prtlv,
       indx = (iAnt1*nval + ipoln)*2;
       phase1 = atan2(in->antGain[indx+1], in->antGain[indx]);
       indx = (iAnt2*nval + ipoln)*2;
-      phase2 = atan2(in->antGain[indx+1], in->antGain[indx]);
 
      /* Loop over IF */
       ip = ipoln*in->numIF;  /* data product (IF/poln) indicator */
@@ -2222,7 +2217,7 @@ static void
 stackAnt (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
 {
   olong naxis[1], maxis[1], iBase, jBase, iPoln, jAnt, iIF, ip, nPoln;
-  olong iBase1, iBase2, offset, nval, k, kndx, kp;
+  olong iBase1, iBase2, nval, k, kndx, kp;
   ofloat cmplx[2] = {0.0,0.0};
   ofloat antWt;
   gboolean good;
@@ -2250,7 +2245,6 @@ stackAnt (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
   else in->fWork3 = ObitFArrayRealloc (in->fWork3, 1, maxis);
 
   nval = in->numIF * in->numPoln;  /* entries per antenna */
-  offset = (iAnt-1)*nval;          /* This antennas offset on solutions */
 
   /* How many polarizations? */
   if (in->scanData->avgPoln)  nPoln = 1;
@@ -3200,7 +3194,7 @@ static void
 FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat pval[2])
 {
   olong i, n, pos[1], i1, i2;
-  ofloat *inData, *outData, pmax, sum, wt, pixel=0.0;
+  ofloat *inData, *outData, sum, wt, pixel=0.0;
 
   /* Shuffle data to interpolator array */
   n = in->cWork2->arraySize/2;
@@ -3213,7 +3207,7 @@ FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat pval[2])
   ObitCArrayAmp (in->FFTFitArray, in->fWork2);
 
   /* Find peak */
-  pmax = ObitFArrayMax (in->fWork2, pos);
+  ObitFArrayMax (in->fWork2, pos);
 
   /* Centroid (up to) closest 5 points */
   i1 = MAX (0, pos[0]-2);

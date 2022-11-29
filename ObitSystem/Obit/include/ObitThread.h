@@ -83,7 +83,7 @@ typedef struct {
   /** Mutex to lock object */
   GMutex *myMutex;
   /** Read/write lock to lock object */
-  GStaticRWLock *myRWLock;
+  GRWLock *myRWLock;
 #else  /* No threads */
   gpointer pool;
   gpointer queue;

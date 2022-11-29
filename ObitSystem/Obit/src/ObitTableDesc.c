@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -134,12 +134,12 @@ ObitTableDesc* ObitTableDescCopy (ObitTableDesc* in, ObitTableDesc* out,
 
   /* Free any existing array members */
   if ((in->info)&&(out->info)) out->info = ObitInfoListUnref (out->info); 
-  if (out->TableName) g_free(out->TableName);   out->TableName= NULL;
-  if (out->type)      g_free(out->type);        out->type     = NULL;
-  if (out->order)     g_free(out->order);       out->order    = NULL;
-  if (out->repeat)    g_free(out->repeat);      out->repeat   = NULL;
-  if (out->offset)    g_free(out->offset);      out->offset   = NULL;
-  if (out->byteOffset) g_free(out->byteOffset); out->byteOffset = NULL;
+  if (out->TableName) {g_free(out->TableName);}   out->TableName= NULL;
+  if (out->type)      {g_free(out->type);}        out->type     = NULL;
+  if (out->order)     {g_free(out->order);}       out->order    = NULL;
+  if (out->repeat)    {g_free(out->repeat);}      out->repeat   = NULL;
+  if (out->offset)    {g_free(out->offset);}      out->offset   = NULL;
+  if (out->byteOffset) {g_free(out->byteOffset);} out->byteOffset = NULL;
   /* Loop over fields */
   if (out->FieldName) {
     for (i=0; i<out->nfield; i++) {
@@ -157,7 +157,7 @@ ObitTableDesc* ObitTableDescCopy (ObitTableDesc* in, ObitTableDesc* out,
   }
   if (out->dim) {
     for (i=0; i<out->nfield; i++) {
-      if (out->dim[i]) g_free(out->dim[i]); out->dim[i] = NULL;
+      if (out->dim[i]) {g_free(out->dim[i]);} out->dim[i] = NULL;
     }
     g_free(out->dim); out->dim = NULL;
   }
@@ -411,31 +411,31 @@ void ObitTableDescRealloc (ObitTableDesc* in, olong nfield)
 
   /* Free any existing array members  in descriptor */
   if (in->info)       in->info = ObitInfoListUnref (in->info); 
-  if (in->type)       g_free(in->type);        in->type     = NULL;
-  if (in->order)      g_free(in->order);       in->order    = NULL;
-  if (in->repeat)     g_free(in->repeat);      in->repeat   = NULL;
-  if (in->offset)     g_free(in->offset);      in->offset   = NULL;
-  if (in->byteOffset) g_free(in->byteOffset);  in->byteOffset = NULL;
+  if (in->type)       {g_free(in->type);}        in->type     = NULL;
+  if (in->order)      {g_free(in->order);}       in->order    = NULL;
+  if (in->repeat)     {g_free(in->repeat);}      in->repeat   = NULL;
+  if (in->offset)     {g_free(in->offset);}      in->offset   = NULL;
+  if (in->byteOffset) {g_free(in->byteOffset);}  in->byteOffset = NULL;
   /* Loop over fields */
   if (in->FieldName) {
     for (i=0; i<in->nfield; i++) {
-      if (in->FieldName[i]) g_free(in->FieldName[i]);
+      if (in->FieldName[i]) {g_free(in->FieldName[i]);}
       in->FieldName[i] = NULL;
     }
-    if (in->FieldName) g_free(in->FieldName); in->FieldName = NULL;
+    if (in->FieldName) {g_free(in->FieldName);} in->FieldName = NULL;
   }
   if (in->FieldUnit) {
     for (i=0; i<in->nfield; i++) {
-      if (in->FieldUnit[i]) g_free(in->FieldUnit[i]);
+      if (in->FieldUnit[i]) {g_free(in->FieldUnit[i]);}
       in->FieldUnit[i] = NULL;
     }
-    if (in->FieldUnit) g_free(in->FieldUnit); in->FieldUnit = NULL;
+    if (in->FieldUnit) {g_free(in->FieldUnit);} in->FieldUnit = NULL;
   }
   if (in->dim) {
     for (i=0; i<in->nfield; i++) {
-      if (in->dim[i]) g_free(in->dim[i]); in->dim[i] = NULL;
+      if (in->dim[i]) {g_free(in->dim[i]);} in->dim[i] = NULL;
     }
-    if (in->dim) g_free(in->dim); in->dim = NULL;
+    if (in->dim) {g_free(in->dim);} in->dim = NULL;
   }
 
   in->nfield = nfield;  /* new number of fields */
@@ -573,37 +573,35 @@ void ObitTableDescClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* free this class members */
-  if (in->TableName) g_free(in->TableName);   in->TableName=NULL;
-  if (in->type)      g_free(in->type);        in->type     = NULL;
-  if (in->order)     g_free(in->order);       in->order    = NULL;
-  if (in->repeat)    g_free(in->repeat);      in->repeat   = NULL;
-  if (in->offset)    g_free(in->offset);      in->offset   = NULL;
-  if (in->byteOffset) g_free(in->byteOffset); in->byteOffset = NULL;
-  if (in->info) ObitInfoListUnref (in->info); in->info     = NULL;
+  if (in->TableName) {g_free(in->TableName);}   in->TableName=NULL;
+  if (in->type)      {g_free(in->type);}        in->type     = NULL;
+  if (in->order)     {g_free(in->order);}       in->order    = NULL;
+  if (in->repeat)    {g_free(in->repeat);}      in->repeat   = NULL;
+  if (in->offset)    {g_free(in->offset);}      in->offset   = NULL;
+  if (in->byteOffset) {g_free(in->byteOffset);} in->byteOffset = NULL;
+  if (in->info) {ObitInfoListUnref (in->info);} in->info     = NULL;
 
  /* Loop over fields - field labels */
   if (in->FieldName) {
     for (i=0; i<in->nfield; i++) {
-      if (in->FieldName[i]) g_free(in->FieldName[i]);
-      in->FieldName[i] = NULL;
+      if (in->FieldName[i]) {g_free(in->FieldName[i]);} in->FieldName[i] = NULL;
     }
-    if (in->FieldName) g_free(in->FieldName); in->FieldName = NULL;
+    if (in->FieldName) {g_free(in->FieldName);} in->FieldName = NULL;
   }
   /* Field units string */
   if (in->FieldUnit) {
     for (i=0; i<in->nfield; i++) {
-      if (in->FieldUnit[i]) g_free(in->FieldUnit[i]);
-      in->FieldUnit[i] = NULL;
+      if (in->FieldUnit[i]) {g_free(in->FieldUnit[i]);} in->FieldUnit[i] = NULL;
     }
-    if (in->FieldUnit) g_free(in->FieldUnit); in->FieldUnit = NULL;
+    if (in->FieldUnit) {g_free(in->FieldUnit);} in->FieldUnit = NULL;
   }
 
   /* now dim array */
   if (in->dim) {
     for (i=0; i<in->nfield; i++) {
-      if (in->dim[i]) g_free(in->dim[i]); in->dim[i] = NULL;
+      if (in->dim[i]) {g_free(in->dim[i]);} in->dim[i] = NULL;
     }
-    if (in->dim) g_free(in->dim); in->dim = NULL;
+    if (in->dim) {g_free(in->dim);} in->dim = NULL;
   }
   
   /* unlink parent class members */

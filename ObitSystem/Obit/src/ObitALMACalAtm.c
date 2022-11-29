@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013.2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -266,8 +266,7 @@ ObitALMACalAtm* ObitALMACalAtmCreate (gchar* name, ObitErr *err)
  */
 void ObitALMACalAtmInitFile  (ObitALMACalAtm *in, gchar *DataFile, ObitErr *err)
 {
-  ObitIOCode retCode;
-  olong i, count, maxStr, itemp, iord, nord;
+  olong i, maxStr, iord, nord;
   gchar *startInfo, *endInfo, *next, *start, *prior, *tstr;
   gchar *ord[40];
   gchar *tableUID=NULL, *containerUID=NULL, *junk=NULL;
@@ -292,7 +291,7 @@ void ObitALMACalAtmInitFile  (ObitALMACalAtm *in, gchar *DataFile, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Fill Buffer */
-  retCode = ObitALMACalAtmFillBuffer (in, err);
+  ObitALMACalAtmFillBuffer (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Parse xml header - first find limits */
@@ -359,252 +358,216 @@ void ObitALMACalAtmInitFile  (ObitALMACalAtm *in, gchar *DataFile, ObitErr *err)
 
   /* Interprete orders */
   /* antennaName 0 */
-  count = 0;
   in->ordantennaName = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[0])) in->ordantennaName++;
   }
 
   /* receiverBand 1 */
-  count = 0;
   in->ordreceiverBand = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[1])) in->ordreceiverBand++;
   }
 
   /* basebandName 2 */
-  count = 0;
   in->ordbasebandName = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[2])) in->ordbasebandName++;
   }
 
   /* calDataId 3 */
-  count = 0;
   in->ordcalDataId = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[3])) in->ordcalDataId++;
   }
 
   /* calReductionId 4 */
-  count = 0;
   in->ordcalReductionId = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[4])) in->ordcalReductionId++;
   }
 
   /* startValidTime 5 */
-  count = 0;
   in->ordstartValidTime = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[5])) in->ordstartValidTime++;
   }
 
   /* endValidTime 6 */
-  count = 0;
   in->ordendValidTime = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[6])) in->ordendValidTime++;
   }
 
   /* numFreq 7 */
-  count = 0;
   in->ordnumFreq = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[7])) in->ordnumFreq++;
   }
 
   /* numLoad 8 */
-  count = 0;
   in->ordnumLoad = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[8])) in->ordnumLoad++;
   }
 
   /* numReceptor 9 */
-  count = 0;
   in->ordnumReceptor = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[9])) in->ordnumReceptor++;
   }
 
   /* forwardEffSpectrum 10 */
-  count = 0;
   in->ordforwardEffSpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[10])) in->ordforwardEffSpectrum++;
   }
 
   /* frequencyRange 11 */
-  count = 0;
   in->ordfrequencyRange = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[11])) in->ordfrequencyRange++;
   }
 
   /* groundPressure 12 */
-  count = 0;
   in->ordgroundPressure = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[12])) in->ordgroundPressure++;
   }
 
   /* groundRelHumidity 13 */
-  count = 0;
   in->ordgroundRelHumidity = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[13])) in->ordgroundRelHumidity++;
   }
 
   /* frequencySpectrum 14 */
-  count = 0;
   in->ordfrequencySpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[14])) in->ordfrequencySpectrum++;
   }
 
   /* groundTemperature 15 */
-  count = 0;
   in->ordgroundTemperature = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[15])) in->ordgroundTemperature++;
   }
 
   /* polarizationTypes 16 */
-  count = 0;
   in->ordpolarizationTypes = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[16])) in->ordpolarizationTypes++;
   }
 
   /* powerSkySpectrum 17 */
-  count = 0;
   in->ordpowerSkySpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[17])) in->ordpowerSkySpectrum++;
   }
 
   /* powerLoadSpectrum 18 */
-  count = 0;
   in->ordpowerLoadSpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[18])) in->ordpowerLoadSpectrum++;
   }
 
   /* syscalType 19 */
-  count = 0;
   in->ordsyscalType = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[19])) in->ordsyscalType++;
   }
 
   /* tAtmSpectrum 20 */
-  count = 0;
   in->ordtAtmSpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[20])) in->ordtAtmSpectrum++;
   }
 
   /* tRecSpectrum 21 */
-  count = 0;
   in->ordtRecSpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[21])) in->ordtRecSpectrum++;
   }
 
   /* tSysSpectrum 22 */
-  count = 0;
   in->ordtSysSpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[22])) in->ordtSysSpectrum++;
   }
 
   /* tauSpectrum 23 */
-  count = 0;
   in->ordtauSpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[23])) in->ordtauSpectrum++;
   }
 
   /* tAtm 24 */
-  count = 0;
   in->ordtAtm = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[24])) in->ordtAtm++;
   }
 
   /* tRec 25 */
-  count = 0;
   in->ordtRec = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[25])) in->ordtRec++;
   }
 
   /* tSys 26 */
-  count = 0;
   in->ordtSys = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[26])) in->ordtSys++;
   }
 
   /* tau 27 */
-  count = 0;
   in->ordtau = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[27])) in->ordtau++;
   }
 
   /* water 28 */
-  count = 0;
   in->ordwater = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[28])) in->ordwater++;
   }
 
   /* waterError 29 */
-  count = 0;
   in->ordwaterError = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[29])) in->ordwaterError++;
   }
 
   /* alphaSpectrum 30 */
-  count = 0;
   in->ordalphaSpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[30])) in->ordalphaSpectrum++;
   }
 
   /* forwardEfficiency 31 */
-  count = 0;
   in->ordforwardEfficiency = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[31])) in->ordforwardEfficiency++;
   }
 
   /* forwardEfficiencyError 32 */
-  count = 0;
   in->ordforwardEfficiencyError = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[32])) in->ordforwardEfficiencyError++;
   }
 
   /* sbGain 33 */
-  count = 0;
   in->ordsbGain = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[33])) in->ordsbGain++;
   }
 
   /* sbGainError 34 */
-  count = 0;
   in->ordsbGainError = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[34])) in->ordsbGainError++;
   }
 
   /* sbGainSpectrum 35 */
-  count = 0;
   in->ordsbGainSpectrum = 0;
   for (i=0; i<nord; i++) {
     if ((i!=0) && (ord[i]<=ord[35])) in->ordsbGainSpectrum++;
@@ -621,28 +584,28 @@ void ObitALMACalAtmInitFile  (ObitALMACalAtm *in, gchar *DataFile, ObitErr *err)
   tableUID     = ACAparse_str(in->buffer, start, &next, in->byteFlip);
   start        = next;
   junk         = ACAparse_str(in->buffer, start, &next, in->byteFlip);
-  if (junk)    g_free(junk); junk = NULL;
+  if (junk)    {g_free(junk);} junk = NULL;
   start        = next;
   junk         = ACAparse_str(in->buffer, start, &next, in->byteFlip);
-  if (junk)    g_free(junk); junk = NULL;
+  if (junk)    {g_free(junk);} junk = NULL;
   start        = next;
   junk         = ACAparse_str(in->buffer, start, &next, in->byteFlip);
-  if (junk)    g_free(junk); junk = NULL;
+  if (junk)    {g_free(junk);} junk = NULL;
   start        = next;
   junk         = ACAparse_str(in->buffer, start, &next, in->byteFlip);
-  if (junk)    g_free(junk); junk = NULL;
+  if (junk)    {g_free(junk);} junk = NULL;
   start        = next;
   containerUID = ACAparse_str(in->buffer, start, &next, in->byteFlip);
   start        = next;
   junk         = ACAparse_str(in->buffer, start, &next, in->byteFlip);
-  if (junk)    g_free(junk); junk = NULL;
+  if (junk)    {g_free(junk);} junk = NULL;
   start        = next;
   junk         = ACAparse_str(in->buffer, start, &next, in->byteFlip);
-  if (junk)    g_free(junk); junk = NULL;
+  if (junk)    {g_free(junk);} junk = NULL;
   start        = next;
-  itemp        = ACAparse_int(in->buffer, start, &next, in->byteFlip);
+  ACAparse_int(in->buffer, start, &next, in->byteFlip);
   start        = next;
-  itemp        = ACAparse_int(in->buffer, start, &next, in->byteFlip);
+  ACAparse_int(in->buffer, start, &next, in->byteFlip);
   start        = next+2;
   in->nrow     = ACAparse_int(in->buffer, start, &next, in->byteFlip);
   start        = next;
@@ -743,7 +706,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
 			    ASDMcalAtmosphereRow *row, ObitErr *err)
 {
   olong out = in->curRow+1;
-  olong maxStr, elem, nelem, i, n, ijunk;
+  olong maxStr, elem, nelem, i, n;
   odouble *dbljunk=NULL;
   ofloat *fltjunk=NULL;
   gchar *start, *next, *done, *strjunk=NULL;
@@ -801,11 +764,11 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
       /* forwardEffSpectrum */
     } else if (elem==in->ordforwardEffSpectrum) {
       fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 1, row->numReceptor*row->numFreq, in->byteFlip);
-      if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+      if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       /* frequencyRange */
     } else if (elem==in->ordfrequencyRange) {
       row->frequencyRange = g_malloc0(2*sizeof(odouble));
-      ijunk = ACAparse_int(in->buffer, start, &next, in->byteFlip); 
+      ACAparse_int(in->buffer, start, &next, in->byteFlip); 
       start = next; row->frequencyRange[0] = ACAparse_dbl(in->buffer, start, &next, in->byteFlip); 
       start = next; row->frequencyRange[1] = ACAparse_dbl(in->buffer, start, &next, in->byteFlip); 
       /* groundPressure */
@@ -817,43 +780,43 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
       /* frequencySpectrum */
     } else if (elem==in->ordfrequencySpectrum) {
       dbljunk = ACAparse_dbl_arr(in->buffer, start, &next, 0, row->numFreq, in->byteFlip);
-      if (dbljunk) g_free(dbljunk); dbljunk = NULL;
+      if (dbljunk) {g_free(dbljunk);} dbljunk = NULL;
       /* groundTemperature */
     } else if (elem==in->ordgroundTemperature) {
       row->groundTemperature = ACAparse_dbl(in->buffer, start, &next, in->byteFlip);
       /* polarizationTypes */
     } else if (elem==in->ordpolarizationTypes) {
       strjunk = ACAparse_poln(in->buffer, start, &next, in->byteFlip);
-      if (strjunk) g_free(strjunk); strjunk = NULL;
+      if (strjunk) {g_free(strjunk);} strjunk = NULL;
       /* Not really what's needed here */
       /* powerSkySpectrum */
     } else if (elem==in->ordpowerSkySpectrum) {
       fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 1, row->numReceptor*row->numFreq, in->byteFlip);
-      if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+      if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       /* powerLoadSpectrum */
     } else if (elem==in->ordpowerLoadSpectrum) {
       n = row->numReceptor*row->numFreq*MAX (1, row->numLoad);
       fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 2, n, in->byteFlip);
-      if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+      if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       /* syscalType */
     } else if (elem==in->ordsyscalType) {
       row->syscalType = ACAparse_str(in->buffer, start, &next, in->byteFlip);
       /* tAtmSpectrum  */
     } else if (elem==in->ordtAtmSpectrum) {
       dbljunk = ACAparse_dbl_arr(in->buffer, start, &next, 1, row->numReceptor*row->numFreq, in->byteFlip);
-      if (dbljunk) g_free(dbljunk); dbljunk = NULL;
+      if (dbljunk) {g_free(dbljunk);} dbljunk = NULL;
       /* tRecSpectrum */
     } else if (elem==in->ordtRecSpectrum) {
       dbljunk = ACAparse_dbl_arr(in->buffer, start, &next, 1, row->numReceptor*row->numFreq, in->byteFlip);
-      if (dbljunk) g_free(dbljunk); dbljunk = NULL;
+      if (dbljunk) {g_free(dbljunk);} dbljunk = NULL;
       /* tSysSpectrum */
     } else if (elem==in->ordtSysSpectrum) {
       dbljunk = ACAparse_dbl_arr(in->buffer, start, &next, 1, row->numReceptor*row->numFreq, in->byteFlip);
-      if (dbljunk) g_free(dbljunk); dbljunk = NULL;
+      if (dbljunk) {g_free(dbljunk);} dbljunk = NULL;
       /* tauSpectrum */
     } else if (elem==in->ordtauSpectrum) {
       fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 1, row->numReceptor*row->numFreq, in->byteFlip);
-      if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+      if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       /* tAtm */
     } else if (elem==in->ordtAtm) {
       row->tAtm = ACAparse_dbl_arr(in->buffer, start, &next, 0, row->numReceptor, in->byteFlip);
@@ -868,7 +831,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
       fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 0, row->numReceptor, in->byteFlip);
       row->tau = g_malloc0(row->numReceptor*sizeof(odouble));
       for (i=0; i<row->numReceptor; i++) row->tau[i] = fltjunk[i];
-      if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+      if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       /* water */
     } else if (elem==in->ordwater) {
       row->water = ACAparse_dbl_arr(in->buffer, start, &next, 0, row->numReceptor, in->byteFlip);
@@ -881,7 +844,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
       start = next;
       if (gotIt) {
 	fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 1, row->numReceptor*row->numFreq, in->byteFlip);
-	if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+	if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       }
       /* forwardEfficiency  optional */
     } else if (elem==in->ordforwardEfficiency) {
@@ -891,7 +854,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
 	fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 0, row->numReceptor, in->byteFlip);
 	row->forwardEfficiency = g_malloc0(row->numReceptor*sizeof(odouble));
 	for (i=0; i<row->numReceptor; i++) row->forwardEfficiency[i] = fltjunk[i];
-	if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+	if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       }
       /* forwardEfficiencyError optional */
     } else if (elem==in->ordforwardEfficiencyError) {
@@ -899,7 +862,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
       start = next;
       if (gotIt) {
 	dbljunk = ACAparse_dbl_arr(in->buffer, start, &next, 0, row->numReceptor, in->byteFlip);
-	if (dbljunk) g_free(dbljunk); dbljunk = NULL;
+	if (dbljunk) {g_free(dbljunk);} dbljunk = NULL;
       }
       /* sbGain optional */
     } else if (elem==in->ordsbGain) {
@@ -909,7 +872,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
 	fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 0, row->numReceptor, in->byteFlip);
 	row->sbGain = g_malloc0(row->numReceptor*sizeof(odouble));
 	for (i=0; i<row->numReceptor; i++) row->sbGain[i] = fltjunk[i];
-	if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+	if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       }
       /* sbGainError optional */
     } else if (elem==in->ordsbGainError) {
@@ -917,7 +880,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
       start = next;
       if (gotIt) {
 	fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 0, row->numReceptor*row->numFreq, in->byteFlip);
-	if (fltjunk) g_free(fltjunk); fltjunk = NULL;
+	if (fltjunk) {g_free(fltjunk);} fltjunk = NULL;
       }
       /* sbGainSpectrum optional */
     } else if (elem==in->ordsbGainSpectrum) {
@@ -925,7 +888,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
       start = next;
       if (gotIt) {
 	fltjunk = ACAparse_flt_arr(in->buffer, start, &next, 1, row->numReceptor*row->numFreq, in->byteFlip);
-	if (fltjunk) g_free(fltjunk); fltjunk = NULL; 
+	if (fltjunk) {g_free(fltjunk);} fltjunk = NULL; 
       }
     } else {
       /* Bummer */
@@ -1124,7 +1087,7 @@ static gchar* ACAparse_quote_str(gchar *string, olong maxChar,
     n++;
   }
   out = g_malloc(n+1);
-  for (i=0; i<n; i++) out[i] = b[i]; out[i] = 0;
+  for (i=0; i<n; i++) {out[i] = b[i];} out[i] = 0;
   *next = b + n;
 
   return out;
@@ -1343,7 +1306,7 @@ gchar* ACAparse_str(gchar *buffer,
   /* output string */
   out = g_malloc(len+1);
   b = *next;
-  for (i=0; i<len; i++) out[i] = b[i]; out[i] = 0;
+  for (i=0; i<len; i++) {out[i] = b[i];} out[i] = 0;
   *next += len;
 
   return out;
@@ -1376,7 +1339,7 @@ gchar* ACAparse_poln(gchar *buffer,
   for (i=0; i<len; i++) {
     t = ACAparse_str(buffer, b, next, byteFlip);
     out[i] = t[0]; 
-    if (t) g_free(t); t = NULL;
+    if (t) {g_free(t);} t = NULL;
     b = *next;
   }
   out[i] = 0;
@@ -1453,12 +1416,12 @@ ofloat* ACAparse_flt_arr(gchar *buffer,
 			 gboolean byteFlip)
 {
   ofloat *out = NULL;
-  olong ndim,  i;
+  olong  i;
   /*olong num, naxis[10]; */
   gchar *b;
   
   /* How many dimensions? */
-  ndim = ACAparse_int(buffer, prior, next, byteFlip);
+  ACAparse_int(buffer, prior, next, byteFlip);
   b = *next;
   /* Useless words?  */
   if (ncrap>0) {
@@ -1511,12 +1474,12 @@ odouble* ACAparse_dbl_arr(gchar *buffer,
 			  gboolean byteFlip)
 {
   odouble *out = NULL;
-  olong ndim, num, i;
+  olong num, i;
   /* olong naxis[10]; */
   gchar *b;
 
   /* How many dimensions? */
-  ndim = ACAparse_int(buffer, prior, next, byteFlip);
+  ACAparse_int(buffer, prior, next, byteFlip);
   b = *next;
   /* Useless words?  */
   if (ncrap>0) {

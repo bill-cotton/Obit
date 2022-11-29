@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2017                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -246,16 +246,16 @@ ObitSkyModelVMSquintCopy  (ObitSkyModelVMSquint *in,
   /* Component arrays */
   out->dimGain = in->dimGain;
   if (in->dimGain>0) {
-    if (out->Rgain) g_free(out->Rgain); out->Rgain = NULL;
+    if (out->Rgain) {g_free(out->Rgain);} out->Rgain = NULL;
     out->Rgain = g_malloc0(in->dimGain*sizeof(ofloat));
     for (i=0; i<in->dimGain; i++) out->Rgain[i] = in->Rgain[i];
-    if (out->Lgain) g_free(out->Lgain); out->Lgain = NULL;
+    if (out->Lgain) {g_free(out->Lgain);} out->Lgain = NULL;
     out->Lgain = g_malloc0(in->dimGain*sizeof(ofloat));
     for (i=0; i<in->dimGain; i++) out->Lgain[i] = in->Lgain[i];
-    if (out->REgain) g_free(out->REgain); out->REgain = NULL;
+    if (out->REgain) {g_free(out->REgain);} out->REgain = NULL;
     out->REgain = g_malloc0(in->dimGain*sizeof(ofloat));
     for (i=0; i<in->dimGain; i++) out->Rgain[i] = in->REgain[i];
-    if (out->LEgain) g_free(out->LEgain); out->LEgain = NULL;
+    if (out->LEgain) {g_free(out->LEgain);} out->LEgain = NULL;
     out->LEgain = g_malloc0(in->dimGain*sizeof(ofloat));
     for (i=0; i<in->dimGain; i++) out->LEgain[i] = in->LEgain[i];
   }
@@ -402,7 +402,7 @@ void ObitSkyModelVMSquintInitMod (ObitSkyModel* inn, ObitUV *uvdata,
     for (iver=1; iver<=in->numAntList; iver++) { 
       in->AntList[iver-1] = ObitAntennaListUnref(in->AntList[iver-1]);
     }
-    if (in->AntList) g_free(in->AntList); in->AntList = NULL;
+    if (in->AntList) {g_free(in->AntList);} in->AntList = NULL;
     in->AntList = g_malloc0((numAntList)*sizeof(ObitAntennaList*));
   }
   in->numAntList = numAntList;
@@ -862,11 +862,11 @@ void ObitSkyModelVMSquintClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  if (in->isEVLA) g_free(in->isEVLA); in->isEVLA = NULL;
-  if (in->Rgain)  g_free(in->Rgain);  in->Rgain  = NULL;
-  if (in->Lgain)  g_free(in->Lgain);  in->Lgain  = NULL;
-  if (in->REgain) g_free(in->REgain); in->REgain = NULL;
-  if (in->LEgain) g_free(in->LEgain); in->LEgain = NULL;
+  if (in->isEVLA) {g_free(in->isEVLA);} in->isEVLA = NULL;
+  if (in->Rgain)  {g_free(in->Rgain);}  in->Rgain  = NULL;
+  if (in->Lgain)  {g_free(in->Lgain);}  in->Lgain  = NULL;
+  if (in->REgain) {g_free(in->REgain);} in->REgain = NULL;
+  if (in->LEgain) {g_free(in->LEgain);} in->LEgain = NULL;
   in->curSource = ObitSourceUnref(in->curSource);
   if (in->AntList)  {
     for (i=0; i<in->numAntList; i++) { 
@@ -1130,9 +1130,10 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
   ofloat *REgain   = largs->REgain;
   ofloat *LEgain   = largs->LEgain;
 
-  olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp;
+  olong iVis, iIF, iChannel, iStoke, iComp, lcomp;
   olong lrec, nrparm, naxis[2];
-  olong startPoln, numberPoln, jincs, startChannel, numberChannel;
+  /*olong startPoln, numberPoln, ncomp*/
+  olong jincs, startChannel, numberChannel;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, lim;
   olong ilocu, ilocv, ilocw, iloct, suba, it1, it2, ant1, ant2, mcomp;
@@ -1146,7 +1147,7 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
   ofloat ExpArgR[FazArrSize],  ExpValR[FazArrSize], ExpArgL[FazArrSize],  ExpValL[FazArrSize];
   olong it, jt, itcnt;
   ofloat ampr, ampl, arg=0.0, freq2, freqFact, wtRR=0.0, wtLL=0.0, temp;
-  odouble *freqArr;
+  /*odouble *freqArr;*/
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
   gchar *routine = "ThreadSkyModelVMSquintFTDFT";
@@ -1167,8 +1168,8 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
   startChannel  = in->startChannelPB-1;
   numberChannel = MAX (1, in->numberChannelPB);
   jincf         = uvdata->myDesc->incf;
-  startPoln  = in->startPoln-1;
-  numberPoln = in->numberPoln;
+  /* startPoln  = in->startPoln-1;
+     numberPoln = in->numberPoln;*/
   jincs      = uvdata->myDesc->incs;  /* increment in real array */
   /* Increments in frequency tables */
   if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
@@ -1183,12 +1184,12 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
   naxis[0] = 0; naxis[1] = 0; 
   Data = ObitFArrayIndex(in->comps, naxis);
   lcomp = in->comps->naxis[0];   /* Length of row in comp table */
-  ncomp = in->comps->naxis[1];   /* Number of components */
+  /*ncomp = in->comps->naxis[1];    Number of components */
   mcomp = in->numComp;           /* Actual number */
 
   /* Get pointer for frequency correction tables */
   fscale  = uvdata->myDesc->fscale;
-  freqArr = uvdata->myDesc->freqArr;
+  /*freqArr = uvdata->myDesc->freqArr;*/
 
   /* Loop over vis in buffer */
   lrec    = uvdata->myDesc->lrec;         /* Length of record */

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2017                                          */
+/*;  Copyright (C) 2009-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -613,19 +613,19 @@ void ObitUVRFIXizeFetchStartUp (ObitUVRFIXize *in, ObitErr *err)
   in->NextVisRead = 1;          /* Start at beginning */
 
   /* In case restarting */
-  if (in->PriorVisTime)  g_free (in->PriorVisTime);  in->PriorVisTime  = NULL;
-  if (in->FollowVisTime) g_free (in->FollowVisTime); in->FollowVisTime = NULL;
-  if (in->ApplyVisTime)  g_free (in->ApplyVisTime);  in->ApplyVisTime  = NULL;
-  if (in->PriorVisNum)   g_free (in->PriorVisNum);   in->PriorVisNum   = NULL;
-  if (in->FollowVisNum)  g_free (in->FollowVisNum);  in->FollowVisNum  = NULL;
-  if (in->ApplyVisNum)   g_free (in->ApplyVisNum);   in->ApplyVisNum   = NULL;
-  if (in->VisApply)      g_free (in->VisApply);      in->VisApply      = NULL;
-  if (in->VisPrior)      g_free (in->VisPrior);      in->VisPrior      = NULL;
-  if (in->VisFollow)     g_free (in->VisFollow);     in->VisFollow     = NULL;
-  if (in->AntReal)       g_free (in->AntReal);       in->AntReal       = NULL;
-  if (in->AntImag)       g_free (in->AntImag);       in->AntImag       = NULL;
-  if (in->AntDelay)      g_free (in->AntDelay);      in->AntDelay      = NULL;
-  if (in->AntRate)       g_free (in->AntRate);       in->AntRate       = NULL;
+  if (in->PriorVisTime)  {g_free (in->PriorVisTime);}  in->PriorVisTime  = NULL;
+  if (in->FollowVisTime) {g_free (in->FollowVisTime);} in->FollowVisTime = NULL;
+  if (in->ApplyVisTime)  {g_free (in->ApplyVisTime);}  in->ApplyVisTime  = NULL;
+  if (in->PriorVisNum)   {g_free (in->PriorVisNum);}   in->PriorVisNum   = NULL;
+  if (in->FollowVisNum)  {g_free (in->FollowVisNum);}  in->FollowVisNum  = NULL;
+  if (in->ApplyVisNum)   {g_free (in->ApplyVisNum);}   in->ApplyVisNum   = NULL;
+  if (in->VisApply)      {g_free (in->VisApply);}      in->VisApply      = NULL;
+  if (in->VisPrior)      {g_free (in->VisPrior);}      in->VisPrior      = NULL;
+  if (in->VisFollow)     {g_free (in->VisFollow);}     in->VisFollow     = NULL;
+  if (in->AntReal)       {g_free (in->AntReal);}       in->AntReal       = NULL;
+  if (in->AntImag)       {g_free (in->AntImag);}       in->AntImag       = NULL;
+  if (in->AntDelay)      {g_free (in->AntDelay);}      in->AntDelay      = NULL;
+  if (in->AntRate)       {g_free (in->AntRate);}       in->AntRate       = NULL;
 
   /* Allocate arrays */
   in->lenVisArrayEntry = desc->lrec; /* length of vis array entry */
@@ -706,10 +706,10 @@ gboolean ObitUVRFIXizeFetch (ObitUVRFIXize *in, ofloat time, ObitErr *err)
   gboolean out = FALSE;
   gboolean wanted, doPrior, good1, good2;
   olong  k, j, jndx, indx, kndx, BLindx, ant1, ant2;
-  olong incs, incif, incf,  nif, nchan, nstok, iif, ichan, istok;
+  olong incs, incif, incf, nchan, nstok, iif, ichan, istok;
   ofloat gr1, gi1, dly1, rat1, gr2, gi2, dly2, rat2, tr, ti, gr, gi;
-  ofloat dt1, dt2, dt, wt1, wt2, amp1, amp2, phase1, phase2, amp, phase=0.0;
-  ofloat freqFact, dc, dcr, dci, ggr, ggi;
+  ofloat dt2, dt, wt1, wt2, amp1, amp2, phase1, phase2, amp, phase=0.0;
+  ofloat dc, dcr, dci, ggr, ggi;
   ofloat fblank = ObitMagicF();
   gdouble twopi = 2.0* G_PI;
   ObitUVDesc *desc;
@@ -728,8 +728,6 @@ gboolean ObitUVRFIXizeFetch (ObitUVRFIXize *in, ofloat time, ObitErr *err)
 
   /* How many IFs, freq, poln */
   nchan = desc->inaxes[desc->jlocf];
-  if (desc->jlocf>=0) nif = desc->inaxes[desc->jlocif];
-  else nif = 1;
   if (desc->jlocs>=0) nstok = desc->inaxes[desc->jlocs];
   else nstok = 1;
 
@@ -749,9 +747,6 @@ gboolean ObitUVRFIXizeFetch (ObitUVRFIXize *in, ofloat time, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, in->name, out);
   }
 
-  /* Rate frequency factor */
-  freqFact = twopi * 86400.0;
-
   /* Update zero delay/fringe rate table if necessary 
    leaves results in in->AntReal, in->AntImag, in->AntRate and in->AntDelay */
   if (time > in->SNSoln->CalTime){
@@ -769,7 +764,6 @@ gboolean ObitUVRFIXizeFetch (ObitUVRFIXize *in, ofloat time, ObitErr *err)
 
       /* set interpolation weights proportional to time difference. */
       dt  = in->FollowVisTime[jndx] - in->PriorVisTime[jndx] + 1.0e-20;
-      dt1 = time - in->PriorVisTime[jndx];
       dt2 = time - in->FollowVisTime[jndx];
       wt1 = 0.0;
       if ((time < in->FollowVisTime[jndx]) && (dt>1.0e-19)) wt1 = -dt2 / dt;
@@ -934,19 +928,19 @@ void ObitUVRFIXizeFetchShutDown(ObitUVRFIXize *in, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->RFIUV->name);
   in->SNSoln     = ObitUVSolnUnref(in->SNSoln);
   in->SNTableRow = ObitTableSNRowUnref(in->SNTableRow);
-  if (in->PriorVisTime)  g_free (in->PriorVisTime);  in->PriorVisTime  = NULL;
-  if (in->FollowVisTime) g_free (in->FollowVisTime); in->FollowVisTime = NULL;
-  if (in->ApplyVisTime)  g_free (in->ApplyVisTime);  in->ApplyVisTime  = NULL;
-  if (in->PriorVisNum)   g_free (in->PriorVisNum);   in->PriorVisNum   = NULL;
-  if (in->FollowVisNum)  g_free (in->FollowVisNum);  in->FollowVisNum  = NULL;
-  if (in->ApplyVisNum)   g_free (in->ApplyVisNum);   in->ApplyVisNum   = NULL;
-  if (in->VisApply)      g_free (in->VisApply);      in->VisApply      = NULL;
-  if (in->VisPrior)      g_free (in->VisPrior);      in->VisPrior      = NULL;
-  if (in->VisFollow)     g_free (in->VisFollow);     in->VisFollow     = NULL;
-  if (in->AntReal)       g_free (in->AntReal);       in->AntReal       = NULL;
-  if (in->AntImag)       g_free (in->AntImag);       in->AntImag       = NULL;
-  if (in->AntDelay)      g_free (in->AntDelay);      in->AntDelay      = NULL;
-  if (in->AntRate)       g_free (in->AntRate);       in->AntRate       = NULL;
+  if (in->PriorVisTime)  {g_free (in->PriorVisTime);}  in->PriorVisTime  = NULL;
+  if (in->FollowVisTime) {g_free (in->FollowVisTime);} in->FollowVisTime = NULL;
+  if (in->ApplyVisTime)  {g_free (in->ApplyVisTime);}  in->ApplyVisTime  = NULL;
+  if (in->PriorVisNum)   {g_free (in->PriorVisNum);}   in->PriorVisNum   = NULL;
+  if (in->FollowVisNum)  {g_free (in->FollowVisNum);}  in->FollowVisNum  = NULL;
+  if (in->ApplyVisNum)   {g_free (in->ApplyVisNum);}   in->ApplyVisNum   = NULL;
+  if (in->VisApply)      {g_free (in->VisApply);}      in->VisApply      = NULL;
+  if (in->VisPrior)      {g_free (in->VisPrior);}      in->VisPrior      = NULL;
+  if (in->VisFollow)     {g_free (in->VisFollow);}     in->VisFollow     = NULL;
+  if (in->AntReal)       {g_free (in->AntReal);}       in->AntReal       = NULL;
+  if (in->AntImag)       {g_free (in->AntImag);}       in->AntImag       = NULL;
+  if (in->AntDelay)      {g_free (in->AntDelay);}      in->AntDelay      = NULL;
+  if (in->AntRate)       {g_free (in->AntRate);}       in->AntRate       = NULL;
 
 } /*  end ObitUVRFIXizeFetchShutDown */
 
@@ -1085,20 +1079,20 @@ void ObitUVRFIXizeClear (gpointer inn)
   in->myUV          = ObitUVUnref(in->myUV);
   in->RFIUV         = ObitUVUnref(in->RFIUV);
   in->outUV         = ObitUVUnref(in->outUV);
-  if (in->PriorVisTime)  g_free (in->PriorVisTime);  in->PriorVisTime  = NULL;
-  if (in->FollowVisTime) g_free (in->FollowVisTime); in->FollowVisTime = NULL;
-  if (in->ApplyVisTime)  g_free (in->ApplyVisTime);  in->ApplyVisTime  = NULL;
-  if (in->PriorVisNum)   g_free (in->PriorVisNum);   in->PriorVisNum   = NULL;
-  if (in->FollowVisNum)  g_free (in->FollowVisNum);  in->FollowVisNum  = NULL;
-  if (in->ApplyVisNum)   g_free (in->ApplyVisNum);   in->ApplyVisNum   = NULL;
-  if (in->VisApply)      g_free (in->VisApply);      in->VisApply      = NULL;
-  if (in->VisPrior)      g_free (in->VisPrior);      in->VisPrior      = NULL;
-  if (in->VisFollow)     g_free (in->VisFollow);     in->VisFollow     = NULL;
-  if (in->AntReal)       g_free (in->AntReal);       in->AntReal       = NULL;
-  if (in->AntImag)       g_free (in->AntImag);       in->AntImag       = NULL;
-  if (in->AntDelay)      g_free (in->AntDelay);      in->AntDelay      = NULL;
-  if (in->AntRate)       g_free (in->AntRate);       in->AntRate       = NULL;
-  if (in->blLookup)      g_free (in->blLookup);      in->blLookup      = NULL;
+  if (in->PriorVisTime)  {g_free (in->PriorVisTime);}  in->PriorVisTime  = NULL;
+  if (in->FollowVisTime) {g_free (in->FollowVisTime);} in->FollowVisTime = NULL;
+  if (in->ApplyVisTime)  {g_free (in->ApplyVisTime);}  in->ApplyVisTime  = NULL;
+  if (in->PriorVisNum)   {g_free (in->PriorVisNum);}   in->PriorVisNum   = NULL;
+  if (in->FollowVisNum)  {g_free (in->FollowVisNum);}  in->FollowVisNum  = NULL;
+  if (in->ApplyVisNum)   {g_free (in->ApplyVisNum);}   in->ApplyVisNum   = NULL;
+  if (in->VisApply)      {g_free (in->VisApply);}      in->VisApply      = NULL;
+  if (in->VisPrior)      {g_free (in->VisPrior);}      in->VisPrior      = NULL;
+  if (in->VisFollow)     {g_free (in->VisFollow);}     in->VisFollow     = NULL;
+  if (in->AntReal)       {g_free (in->AntReal);}       in->AntReal       = NULL;
+  if (in->AntImag)       {g_free (in->AntImag);}       in->AntImag       = NULL;
+  if (in->AntDelay)      {g_free (in->AntDelay);}      in->AntDelay      = NULL;
+  if (in->AntRate)       {g_free (in->AntRate);}       in->AntRate       = NULL;
+  if (in->blLookup)      {g_free (in->blLookup);}      in->blLookup      = NULL;
  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

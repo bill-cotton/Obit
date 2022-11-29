@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Information dialog box for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2020
+*  Copyright (C) 1996,1997,1999,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -69,7 +69,7 @@ void NextInfoLine (Widget form, Widget prev, Widget *line,
 				   XmNtopWidget,     prev,
 				   XmNleftAttachment,  XmATTACH_FORM,
 				   NULL);
-  if (xlinestr) XmStringFree(xlinestr); xlinestr = NULL;
+  if (xlinestr) {XmStringFree(xlinestr);} xlinestr = NULL;
 } /* end NextInfoLine */
 
 /* button callbacks */
@@ -181,7 +181,7 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 				     XmNtopAttachment, XmATTACH_FORM,
 				     XmNleftAttachment,  XmATTACH_FORM,
 				     NULL);
-  if (label) XmStringFree(label); label = NULL;
+  if (label) {XmStringFree(label);} label = NULL;
   iLine = 0;
   /* object name, units */
   sprintf(linestr, "object = %s  units = %s",

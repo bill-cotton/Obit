@@ -242,9 +242,9 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
 {
   olong   indxa1, indxa2, asize, iif, ipol, ifreq, ioff, joff, index, 
     jndxa1, jndxa2, maxpol, idndx, itfilt, corID, iSubA, it1, it2;
-  gboolean   sombad, somflg, allflg, smpflg, alpflg, allded, ccor;
+  gboolean   sombad, somflg, allflg, smpflg, alpflg, allded;
   gboolean calBad, doDisp, badDsp;
-  ofloat tvr, tvi, tvr1, gr, gi, dgr, dgi, ddgr=1.0, ddgi=0.0, phase, grd, gid;
+  ofloat tvr, tvi, tvr1, gr, gi, dgr, ddgr=1.0, ddgi=0.0, phase, grd, gid;
   ofloat  cp, sp, gwt, dphas, rate, arg=0.0, rfact, dfact, fblank = ObitMagicF();
   odouble dbits, dsfact;
   ObitUVCalCalibrateS *me;
@@ -280,9 +280,6 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
     ObitUVCalCalibrateUpdate (me, time, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
-
-  /* check if cross correlation */
-  ccor = ant1 != ant2;
 
   /* init. flagged flags */
   allflg = TRUE;
@@ -322,7 +319,6 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
       gr = 1.0;
       gi = 0.0;
       dgr = 1.0;
-      dgi = 0.0;
       gwt = 0.0;
 
       /* check IF flags */
@@ -347,7 +343,6 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
 
 	/* delay correction - real and imaginary of phase rotation per channel */
 	dgr = me->CalApply[indxa1+2] - me->CalApply[indxa2+2];  /* Now total phase */
-	dgi = 0.0;
 	ddgr = cos (dgr);
 	ddgi = sin (dgr);
 	/*dgr = me->CalApply[indxa1+2] * me->CalApply[indxa2+2] + me->CalApply[indxa1+3] * me->CalApply[indxa2+3];
@@ -559,29 +554,29 @@ ObitUVCalCalibrateSUnref (ObitUVCalCalibrateS *in)
   in->CLTableRow = ObitTableCLRowUnref((ObitTableCLRow*)in->CLTableRow);
   in->SNTable    = ObitTableSNUnref((ObitTableSN*)in->SNTable);
   in->SNTableRow = ObitTableSNRowUnref((ObitTableSNRow*)in->SNTableRow);
-  if (in->CalApply)     g_free(in->CalApply); in->CalApply   = NULL;
-  if (in->CalPrior)     g_free(in->CalPrior); in->CalPrior   = NULL;
-  if (in->CalFollow)    g_free(in->CalFollow); in->CalFollow  = NULL;
-  if (in->IFR)          g_free(in->IFR); in->IFR   = NULL;
-  if (in->PriorIFR)     g_free(in->PriorIFR); in->PriorIFR   = NULL;
-  if (in->FollowIFR)    g_free(in->FollowIFR); in->FollowIFR  = NULL;
-  if (in->DDelay)       g_free(in->DDelay); in->DDelay     = NULL;
-  if (in->PriorDDelay)  g_free(in->PriorDDelay); in->PriorDDelay  = NULL;
-  if (in->FollowDDelay) g_free(in->FollowDDelay); in->FollowDDelay = NULL;
-  if (in->RateFact)     g_free(in->RateFact); in->RateFact  = NULL;
-  if (in->DelayFact)    g_free(in->DelayFact); in->DelayFact = NULL;
-  if (in->Lambda)       g_free(in->Lambda); in->Lambda    = NULL;
-  if (in->PriorAntTime) g_free(in->PriorAntTime); in->PriorAntTime    = NULL;
-  if (in->FollowAntTime) g_free(in->FollowAntTime); in->FollowAntTime    = NULL;
-  if (in->LTaper)       g_free(in->LTaper); in->LTaper    = NULL;
-  if (in->NSpecA)       g_free(in->NSpecA); in->NSpecA    = NULL;
-  if (in->DelBit)       g_free(in->DelBit); in->DelBit    = NULL;
-  if (in->NFFTSize)     g_free(in->NFFTSize); in->NFFTSize  = NULL;
-  if (in->typeTimeFilt) g_free(in->typeTimeFilt); in->typeTimeFilt   = NULL;
-  if (in->TimeFiltTime) g_free(in->TimeFiltTime); in->TimeFiltTime   = NULL;
-  if (in->doDelayDecorr) g_free(in->doDelayDecorr); in->doDelayDecorr  = NULL;
-  if (in->corrType)     g_free(in->corrType); in->corrType  = NULL;
-  if (in->warnNoCQ)     g_free(in->warnNoCQ); in->warnNoCQ = NULL;
+  if (in->CalApply)     {g_free(in->CalApply);} in->CalApply   = NULL;
+  if (in->CalPrior)     {g_free(in->CalPrior);} in->CalPrior   = NULL;
+  if (in->CalFollow)    {g_free(in->CalFollow);} in->CalFollow  = NULL;
+  if (in->IFR)          {g_free(in->IFR);} in->IFR   = NULL;
+  if (in->PriorIFR)     {g_free(in->PriorIFR);} in->PriorIFR   = NULL;
+  if (in->FollowIFR)    {g_free(in->FollowIFR);} in->FollowIFR  = NULL;
+  if (in->DDelay)       {g_free(in->DDelay);} in->DDelay     = NULL;
+  if (in->PriorDDelay)  {g_free(in->PriorDDelay);} in->PriorDDelay  = NULL;
+  if (in->FollowDDelay) {g_free(in->FollowDDelay);} in->FollowDDelay = NULL;
+  if (in->RateFact)     {g_free(in->RateFact);} in->RateFact  = NULL;
+  if (in->DelayFact)    {g_free(in->DelayFact);} in->DelayFact = NULL;
+  if (in->Lambda)       {g_free(in->Lambda);} in->Lambda    = NULL;
+  if (in->PriorAntTime) {g_free(in->PriorAntTime);} in->PriorAntTime    = NULL;
+  if (in->FollowAntTime){g_free(in->FollowAntTime);} in->FollowAntTime    = NULL;
+  if (in->LTaper)       {g_free(in->LTaper);} in->LTaper    = NULL;
+  if (in->NSpecA)       {g_free(in->NSpecA);} in->NSpecA    = NULL;
+  if (in->DelBit)       {g_free(in->DelBit);} in->DelBit    = NULL;
+  if (in->NFFTSize)     {g_free(in->NFFTSize);} in->NFFTSize  = NULL;
+  if (in->typeTimeFilt) {g_free(in->typeTimeFilt);} in->typeTimeFilt   = NULL;
+  if (in->TimeFiltTime) {g_free(in->TimeFiltTime);} in->TimeFiltTime   = NULL;
+  if (in->doDelayDecorr){g_free(in->doDelayDecorr);} in->doDelayDecorr  = NULL;
+  if (in->corrType)     {g_free(in->corrType);} in->corrType  = NULL;
+  if (in->warnNoCQ)     {g_free(in->warnNoCQ);} in->warnNoCQ = NULL;
 
   /* basic structure */
    g_free (in);
@@ -869,7 +864,6 @@ static void ObitUVCalCalibrateUpdate (ObitUVCalCalibrateS *in, ofloat time,
 static void ObitUVCalCalibrateNewTime (ObitUVCalCalibrateS *in, ofloat time,
 					ObitErr *err)
 {
-  ObitIOCode retCode;
   ofloat mGModI, wt1, wt2;
   ofloat fblank = ObitMagicF();
   olong nblank, i, j, iant, iif, indx, lenEntryPoln, lenEntry, lenEntryAnt;
@@ -942,7 +936,7 @@ static void ObitUVCalCalibrateNewTime (ObitUVCalCalibrateS *in, ofloat time,
     in->LastRowRead = 0;  /* The next time may start somewhere nonobvious */
     for (i= limit; i<=in->numRow; i++) { /* loop 90 */
       irow = i;
-      retCode = ObitTableSNReadRow (SNTable, irow, SNTableRow, err);
+      ObitTableSNReadRow (SNTable, irow, SNTableRow, err);
       if (err->error) Obit_traceback_msg (err, routine, "Cal(SN) table");
       if (SNTableRow->status < 0) continue; /* entry flagged? */
       
@@ -1078,7 +1072,7 @@ static void ObitUVCalCalibrateNewTime (ObitUVCalCalibrateS *in, ofloat time,
     in->LastRowRead = 0;  /* The next time may start somewhere nonobvious */
     for (i= limit; i<=in->numRow; i++) { /* loop 90 */
       irow = i;
-      retCode = ObitTableCLReadRow (CLTable, irow, CLTableRow, err);
+      ObitTableCLReadRow (CLTable, irow, CLTableRow, err);
       if (err->error) Obit_traceback_msg (err, routine, "Cal(CL) Table");
       if (CLTableRow->status < 0) continue; /* entry flagged? */
       
@@ -1267,8 +1261,7 @@ ObitUVCalCalibrateVLBAInit (ObitUVCal *in, ObitUVCalCalibrateS *out,
   ObitTableCQRow *CQTableRow=NULL;
   ObitTableCQ *CQTable=NULL;
   ObitUVDesc *desc=NULL;
-  odouble dfact;
-  olong indx, jif, jfact, isub, icorr, ifilt, id, ii, rc, ioff;
+  olong indx, jif, jfact, icorr, ifilt, id, ii, rc, ioff;
   gchar strTemp[9];
   gchar *routine="ObitUVCalCalibrateVLBAInit";
 
@@ -1366,7 +1359,6 @@ ObitUVCalCalibrateVLBAInit (ObitUVCal *in, ObitUVCalCalibrateS *out,
     if (CQTableRow->FrqSel == out->FreqID) { /*goto 200;*/
       
       /*  Fill output arrays */
-      isub = MAX (CQTableRow->SubA, 1); /* which subarray */
       
       for (jif= 1; jif<= CQTable->numIF; jif++) { /* loop 150 */
 	/* extract correlation  id. from VLBA encryption scheme */
@@ -1415,9 +1407,7 @@ ObitUVCalCalibrateVLBAInit (ObitUVCal *in, ObitUVCalCalibrateS *out,
 	/* Can delay decorrelation corrections be done for this 
 	   (if,corr_id) combination ? Are taper function and fft size valid?*/
 	
-	dfact = 
-	  ObitUVCalCalibrateSegLoss (out->LTaper[indx-1], out->NFFTSize[indx-1], 0.0, 
-				     &rc);
+	ObitUVCalCalibrateSegLoss (out->LTaper[indx-1], out->NFFTSize[indx-1], 0.0, &rc);
 
 	/* incorporate other conditions */
 	out->doDelayDecorr[indx-1] = ((out->NSpecA[indx-1] > 0) && 

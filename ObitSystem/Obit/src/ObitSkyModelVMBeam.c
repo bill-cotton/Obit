@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2021                                          */
+/*;  Copyright (C) 2009-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -274,38 +274,38 @@ ObitSkyModelVMBeamCopy  (ObitSkyModelVMBeam *in,
   if (out->Lgaini==NULL) out->Lgaini = g_malloc0(in->numAntType*sizeof(ofloat*));
   for (j=0; j<in->numAntType; j++) {
     if (in->dimGain>0) {
-      if (out->Rgain[j]) g_free(out->Rgain[j]); out->Rgain[j] = NULL;
+      if (out->Rgain[j]) {g_free(out->Rgain[j]);} out->Rgain[j] = NULL;
       out->Rgain[j] = g_malloc0(in->dimGain*sizeof(ofloat));
       for (i=0; i<in->dimGain; i++) out->Rgain[j][i] = in->Rgain[j][i];
-      if (out->Rgaini[j]) g_free(out->Rgaini[j]); out->Rgaini[j] = NULL;
+      if (out->Rgaini[j]) {g_free(out->Rgaini[j]);} out->Rgaini[j] = NULL;
       if (in->Rgaini[j]) {
 	out->Rgaini[j] = g_malloc0(in->dimGain*sizeof(ofloat));
 	for (i=0; i<in->dimGain; i++) out->Rgaini[j][i] = in->Rgaini[j][i];
       }
       
-      if (out->Lgain[j]) g_free(out->Lgain[j]); out->Lgain[j] = NULL;
+      if (out->Lgain[j]) {g_free(out->Lgain[j]);} out->Lgain[j] = NULL;
       out->Lgain[j] = g_malloc0(in->dimGain*sizeof(ofloat));
       for (i=0; i<in->dimGain; i++) out->Lgain[j][i] = in->Lgain[j][i];
-      if (out->Lgaini[j]) g_free(out->Lgaini[j]); out->Lgaini[j] = NULL;
+      if (out->Lgaini[j]) {g_free(out->Lgaini[j]);} out->Lgaini[j] = NULL;
       if (in->Lgaini[j]) {
 	out->Lgaini[j] = g_malloc0(in->dimGain*sizeof(ofloat));
 	for (i=0; i<in->dimGain; i++) out->Lgaini[j][i] = in->Lgaini[j][i];
       }
       if (in->doCrossPol) {
-	if (out->RLgain[j]) g_free(out->RLgain[j]); out->RLgain[j] = NULL;
+	if (out->RLgain[j]) {g_free(out->RLgain[j]);} out->RLgain[j] = NULL;
 	out->RLgain[j] = g_malloc0(in->dimGain*sizeof(ofloat));
 	for (i=0; i<in->dimGain; i++) out->RLgain[j][i] = in->RLgain[j][i];
 	if (in->RLgaini[j]) {
-	  if (out->RLgaini[j]) g_free(out->RLgaini[j]); out->RLgaini[j] = NULL;
+	  if (out->RLgaini[j]) {g_free(out->RLgaini[j]);} out->RLgaini[j] = NULL;
 	  out->RLgaini[j] = g_malloc0(in->dimGain*sizeof(ofloat));
 	  for (i=0; i<in->dimGain; i++) out->RLgaini[j][i] = in->RLgaini[j][i];
 	}
 	
-	if (out->LRgain) g_free(out->LRgain); out->LRgain = NULL;
+	if (out->LRgain) {g_free(out->LRgain);} out->LRgain = NULL;
 	out->LRgain = g_malloc0(in->dimGain*sizeof(ofloat));
 	for (i=0; i<in->dimGain; i++) out->LRgain[i] = in->LRgain[i];
 	if (in->LRgaini) {
-	  if (out->LRgaini) g_free(out->LRgaini); out->LRgaini = NULL;
+	  if (out->LRgaini) {g_free(out->LRgaini);} out->LRgaini = NULL;
 	  out->LRgaini = g_malloc0(in->dimGain*sizeof(ofloat));
 	  for (i=0; i<in->dimGain; i++) out->LRgaini[i] = in->LRgaini[i];
 	}
@@ -620,7 +620,7 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
     for (iver=1; iver<=in->numAntList; iver++) { 
       in->AntList[iver-1] = ObitAntennaListUnref(in->AntList[iver-1]);
     }
-    if (in->AntList) g_free(in->AntList); in->AntList = NULL;
+    if (in->AntList) {g_free(in->AntList);} in->AntList = NULL;
     in->AntList = g_malloc0((numAntList)*sizeof(ObitAntennaList*));
   }
   in->numAntList = numAntList;
@@ -1274,16 +1274,16 @@ void ObitSkyModelVMBeamClear (gpointer inn)
     if ((in->RLgaini!=NULL)&& (in->RLgaini[i]!=NULL)) g_free(in->RLgaini[i]);
     if ((in->LRgaini!=NULL)&& (in->LRgaini[i]!=NULL)) g_free(in->LRgaini[i]);
   }
-  if (in->Rgain)   g_free(in->Rgain);  in->Rgain   = NULL;
-  if (in->Lgain)   g_free(in->Lgain);  in->Lgain   = NULL;
-  if (in->RLgain)  g_free(in->RLgain); in->RLgain  = NULL;
-  if (in->LRgain)  g_free(in->LRgain); in->LRgain  = NULL;
-  if (in->Rgaini)  g_free(in->Rgaini); in->Rgaini  = NULL;
-  if (in->Lgaini)  g_free(in->Lgaini); in->Lgaini  = NULL;
-  if (in->RLgaini) g_free(in->RLgaini);in->RLgaini = NULL;
-  if (in->LRgaini) g_free(in->LRgaini);in->LRgaini = NULL;
-  if (in->numPlane)g_free(in->numPlane);in->numPlane = NULL;
-  if (in->AntType) g_free(in->AntType);    in->AntType     = NULL;
+  if (in->Rgain)   {g_free(in->Rgain);}  in->Rgain   = NULL;
+  if (in->Lgain)   {g_free(in->Lgain);}  in->Lgain   = NULL;
+  if (in->RLgain)  {g_free(in->RLgain);} in->RLgain  = NULL;
+  if (in->LRgain)  {g_free(in->LRgain);} in->LRgain  = NULL;
+  if (in->Rgaini)  {g_free(in->Rgaini);} in->Rgaini  = NULL;
+  if (in->Lgaini)  {g_free(in->Lgaini);} in->Lgaini  = NULL;
+  if (in->RLgaini) {g_free(in->RLgaini);}in->RLgaini = NULL;
+  if (in->LRgaini) {g_free(in->LRgaini);}in->LRgaini = NULL;
+  if (in->numPlane){g_free(in->numPlane);}in->numPlane = NULL;
+  if (in->AntType) {g_free(in->AntType);}    in->AntType     = NULL;
   in->BeamShape = ObitBeamShapeUnref(in->BeamShape);
   for (i=0; i<in->numAntType; i++) {
     in->RXBeam[i]    = ObitImageInterpUnref(in->RXBeam[i]);

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -53,7 +53,6 @@
 ObitFArray* ObitTableNIUtilSwallow (ObitTableNI *in, ObitErr *err)
 {
   ObitFArray *out = NULL;
-  ObitIOCode retCode;
   ObitTableNIRow *NIRow = NULL;
   olong nrow, irow, lrow, ncoef, icoef, naxis[2], pos[2];
   ofloat *Row;
@@ -63,7 +62,7 @@ ObitFArray* ObitTableNIUtilSwallow (ObitTableNI *in, ObitErr *err)
   if (err->error) return out;
 
   /* Open */
-  retCode = ObitTableNIOpen (in, OBIT_IO_ReadOnly, err);
+  ObitTableNIOpen (in, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, out);
   
   /* Create output structure */
@@ -80,7 +79,7 @@ ObitFArray* ObitTableNIUtilSwallow (ObitTableNI *in, ObitErr *err)
   pos[0] = 0;
   for (irow=1; irow<=nrow; irow++) {
 
-    retCode = ObitTableNIReadRow (in, irow, NIRow, err);
+    ObitTableNIReadRow (in, irow, NIRow, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, out);
     if (NIRow->status<0) continue;   /* Valid row? */
 
@@ -97,7 +96,7 @@ ObitFArray* ObitTableNIUtilSwallow (ObitTableNI *in, ObitErr *err)
   } /* end loop over table */
 
   /* Close */
-  retCode = ObitTableNIClose (in, err);
+  ObitTableNIClose (in, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, out);
 
   /* Cleanup */

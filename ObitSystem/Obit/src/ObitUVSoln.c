@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2019                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -279,20 +279,20 @@ void ObitUVSolnStartUp (ObitUVSoln *in, ObitErr *err)
   in->LastRowRead = 0;
 
   /* In case restarting */
-  if (in->PriorAntTime)  g_free (in->PriorAntTime);  in->PriorAntTime  = NULL;
-  if (in->FollowAntTime) g_free (in->FollowAntTime); in->FollowAntTime = NULL;
-  if (in->CalApply)      g_free (in->CalApply);      in->CalApply      = NULL;
-  if (in->CalPrior)      g_free (in->CalPrior);      in->CalPrior      = NULL;
-  if (in->CalFollow)     g_free (in->CalFollow);     in->CalFollow     = NULL;
-  if (in->IFR)           g_free (in->IFR);           in->IFR           = NULL;
-  if (in->PriorIFR)      g_free (in->PriorIFR);      in->PriorIFR      = NULL;
-  if (in->FollowIFR)     g_free (in->FollowIFR);     in->FollowIFR     = NULL;
-  if (in->MBDelay)       g_free (in->MBDelay);       in->MBDelay       = NULL;
-  if (in->PriorMBDelay)  g_free (in->PriorMBDelay);  in->PriorMBDelay  = NULL;
-  if (in->FollowMBDelay) g_free (in->FollowMBDelay); in->FollowMBDelay = NULL;
-  if (in->RefAnt)        g_free (in->RefAnt);        in->RefAnt        = NULL;
-  if (in->RateFact)      g_free (in->RateFact);      in->RateFact      = NULL;
-  if (in->MissAnt)       g_free (in->MissAnt);       in->MissAnt       = NULL;
+  if (in->PriorAntTime)  {g_free (in->PriorAntTime);}  in->PriorAntTime  = NULL;
+  if (in->FollowAntTime) {g_free (in->FollowAntTime);} in->FollowAntTime = NULL;
+  if (in->CalApply)      {g_free (in->CalApply);}      in->CalApply      = NULL;
+  if (in->CalPrior)      {g_free (in->CalPrior);}      in->CalPrior      = NULL;
+  if (in->CalFollow)     {g_free (in->CalFollow);}     in->CalFollow     = NULL;
+  if (in->IFR)           {g_free (in->IFR);}           in->IFR           = NULL;
+  if (in->PriorIFR)      {g_free (in->PriorIFR);}      in->PriorIFR      = NULL;
+  if (in->FollowIFR)     {g_free (in->FollowIFR);}     in->FollowIFR     = NULL;
+  if (in->MBDelay)       {g_free (in->MBDelay);}       in->MBDelay       = NULL;
+  if (in->PriorMBDelay)  {g_free (in->PriorMBDelay);}  in->PriorMBDelay  = NULL;
+  if (in->FollowMBDelay) {g_free (in->FollowMBDelay);} in->FollowMBDelay = NULL;
+  if (in->RefAnt)        {g_free (in->RefAnt);}        in->RefAnt        = NULL;
+  if (in->RateFact)      {g_free (in->RateFact);}      in->RateFact      = NULL;
+  if (in->MissAnt)       {g_free (in->MissAnt);}       in->MissAnt       = NULL;
 
   /* Which SN table? */
   highVer = ObitTableListGetHigh (in->myUV->tableList, "AIPS SN");
@@ -407,9 +407,8 @@ gboolean ObitUVSolnGetSN (ObitUVSoln *in, ObitTableSNRow *SNrow, ObitErr *err)
 {
   gboolean out = FALSE;
   gboolean   wanted;
-  olong asize, jndxa, indxa, ant, numAnt, iif, ioff, ipol;
+  olong asize, jndxa, indxa, ant, numAnt, iif, ipol;
   ofloat fblank = ObitMagicF();
-  ObitUVDesc *desc;
   ObitUVSel *sel;
   gchar *routine="ObitUVSolnGetSN ";
 
@@ -417,7 +416,6 @@ gboolean ObitUVSolnGetSN (ObitUVSoln *in, ObitTableSNRow *SNrow, ObitErr *err)
   if (err->error) return out;
 
   /* local pointers for structures */
-  desc = in->myUV->myDesc;
   sel  = in->myUV->mySel;
 
   /* Check if this data wanted */
@@ -443,7 +441,6 @@ gboolean ObitUVSolnGetSN (ObitUVSoln *in, ObitTableSNRow *SNrow, ObitErr *err)
 
   /* loop over IF */
   for (iif=0; iif<in->numIF; iif++) { /* loop 300 */
-    ioff = (iif-1) * desc->incif;
     
     /* loop over polarization */
     for (ipol= 1; ipol<=MIN (2, in->numPol); ipol++) { /* loop 200 */
@@ -531,25 +528,25 @@ void ObitUVSolnShutDown (ObitUVSoln *in, ObitErr *err)
     tabtype = g_strdup(in->SNTable->tabType);
     lver = in->SNTable->tabVer;
     ObitUVZapTable (in->myUV, tabtype, lver, err);
-    if (tabtype) g_free (tabtype); tabtype = NULL;
+    if (tabtype) {g_free (tabtype);} tabtype = NULL;
     ObitUVUpdateTables (in->myUV, err);  /* Update disk header */
   }
   in->isSNSmoo = FALSE;
 
-  if (in->PriorAntTime)  g_free (in->PriorAntTime);  in->PriorAntTime  = NULL;
-  if (in->FollowAntTime) g_free (in->FollowAntTime); in->FollowAntTime = NULL;
-  if (in->CalApply)      g_free (in->CalApply);      in->CalApply      = NULL;
-  if (in->CalPrior)      g_free (in->CalPrior);      in->CalPrior      = NULL;
-  if (in->CalFollow)     g_free (in->CalFollow);     in->CalFollow     = NULL;
-  if (in->IFR)           g_free (in->IFR);           in->IFR           = NULL;
-  if (in->PriorIFR)      g_free (in->PriorIFR);      in->PriorIFR      = NULL;
-  if (in->FollowIFR)     g_free (in->FollowIFR);     in->FollowIFR     = NULL;
-  if (in->MBDelay)       g_free (in->MBDelay);       in->MBDelay       = NULL;
-  if (in->PriorMBDelay)  g_free (in->PriorMBDelay);  in->PriorMBDelay  = NULL;
-  if (in->FollowMBDelay) g_free (in->FollowMBDelay); in->FollowMBDelay = NULL;
-  if (in->RefAnt)        g_free (in->RefAnt);        in->RefAnt        = NULL;
-  if (in->RateFact)      g_free (in->RateFact);      in->RateFact      = NULL;
-  if (in->MissAnt)       g_free (in->MissAnt);       in->MissAnt       = NULL;
+  if (in->PriorAntTime)  {g_free (in->PriorAntTime);}  in->PriorAntTime  = NULL;
+  if (in->FollowAntTime) {g_free (in->FollowAntTime);} in->FollowAntTime = NULL;
+  if (in->CalApply)      {g_free (in->CalApply);}      in->CalApply      = NULL;
+  if (in->CalPrior)      {g_free (in->CalPrior);}      in->CalPrior      = NULL;
+  if (in->CalFollow)     {g_free (in->CalFollow);}     in->CalFollow     = NULL;
+  if (in->IFR)           {g_free (in->IFR);}           in->IFR           = NULL;
+  if (in->PriorIFR)      {g_free (in->PriorIFR);}      in->PriorIFR      = NULL;
+  if (in->FollowIFR)     {g_free (in->FollowIFR);}     in->FollowIFR     = NULL;
+  if (in->MBDelay)       {g_free (in->MBDelay);}       in->MBDelay       = NULL;
+  if (in->PriorMBDelay)  {g_free (in->PriorMBDelay);}  in->PriorMBDelay  = NULL;
+  if (in->FollowMBDelay) {g_free (in->FollowMBDelay);} in->FollowMBDelay = NULL;
+  if (in->RefAnt)        {g_free (in->RefAnt);}        in->RefAnt        = NULL;
+  if (in->RateFact)      {g_free (in->RateFact);}      in->RateFact      = NULL;
+  if (in->MissAnt)       {g_free (in->MissAnt);}       in->MissAnt       = NULL;
 
 } /*  end ObitUVSolnShutDown */
 
@@ -879,8 +876,7 @@ void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr *err)
  */
 void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, ObitErr* err) 
 {
-  ObitIOCode retCode;
-  olong   ant, iif, isub, numif, numpol, numant, numtime, iref, crefa, *antuse=NULL;
+  olong   ant, iif, isub, numif, numant, numtime, iref, crefa, *antuse=NULL;
   ofloat *wrkTime=NULL, *work1=NULL, *work2=NULL, *work3=NULL, *work4=NULL, *work5=NULL;
   gboolean noReRef = FALSE;
   gchar msgtxt[81];
@@ -905,13 +901,12 @@ void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, ObitErr* 
   
   /* Open table */
   numant = SNTab->numAnt;
-  retCode = ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
+  ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
   SNTab->numAnt = MAX(SNTab->numAnt, numant);  /* Don't let it get smaller */
  
   /* Get descriptive info */
   numif  = SNTab->numIF;
-  numpol = SNTab->numPol;
   numant = SNTab->numAnt;
 
   /* Determine which antennas used as reference antennas, number of times */
@@ -973,7 +968,7 @@ void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, ObitErr* 
   } /* end of antenna loop  L500: */;
   
   /* Close table */
-  retCode = ObitTableSNClose (SNTab, err);
+  ObitTableSNClose (SNTab, err);
   if (err->error) goto cleanup;
   
   /* Cleanup */
@@ -1040,12 +1035,11 @@ void ObitUVSolnAvgRate (ObitTableSN *SNTab, ObitErr* err)
  */
 void ObitUVSolnSNSmo (ObitTableSN *SNTab, olong isuba, ObitErr* err) 
 {
-  ObitIOCode retCode;
   gint32 dim[UV_MAXDIM];
   ObitInfoType type;
   ObitUV *host;
   gchar  smtype[5], smfunc[5], doType[5];
-  olong   i, iif, isub, numant, numpol, numif;
+  olong   i, iif, isub, numif;
   gboolean doBlank;
   ofloat smparm[5], gncnt, gnsum;
   olong   mxtime, ntmp, *antuse;
@@ -1077,12 +1071,12 @@ void ObitUVSolnSNSmo (ObitTableSN *SNTab, olong isuba, ObitErr* err)
   isub = MAX (1, isuba);
   
   /* Determine which antennas used as reference antennas, number of times */
-  retCode = ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
+  ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
   antuse = refCount (SNTab, isub, &mxtime, err);
   mxtime += 10;  /* Fudge a bit on the number of times */
   g_free(antuse);  /* don't need */
-  retCode = ObitTableSNClose (SNTab, err);
+  ObitTableSNClose (SNTab, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
 
   /* MUST be antenna-time order */
@@ -1091,13 +1085,11 @@ void ObitUVSolnSNSmo (ObitTableSN *SNTab, olong isuba, ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
 
   /* Open table */
-  retCode = ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
+  ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
  
   /* Get descriptive info */
   numif  = SNTab->numIF;
-  numpol = SNTab->numPol;
-  numant = SNTab->numAnt;
 
   /* Average rates */
   avgRate (SNTab, err);
@@ -1127,8 +1119,8 @@ void ObitUVSolnSNSmo (ObitTableSN *SNTab, olong isuba, ObitErr* err)
 			&gncnt, &gnsum, mxtime, work1, work2, doBlank, err);
     if (err->error) goto cleanup;
   } /* end loop  L300: */
-  if (work1) g_free(work1); work1 = NULL;
-  if (work2) g_free(work2); work2 = NULL;
+  if (work1) {g_free(work1);} work1 = NULL;
+  if (work2) {g_free(work2);} work2 = NULL;
 
   /* If VLMB smooth phase coherently */
       if (!strncmp(smtype, "VLMB", 4)) {
@@ -1145,11 +1137,11 @@ void ObitUVSolnSNSmo (ObitTableSN *SNTab, olong isuba, ObitErr* err)
   
   /* Close output table */
 cleanup: 
-  retCode = ObitTableSNClose (SNTab, err);
+  ObitTableSNClose (SNTab, err);
   
   /* Cleanup */
-  if (work1) g_free(work1);
-  if (work2) g_free(work2);
+  if (work1) {g_free(work1);}
+  if (work2) {g_free(work2);}
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
 } /* end of routine ObitUVSolnSNSmo */ 
 
@@ -1171,7 +1163,6 @@ void ObitUVSolnDeselSN (ObitTableSN *SNTab, olong isuba, olong fqid,
 			olong nantf, olong *ants, olong nsou, olong *sources,
 			ofloat timerange[2], ObitErr* err)
 {
-  ObitIOCode retCode;
   ObitTableSNRow *row=NULL;
   olong   i;
   gboolean allAnt, allSou, flagIt;
@@ -1184,8 +1175,8 @@ void ObitUVSolnDeselSN (ObitTableSN *SNTab, olong isuba, olong fqid,
   if (err->error) return;  /* previous error? */
   g_assert(ObitTableSNIsA(SNTab));
  
- /* Open table */
-  retCode = ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
+  /* Open table */
+  ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
  
   /* All antennas to be flagged? */
@@ -1206,7 +1197,7 @@ void ObitUVSolnDeselSN (ObitTableSN *SNTab, olong isuba, olong fqid,
   /* Loop through table */
   for (loop=1; loop<=SNTab->myDesc->nrow; loop++) { /* loop 20 */
 
-    retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+    ObitTableSNReadRow (SNTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     if (row->status<0) continue;  /* Skip deselected record */
 
@@ -1226,13 +1217,13 @@ void ObitUVSolnDeselSN (ObitTableSN *SNTab, olong isuba, olong fqid,
     if (flagIt) { /* flag */
       /* Rewrite record flagged */
       row->status = -1;
-      retCode = ObitTableSNWriteRow (SNTab, loop, row, err);
+      ObitTableSNWriteRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     } /* end if flag */
   } /* End loop over table */
 
   /* Close table */
-  retCode = ObitTableSNClose (SNTab, err);
+  ObitTableSNClose (SNTab, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
   row = ObitTableSNRowUnref (row);  /* Cleanup */
 } /* end ObitUVSolnDeselSN */
@@ -1255,7 +1246,6 @@ void ObitUVSolnDeselCL (ObitTableCL *CLTab, olong isuba, olong fqid,
 			   olong nantf, olong *ants, olong nsou, olong *sources,
 			   ofloat timerange[2], ObitErr* err)
 {
-  ObitIOCode retCode;
   ObitTableCLRow *row=NULL;
   olong   i;
   gboolean allAnt, allSou, flagIt;
@@ -1268,8 +1258,8 @@ void ObitUVSolnDeselCL (ObitTableCL *CLTab, olong isuba, olong fqid,
   if (err->error) return;  /* previous error? */
   g_assert(ObitTableCLIsA(CLTab));
  
- /* Open table */
-  retCode = ObitTableCLOpen (CLTab, OBIT_IO_ReadWrite, err);
+  /* Open table */
+  ObitTableCLOpen (CLTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, CLTab->name);
  
   /* All antennas to be flagged? */
@@ -1290,7 +1280,7 @@ void ObitUVSolnDeselCL (ObitTableCL *CLTab, olong isuba, olong fqid,
   /* Loop through table */
   for (loop=1; loop<=CLTab->myDesc->nrow; loop++) { /* loop 20 */
 
-    retCode = ObitTableCLReadRow (CLTab, loop, row, err);
+    ObitTableCLReadRow (CLTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, CLTab->name);
     if (row->status<0) continue;  /* Skip deselected record */
 
@@ -1310,13 +1300,13 @@ void ObitUVSolnDeselCL (ObitTableCL *CLTab, olong isuba, olong fqid,
     if (flagIt) { /* flag */
       /* Rewrite record flagged */
       row->status = -1;
-      retCode = ObitTableCLWriteRow (CLTab, loop, row, err);
+      ObitTableCLWriteRow (CLTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, CLTab->name);
     } /* end if flag */
   } /* End loop over table */
 
   /* Close table */
-  retCode = ObitTableCLClose (CLTab, err);
+  ObitTableCLClose (CLTab, err);
   if (err->error) Obit_traceback_msg (err, routine, CLTab->name);
   row = ObitTableCLRowUnref (row);  /* Cleanup */
 } /* end ObitUVSolnDeselCL */
@@ -1339,7 +1329,6 @@ void ObitUVSolnDeselBP (ObitTableBP *BPTab, olong isuba, olong fqid,
 			   olong nantf, olong *ants, olong nsou, olong *sources,
 			   ofloat timerange[2], ObitErr* err)
 {
-  ObitIOCode retCode;
   ObitTableBPRow *row=NULL;
   olong   i;
   gboolean allAnt, allSou, flagIt;
@@ -1353,7 +1342,7 @@ void ObitUVSolnDeselBP (ObitTableBP *BPTab, olong isuba, olong fqid,
   g_assert(ObitTableBPIsA(BPTab));
  
  /* Open table */
-  retCode = ObitTableBPOpen (BPTab, OBIT_IO_ReadWrite, err);
+  ObitTableBPOpen (BPTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
  
   /* All antennas to be flagged? */
@@ -1374,7 +1363,7 @@ void ObitUVSolnDeselBP (ObitTableBP *BPTab, olong isuba, olong fqid,
   /* Loop through table */
   for (loop=1; loop<=BPTab->myDesc->nrow; loop++) { /* loop 20 */
 
-    retCode = ObitTableBPReadRow (BPTab, loop, row, err);
+    ObitTableBPReadRow (BPTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
     if (row->status<0) continue;  /* Skip deselected record */
 
@@ -1394,13 +1383,13 @@ void ObitUVSolnDeselBP (ObitTableBP *BPTab, olong isuba, olong fqid,
     if (flagIt) { /* flag */
       /* Rewrite record flagged */
       row->status = -1;
-      retCode = ObitTableBPWriteRow (BPTab, loop, row, err);
+      ObitTableBPWriteRow (BPTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
     } /* end if flag */
   } /* End loop over table */
 
   /* Close table */
-  retCode = ObitTableBPClose (BPTab, err);
+  ObitTableBPClose (BPTab, err);
   if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
   row = ObitTableBPRowUnref (row);  /* Cleanup */
 } /* end ObitUVSolnDeselBP */
@@ -1440,12 +1429,11 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 		    olong nxt, ofloat* work1, ofloat* work2, gboolean doBlank, ObitErr* err) 
 {
   olong   loopa, numtim, ant, numrec, nleft, isnrno=0, itime, 
-    refa1, refa2, n1good, n2good, i, numif, numpol, numant;
+    refa1, refa2, n1good, n2good, i, numpol, numant;
   olong loopr, fstrec, save;
   ofloat    amp, stamp, stph, stMB, stdela, strate, fblank =  ObitMagicF();
-  gboolean  need2, doamp, doph, doMB, dodela, dorate, isVLBI, isVLBIMB;
+  gboolean  need2, doamp, doph, doMB, dodela, dorate;
   odouble   timoff=0.0;
-  ObitIOCode retCode;
   ObitTableSNRow *row=NULL;
   gchar *routine = "ObitUVSolnSNSmooth";
   
@@ -1459,7 +1447,6 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
   if (numrec <= 0) return;   /* bail if nothing */
   
   /* Get descriptive info */
-  numif  = SNTab->numIF;
   numpol = SNTab->numPol;
   numant = SNTab->numAnt;
   
@@ -1474,11 +1461,6 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
   need2 = numpol>1;
   refa1 = 0;
   refa2 = 0;
-
-  /* Any delay/rate smoothing? */
-  isVLBI = (!strncmp(smoType, "VLBI",4)) || (!strncmp(smoType, "VLMB",4)) ||
-    (!strncmp(smoType, "FULL",4));
-  isVLBIMB =  (!strncmp(smoType, "VLMB",4));
 
   doamp = FALSE;
   doph  = FALSE;
@@ -1552,7 +1534,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
     /* Loop in time, reading */
     for (loopr=1; loopr<=nleft; loopr++) { /* loop 100 */
       isnrno = fstrec + loopr;
-      retCode = ObitTableSNReadRow (SNTab, isnrno, row, err);
+      ObitTableSNReadRow (SNTab, isnrno, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
       if (row->status<0) continue;  /* Skip deselected record */
       
@@ -1764,7 +1746,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
       /* Replace with smoothed values */
     for (itime=0; itime<numtim; itime++) { /* loop 200 */
       isnrno = (olong)(work1[9*nxt+itime]+0.5);
-      retCode = ObitTableSNReadRow (SNTab, isnrno, row, err);
+      ObitTableSNReadRow (SNTab, isnrno, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
       if (row->status<0) continue;  /* Skip deselected record */
       
@@ -1824,7 +1806,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
       }
       
       /* Rewrite record */
-      retCode = ObitTableSNWriteRow (SNTab, isnrno, row, err);
+      ObitTableSNWriteRow (SNTab, isnrno, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     } /* end loop rewriting smoothed solutions L200: */;
     /* First SN number of next antenna */
@@ -2470,7 +2452,7 @@ void ObitUVSolnClear (gpointer inn)
     tabtype = g_strdup(in->SNTable->tabType);
     lver    = in->SNTable->tabVer;
     ObitUVZapTable (in->myUV, tabtype, lver, err);
-    if (tabtype) g_free (tabtype); tabtype = NULL;
+    if (tabtype) {g_free (tabtype);} tabtype = NULL;
     ObitUVUpdateTables (in->myUV, err);  /* Update disk header */
   }
   ObitErrLog (err);
@@ -2479,20 +2461,20 @@ void ObitUVSolnClear (gpointer inn)
   in->SNTableRow    = ObitTableSNRowUnref(in->SNTableRow);
   in->CalSel        = ObitUVSelUnref(in->CalSel);
   in->myUV          = ObitUVUnref(in->myUV);
-  if (in->PriorAntTime)  g_free (in->PriorAntTime);  in->PriorAntTime  = NULL;
-  if (in->FollowAntTime) g_free (in->FollowAntTime); in->FollowAntTime = NULL;
-  if (in->CalApply)      g_free (in->CalApply);      in->CalApply      = NULL;
-  if (in->CalPrior)      g_free (in->CalPrior);      in->CalPrior      = NULL;
-  if (in->CalFollow)     g_free (in->CalFollow);     in->CalFollow     = NULL;
-  if (in->IFR)           g_free (in->IFR);           in->IFR           = NULL;
-  if (in->PriorIFR)      g_free (in->PriorIFR);      in->PriorIFR      = NULL;
-  if (in->FollowIFR)     g_free (in->FollowIFR);     in->FollowIFR     = NULL;
-  if (in->MBDelay)       g_free (in->MBDelay);       in->MBDelay       = NULL;
-  if (in->PriorMBDelay)  g_free (in->PriorMBDelay);  in->PriorMBDelay  = NULL;
-  if (in->FollowMBDelay) g_free (in->FollowMBDelay); in->FollowMBDelay = NULL;
-  if (in->RefAnt)        g_free (in->RefAnt);        in->RefAnt        = NULL;
-  if (in->RateFact)      g_free (in->RateFact);      in->RateFact      = NULL;
-  if (in->MissAnt)       g_free (in->MissAnt);       in->MissAnt       = NULL;
+  if (in->PriorAntTime)  {g_free (in->PriorAntTime);}  in->PriorAntTime  = NULL;
+  if (in->FollowAntTime) {g_free (in->FollowAntTime);} in->FollowAntTime = NULL;
+  if (in->CalApply)      {g_free (in->CalApply);}      in->CalApply      = NULL;
+  if (in->CalPrior)      {g_free (in->CalPrior);}      in->CalPrior      = NULL;
+  if (in->CalFollow)     {g_free (in->CalFollow);}     in->CalFollow     = NULL;
+  if (in->IFR)           {g_free (in->IFR);}           in->IFR           = NULL;
+  if (in->PriorIFR)      {g_free (in->PriorIFR);}      in->PriorIFR      = NULL;
+  if (in->FollowIFR)     {g_free (in->FollowIFR);}     in->FollowIFR     = NULL;
+  if (in->MBDelay)       {g_free (in->MBDelay);}       in->MBDelay       = NULL;
+  if (in->PriorMBDelay)  {g_free (in->PriorMBDelay);}  in->PriorMBDelay  = NULL;
+  if (in->FollowMBDelay) {g_free (in->FollowMBDelay);} in->FollowMBDelay = NULL;
+  if (in->RefAnt)        {g_free (in->RefAnt);}        in->RefAnt        = NULL;
+  if (in->RateFact)      {g_free (in->RateFact);}      in->RateFact      = NULL;
+  if (in->MissAnt)       {g_free (in->MissAnt);}       in->MissAnt       = NULL;
  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -2521,7 +2503,6 @@ void ObitUVSolnClear (gpointer inn)
 static void ObitUVSolnNewTime (ObitUVSoln *in, ofloat time,
 			       ObitErr *err)
 {
-  ObitIOCode retCode;
   ofloat mGModI, wt1, wt2;
   ofloat fblank = ObitMagicF();
   olong nblank, i, j, iant, iif, indx, lenEntryPoln, lenEntry, lenEntryAnt;
@@ -2595,7 +2576,7 @@ static void ObitUVSolnNewTime (ObitUVSoln *in, ofloat time,
   for (i= limit; i<=in->numRow; i++) { /* loop 90 */
     irow = i;
     if (i>=in->numRow) readAll = TRUE;  /* Read whole file? */
-    retCode = ObitTableSNReadRow (SNTable, irow, SNTableRow, err);
+    ObitTableSNReadRow (SNTable, irow, SNTableRow, err);
     if (err->error) Obit_traceback_msg (err, routine, "Cal(SN) table");
     if (SNTableRow->status < 0) continue; /* entry flagged? */
 
@@ -2767,7 +2748,6 @@ static olong *refCount (ObitTableSN *SNTab, olong isub,
 		       olong *numtime, ObitErr* err) 
 {
   olong   *antuse=NULL;
-  ObitIOCode retCode;
   olong   iif, iref, numif, numpol, numant=0,sub;
   olong  loop, count;
   ofloat lastTime;
@@ -2799,7 +2779,7 @@ static olong *refCount (ObitTableSN *SNTab, olong isub,
   /* Loop through table */
   for (loop=1; loop<=SNTab->myDesc->nrow; loop++) { /* loop 20 */
 
-    retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+    ObitTableSNReadRow (SNTab, loop, row, err);
     if (err->error) break;
     if (row->status<0) continue;  /* Skip deselected record */
 
@@ -2860,13 +2840,12 @@ refPhase (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
 	  olong mxtime, ofloat* wrktim, ofloat* work1, ofloat* work2, 
 	  ofloat* work3, ofloat* work4, ofloat* work5, ObitErr* err)
 {
-  olong    numtim, numif, numpol, ipnt1, ipnt2, refa1, refa2, isuba, sa;
+  olong    numtim, numpol, ipnt1, ipnt2, refa1, refa2, isuba, sa;
   olong   loop, numrec;
   gboolean   need2, dotwo, done;
   ofloat wt1=0.0, wt2, re1, re2, im1, im2, amp, tre, tim, smotim;
   ofloat fblank =  ObitMagicF();
   odouble timoff=0.0, time, time1, time2;
-  ObitIOCode retCode;
   ObitTableSNRow *row=NULL;
   gchar *routine = "refPhase";
 
@@ -2879,7 +2858,6 @@ refPhase (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
   isuba = MAX (1, isub);
   
   /* Get descriptive info */
-  numif  = SNTab->numIF;
   numpol = SNTab->numPol;
 
   /* Create Row */
@@ -2895,7 +2873,7 @@ refPhase (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
     numtim = 0;
     for (loop=1; loop<=SNTab->myDesc->nrow; loop++) { /* loop 100 */
 
-      retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+      ObitTableSNReadRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
       if (row->status<0) continue;  /* Skip deselected record */
       
@@ -2983,7 +2961,7 @@ refPhase (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
   numrec = SNTab->myDesc->nrow;
   for (loop=1; loop<=numrec; loop++) { /* loop 200 */
     
-    retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+    ObitTableSNReadRow (SNTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     if (row->status<0) continue;  /* Skip deselected record */
 
@@ -3080,7 +3058,7 @@ refPhase (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
       }
       
       /* Rewrite record */
-      retCode = ObitTableSNWriteRow (SNTab, loop, row, err);
+      ObitTableSNWriteRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     } /* end of if correct subarray */
   } /* end loop  L200: */;
@@ -3111,13 +3089,12 @@ refMBDelay (ObitTableSN *SNTab, olong isub, olong refa, olong ant,
 	  olong mxtime, ofloat* wrktim, ofloat* work1, ofloat* work2, 
 	  ofloat* work4, ObitErr* err)
 {
-  olong    numtim, numif, numpol, ipnt1, ipnt2, refa1, refa2, isuba, sa;
+  olong    numtim, numpol, ipnt1, ipnt2, refa1, refa2, isuba, sa;
   olong   loop, numrec;
   gboolean   need2, dotwo, done, gotAny=FALSE;
   ofloat wt1=0.0, wt2, de1, de2, smotim;
   ofloat fblank =  ObitMagicF();
   odouble timoff=0.0, time, time1, time2;
-  ObitIOCode retCode;
   ObitTableSNRow *row=NULL;
   gchar *routine = "refMBDelay";
 
@@ -3130,7 +3107,6 @@ refMBDelay (ObitTableSN *SNTab, olong isub, olong refa, olong ant,
   isuba = MAX (1, isub);
   
   /* Get descriptive info */
-  numif  = SNTab->numIF;
   numpol = SNTab->numPol;
 
   /* Create Row */
@@ -3146,7 +3122,7 @@ refMBDelay (ObitTableSN *SNTab, olong isub, olong refa, olong ant,
     numtim = 0;
     for (loop=1; loop<=SNTab->myDesc->nrow; loop++) { /* loop 100 */
 
-      retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+      ObitTableSNReadRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
       if (row->status<0) continue;  /* Skip deselected record */
       
@@ -3226,7 +3202,7 @@ refMBDelay (ObitTableSN *SNTab, olong isub, olong refa, olong ant,
   numrec = SNTab->myDesc->nrow;
   for (loop=1; loop<=numrec; loop++) { /* loop 200 */
     
-    retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+    ObitTableSNReadRow (SNTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     if (row->status<0) continue;  /* Skip deselected record */
     
@@ -3289,7 +3265,7 @@ refMBDelay (ObitTableSN *SNTab, olong isub, olong refa, olong ant,
       }
       
       /* Rewrite record */
-      retCode = ObitTableSNWriteRow (SNTab, loop, row, err);
+      ObitTableSNWriteRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     } /* end of if correct subarray */
   } /* end loop  L200: */;
@@ -3321,13 +3297,12 @@ refDelay (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
 	  olong mxtime, ofloat* wrktim, ofloat* work1, ofloat* work2, 
 	  ofloat* work4, ObitErr* err)
 {
-  olong    numtim, numif, numpol, ipnt1, ipnt2, refa1, refa2, isuba, sa;
+  olong    numtim, numpol, ipnt1, ipnt2, refa1, refa2, isuba, sa;
   olong   loop, numrec;
   gboolean   need2, dotwo, done, gotAny=FALSE;
   ofloat wt1=0.0, wt2, de1, de2, smotim;
   ofloat fblank =  ObitMagicF();
   odouble timoff=0.0, time, time1, time2;
-  ObitIOCode retCode;
   ObitTableSNRow *row=NULL;
   gchar *routine = "refDelay";
 
@@ -3340,7 +3315,6 @@ refDelay (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
   isuba = MAX (1, isub);
   
   /* Get descriptive info */
-  numif  = SNTab->numIF;
   numpol = SNTab->numPol;
 
   /* Create Row */
@@ -3356,7 +3330,7 @@ refDelay (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
     numtim = 0;
     for (loop=1; loop<=SNTab->myDesc->nrow; loop++) { /* loop 100 */
 
-      retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+      ObitTableSNReadRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
       if (row->status<0) continue;  /* Skip deselected record */
       
@@ -3436,7 +3410,7 @@ refDelay (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
   numrec = SNTab->myDesc->nrow;
   for (loop=1; loop<=numrec; loop++) { /* loop 200 */
     
-    retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+    ObitTableSNReadRow (SNTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     if (row->status<0) continue;  /* Skip deselected record */
     
@@ -3500,7 +3474,7 @@ refDelay (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
       }
       
       /* Rewrite record */
-      retCode = ObitTableSNWriteRow (SNTab, loop, row, err);
+      ObitTableSNWriteRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     } /* end of if correct subarray */
   } /* end loop  L200: */;
@@ -3532,13 +3506,12 @@ refRate (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
 	  olong mxtime, ofloat* wrktim, ofloat* work1, ofloat* work2, 
 	  ofloat* work4, ObitErr* err)
 {
-  olong    numtim, numif, numpol, ipnt1, ipnt2, refa1, refa2, isuba, sa;
+  olong    numtim, numpol, ipnt1, ipnt2, refa1, refa2, isuba, sa;
   olong   loop, numrec;
   gboolean   need2, dotwo, done, gotAny=FALSE;
   ofloat wt1=0.0, wt2, de1, de2, smotim;
   ofloat fblank =  ObitMagicF();
   odouble timoff=0.0, time, time1, time2;
-  ObitIOCode retCode;
   ObitTableSNRow *row=NULL;
   gchar *routine = "refRate";
 
@@ -3551,7 +3524,6 @@ refRate (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
   isuba = MAX (1, isub);
   
   /* Get descriptive info */
-  numif  = SNTab->numIF;
   numpol = SNTab->numPol;
 
   /* Create Row */
@@ -3567,7 +3539,7 @@ refRate (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
     numtim = 0;
     for (loop=1; loop<=SNTab->myDesc->nrow; loop++) { /* loop 100 */
 
-      retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+      ObitTableSNReadRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
       if (row->status<0) continue;  /* Skip deselected record */
       
@@ -3647,7 +3619,7 @@ refRate (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
   numrec = SNTab->myDesc->nrow;
   for (loop=1; loop<=numrec; loop++) { /* loop 200 */
     
-    retCode = ObitTableSNReadRow (SNTab, loop, row, err);
+    ObitTableSNReadRow (SNTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     if (row->status<0) continue;  /* Skip deselected record */
     
@@ -3711,7 +3683,7 @@ refRate (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
       }
       
       /* Rewrite record */
-      retCode = ObitTableSNWriteRow (SNTab, loop, row, err);
+      ObitTableSNWriteRow (SNTab, loop, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
     } /* end of if correct subarray */
   } /* end loop  L200: */;

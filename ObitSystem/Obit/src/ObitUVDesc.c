@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -212,11 +212,11 @@ ObitUVDesc* ObitUVDescCopy (ObitUVDesc* in, ObitUVDesc* out, ObitErr *err)
   out->info = ObitInfoListCopyData (in->info,out->info );
   
   /* Release frequency related arrays - use ObitUVDescGetFreq to rebuild */
-  if (out->freqArr)  g_free(out->freqArr);  out->freqArr = NULL;
-  if (out->fscale)   g_free(out->fscale);   out->fscale = NULL;
-  if (out->freqIF)   g_free(out->freqIF);   out->freqIF = NULL;
-  if (out->chIncIF)  g_free(out->chIncIF);  out->chIncIF = NULL;
-  if (out->sideband) g_free(out->sideband); out->sideband = NULL;
+  if (out->freqArr)  {g_free(out->freqArr);}  out->freqArr = NULL;
+  if (out->fscale)   {g_free(out->fscale);}   out->fscale = NULL;
+  if (out->freqIF)   {g_free(out->freqIF);}   out->freqIF = NULL;
+  if (out->chIncIF)  {g_free(out->chIncIF);}  out->chIncIF = NULL;
+  if (out->sideband) {g_free(out->sideband);} out->sideband = NULL;
 
   /* index output */
   ObitUVDescIndex (out);
@@ -283,7 +283,7 @@ void ObitUVDescCopyDesc (ObitUVDesc* in, ObitUVDesc* out,
    for (i=0; i<UVLEN_KEYWORD; i++) out->ptype[j][i] = in->ptype[j][i];
   }*/
 
-  if (in->chIncIF)  g_free(in->chIncIF);  in->chIncIF = NULL;
+  if (in->chIncIF)  {g_free(in->chIncIF);}  in->chIncIF = NULL;
   /* index output */
   ObitUVDescIndex (out);
 
@@ -520,11 +520,11 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* release old memory if necessary */
-  if (in->freqArr)  g_free(in->freqArr);  in->freqArr = NULL;
-  if (in->fscale)   g_free(in->fscale);   in->fscale = NULL;
-  if (in->freqIF)   g_free(in->freqIF);   in->freqIF = NULL;
-  if (in->chIncIF)  g_free(in->chIncIF);  in->chIncIF = NULL;
-  if (in->sideband) g_free(in->sideband); in->sideband = NULL;
+  if (in->freqArr)  {g_free(in->freqArr);}  in->freqArr = NULL;
+  if (in->fscale)   {g_free(in->fscale);}   in->fscale = NULL;
+  if (in->freqIF)   {g_free(in->freqIF);}   in->freqIF = NULL;
+  if (in->chIncIF)  {g_free(in->chIncIF);}  in->chIncIF = NULL;
+  if (in->sideband) {g_free(in->sideband);} in->sideband = NULL;
 
   /* how big */
   nfreq = 1;
@@ -1539,13 +1539,13 @@ void ObitUVDescClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* free this class members */
-  if (in->info) ObitInfoListUnref (in->info); in->info = NULL;
-  if (in->freqArr)  g_free(in->freqArr);  in->freqArr = NULL;
-  if (in->fscale)   g_free(in->fscale);   in->fscale  = NULL;
-  if (in->freqIF)   g_free(in->freqIF);   in->freqIF  = NULL;
-  if (in->chIncIF)  g_free(in->chIncIF);  in->chIncIF = NULL;
-  if (in->sideband) g_free(in->sideband); in->sideband= NULL;
-  if (in->numAnt)   g_free(in->numAnt);   in->numAnt  = NULL;
+  if (in->info) {ObitInfoListUnref (in->info);} in->info = NULL;
+  if (in->freqArr)  {g_free(in->freqArr);}  in->freqArr = NULL;
+  if (in->fscale)   {g_free(in->fscale);}   in->fscale  = NULL;
+  if (in->freqIF)   {g_free(in->freqIF);}   in->freqIF  = NULL;
+  if (in->chIncIF)  {g_free(in->chIncIF);}  in->chIncIF = NULL;
+  if (in->sideband) {g_free(in->sideband);} in->sideband= NULL;
+  if (in->numAnt)   {g_free(in->numAnt);}   in->numAnt  = NULL;
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

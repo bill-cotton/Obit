@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Display widget for images for ObitView allows zoom and scroll       */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2016
+*  Copyright (C) 1996,1997,1999,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -212,10 +212,10 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
 		    int iYpos, int Width, int Height)
 {
   olong xinc, yinc, xrep, yrep, ix, iy, iix=0, iiy, i, j;
-  olong yaddr, addr, nxin, nxout, xMin, xMax, yMin, yMax, ival;
+  olong yaddr, addr, nxin, xMin, xMax, yMin, yMax, ival;
   unsigned long cval;
   XImage *work;
-  gchar *pixarray, *gpharray, *work_data;
+  gchar *pixarray, *gpharray;
   
   /*  debug */
   /*  Dimension cwid,chei;
@@ -245,8 +245,6 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
   gpharray = image[CurImag].gpharray;
   nxin = image[CurImag].nxArray;
   work = IDdata->work;
-  nxout = work->bytes_per_line;
-  work_data = work->data;
   /* set increment, multiples in pixel array */
   if (IDdata->zoom>=1) /* no zoom or zoom in */
     { xinc = 1;
@@ -553,7 +551,7 @@ void SetDisplay (ImageDisplay* IDdata)
 void PaintImage (ImageDisplay* IDdata)
 {
   olong nXDIB, nYDIB, iZoom, iSrcWid, iSrcHei, iXHalf, iYHalf;
-  olong iXSize, iYSize, iXPos, iYPos, iXPage, iYPage;
+  olong iXSize, iYSize, iXPos, iYPos;
   Dimension cWidth, cHeight;
   olong i, ch1;
   gchar TitleString[501], *cptr;
@@ -629,8 +627,6 @@ void PaintImage (ImageDisplay* IDdata)
   iXSize = max (iXSize, 1);
   iYSize = max (iYSize, 1);
   /* "page" size for scrolling */
-  iXPage = iSrcWid;
-  iYPage = iSrcHei;
   iXPos = IDdata->scrollx - iXHalf;
   iYPos = IDdata->scrolly - iYHalf;
   iXPos = max (iXPos, 0);
@@ -997,7 +993,7 @@ int FitPos(ImageDisplay *IDdata)
 { 
   olong iXcen, iYcen, iX, iY, iXp, iYp;
   ofloat data[9][9], fblank;
-  olong pos[7] = {0, 0, 0, 0, 0, 0, 0}, ndim;
+  olong pos[7] = {0, 0, 0, 0, 0, 0, 0};
   ofloat s, dx[2], pixval=0.0, *pixP;
   Display *dpy = XtDisplay(IDdata->canvas);
  
@@ -1005,7 +1001,6 @@ int FitPos(ImageDisplay *IDdata)
   if (!image[CurImag].valid) return 0;
   if (!image[CurImag].myDesc) return 0;
 
-  ndim=image[CurImag].myDesc->naxis;
   iXcen = image[CurImag].iXPixel;
   iYcen = image[CurImag].iYPixel;
   fblank = ObitMagicF();
@@ -1079,7 +1074,7 @@ void UpdateInfo (ImageDisplay *IDdata)
       XtSetValues (IDdata->Info5, wargs, 1);
       XtSetValues (IDdata->Info6, wargs, 1);
       XtSetValues (IDdata->Info7, wargs, 1);
-      if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+      if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
       return;
     } /* end blank info area */
   /* return OK if no valid image */
@@ -1102,7 +1097,7 @@ void UpdateInfo (ImageDisplay *IDdata)
   wierdstring = XmStringCreateSimple (jerkstring);
   XtSetArg (wargs[0], XmNlabelString, wierdstring);
   XtSetValues (IDdata->Info1, wargs, 1);
-  if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+  if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   
   /*  get flux */
   fblank = ObitMagicF();
@@ -1138,7 +1133,7 @@ void UpdateInfo (ImageDisplay *IDdata)
   wierdstring = XmStringCreateSimple (jerkstring);
   XtSetArg (wargs[0], XmNlabelString, wierdstring);
   XtSetValues (IDdata->Info2, wargs, 1);
-  if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+  if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   
   /* celestial position */
   /* equinox is line 3 */
@@ -1151,7 +1146,7 @@ void UpdateInfo (ImageDisplay *IDdata)
   wierdstring = XmStringCreateSimple (jerkstring);
   XtSetArg (wargs[0], XmNlabelString, wierdstring);
   XtSetValues (IDdata->Info3, wargs, 1);
-  if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+  if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   
   /*  Get position */
   pix[0] = image[CurImag].fXpixel+1.0; 
@@ -1189,7 +1184,7 @@ void UpdateInfo (ImageDisplay *IDdata)
 	XmStringCreateSimple (label[0]);
       XtSetArg (wargs[0], XmNlabelString, wierdstring);
       XtSetValues (IDdata->Info4, wargs, 1);
-      if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+      if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
       
       /* write fifth line (second axis) */
       if (ndim>=2) 
@@ -1197,7 +1192,7 @@ void UpdateInfo (ImageDisplay *IDdata)
 	   XmStringCreateSimple (label[1]);
 	XtSetArg (wargs[0], XmNlabelString, wierdstring);
 	XtSetValues (IDdata->Info5, wargs, 1);
-	if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;}
+	if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;}
       
       /* write sixth line (third axis) */
       if (ndim>=3) 
@@ -1205,7 +1200,7 @@ void UpdateInfo (ImageDisplay *IDdata)
 	   XmStringCreateSimple (label[2]);
 	XtSetArg (wargs[0], XmNlabelString, wierdstring);
 	XtSetValues (IDdata->Info6, wargs, 1);
-	if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;}
+	if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;}
     }}
   else {  /* invalid position */
     g_snprintf (jerkstring, 100, "invalid pixel");
@@ -1214,7 +1209,7 @@ void UpdateInfo (ImageDisplay *IDdata)
       XmStringCreateSimple (jerkstring);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (IDdata->Info3, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   }  /* end of give position on invalid */
   /*  fitted or current? */
   if (image[CurImag].iFitted>0) /* fitted values */
@@ -1229,7 +1224,7 @@ void UpdateInfo (ImageDisplay *IDdata)
     XmStringCreateSimple (jerkstring);
   XtSetArg (wargs[0], XmNlabelString, wierdstring);
   XtSetValues (IDdata->Info7, wargs, 1);
-  if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+  if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
 } /* end UpdateInfo */
 
 /* call backs for zoom */

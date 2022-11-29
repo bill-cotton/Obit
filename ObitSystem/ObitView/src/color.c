@@ -1,7 +1,7 @@
 /* $Id$ */
 /*    Colormap functions for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1998,1999, 2002-2008
+*  Copyright (C) 1996,1998,1999, 2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -147,7 +147,7 @@ void SetupColorMap (Widget shell, ImageDisplay *IDdata)
     IDdata->coltab[i] = IDdata->colut[i];
     IDdata->colors[i].pixel = IDdata->colut[i];
     }
-    if (Colors) XtFree ((XtPointer) Colors); Colors = NULL;
+    if (Colors) {XtFree ((XtPointer) Colors);} Colors = NULL;
     return;
     } 
   */
@@ -155,7 +155,7 @@ void SetupColorMap (Widget shell, ImageDisplay *IDdata)
   /* Need true color? Have to repaint the screen.*/
   if (IDdata->trueColor) {
     RGB2Pixel(Colors, IDdata); /* compute pixel values */
-    if (Colors) XtFree ((XtPointer) Colors); Colors = NULL; /* no longer need this */
+    if (Colors) {XtFree ((XtPointer) Colors);} Colors = NULL; /* no longer need this */
     ResetColCB (IDdata->display, (XtPointer)IDdata, NULL);
     return;
   } /* end true color */
@@ -185,7 +185,7 @@ void SetupColorMap (Widget shell, ImageDisplay *IDdata)
 			       &visual_info))
 	  {  /* Oh bother */
 	    MessageShow ("No PseudoColor(8 bit) or TrueColor(24 bit) visual available, I cannot cope!");
-	    if (Colors) XtFree ((XtPointer) Colors); Colors = NULL;
+	    if (Colors) {XtFree ((XtPointer) Colors);} Colors = NULL;
 	    return;
 	  }
 	/* MessageShow ("A TrueColor(24 bit) visual is available, will use it."); */
@@ -200,7 +200,7 @@ void SetupColorMap (Widget shell, ImageDisplay *IDdata)
 	  XCreateColormap (dpy, XtWindow(IDdata->canvas), visual_info.visual, AllocAll);
 	if (!IDdata->cmap) {
 	  MessageShow ("Could not create colormap");
-	  if (Colors) XtFree ((XtPointer) Colors); Colors = NULL;
+	  if (Colors) {XtFree ((XtPointer) Colors);} Colors = NULL;
 	  return;}
 	/* Copy as much of the default color table as possible */
 	for (i = 0; i < ncolor; i++) {
@@ -257,7 +257,7 @@ void SetupColorMap (Widget shell, ImageDisplay *IDdata)
   else
     XStoreColors (dpy, IDdata->cmap, Colors, IDdata->ncolors);
   
-  if (Colors) XtFree ((XtPointer) Colors); Colors = NULL;
+  if (Colors) {XtFree ((XtPointer) Colors);} Colors = NULL;
   
   /* reset sliders */
   IDdata->value[0] = 128; IDdata->value[1]=128;
@@ -315,7 +315,7 @@ void SetColorTable (ImageDisplay* IDdata)
   
   /* Don't bother if no colormap */
   if (!IDdata->cmap) {
-    if (colors) XtFree ((XtPointer) colors); colors = NULL;
+    if (colors) {XtFree ((XtPointer) colors);} colors = NULL;
     return;}
   
   /* allocate colors */
@@ -326,7 +326,7 @@ void SetColorTable (ImageDisplay* IDdata)
     XStoreColors (dpy, IDdata->cmap, colors, IDdata->ncolors);
   }
   
-  if (colors) XtFree ((XtPointer) colors);  colors = NULL;
+  if (colors) {XtFree ((XtPointer) colors);}  colors = NULL;
   return;
 }  /* end of SetColorTable */
 
@@ -636,6 +636,6 @@ void InitGraphColor(ImageDisplay* IDdata)
    }
    
    /* Cleanup */
-   if (colors) XtFree ((XtPointer) colors);  colors = NULL;
+   if (colors) {XtFree ((XtPointer) colors);}  colors = NULL;
    
  } /* end InitGraphColor */

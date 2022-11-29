@@ -3,7 +3,7 @@
 /* adopted from "Power programming Motif" by E. F. Johnson and
    K. Reichard, 1993, MIS Press, New York */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2016
+*  Copyright (C) 1998-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -129,7 +129,7 @@ Boolean HelpBoxCreate (Widget parent,
   textWid = 80*cwid;
   textHei = 20*chei;
   
-  if (gc) XFreeGC(XtDisplay(parent), gc); gc = NULL;
+  if (gc) {XFreeGC(XtDisplay(parent), gc);} gc = NULL;
   
   n = 0;
   XtSetArg(args[n], XmNallowResize, True); n++;
@@ -254,7 +254,7 @@ void HelpBoxAddTopic (char* topic) {
   
   xmstring = XmStringCreateSimple(topic);
   XmListAddItemUnselected(help_topic, xmstring, 0); /* add to end */
-  if (xmstring) XmStringFree(xmstring); xmstring = NULL;/* release structure */ 
+  if (xmstring) {XmStringFree(xmstring);} xmstring = NULL;/* release structure */ 
 } /* end HelpBoxAddTopic */
 
 /**
@@ -308,7 +308,7 @@ void HelpBoxShowTopic( char* topic) {
   if (XtIsRealized (help_text)) XtMapWidget(help_text);
   
   
-  if (xmstring) XmStringFree(xmstring); xmstring = NULL;/* release structure */
+  if (xmstring) {XmStringFree(xmstring);} xmstring = NULL;/* release structure */
 } /* end HelpBoxAddTopic */
 
 
@@ -370,7 +370,7 @@ void HelpBoxSelectCB(Widget parent, XtPointer clientData, XtPointer callData) {
   /* display */
   HelpBoxSetText(topic_text[topic]);
   
-  if (string) XtFree(string); string = NULL;/* free string */ 
+  if (string) {XtFree(string);} string = NULL;/* free string */ 
 } /* end MakeHelpBox */
 
 /**

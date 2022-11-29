@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -266,7 +266,7 @@ ObitTable* ObitTableZap (ObitTable *in, ObitErr *err)
 
   in->myIO = ObitIOUnref(in->myIO);       /*  delete IO */
   in->info = ObitInfoListUnref(in->info);  /* delete infoList */
-  if (in->buffer) ObitIOFreeBuffer(in->buffer); in->buffer = NULL;  /* Delete Buffer*/
+  if (in->buffer) {ObitIOFreeBuffer(in->buffer);} in->buffer = NULL;  /* Delete Buffer*/
 
   /* Get memory resident bits as well - loop until truely deleted
   Bad Idea while (in->ReferenceCount>1) ObitTableUnref(in);*/
@@ -314,9 +314,9 @@ ObitTable* ObitTableCopy (ObitTable *in, ObitTable *out, ObitErr *err)
     /* derive object name */
     outName = g_strconcat ("Copy: ",in->name,NULL);
     out = newObitTable(outName);
-    if (outName) g_free(outName); outName = NULL;
-    if (out->tabType) g_free(out->tabType); out->tabType = NULL;
-    if (in->tabType) out->tabType = g_strdup(in->tabType);
+    if (outName)      {g_free(outName);}      outName = NULL;
+    if (out->tabType) {g_free(out->tabType);} out->tabType = NULL;
+    if (in->tabType)  out->tabType = g_strdup(in->tabType);
  }
 
   /* deep copy any base class members */
@@ -431,7 +431,7 @@ ObitTable* ObitTableClone  (ObitTable *in, ObitTable *out)
     if (strncmp("Clone", in->name, 5)) outName = g_strconcat ("Clone: ",in->name,NULL);
     else                               outName = g_strconcat (in->name,NULL);
     out = newObitTable(outName);
-    if (outName) g_free(outName); outName = NULL;
+    if (outName) {g_free(outName);} outName = NULL;
   }
 
   /* shallow copy any parent class members */
@@ -456,7 +456,7 @@ ObitTable* ObitTableClone  (ObitTable *in, ObitTable *out)
 		    routine, out->name);
    ObitErrLog (err);
    err = ObitErrUnref(err);
-   if (out->tabType) g_free(out->tabType); out->tabType = NULL;
+   if (out->tabType) {g_free(out->tabType);} out->tabType = NULL;
    if (in->tabType) out->tabType = g_strdup(in->tabType);
 
    /* Secret reference to host */
@@ -762,7 +762,7 @@ ObitIOCode ObitTableClose (ObitTable *in, ObitErr *err)
     Obit_traceback_val (err, routine, in->name, retCode);
 
   /* Delete buffer */
-  if (in->buffer)  ObitIOFreeBuffer(in->buffer); in->buffer = NULL;
+  if (in->buffer)  {ObitIOFreeBuffer(in->buffer);} in->buffer = NULL;
   in->bufferSize = 0; 
 
   /* set Status */
@@ -1529,7 +1529,7 @@ void ObitTableClear (gpointer inn)
   in->mySel  = ObitTableSelUnref(in->mySel);
   /* myHost a secret reference don't unreference */ 
   if (in->buffer)  ObitIOFreeBuffer(in->buffer); 
-  if (in->tabType) g_free(in->tabType); in->tabType = NULL;
+  if (in->tabType) {g_free(in->tabType);} in->tabType = NULL;
  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

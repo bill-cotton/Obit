@@ -92,13 +92,13 @@ gchar szErrMess[120];
  */
 int main ( int argc, char **argv ) 
 {
-  Widget       mainWindow, menu, control, form;
-  /*Widget       toolbox;*/
+  Widget       mainWindow, control, form;
+  /*Widget       toolbox, menu;*/
   ImageData    image;
   ImageDisplay *IDdata;
   Arg          args[10];
   olong         n, user;
-  guint dbug;
+  /*guint dbug;*/
   pthread_t    thread[2];
   pthread_attr_t thread_attr[2];
   ObitSystem *mySystem=NULL;
@@ -171,11 +171,12 @@ int main ( int argc, char **argv )
   /* Initialize Obit error/message */
   err = newObitErr();
   /* Set handler so that Obit messages appear in Message Box */
-  dbug = g_log_set_handler (NULL,  G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL |
-			    G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_MESSAGE |
-			    G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG |
-			    G_LOG_FLAG_RECURSION, 
-			    (GLogFunc)MessageObitHandler, NULL);
+  /*dbug = */
+  g_log_set_handler (NULL,  G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL |
+		     G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_MESSAGE |
+		     G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG |
+		     G_LOG_FLAG_RECURSION, 
+		     (GLogFunc)MessageObitHandler, NULL);
    /* Initialize Obit */
   user = 1;
   mySystem = ObitSystemStartup ("", 1, user, 1, AIPSdir, 1, FITSdir, 
@@ -199,8 +200,8 @@ int main ( int argc, char **argv )
 		NULL);
   
   /*  make main menu */
-  menu = MakeMainMenu (mainWindow, (XtPointer)&image, 
-		       (XtPointer)IDdata);
+  /*menu = */
+  MakeMainMenu (mainWindow, (XtPointer)&image, (XtPointer)IDdata);
   
   /*  save some widget names - this doesn't seem necessary
   XtVaSetValues ( mainWindow, XmNmenuBar, menu, NULL ); */
@@ -335,7 +336,7 @@ void InitImage (ImageDisplay *IDdata, olong narg, gchar *filename)
   j = strlen(filename);
   k = 0;
   for (i=0;i<j;i++) if (filename[i]=='/') k = i+1;
-  for (i=0;i<k;i++) direct[i]=filename[i]; direct[i]=0;
+  for (i=0;i<k;i++) {direct[i]=filename[i];} direct[i]=0;
   FITS_dir = MakeFStrng(direct);
   PaintImage(IDdata); /* draw image */
 } /* end of InitImage */

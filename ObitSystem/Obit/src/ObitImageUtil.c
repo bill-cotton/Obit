@@ -996,7 +996,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   olong cuda_device=0; /* default GPU number*/
   olong i, j, ip, pln, ifacet, nfacet, nplane=1, nImage, nGain=0, *gainUse=NULL, gain;
   olong plane[5], NPIO, oldNPIO, *arrayNx=NULL, *arrayNy=NULL;
-  olong doCalib = 0, norder, iorder, bmInc=1;
+  olong doCalib = 0, norder, iorder, nadd=0, bmInc=1;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1035,8 +1035,10 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   /* How many to do */
   norder = imgClass->ObitImageGetBeamOrder(outImage[0]); /* No. orders of beam */
   nImage = nPar;
-  if (doBeam) nImage += (norder+1)*nImage;  /* Doing Beams as well? */
-  else {
+  if (doBeam) {
+    nImage += (norder+1)*nImage;  /* Doing Beams as well? */
+    bmInc = 2;  /* increment in grids array */
+  } else {
     /* Add number of images without a beam  */
     for (j=0; j<nPar; j++) {
       sumwts = 0.0;
@@ -1044,6 +1046,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       if ((theBeam==NULL) ||
 	  !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, &sumwts)) {
 	nImage += (norder+1);
+	nadd++;  /* How many beams being added */
       }
     }
   }
@@ -1070,7 +1073,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   if (err->error) goto cleanup;
   
   /* Loop over images creating things */
-  ip = 0;
+  ip = 0; ifacet = 0;
   for (j=0; j<nPar; j++) {
     
     /*  Open image ReadOnly to get proper descriptor, pixel array */
@@ -1115,7 +1118,6 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
     /* Arrays -  Need set for the Beam? */
     if (doBeam || forceBeam) {
-      bmInc = 2;  /* increment in grids array */
       /* Ensure beam image OK */
       theBeam->image = ObitImageUnref(theBeam->image);  /* No buffer needed here */
       ObitImageOpen (theBeam, OBIT_IO_WriteOnly, err);
@@ -1200,14 +1202,15 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     /* GPU Info on first grid */
     if (doGPUGrid) {
       myGrid = grids[0];  /* All CUDA info on grids[0]->gridInfo->cudaInfo */
-      ifacet = j; nfacet = nPar;
-      if (doBeam) {nfacet *= 2; ifacet *=2;}
+      nfacet = nPar;
+      if (doBeam) nfacet *= 2;
+      else        nfacet += nadd;
       if ((j==0) || (myGrid->gridInfo==NULL)) {  /* Init first facet */
 	myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)outImage[0], inUV);
 	myGrid->doGPUGrid = doGPUGrid; myGrid->cuda_device = cuda_device;
       }
       /* Also beam? Beam preceeds image */
-      if (doBeam) {
+      if (doBeam || forceBeam) {
 	theBeam = (ObitImage*)outImage[j]->myBeam; 
 	theBeam->myGrid = ObitUVGridRef(outImage[j]->myGrid);  /* Link grid info */
 	beamGrid = (ObitUVGrid*)theBeam->myGrid;
@@ -1223,6 +1226,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       ObitGPUGridSetGPUStruct(myGrid->gridInfo, (Obit*)grids[j*bmInc],  chDone,
 			      ifacet, nfacet, nplane, inUV, (Obit*)outImage[j], 
 			      FALSE, err);
+      ifacet++;
       if (err->error) Obit_traceback_msg (err, routine, outImage[j]->name);
       myGrid->gridInfo->cudaInfo->cuda_device = cuda_device;
       myGrid->gridInfo->cudaInfo->gpu_memory = (size_t)gpumem;

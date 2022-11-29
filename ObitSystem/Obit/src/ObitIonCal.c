@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2013                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1263,11 +1263,11 @@ void ObitIonCalPosMosaic (ObitIonCal *in, ObitImageMosaic* mosaic,
   }
 
  cleanup:
-  if (x)    g_free(x);  x =NULL;
-  if (y)    g_free(y);  y =NULL;
-  if (dx)   g_free(dx); dx=NULL;
-  if (dy)   g_free(dy); dy=NULL;
-  if (w)    g_free(w);  w =NULL;
+  if (x)    {g_free(x);}  x =NULL;
+  if (y)    {g_free(y);}  y =NULL;
+  if (dx)   {g_free(dx);} dx=NULL;
+  if (dy)   {g_free(dy);} dy=NULL;
+  if (w)    {g_free(w);}  w =NULL;
   if (isou) g_free(isou);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
@@ -1659,7 +1659,6 @@ FindCalImage (ObitImage *image, gchar *Catalog, olong catDisk,
   olong bad, calNo, ierr, epoch=0;
   ofloat shift[2], pixel[2], offset[2]={0.0,0.0}, peak=0.0, fint=0.0, wt=0.0;
   ofloat ZernXY[2];
-  ObitIOCode retCode;
   ObitImageDesc *desc=NULL;
   ObitImage *VZImage=NULL;
   ObitTableVZ *VZTable=NULL;
@@ -1733,7 +1732,7 @@ FindCalImage (ObitImage *image, gchar *Catalog, olong catDisk,
   count = 0;
   for (irow= 1; irow<=nrows; irow++) { /* loop 500 */
     /* read */
-    retCode = ObitTableVZReadRow (VZTable, irow, VZRow, err);
+    ObitTableVZReadRow (VZTable, irow, VZRow, err);
     if (err->error) Obit_traceback_msg (err, routine, VZTable->name);
    
     /* spectral scaling of flux density */
@@ -1812,7 +1811,7 @@ FindCalImage (ObitImage *image, gchar *Catalog, olong catDisk,
 
   /* Close up */
   ObitImageClose(VZImage, err);
-  retCode = ObitTableVZClose(VZTable, err);
+  ObitTableVZClose(VZTable, err);
   if (err->error) Obit_traceback_msg (err, routine, VZTable->name);
   VZImage->image = ObitImageUnref(VZImage->image);   /* Free buffer */
 
@@ -2127,7 +2126,6 @@ LookupCals (ObitIonCal *in, ObitImageMosaic *mosaic, CalList *calList,
   olong blc[IM_MAXDIM] = {1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0};
   olong ver, nrows, irow;
-  ObitIOCode retCode;
   ObitImage *VZImage=NULL;
   ObitTableVZ *VZTable=NULL;
   ObitTableVZRow *VZRow=NULL;
@@ -2210,7 +2208,7 @@ LookupCals (ObitIonCal *in, ObitImageMosaic *mosaic, CalList *calList,
   count = 0;
   for (irow= 1; irow<=nrows; irow++) { /* loop 500 */
     /* read */
-    retCode = ObitTableVZReadRow (VZTable, irow, VZRow, err);
+    ObitTableVZReadRow (VZTable, irow, VZRow, err);
     if (err->error) goto cleanup;
    
     /* spectral scaling of flux density */
@@ -2280,7 +2278,7 @@ LookupCals (ObitIonCal *in, ObitImageMosaic *mosaic, CalList *calList,
 
   /* Close up */
   ObitImageClose(VZImage, err);
-  retCode = ObitTableVZClose(VZTable, err);
+  ObitTableVZClose(VZTable, err);
   if (err->error) goto cleanup;
   /* clean up */
  cleanup: VZImage = ObitImageUnref(VZImage);
@@ -3098,7 +3096,7 @@ finalIonModel (olong nobs, olong nsou, olong nTime, olong maxcoe, olong* isou,
 	       ofloat* soffx, ofloat* soffy, ofloat** coef, 
 	       olong prtLv, ObitErr* err) 
 {
-  olong   i, j, k, it, is, itim, rmscnt, numobs, numprm, itlast, itb, ite, js, ntgood;
+  olong   i, j, k, it, itim, rmscnt, numobs, numprm, itlast, itb, ite, js, ntgood;
   ofloat rms, dr, dd, rx, ry;
   ofloat *tcoef=NULL, *gdx=NULL, *gdy=NULL;
   gchar *routine = "finalIonModel";
@@ -3142,7 +3140,6 @@ finalIonModel (olong nobs, olong nsou, olong nTime, olong maxcoe, olong* isou,
   for (i=0; i<nobs; i++) { /* loop 200 */
     it = iTime[i];
     if ((it > 0)  &&  (ncoef[it] > 0)) {
-      is = isou[i];
       ite = i-1;
       /* New time? */
       if (it != itlast) {
@@ -4518,7 +4515,7 @@ static void zerrot (odouble ra, odouble dec, ofloat xshift, ofloat yshift,
   
   /* simple shifts */
   xdec = dec + yshift;
-  xxinc = cos (DG2RAD * dec);
+  xxinc = cos (DG2RAD * xdec);
   if (xxinc != 0) {
     xra = ra + xshift / xxinc;
   } else {
@@ -4915,7 +4912,6 @@ static void CalBadTime (ObitIonCal *in, ObitImageMosaic* mosaic,
 {
   olong   field;
   ofloat offset[2], peak, fint, wt;
-  ObitImage *image=NULL;
   CalListElem *elem=NULL, *nelem=NULL;
   GSList  *tmp;
   CalList *calList;
@@ -4931,7 +4927,6 @@ static void CalBadTime (ObitIonCal *in, ObitImageMosaic* mosaic,
 
   /* do up to 5 fields Loop over images  */
   for (field=0; field<MIN (5, mosaic->numberImages); field++) {
-    image = mosaic->images[field];
  
     /* Find cal info */
     tmp = calList->list;

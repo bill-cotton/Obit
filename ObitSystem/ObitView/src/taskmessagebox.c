@@ -3,7 +3,7 @@
 /* adopted from "Power programming Motif" by E. F. Johnson and
    K. Reichard, 1993, MIS Press, New York */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2009
+*  Copyright (C) 2009,2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -113,7 +113,7 @@ TaskMessageBox* TaskMessageBoxMake (Widget parent, gchar *taskname,
   textWid = 120*cwid;
   textHei =  30*chei;
   
-  if (gc) XFreeGC(XtDisplay(parent), gc); gc = NULL;
+  if (gc) {XFreeGC(XtDisplay(parent), gc);} gc = NULL;
   
   n = 0;
   XtSetArg(args[n], XmNallowResize, True); n++;
@@ -230,7 +230,7 @@ TaskMessageBox* TaskMessageBoxMake (Widget parent, gchar *taskname,
   TaskMessageBoxShow(tmb);
 
   /* Cleanup */
-  if (label)   XmStringFree(label); label   = NULL;
+  if (label)   {{XmStringFree(label);}} label   = NULL;
 
   return tmb;
 } /* end  TaskMessageBoxCreate */
@@ -318,7 +318,7 @@ void TaskMessageBoxStatus (TaskMessageBox* tmb, gchar *status)
   wierdstring = XmStringCreateSimple (status);
   XtSetArg (wargs[0], XmNlabelString, wierdstring);
   XtSetValues (tmb->status, wargs, 1);
-  if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+  if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
 } /* end  TaskMessageBoxStatus */
 
 /**
@@ -406,8 +406,8 @@ static void SaveAsFileOKCB (Widget filebox,
     return; /* error */
   if (SaveAsDir) g_free(SaveAsDir);
   SaveAsDir = g_strdup(directory);
-  if (filename) XtFree(filename); filename = NULL; 
-  if (directory) XtFree(directory); directory = NULL;
+  if (filename)  {XtFree(filename);}  filename = NULL; 
+  if (directory) {XtFree(directory);} directory = NULL;
   
   /* Shazam disappear and die */
 #ifndef KEEP_FILE_DIALOG  /* option to let it hang around */
@@ -459,7 +459,7 @@ static void SaveAsCB(Widget widget,
     wierdstring = XmStringCreateSimple (SaveAsDir);
     XtSetArg (wargs[0], XmNdirectory, wierdstring);
     XtSetValues (filebox, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   }
 
   /* Shazam appear: */
@@ -492,7 +492,7 @@ static void AbortCB(Widget widget,
     wierdstring = XmStringCreateSimple ("Abort requested");
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (tmb->status, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
   }
 
 } /* end AbortCB */

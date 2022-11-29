@@ -4,7 +4,7 @@
 ;! MeerKAT X/Y phase bandpass calibration from noise diode
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2019
+;;  Copyright (C) 2019,2022
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-MKXPhase   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+MKXPhase  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 MKXPhase:  MeerKAT X/Y phase bandpass calibration from noise diode
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
@@ -79,8 +79,10 @@ refAnt            0                 Reference antenna
 solInt           0.0                Soln interval (min)
 **PARAM** int 1
 prtLv             0.0               Print level in cal
+**PARAM** boo 1
+fakeBP   $                          Was the output BP table dummy?
 **PARAM** str 128
-taskLog                            Logfile to write task messages to
+taskLog                             Logfile to write task messages to
 **PARAM** int 10
 noScrat                             AIPS disk numbers for which
                                     scratch files are disallowed
@@ -98,6 +100,10 @@ an observing session, possibly several days long.  There are two scans
 the second of which ONLY is useful.  It may also help to do a 
 parallel-hand delay calibration on this data before MKXPhase and also
 apply this delay calibration to the data being corrected.
+   If the input table has no entries, a dummy BP table is written with
+all entries (1,0).  A history table entry ("fakeBP") is made with T or 
+F indicating is this is the case.  The value is also returned to the 
+task object, e.g. mkxphase.fakeBP which can be tested from a script.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -158,4 +164,5 @@ Adverbs:
              executes.
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
+  fakeBP.....(output) is the BP table a dummy?
 ----------------------------------------------------------------

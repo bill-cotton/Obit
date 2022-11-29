@@ -1693,7 +1693,7 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
 { 
   ASDMSourceArray* out=NULL;
   ASDMSpectralWindowArray* SpWinArray=NULL;
-  olong numr, i, ig, iOut=0, iSource, iField, sourceId, iSW, SWId, kSW;
+  olong numr, i, ig, iOut=0, iSource, iField, sourceId, iSW, SWId, kSW=0;
   olong nSelSW=0, fieldId, iMain, occur;
   gchar *ignore[]={"OTFDUMMY","DUMMY",NULL}; /*  Names to ignore */
   /* gchar *ignore[]={"OTFDUMMY",NULL};  Names to ignore - hackfor fix screwup */
@@ -2833,9 +2833,9 @@ void ObitSDMDataClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  if (in->DataRoot) g_free(in->DataRoot); in->DataRoot = NULL;
-  if (in->line)     g_free(in->line);     in->line = NULL;
-  if (in->selCode)  g_free(in->selCode);  in->selCode = NULL;
+  if (in->DataRoot) {g_free(in->DataRoot);} in->DataRoot = NULL;
+  if (in->line)     {g_free(in->line);}     in->line = NULL;
+  if (in->selCode)  {g_free(in->selCode);}  in->selCode = NULL;
   in->ASDMTab              = KillASDMTable(in->ASDMTab);
   in->MainTab              = KillASDMMainTable(in->MainTab);
   in->AntennaTab           = KillASDMAntennaTable(in->AntennaTab);
@@ -3003,7 +3003,7 @@ static gchar* ASDMparse_str(gchar *string, olong maxChar,
     n++;
   }
   out = g_malloc(n+1);
-  for (i=0; i<n; i++) out[i] = b[i]; out[i] = 0;
+  for (i=0; i<n; i++) {out[i] = b[i];} out[i] = 0;
   *next = b + n;
 
   return out;
@@ -3040,7 +3040,7 @@ static gchar* ASDMparse_quote_str(gchar *string, olong maxChar,
     n++;
   }
   out = g_malloc(n+1);
-  for (i=0; i<n; i++) out[i] = b[i]; out[i] = 0;
+  for (i=0; i<n; i++) {out[i] = b[i];} out[i] = 0;
   *next = b + n;
 
   return out;
@@ -3276,7 +3276,7 @@ static gchar** ASDMparse_strarray(gchar *string, olong maxChar,
       n++;
     }
     out[j] = g_malloc(n+1);
-    for (i=0; i<n; i++) out[j][i] = b[i]; out[j][i] = 0;
+    for (i=0; i<n; i++) {out[j][i] = b[i];} out[j][i] = 0;
     b += n+1;
     *next = b;
   } /* end loop over strings */
@@ -4021,7 +4021,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       out->WeatherRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
-    if (tstr); g_free(tstr); tstr = NULL;
+    if (tstr) {g_free(tstr);} tstr = NULL;
   } /* end loop over table */
 
   /* Close up */

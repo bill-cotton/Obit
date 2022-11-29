@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Request (of client) boxes  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2020
+*  Copyright (C) 2005-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -78,9 +78,9 @@ void ReadField (Widget w)
   if (!sscanf (value, "%d", &temp))
     { /* error */
       MessageShow ("Error reading requested field value");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
 
   /* OK, save */
   temp = MAX (1, MIN (temp, RBdia.nfield));
@@ -291,7 +291,7 @@ void EditRequestBox ()
     XtVaSetValues(RBdia.fieldlabel,
 		  XmNlabelString,   WierdString,
 		  NULL);
-    if (WierdString) XmStringFree(WierdString); WierdString = NULL;
+    if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
   
     /* Timeout enabled? */
     if (ERtime_out>0.0) {
@@ -455,13 +455,13 @@ void EditRequestBox ()
   XtAddCallback (HelpButton, XmNactivateCallback,  HelpBoxTopicCB, 
 		 (XtPointer)"Window Editing");
   
-  if (label)    XmStringFree(label);    label  = NULL;
-  if (Field)    XmStringFree(Field);    Field  = NULL;
-  if (Continue) XmStringFree(Continue); Continue = NULL;
-  if (Abort   ) XmStringFree(Abort);    Abort= NULL;
-  if (Quit)     XmStringFree(Quit);     Quit = NULL;
-  if (View)     XmStringFree(View);     View = NULL;
-  if (NoTV)     XmStringFree(NoTV);     NoTV = NULL;
+  if (label)    {XmStringFree(label);}    label  = NULL;
+  if (Field)    {XmStringFree(Field);}    Field  = NULL;
+  if (Continue) {XmStringFree(Continue);} Continue = NULL;
+  if (Abort   ) {XmStringFree(Abort);}    Abort= NULL;
+  if (Quit)     {XmStringFree(Quit);}     Quit = NULL;
+  if (View)     {XmStringFree(View);}     View = NULL;
+  if (NoTV)     {XmStringFree(NoTV);}     NoTV = NULL;
   
   /* set it up */
   XtManageChild (RBdia.dialog);

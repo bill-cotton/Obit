@@ -2417,6 +2417,7 @@ static gboolean MFResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
 
   nfield = mosaic->numberImages;
   itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
+  for (i=0; i<nfield; i++) itemp[i] = 0;  /* initial number to subtract */
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
 
   /* Reset U if isDual */
@@ -2437,7 +2438,6 @@ static gboolean MFResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
     ObitInfoListAlwaysPut(skyModel->info, "EChan", OBIT_long, dim, &it);
     ObitInfoListAlwaysPut(skyModel->info, "EIF",   OBIT_long, dim, &it);
     
-    for (i=0; i<nfield; i++) itemp[i] = 0;  /* initial number to subtract */
   } /* End reset U if isDual */
 
   /* Check for reuse  */

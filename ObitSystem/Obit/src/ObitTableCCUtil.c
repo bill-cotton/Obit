@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2018                                          */
+/*;  Copyright (C) 2004-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2234,7 +2234,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   gpointer fitArg=NULL;
   olong irow, orow, ver, i, j, offset, nSpec, sCC, eCC, noParms, nterm;
   olong planeNo[5] = {1,1,1,1,1};
-  gchar keyword[12];
+  gchar keyword[20];
   gboolean doZ, dropNeg, doPBCor;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitTableCCUtilT2Spec";
@@ -2486,7 +2486,7 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
   olong irow, orow, ver, i, j, iterm, offset, nSpec, sCC, eCC;
   union ObitInfoListEquiv InfoReal; 
   gchar *tabType = "AIPS CC";
-  gchar keyword[12];
+  gchar keyword[20];
   gchar *routine = "ObitTableCCUtilFixTSpec";
 
   /* error checks */
@@ -2787,7 +2787,8 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
   ofloat *out = NULL;
   ObitTableCCRow *row = NULL;
   ofloat *entry;
-  olong irow, nrow, tsize, count, i, j, toff;
+  olong irow, nrow, count, i, j, toff;
+  gulong tsize;
   olong nterms, fsize;
   gboolean haveDeltaZ=FALSE;
   gchar *routine = "MakeCCSortStruct";
@@ -2813,7 +2814,8 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
   *size = fsize * sizeof(ofloat);
 
   /* Total size of structure in case all rows valid */
-  tsize = (*size) * (nrow+10);
+  tsize = *size;
+  tsize *= (nrow+10);
   /* create output structure */
   out = ObitMemAlloc0Name (tsize, "CCSortStructure");
   

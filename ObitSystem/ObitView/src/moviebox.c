@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Movie control box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999, 2002-2009
+*  Copyright (C) 1996,1997,1999, 2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -109,9 +109,9 @@ void ReadStartPlaneCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%d", &itemp))
     { /* error */
       MessageShow("Error reading start plane number");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       MovieDia.Stop = 1; return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* internally 0 rel; externally 1 rel */
   itemp--;
@@ -146,9 +146,9 @@ void ReadEndPlaneCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%d", &itemp))
     { /* error */
       MessageShow("Error reading end plane number");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       MovieDia.Stop = 1; return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* internally 0 rel; externally 1 rel */
   itemp--;
@@ -183,9 +183,9 @@ void ReadDwellCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%e", &temp))
     { /* error */
       MessageShow ("Error Dwell time");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       MovieDia.Stop = 1; return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   if (MovieDia.Dwell<0.0) MovieDia.Dwell = 0.0;  /* constrain */
   if (MovieDia.Dwell>100.0) MovieDia.Dwell = 100.0;
   /* OK, save */
@@ -217,7 +217,7 @@ void MovieLabelPlane(void)
   XtVaSetValues(MovieDia.PlaneLabel, 
 		XmNlabelString,   WierdString,
 		NULL);
-  if (WierdString) XmStringFree(WierdString); WierdString = NULL;
+  if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
 } /* end MovieLabelPlane */
 
 /**
@@ -276,7 +276,7 @@ void MovieLoadPlane (void)
   XtVaSetValues(MovieDia.PlaneScrollLabel, 
 		XmNlabelString,   WierdString,
 		NULL);
-  if (WierdString) XmStringFree(WierdString); WierdString = NULL;
+  if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
   MovieLabelPlane();
 } /* end MovieLoadPlane */
 
@@ -306,7 +306,7 @@ void MovieScrollPlaneCB (Widget w, XtPointer clientData, XtPointer callData)
 void MoviePlay (Widget w, XtPointer clientData, XtPointer callData)
 {
   unsigned long interval;
-  XtIntervalId  timer;
+  /*XtIntervalId  timer;*/
   
   /* valid image to load? */
   if (!image[CurImag].valid) return;
@@ -325,8 +325,9 @@ void MoviePlay (Widget w, XtPointer clientData, XtPointer callData)
   
   /* start timer */
   interval = 1000.0 * MovieDia.Dwell;
-  timer = XtAppAddTimeOut(MovieDia.BoxData->app, interval, 
-			  (XtTimerCallbackProc)MoviePlay, NULL);
+  /*timer = */
+  XtAppAddTimeOut(MovieDia.BoxData->app, interval, 
+		  (XtTimerCallbackProc)MoviePlay, NULL);
   /*  fprintf (stderr,"MoviePlay: events pending = %d\n",
       XPending(XtDisplay(MovieDia.dialog)));*/
   /* show next plane */
@@ -405,7 +406,8 @@ void MovieStopButCB (Widget w, XtPointer clientData, XtPointer callData)
  */
 void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 {
-  Widget form, label1, label2, label3, label4;
+  Widget form, label4;
+  /*Widget label1, label2, label3; */
   Widget PlayButton, QuitButton;
   XmString     StartLab = NULL;
   XmString     EndLab   = NULL;
@@ -467,7 +469,7 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
     XtVaSetValues(MovieDia.PlaneScrollLabel, 
 		  XmNlabelString,   WierdString,
 		  NULL);
-    if (WierdString) XmStringFree(WierdString); WierdString = NULL;
+    if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
     MovieLabelPlane();
     return;
     
@@ -563,15 +565,16 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 					    XmNtopWidget,     MovieDia.StopButton,
 					    XmNrightAttachment,  XmATTACH_FORM,
 					    NULL);
-  label1 = XtVaCreateManagedWidget ("MovieStartLabel", xmLabelWidgetClass, 
-				    form, 
-				    XmNwidth,           75,
-				    XmNheight,          30,
-				    XmNlabelString,   StartLab,
-				    XmNtopAttachment, XmATTACH_WIDGET,
-                                    XmNtopWidget,      PlayButton,
-				    XmNleftAttachment,  XmATTACH_FORM,
-				    NULL);
+  /*label1 = */
+  XtVaCreateManagedWidget ("MovieStartLabel", xmLabelWidgetClass, 
+			   form, 
+			   XmNwidth,           75,
+			   XmNheight,          30,
+			   XmNlabelString,   StartLab,
+			   XmNtopAttachment, XmATTACH_WIDGET,
+			   XmNtopWidget,      PlayButton,
+			   XmNleftAttachment,  XmATTACH_FORM,
+			   NULL);
   
   /* end Plane */
   sprintf (valuestr, "%d", MovieDia.EndPlane);
@@ -584,15 +587,16 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 					  XmNtopWidget,     MovieDia.start,
 					  XmNrightAttachment,  XmATTACH_FORM,
 					  NULL);
-  label2 = XtVaCreateManagedWidget ("MovieEndLabel", xmLabelWidgetClass, 
-				    form, 
-				    XmNwidth,           75,
-				    XmNheight,          30,
-				    XmNlabelString,   EndLab,
-				    XmNtopAttachment, XmATTACH_WIDGET,
-                                    XmNtopWidget,      MovieDia.start,
-				    XmNleftAttachment,  XmATTACH_FORM,
-				    NULL);
+  /*label2 = */
+  XtVaCreateManagedWidget ("MovieEndLabel", xmLabelWidgetClass, 
+			   form, 
+			   XmNwidth,           75,
+			   XmNheight,          30,
+			   XmNlabelString,   EndLab,
+			   XmNtopAttachment, XmATTACH_WIDGET,
+			   XmNtopWidget,      MovieDia.start,
+			   XmNleftAttachment,  XmATTACH_FORM,
+			   NULL);
   
   /* Dwell */
   sprintf (valuestr, "%f", MovieDia.Dwell);
@@ -606,15 +610,16 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 					    XmNrightAttachment,  XmATTACH_FORM,
 					    NULL);
   
-  label3 = XtVaCreateManagedWidget ("MovieDwellLabel", xmLabelWidgetClass, 
-				    form, 
-				    XmNwidth,           75,
-				    XmNheight,          30,
-				    XmNlabelString,   DwellLab,
-				    XmNtopAttachment, XmATTACH_WIDGET,
-                                    XmNtopWidget,      MovieDia.end,
-				    XmNleftAttachment,  XmATTACH_FORM,
-				    NULL);
+  /*label3 = */
+  XtVaCreateManagedWidget ("MovieDwellLabel", xmLabelWidgetClass, 
+			   form, 
+			   XmNwidth,           75,
+			   XmNheight,          30,
+			   XmNlabelString,   DwellLab,
+			   XmNtopAttachment, XmATTACH_WIDGET,
+			   XmNtopWidget,      MovieDia.end,
+			   XmNleftAttachment,  XmATTACH_FORM,
+			   NULL);
   /* Higher dimensions */
   label4 = XtVaCreateManagedWidget ("OptionLabel4", xmLabelWidgetClass,
 				    form,
@@ -698,7 +703,7 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   
   /* plane value label */
   sprintf (valuestr, "Plane value label");
-  if (WierdString) XmStringFree(WierdString); WierdString = NULL;
+  if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
   WierdString = XmStringCreateSimple (valuestr);
   MovieDia.PlaneLabel = XtVaCreateManagedWidget ("MoviePlaneLabel", 
 						 xmLabelWidgetClass, 
@@ -720,11 +725,11 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   XtAddCallback (QuitButton, XmNactivateCallback, MovieQuitButCB, 
 		 (XtPointer)IDdata);
   
-  if (WierdString) XmStringFree(WierdString); WierdString = NULL;
-  if (StartLab) XmStringFree(StartLab); StartLab = NULL;
-  if (EndLab) XmStringFree(EndLab); EndLab = NULL;
-  if (DwellLab) XmStringFree(DwellLab); DwellLab = NULL;
-  if (higher) XmStringFree(higher); higher = NULL;
+  if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
+  if (StartLab)    {XmStringFree(StartLab);}    StartLab = NULL;
+  if (EndLab)      {XmStringFree(EndLab);}      EndLab = NULL;
+  if (DwellLab)    {XmStringFree(DwellLab);}    DwellLab = NULL;
+  if (higher)      {XmStringFree(higher);}      higher = NULL;
   
   /* set it up */
   XtManageChild (MovieDia.dialog);

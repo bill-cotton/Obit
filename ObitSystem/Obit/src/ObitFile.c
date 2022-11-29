@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -118,7 +118,6 @@ gconstpointer ObitFileGetClass (void)
  */
 ObitFile* ObitFileZap (ObitFile *in, ObitErr *err)
 {
-  ObitIOCode  retCode = OBIT_IO_SpecErr;
   olong status;
   gchar *routine = "ObitFileZap";
 
@@ -130,7 +129,7 @@ ObitFile* ObitFileZap (ObitFile *in, ObitErr *err)
 
  /* Close if still open */
   if ((in->status==OBIT_Modified) || (in->status==OBIT_Active)) {
-    retCode = ObitFileClose (in, err);
+    ObitFileClose (in, err);
     if (err->error) /* add traceback on error */
       Obit_traceback_val (err, routine, in->name, in);
   }
@@ -307,7 +306,6 @@ ObitFilePos ObitFileSize (gchar *fileName, ObitErr *err)
 {
   ObitFilePos out;
   struct stat stbuf;
-  olong status;  
 
   /* error checks */
   if (err->error) return FALSE;
@@ -315,7 +313,7 @@ ObitFilePos ObitFileSize (gchar *fileName, ObitErr *err)
   errno = 0;  /* reset any system error */
 
   /* Get file info */
-  status = stat(fileName, &stbuf);
+  stat(fileName, &stbuf);
   out = stbuf.st_size;
 
   return out;
@@ -1103,7 +1101,7 @@ ObitFilePadFile (ObitFile *in, olong blksize, ObitErr *err)
     Obit_log_error(err, OBIT_Error, 
 		   "ERROR Positioning file %s", in->name);
     ObitFileErrMsg(err);     /* system error message*/
-    if (tmpBuff) g_free(tmpBuff); tmpBuff = NULL;
+    if (tmpBuff) {g_free(tmpBuff);} tmpBuff = NULL;
     return OBIT_IO_OpenErr;
   }
 
@@ -1123,7 +1121,7 @@ ObitFilePadFile (ObitFile *in, olong blksize, ObitErr *err)
     retCode = OBIT_IO_WriteErr;
     if (feof(in->myFile)) retCode = OBIT_IO_EOF;
     in->status = OBIT_ErrorExist;
-    if (tmpBuff) g_free(tmpBuff); tmpBuff = NULL;
+    if (tmpBuff) {g_free(tmpBuff);} tmpBuff = NULL;
     return retCode;
   }
   
@@ -1136,7 +1134,7 @@ ObitFilePadFile (ObitFile *in, olong blksize, ObitErr *err)
      END DEBUG */
 
   if (in->filePos>=0) in->filePos += size;  /* update file position */
-  if (tmpBuff) g_free(tmpBuff); tmpBuff = NULL;
+  if (tmpBuff) {g_free(tmpBuff);} tmpBuff = NULL;
 
   return OBIT_IO_OK;
 } /* end ObitFilePadFile */
@@ -1334,8 +1332,8 @@ void ObitFileClear (gpointer inn)
 
   /* free this class members */
   if (in->thread) in->thread  = ObitThreadUnref(in->thread);
-  if (in->fileName)  g_free(in->fileName);  in->fileName  = NULL;
-  if (in->XMLbuffer) g_free(in->XMLbuffer); in->XMLbuffer = NULL;
+  if (in->fileName)  {g_free(in->fileName);}  in->fileName  = NULL;
+  if (in->XMLbuffer) {g_free(in->XMLbuffer);} in->XMLbuffer = NULL;
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

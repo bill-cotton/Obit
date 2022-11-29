@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -96,6 +96,8 @@ typedef struct {
   gboolean doPBCorr;
   /* Antenna diameter */
   ofloat antSize;
+  /* Minimum flux density for fit */
+  ofloat minFlux;
   /* Max. number of orders to fit  */
   olong  nOrder;
   /* (nOrder+1) Arrays of fitted values */
@@ -338,7 +340,7 @@ ObitImageMF* ObitImageMFFromImage (ObitImage* in, ObitUV *inData,
     /* Change frequency axis labeling */ 
     strncpy (out->myDesc->ctype[out->myDesc->jlocf], "SPECLNMF", IMLEN_KEYWORD-1);
     /* Save reference frequency */
-    out->refFreq = out->myDesc->crval[out->myDesc->jlocf];  
+   out->refFreq = out->myDesc->crval[out->myDesc->jlocf];  
     
     /* Add order to infolist */
     dim[0] = dim[1] = dim[2] = 1;
@@ -1333,6 +1335,15 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
  *                   correction to apply, def = 0.0
  * \li maxSNR     boolean scalar If true maximuze SNR rather than just minimize noise
  *                   Adjusts weights to account for spectral index corAlpha
+ * \li refFreq    OBIT_double scalar reference freq in Hz, default in ref. freq
+ * \li minFlux    OBIT_float scalar, Min. broadband flux density to attempt a spectral fit.
+ *                If nonzero, then all flux densities are the weighted average
+ *                and only any fitted spectral indices and errors are output.
+ *                default 0
+ * \li Weights   OBIT_float (?,1,1 per channel) 
+ *                if given, use these weights rather than 1/rms^2
+ *                NOTE: 1/sqrt(sum(weights)) should give the broadband RMS!
+ *                Default None.
  * \param antsize if > 0 make primary beam corrections assuming antenna 
  *                diameter antsize (m) 
  * \param err     Obit error stack object.
@@ -1343,10 +1354,12 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
   FitSpecFuncArg **targs=NULL;
   ObitImage **inArray=NULL, **outArray=NULL; 
   ObitHistory *inHist=NULL;
-  ofloat sigma, wtfact, corAlpha=0.0;
-  olong i, iy, ny, nterm=1, nOrder, nTh, plane[5] = {1,1,1,1,1};
+  ofloat sigma, wtfact, corAlpha=0.0, minFlux = 0.0, *weights=NULL;
+  olong i, iy, ny, nterm=1, nwt=0, nOrder, nTh, plane[5] = {1,1,1,1,1};
+  odouble refFreq=-1.0;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  union ObitInfoListEquiv InfoReal; 
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOSize IOBy = OBIT_IO_byRow;
@@ -1376,11 +1389,37 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
 
   /* Maximize SNR? */
   ObitInfoListGetTest (in->info, "maxSNR",     &type, dim, &maxSNR);
+  ObitInfoListGetTest (in->info, "minFlux",    &type, dim, &minFlux);
 
-  ObitInfoListGetTest (in->info, "corAlpha",   &type, dim,   &corAlpha);
+  ObitInfoListGetTest (in->info, "corAlpha",   &type, dim, &corAlpha);
 
-  /* Reference frequency if not set */
+  /* Specified ref. Freq? */
+  if (ObitInfoListGetTest (in->info, "refFreq",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       refFreq = (odouble)InfoReal.flt;
+    else if (type==OBIT_double) refFreq = (odouble)InfoReal.dbl;
+    if (refFreq>1.0) {
+      in->refFreq = refFreq;
+      /* Open and close to update frequency */
+      ObitImageOpen ((ObitImage*)in, OBIT_IO_ReadWrite, err);
+      in->myDesc->crval[in->myDesc->jlocf] = refFreq;
+      ((ObitImageDesc*)in->myIO->myDesc)->crval[in->myDesc->jlocf] = refFreq;
+      in->myStatus = OBIT_Modified;  /* Force update */
+      ObitImageClose ((ObitImage*)in, err);}
+  }
+  /* Reference frequency from data if not set */
   if (in->refFreq<1.0) in->refFreq = in->myDesc->crval[in->myDesc->jlocf];
+  refFreq = in->refFreq;
+
+
+  /* Specified Weights? */
+  ObitInfoListGetP (in->info, "Weights",   &type, dim, (gpointer)&weights);
+  if (weights) {
+    nwt = dim[0]; /* How many weights? */
+    Obit_return_if_fail((nwt==in->nSpec), err, 
+  		      "%s: Number of Weights incompatible with data %d %d", 
+			routine, nwt, in->nSpec);
+    Obit_log_error(err, OBIT_InfoErr, "Using provided Weights");
+    ObitErrLog(err); }
 
   /* Create arrays of Images to handle input and output I/O */
   nterm = in->maxOrder+1;    /* Number of output spectral terms */
@@ -1428,24 +1467,40 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
   nThreads = MakeFitSpecArgs (in, maxThread, antsize, nOrder, &targs, err);
   if (err->error) goto cleanup;
 
-  /* Read through all input channels getting sigmas - save on thread arguments */
-  for (i=0; i<in->nSpec; i++) {
-    plane[0] = 2+in->maxOrder+i;
-    ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
-    sigma = ObitFArrayRMS(in->image);
-    /* if maxSNR, modify sigma by exp(alpha*ln(nu/nu_0)) */
-    if (maxSNR) {
-      wtfact  = (ofloat)exp(corAlpha*log(in->specFreq[i]/in->refFreq));
-      sigma *= wtfact;
-    }  /* end modify SNR */
-    if (err->error) goto cleanup;
-    /* Save on thread arguments */
-    for (ithread=0; ithread<nThreads; ithread++)
-      targs[ithread]->sigma[i] = sigma;
-  } /* end loop getting sigmas */
+  /* Were weights provided? */
+  if (nwt>0) {
+    /* convert to sigmas (1/sqrt(wt)) */
+    for (i=0; i<in->nSpec; i++) {
+      if (weights[i]>0.0) sigma = 1.0 / sqrtf(weights[i]);
+      else                sigma = 1.0e10;
+      /* Save on thread arguments */
+      for (ithread=0; ithread<nThreads; ithread++) targs[ithread]->sigma[i] = sigma;
+    } /* end converting weights to sigmas */
+  } else {
+    /* Read through all input channels getting sigmas - save on thread arguments */
+    for (i=0; i<in->nSpec; i++) {
+      plane[0] = 2+in->maxOrder+i;
+      ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
+      sigma = ObitFArrayRMS(in->image);
+      /* if maxSNR, modify sigma by exp(alpha*ln(nu/nu_0)) */
+      if (maxSNR) {
+	wtfact  = (ofloat)exp(corAlpha*log(in->specFreq[i]/in->refFreq));
+	sigma *= wtfact;
+      }  /* end modify SNR */
+      if (err->error) goto cleanup;
+      /* Save on thread arguments */
+      for (ithread=0; ithread<nThreads; ithread++)
+	targs[ithread]->sigma[i] = sigma;
+    } /* end loop getting sigmas */
+  } /* end calculate weghts from image RMS */
   in->image = ObitFArrayUnref(in->image);  /* Free image buffer */
 
-  /* Loop over rows - one row per thread */
+  /* Save minFlux on thread arguments */
+  for (ithread=0; ithread<nThreads; ithread++) {
+    targs[ithread]->minFlux = minFlux; 
+  }
+
+ /* Loop over rows - one row per thread */
   ny = in->myDesc->inaxes[1];
   for (iy=0; iy<ny; iy += nThreads) {
 
@@ -1491,8 +1546,17 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
   ObitHistoryWriteRec (inHist, -1, hiCard, err);
   g_snprintf ( hiCard, 72, "FitSpec  maxSNR = %d",maxSNR);
   ObitHistoryWriteRec (inHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitSpec  minFlux = %f",minFlux);
+  ObitHistoryWriteRec (inHist, -1, hiCard, err);
   g_snprintf ( hiCard, 72, "FitSpec  antsize = %f",antsize);
   ObitHistoryWriteRec (inHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitSpec  refFreq = %lf",refFreq);
+  ObitHistoryWriteRec (inHist, -1, hiCard, err);
+  if (nwt>0)
+    g_snprintf ( hiCard, 72, "FitSpec  Weights = %f %f %f...",
+		 weights[0], weights[1], weights[2]);
+  ObitHistoryWriteRec (inHist, -1, hiCard, err);
+  ObitHistoryClose (inHist, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   inHist  = ObitHistoryUnref(inHist);
 
@@ -1542,7 +1606,14 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
  *                   correction to apply, def = 0.0
  * \li            maxSNR     boolean scalar If true maximuze SNR rather than just minimize noise
  *                   Adjusts weights to account for spectral index corAlpha
- * \li            minWt     Min. fraction of total weight to accept for a pixel
+ * \li            minWt      OBIT_float scalar, Min. fraction of total weight to accept for a pixel
+ * \li            minFlux    OBIT_float scalar, Min. broadband flux density to attempt a spectral fit.
+ *                           If nonzero, then all flux densities are the weighted average
+ *                           and only any fitted spectral indices and errors are output.
+ * \li            refFreq    OBIT_double scalar reference freq in Hz, default in ref. freq
+ * \li            Weights    OBIT_float (?,1,1 per channel) 
+ *                           if given use these weights rather than 1/rms^2
+ *                           NOTE: 1/sqrt(sum(weights)) should give the broadband RMS!
  * \param out     Output Image into which to write parameters
  * \param err     Obit error stack object.
  */
@@ -1550,17 +1621,17 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
 {
   ObitSpectrumFit* fitter=NULL;
   ObitHistory *inHist=NULL, *outHist=NULL;
-  ofloat antsize, pbmin, wtfact, minWt=0.5, corAlpha=0.0;
+  ofloat antsize, pbmin, wtfact, sigma, minWt=0.5, corAlpha=0.0, *weights=NULL;
   olong i, plane[5] = {1,1,1,1,1};
-  olong nOut, iplane, naxis[2], nterm=2; 
+  olong nOut, nwt=0, iplane, naxis[2], nterm=2; 
   odouble refFreq=-1.0;
-  ofloat maxChi2=2.0, *PBmin=NULL, *antSize=NULL, *calFract=NULL; 
+  ofloat maxChi2=2.0, minFlux=0.0, *PBmin=NULL, *antSize=NULL, *calFract=NULL; 
   gboolean doGain, maxSNR=FALSE, doError=FALSE, doBrokePow=FALSE, doPBCor=FALSE, isMeerKAT=FALSE;
   union ObitInfoListEquiv InfoReal; 
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1}, PBdim[MAXINFOELEMDIM], ASdim[MAXINFOELEMDIM];
   gchar *fitParms[] = {"refFreq","maxChi2","doError","doPBCor","doBrokePow","calFract",
-		       "PBmin","antSize","corAlpha","minWt", 
+		       "PBmin","antSize","corAlpha","minWt", "minFlux", "Weights",
 		       NULL};
   gchar  *today=NULL, *SPECLOGF = "SPECLOGF";
   gchar hiCard[73], *TF[2]={"False","True"};
@@ -1593,7 +1664,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   type = OBIT_double;  in->refFreq = InfoReal.dbl;
   ObitInfoListGetTest(in->info, "refFreq", &type, dim, &InfoReal);
   if (type==OBIT_float)       refFreq = InfoReal.flt;
-  else if (type==OBIT_double) refFreq = (ofloat)InfoReal.dbl;
+  else if (type==OBIT_double) refFreq = InfoReal.dbl;
   /* Min Chi^2 for fit */
   InfoReal.flt = maxChi2; type = OBIT_float;
   ObitInfoListGetTest(in->info, "maxChi2", &type, dim, &InfoReal);
@@ -1609,6 +1680,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   doBrokePow = InfoReal.itg;
   ObitInfoListGetTest (in->info, "corAlpha",   &type, dim,   &corAlpha);
   ObitInfoListGetTest (in->info, "minWt",   &type, dim,   &minWt);
+  ObitInfoListGetTest (in->info, "minFlux",   &type, dim,   &minFlux);
   /* Want primary beam correction? */
   InfoReal.itg = (olong)doPBCor; type = OBIT_bool;
   ObitInfoListGetTest(in->info, "doPBCor", &type, dim, &InfoReal);
@@ -1618,6 +1690,20 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   /* Maximize SNR? */
   ObitInfoListGetTest (in->info, "maxSNR",     &type, dim, &maxSNR);
   
+  /* Reference frequency from data if not set */
+  if (in->refFreq<1.0) in->refFreq = in->myDesc->crval[in->myDesc->jlocf];
+  refFreq = in->refFreq;
+
+  /* Specified Weights? */
+  ObitInfoListGetP (in->info, "Weights",   &type, dim, (gpointer)&weights);
+  if (weights) {
+    nwt = dim[0]; /* How many weights? */
+    Obit_return_if_fail((nwt==in->nSpec), err, 
+  		      "%s: Number of Weights incompatible with data %d %d", 
+			routine, nwt, in->nSpec);
+    Obit_log_error(err, OBIT_InfoErr, "Using provided Weights");
+    ObitErrLog(err); }
+
   /* Create Fitter */
   fitter = ObitSpectrumFitCreate("Fitter", nterm);
   fitter->refFreq    = refFreq;
@@ -1628,6 +1714,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   fitter->corAlpha   = corAlpha;
   fitter->doPBCorr   = doPBCor;
   fitter->minWt      = minWt;
+  fitter->minFlux    = minFlux;
 
   /* Get fitting parameters, copy to fitter */
   ObitInfoListCopyList (in->info, fitter->info, fitParms);
@@ -1671,6 +1758,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   /* Change third axis to type "SPECLOGF" and leave the reference frequency
      as the "CRVAL" */
   out->myDesc->inaxes[out->myDesc->jlocf] =  nOut;
+  /*out->myDesc->crval[out->myDesc->jlocf]  =  fitter->refFreq; DEBUG*/
   out->myDesc->crval[out->myDesc->jlocf]  =  fitter->refFreq;
   out->myDesc->crpix[out->myDesc->jlocf]  =  1.0;
   out->myDesc->cdelt[out->myDesc->jlocf]  =  1.0;
@@ -1686,12 +1774,22 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   ObitImageMFFullInstantiate (out, FALSE, err);
   if (err->error) goto cleanup;
 
+   /* Were weights provided? */
+  if (nwt>0) {
+    /* convert to sigmas (1/sqrt(wt)) */
+    for (i=0; i<in->nSpec; i++) {
+      if (weights[i]>0.0) sigma = 1.0 / sqrtf(weights[i]);
+      else                sigma = -1.0;
+      fitter->RMS[i] = sigma;
+    } /* end converting weights to sigmas */
+  } 
+
   /* Loop reading planes */
   for (iplane=0; iplane<fitter->nfreq; iplane++) {
     plane[0] = iplane+in->maxOrder+2; 
     ObitImageGetPlane ((ObitImage*)in, fitter->inFArrays[iplane]->array, plane, err);
     if (err->error) goto cleanup;
-
+  
     /* Get BeamShape */
     antsize = 25.0;
     if (antSize) antsize = antSize[0];
@@ -1701,20 +1799,20 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
     if (PBmin && (PBdim[0]>=fitter->nfreq)) pbmin = PBmin[iplane];
     doGain = pbmin<0.999;
     fitter->BeamShapes[iplane] = ObitBeamShapeCreate ("BS", (ObitImage*)in, pbmin, antsize, doGain);
-
-    /* Plane RMS */
-    fitter->RMS[iplane] = ObitFArrayRMS(fitter->inFArrays[iplane]);
+  
+    /* Plane RMS if Weights not given */
+    if (nwt<=0) {
+      fitter->RMS[iplane] = ObitFArrayRMS(fitter->inFArrays[iplane]);
+      /* if maxSNR, modify RMS by exp(-alpha*ln(nu/nu_0)) */
+      if (maxSNR) {
+	wtfact  = (ofloat)exp(-fitter->corAlpha*log(fitter->freqs[iplane]/refFreq));
+	fitter->RMS[iplane] *= wtfact;
+      }  /* end modify SNR */
+    } /* end get plane RMSes */  
     /* Frequency */
     fitter->freqs[iplane] = in->specFreq[iplane];
     ObitBeamShapeSetFreq (fitter->BeamShapes[iplane], fitter->freqs[iplane]);
-    /* if maxSNR, modify RMS by exp(-alpha*ln(nu/nu_0)) */
-    if (maxSNR) {
-      wtfact  = (ofloat)exp(-fitter->corAlpha*log(fitter->freqs[iplane]/refFreq));
-      fitter->RMS[iplane] *= wtfact;
-    }  /* end modify SNR */
-    
   } /* end loop reading planes */
-
   /* Diagnostics */
   if (err->prtLv>=2) {
     if (fitter->BeamShapes[0]->doTab) Obit_log_error(err, OBIT_InfoErr, "Using Tabulated Beam");
@@ -1729,8 +1827,8 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   if (err->error) goto cleanup;
 
   /* Update output header to reference Frequency */
-  out->myDesc->crval[out->myDesc->jlocf] = fitter->refFreq;
   fitter->outDesc = ObitImageDescRef(in->myDesc); /* Desc to fitter */
+  fitter->outDesc->crval[fitter->outDesc->jlocf] = fitter->refFreq;
 
   /* Write output */
   ObitSpectrumWriteOutput(fitter, (ObitImage*)out, err);
@@ -1775,7 +1873,14 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
     ObitHistoryWriteRec (outHist, -1, hiCard, err);
     g_snprintf ( hiCard, 72, "FitSpec2  minWt = %f",minWt);
     ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    g_snprintf ( hiCard, 72, "FitSpec2  minFlux = %f",minFlux);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    if (nwt>0)
+      g_snprintf ( hiCard, 72, "FitSpec2  Weights = %f %f %f...",
+		   weights[0], weights[1], weights[2]);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
     ObitHistoryClose (inHist, err);
+    ObitHistoryClose (outHist, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     inHist  = ObitHistoryUnref(inHist);
     outHist = ObitHistoryUnref(outHist);
@@ -2229,6 +2334,7 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
       (*args)[i]->ithread   = -1;
     (*args)[i]->thread    = image->thread;
     (*args)[i]->antSize   = antSize;
+    (*args)[i]->minFlux   = 0.0;
     (*args)[i]->doPBCorr  = doPBCor;
     (*args)[i]->BeamShape = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, antSize, doPBCor);
     (*args)[i]->nSpec     = image->nSpec;
@@ -2337,7 +2443,8 @@ gpointer ThreadFitSpec (gpointer args)
   olong  iy                = largs->iy;
   ObitImageDesc *desc      = largs->desc;
   gboolean doPBCorr        = largs->doPBCorr;
-  /*ofloat antSize           = largs->antSize;*/
+  /*ofloat antSize           = largs->antSize;*/ 
+  ofloat minFlux           = largs->minFlux;
   olong  nOrder            = largs->nOrder;
   ofloat **outData         = largs->outData;
   gpointer fitArg          = largs->fitArg;
@@ -2400,8 +2507,10 @@ gpointer ThreadFitSpec (gpointer args)
 	  workSigma[i] *= spFact;
 	}
       }
-   }
+    }
     
+    ObitSpectrumFitAddMinFlux(fitArg,minFlux);  /* Add minimum flux density */
+
     /* Fit spectrum */
     ObitSpectrumFitSingleArg (fitArg, workFlux, workSigma, fitResult);
 

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -443,10 +443,10 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitInfoType type;
   ofloat *rec, solInt, t0, sumTime, lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0;
   ofloat delTime, curSou=-1.0, curFQ=-1.0;
-  olong i, ia, lrec, maxant, numSubA, iANver;
+  olong i, ia, maxant, numSubA, iANver;
   olong  nTime, SubA=0, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numOrb, numPCal;
-  odouble DecR=0.0, RAR=0.0, ArrLong=0.0, cosdec=0.0;
+  odouble DecR=0.0, RAR=0.0, ArrLong=0.0; /*, cosdec=0.0;*/
   gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT], invert=FALSE;
   ObitIOCode retCode;
   gchar *tname, *ANType = "AIPS AN";;
@@ -471,7 +471,6 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
     retCode = ObitUVOpen (inUV, access, err);
     if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
   }
-  lrec = inUV->myDesc->lrec;
   t0 = -1.0e20;
 
   /* Create output */
@@ -507,7 +506,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
     ObitPrecessUVRaDecApp (desc, &RAR, &DecR);
     RAR      *= DG2RAD;
     DecR     *= DG2RAD;
-    cosdec   = cos(DecR);
+    /*cosdec   = cos(DecR);*/
   } else { /* Use SU table */
     SouList = ObitTableSUGetList (SUTable, err);
     if (err->error) Obit_traceback_val (err, routine, outUV->name, outCal);

@@ -1,7 +1,7 @@
 /* $Id$ */
 /*   Interactively draw boxes */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2013
+*  Copyright (C) 2005-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -444,7 +444,7 @@ static void TellWindow (void)
  */
 void DrawBoxButEH (Widget w, XtPointer data, XEvent *event)
 {
-  olong         ix, iy, nx, ny, iD, i, which, color;
+  olong         ix, iy, iD, i, which, color; /* , nx, ny */
   olong        *win, pixel[2], toler, twin[4];
   ofloat       fx, fy, z, dist;
   ObitDConCleanWindowType type;
@@ -469,8 +469,8 @@ void DrawBoxButEH (Widget w, XtPointer data, XEvent *event)
 
   /* Pixel positing (0-rel) in image */
   ix = (olong)(fx+0.5); iy = (olong)(fy+0.5);
-  nx = image[CurImag].myDesc->inaxes[0];
-  ny = image[CurImag].myDesc->inaxes[1];
+  /*nx = image[CurImag].myDesc->inaxes[0];
+    ny = image[CurImag].myDesc->inaxes[1];*/
 
   /* Editing or searching? */
 

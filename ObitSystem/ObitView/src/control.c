@@ -1,7 +1,7 @@
 /* $Id$  */
 /*    control panel functions for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2008
+*  Copyright (C) 1996,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -233,10 +233,10 @@ Widget MakeControl(Widget mainWindow, XtPointer data)
   
   XtManageChild (control);
   
-  if (topstr) XmStringFree(topstr); topstr = NULL;
-  if (bristr) XmStringFree(bristr); bristr = NULL;
-  if (constr) XmStringFree(constr); constr = NULL;
-  if (blankstr) XmStringFree(blankstr); blankstr = NULL;
+  if (topstr) {XmStringFree(topstr);} topstr = NULL;
+  if (bristr) {XmStringFree(bristr);} bristr = NULL;
+  if (constr) {XmStringFree(constr);} constr = NULL;
+  if (blankstr) {XmStringFree(blankstr);} blankstr = NULL;
   return control;
 } /* end MakeControl */
 

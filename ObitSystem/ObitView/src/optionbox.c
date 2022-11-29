@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Option dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2009
+*  Copyright (C) 1996,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -71,9 +71,9 @@ void ReadMinCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%e", &temp))
     { /* error */
       MessageShow ("Error reading minimum pixel value");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
-  if (value) XtFree(value);value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* OK, save */
   image[CurImag].PixRange[0] = temp;
@@ -100,9 +100,9 @@ void ReadMaxCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%e", &temp))
     { /* error */
       MessageShow ("Error reading maximum pixel value");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* OK, save */
   image[CurImag].PixRange[1] = temp;
@@ -129,9 +129,9 @@ void ReadERTimeoutCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%e", &temp))
     { /* error */
       MessageShow ("Error reading timeout value");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* OK, save - lock mutex to avoid collision with inicoming request */
   pthread_mutex_lock(&request_lock); /* lock mutex */
@@ -160,9 +160,9 @@ void ReadPlaneCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%d", &itemp))
     { /* error */
       MessageShow ("Error reading plane number");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* internally 0 rel; externally 1 rel */
   itemp--;
@@ -199,9 +199,9 @@ void ReadDim4CB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%d", &itemp))
     { /* error */
       MessageShow ("Error reading dimension 4 number");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* internally 0 rel; externally 1 rel */
   itemp--;
@@ -238,9 +238,9 @@ void ReadDim5CB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%d", &itemp))
     { /* error */
       MessageShow ("Error reading dimension 5 number");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* internally 0 rel; externally 1 rel */
   itemp--;
@@ -277,9 +277,9 @@ void ReadDim6CB (Widget w, XtPointer clientData, XtPointer callData)
   if (!sscanf (value, "%d", &itemp))
     { /* error */
       MessageShow ("Error reading dimension 6 number");
-      if (value) XtFree(value); value = NULL;
+      if (value) {XtFree(value);} value = NULL;
       return;}
-  if (value) XtFree(value); value = NULL;
+  if (value) {XtFree(value);} value = NULL;
   
   /* internally 0 rel; externally 1 rel */
   itemp--;
@@ -482,7 +482,7 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
     wierdstring = XmStringCreateSimple (valuestr);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (dia.pixran2, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     
     /* range of planes in image */
     if (image[CurImag].myDesc) 
@@ -492,7 +492,7 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
     wierdstring = XmStringCreateSimple (valuestr);
     XtSetArg (wargs[0], XmNlabelString, wierdstring);
     XtSetValues (dia.planelab, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL;
     
     /* current min */
     g_snprintf (valuestr, 60, "%f", image[CurImag].PixRange[0]);
@@ -761,17 +761,17 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   XtAddCallback (ReloadButton, XmNactivateCallback, OptReloadButCB, 
 		 (XtPointer)IDdata);
   
-  if (label)   XmStringFree(label);    label   = NULL;
-  if (labelto) XmStringFree(labelto);  labelto = NULL;
-  if (minpix) XmStringFree(minpix); minpix = NULL;
-  if (maxpix) XmStringFree(maxpix); maxpix = NULL;
-  if (pixran) XmStringFree(pixran); pixran = NULL;
-  if (linear) XmStringFree(linear); linear = NULL;
-  if (nonlinear) XmStringFree(nonlinear); nonlinear = NULL;
-  if (histEq) XmStringFree(histEq); histEq = NULL;
-  if (plalab) XmStringFree(plalab); plalab = NULL;
-  if (PixelStr) XmStringFree(PixelStr); PixelStr = NULL;
-  if (higher) XmStringFree(higher); higher = NULL;
+  if (label)     {XmStringFree(label);}     label   = NULL;
+  if (labelto)   {XmStringFree(labelto);}   labelto = NULL;
+  if (minpix)    {XmStringFree(minpix);}    minpix = NULL;
+  if (maxpix)    {XmStringFree(maxpix);}    maxpix = NULL;
+  if (pixran)    {XmStringFree(pixran);}    pixran = NULL;
+  if (linear)    {XmStringFree(linear);}    linear = NULL;
+  if (nonlinear) {XmStringFree(nonlinear);} nonlinear = NULL;
+  if (histEq)    {XmStringFree(histEq);}    histEq = NULL;
+  if (plalab)    {XmStringFree(plalab);}    plalab = NULL;
+  if (PixelStr)  {XmStringFree(PixelStr);}  PixelStr = NULL;
+  if (higher)    {XmStringFree(higher);}    higher = NULL;
   
   /* set it up */
   XtManageChild (dia.dialog);

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -184,9 +184,9 @@ olong ObitAIPSDirFindCNO(olong disk, olong user,
   if (err->error) return -1;  /* previous error? */
 
   /* protect against bad strings */
-  for (i=0; i<12; i++) lAname[i]  = Aname[i];  lAname[i] = 0;
-  for (i=0; i<6; i++)  lAclass[i] = Aclass[i]; lAclass[i] = 0;
-  for (i=0; i<2; i++)  lAtype[i]  = Atype[i];  lAtype[i] = 0;
+  for (i=0; i<12; i++) {lAname[i]  = Aname[i];}  lAname[i] = 0;
+  for (i=0; i<6; i++)  {lAclass[i] = Aclass[i];} lAclass[i] = 0;
+  for (i=0; i<2; i++)  {lAtype[i]  = Atype[i];}  lAtype[i] = 0;
   
   /* Check that disk legal */
   ndisk = ObitAIPSGetNumDisk(err);
@@ -273,9 +273,9 @@ olong ObitAIPSDirAlloc(olong disk, olong user,
   if (err->error) return -1;  /* previous error? */
 
   /* protect against bad strings */
-  for (i=0; i<12; i++) lAname[i]  = Aname[i];  lAname[i] = 0;
-  for (i=0; i<6; i++)  lAclass[i] = Aclass[i]; lAclass[i] = 0;
-  for (i=0; i<2; i++)  lAtype[i]  = Atype[i];  lAtype[i] = 0;
+  for (i=0; i<12; i++) {lAname[i]  = Aname[i];}  lAname[i] = 0;
+  for (i=0; i<6; i++)  {lAclass[i] = Aclass[i];} lAclass[i] = 0;
+  for (i=0; i<2; i++)  {lAtype[i]  = Atype[i];}  lAtype[i] = 0;
   
   /* Check that disk legal */
   ndisk = ObitAIPSGetNumDisk(err);
@@ -367,7 +367,6 @@ void ObitAIPSDirRemoveEntry(olong disk, olong user, olong cno, ObitErr *err)
   ObitAIPSDir         *myDir = NULL;
   ObitAIPSDirCatEntry entry;
   olong ndisk;
-  ObitAIPSDirStatusError retCode = OBIT_AIPS_Dir_StatusSpecErr;
   gchar *routine = "ObitAIPSDirRemoveEntry";
 
   /* error checks */
@@ -384,7 +383,6 @@ void ObitAIPSDirRemoveEntry(olong disk, olong user, olong cno, ObitErr *err)
   }
 
   /* Open */
-  retCode = OBIT_AIPS_Dir_StatusIOErr;
   myDir =  ObitAIPSDirOpen (disk, user, err);
   if (err->error) return;
 
@@ -412,7 +410,6 @@ void ObitAIPSDirRemoveEntry(olong disk, olong user, olong cno, ObitErr *err)
   /* write it back */
   ObitAIPSDirWrite(myDir, cno, &entry, err);
   if (err->error) { /* attempt close on error */
-    retCode = OBIT_AIPS_Dir_StatusIOErr;
     ObitAIPSDirClose (myDir, err); 
     return;
   }
@@ -433,7 +430,6 @@ olong ObitAIPSDirNumber(olong disk, olong user, ObitErr *err)
 {
   olong                ndisk, out = 0;
   ObitAIPSDir         *myDir = NULL;
-  ObitAIPSDirStatusError retCode = OBIT_AIPS_Dir_StatusSpecErr;
   gchar *routine = "ObitAIPSDirNumber";
 
   /* error checks */
@@ -450,7 +446,6 @@ olong ObitAIPSDirNumber(olong disk, olong user, ObitErr *err)
   }
 
   /* Open */
-  retCode = OBIT_AIPS_Dir_StatusIOErr;
   myDir =  ObitAIPSDirOpen (disk, user, err);
   if (err->error) return out;
   out = myDir->maxcno;  /* Get maximum allocate */
@@ -1289,7 +1284,7 @@ ObitAIPSDirCopy(ObitAIPSDirCatEntry *in, ObitAIPSDirCatEntry *out)
   g_memmove (out->name, in-> name, 20);
 
   /* replace any NULLs in the string with blanks */
-  for (i=0; i<20; i++) 
+  for (i=0; i<12; i++) 
     if (out->name[i]==0) out->name[i]=' ';
 
 } /* end ObitAIPSDirCopy */
@@ -1557,7 +1552,7 @@ static void SyncDir(ObitAIPSDir *in, ObitAIPSDirCatHead  *head,
   AIPSint    buffer[256];
   ObitIOCode status=OBIT_IO_OK;
   ObitFilePos size;
-  ObitAIPSDirCatEntry *entry=NULL;
+  /*ObitAIPSDirCatEntry *entry=NULL;*/
   gchar *routine = "ObitAIPSDir:SyncDir";
 
   if (err->error) return;  /* previous error? */
@@ -1575,7 +1570,7 @@ static void SyncDir(ObitAIPSDir *in, ObitAIPSDirCatHead  *head,
     status = ObitFileRead (in->myFile, wantPos, size, (gchar*)buffer, err);
     if (status==OBIT_IO_EOF) break;
     if (err->error) Obit_traceback_msg (err, routine, "Catalog search");
-    entry = (ObitAIPSDirCatEntry*)buffer;  /* entry pointer into buffer */
+    /*entry = (ObitAIPSDirCatEntry*)buffer;   entry pointer into buffer */
     wantPos = -1L; /* now sequential access */
     count++;
   }

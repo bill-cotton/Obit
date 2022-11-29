@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -969,10 +969,10 @@ void ObitUVSelClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* free this class members */
-  if (in->ants) g_free(in->ants);       in->ants    = NULL;
-  if (in->sources) g_free(in->sources); in->sources = NULL;
-  if (in->IFDrop)  g_free(in->IFDrop);  in->IFDrop  = NULL;
-  if (in->IFSel)   g_free(in->IFSel);   in->IFSel   = NULL;
+  if (in->ants)    {g_free(in->ants);}  in->ants    = NULL;
+  if (in->sources) {g_free(in->sources);} in->sources = NULL;
+  if (in->IFDrop)  {g_free(in->IFDrop);}  in->IFDrop  = NULL;
+  if (in->IFSel)   {g_free(in->IFSel);}   in->IFSel   = NULL;
   in->NXTable    = ObitTableNXUnref(in->NXTable);
   in->NXTableRow = ObitTableNXRowUnref(in->NXTableRow);
   

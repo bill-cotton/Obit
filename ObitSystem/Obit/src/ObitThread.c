@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2013                                          */
+/*;  Copyright (C) 2002-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -50,13 +50,13 @@ ObitThread* newObitThread (void)
 {
   ObitThread* me;
 #ifdef OBIT_THREADS_ENABLED
-  GStaticRWLock *outRWLock=NULL;
+  GRWLock *outRWLock=NULL;
 #endif  /* OBIT_THREADS_ENABLED */
 
   /* Has g_threads been initialized? */
   if (myClassInfo.initialized==FALSE) {
 #ifdef OBIT_THREADS_ENABLED
-    g_thread_init(NULL);
+    /* Not needed g_thread_init(NULL);*/
 #endif  /* OBIT_THREADS_ENABLED */
     myClassInfo.initialized = TRUE;  /* Now initialized */
     myClassInfo.haveThreads = FALSE; /* Don't know about threading yet */
@@ -75,10 +75,13 @@ ObitThread* newObitThread (void)
   me->myMutex  = NULL;
   me->myRWLock = NULL;
 #ifdef OBIT_THREADS_ENABLED
-  me->myMutex  = g_mutex_new(); 
-  outRWLock = g_malloc0(sizeof(GStaticRWLock));
-  g_static_rw_lock_init(outRWLock);
+  /* Create structures as needed */
+  if (me->myMutex==NULL)      me->myMutex      = g_malloc0(sizeof(GMutex));
+  /* not needed g_mutex_init(me->myMutex); */
+  outRWLock = g_malloc0(sizeof(GRWLock));
+  g_rw_lock_init(outRWLock);
   me->myRWLock = outRWLock;
+
 #endif  /* OBIT_THREADS_ENABLED */
 
   return me;
@@ -99,9 +102,10 @@ ObitThread* freeObitThread (ObitThread *in)
   if (in->pool)  g_thread_pool_free(in->pool, TRUE, FALSE);
   if (in->queue) g_async_queue_unref (in->queue);
   /*g_mutex_unlock(in->myMutex); *//* Make sure unlocked */
-  g_mutex_free(in->myMutex); in->myMutex = NULL;
-  /*g_static_rw_lock_reader_unlock(in->myRWLock); *//* Make sure unlocked */
-  /*g_static_rw_lock_writer_unlock(in->myRWLock); *//* Make sure unlocked */
+  /* old g_mutex_free(in->myMutex); in->myMutex = NULL;*/
+  if (in->myMutex) {g_free(in->myMutex);} in->myMutex = NULL;
+  /*g_rw_lock_reader_unlock(in->myRWLock); *//* Make sure unlocked */
+  /*g_rw_lock_writer_unlock(in->myRWLock); *//* Make sure unlocked */
   g_free(in->myRWLock); in->myRWLock = NULL;
 #endif  /* OBIT_THREADS_ENABLED */
 
@@ -235,7 +239,7 @@ void ObitThreadRWReadLock (ObitThread *in)
 
   /* Lock */
 #ifdef OBIT_THREADS_ENABLED
-  g_static_rw_lock_reader_lock(in->myRWLock);
+  g_rw_lock_reader_lock(in->myRWLock);
 #endif  /* OBIT_THREADS_ENABLED */
 
 } /* end ObitThreadRWReadLock */
@@ -257,7 +261,7 @@ gboolean ObitThreadRWReadTryLock (ObitThread *in)
 
   /* Lock */
 #ifdef OBIT_THREADS_ENABLED
-  out = g_static_rw_lock_reader_trylock(in->myRWLock);
+  out = g_rw_lock_reader_trylock(in->myRWLock);
 #endif  /* OBIT_THREADS_ENABLED */
   return out;
 } /* end ObitThreadRWReadTryLock */
@@ -274,7 +278,7 @@ void ObitThreadRWReadUnlock (ObitThread *in)
 
   /* Lock */
 #ifdef OBIT_THREADS_ENABLED
-  g_static_rw_lock_reader_unlock(in->myRWLock);
+  g_rw_lock_reader_unlock(in->myRWLock);
 #endif  /* OBIT_THREADS_ENABLED */
 
 } /* end ObitThreadRWReadUnlock */
@@ -292,7 +296,7 @@ void ObitThreadRWWriteLock (ObitThread *in)
 
   /* Lock */
 #ifdef OBIT_THREADS_ENABLED
-  g_static_rw_lock_writer_lock(in->myRWLock);
+  g_rw_lock_writer_lock(in->myRWLock);
 #endif  /* OBIT_THREADS_ENABLED */
 
 } /* end ObitThreadRWWriteLock */
@@ -314,7 +318,7 @@ gboolean ObitThreadRWWriteTryLock (ObitThread *in)
 
   /* Lock */
 #ifdef OBIT_THREADS_ENABLED
-  out = g_static_rw_lock_writer_trylock(in->myRWLock);
+  out = g_rw_lock_writer_trylock(in->myRWLock);
 #endif  /* OBIT_THREADS_ENABLED */
   return out;
 } /* end ObitThreadRWWriteTryLock */
@@ -331,7 +335,7 @@ void ObitThreadRWWriteUnlock (ObitThread *in)
 
   /* Lock */
 #ifdef OBIT_THREADS_ENABLED
-  g_static_rw_lock_writer_unlock(in->myRWLock);
+  g_rw_lock_writer_unlock(in->myRWLock);
 #endif  /* OBIT_THREADS_ENABLED */
 
 } /* end ObitThreadRWWriteUnlock */
@@ -484,9 +488,9 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
 			     ObitThreadFunc func, gpointer **args)
 {
   gboolean out = TRUE;
-  GTimeVal end_time;
+  /* old GTimeVal end_time;*/
+  guint64 add_time;
   gpointer rval;
-  glong add_time;
   olong i;
 
   /* error checks */
@@ -532,14 +536,14 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
    queue iff they finish */
   /* 60 min. timeout
   add_time = 3600 * 1000000; */
-  /* Compiler overflow problem? 30 min */
-  add_time = 1800 * 1000000;
-  g_get_current_time (&end_time);
-  g_time_val_add (&end_time, add_time); /* add timeout in microseconds */
-  g_time_val_add (&end_time, add_time); /* double timeout */
-  g_time_val_add (&end_time, add_time); /* add another half hour timeout */
+  add_time = (guint64)3600 * 1000000;
+  /* old g_get_current_time (&end_time); */
+  /* old g_time_val_add (&end_time, add_time);  add timeout in microseconds */
+  /* old g_time_val_add (&end_time, add_time);  double timeout */
+  /* old g_time_val_add (&end_time, add_time);  add another half hour timeout */
   for (i=0; i<nthreads; i++) {
-    rval = g_async_queue_timed_pop (in->queue, &end_time);
+    /* oldrval = g_async_queue_timed_pop (in->queue, &end_time);*/
+    rval = g_async_queue_timeout_pop (in->queue, add_time);
     /* Check for timeout */
     if (rval==NULL) fprintf (stderr, "Timeout on Thread %d\n", i);
   }
@@ -589,7 +593,8 @@ void ObitThreadPoolFree (ObitThread* in)
 void ObitThreadStart1 (ObitThread* in, ObitThreadFunc func, gpointer args)
 {
 #ifdef OBIT_THREADS_ENABLED
-  in->singleThread = (GThread*)g_thread_create ((GThreadFunc)func, args, TRUE, NULL);
+  /* old in->singleThread = (GThread*)g_thread_create ((GThreadFunc)func, args, TRUE, NULL);*/
+  in->singleThread = (GThread*)g_thread_new ("Single",(GThreadFunc)func, args);
 #endif  /* OBIT_THREADS_ENABLED */
 } /* end ObitThreadStart1 */
 
@@ -627,11 +632,12 @@ void ObitThreadQueueInit (ObitThread* in)
 gpointer ObitThreadQueueCheck (ObitThread* in, olong add_time)
 {
 #ifdef OBIT_THREADS_ENABLED
-  GTimeVal end_time;
+  /* old GTimeVal end_time;*/
+  guint64 end_time = add_time;
   
-  g_get_current_time (&end_time);
-  g_time_val_add (&end_time, add_time);
-  if (add_time>0) return g_async_queue_timed_pop (in->queue, &end_time); 
+  /* old g_get_current_time (&end_time);
+     g_time_val_add (&end_time, add_time);*/
+  if (add_time>0) return g_async_queue_timeout_pop (in->queue, end_time); 
   else return g_async_queue_pop (in->queue);
 #endif  /* OBIT_THREADS_ENABLED */
 } /* end ObitThreadQueueInit */

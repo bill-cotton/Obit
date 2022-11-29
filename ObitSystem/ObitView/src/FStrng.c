@@ -3,7 +3,7 @@
 /* an FStrng is an implementation of character strings with associated
    functions */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1998,2002-2008
+*  Copyright (C) 1996,1998,2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -57,8 +57,8 @@ FStrng*  MakeFStrngSize(olong length)
 void  KillFStrng(FStrng* str) 
 { 
   if (!str) return;  /* nobody home */ 
-  if (str->sp) g_free(str->sp); str->sp=NULL;/* delete actual string */ 
-  if (str) g_free(str); str = NULL;
+  if (str->sp) {g_free(str->sp);} str->sp=NULL;/* delete actual string */ 
+  if (str)     {g_free(str);}     str = NULL;
 }  /* end KillFStri\ng */ 
   
 /**
@@ -81,7 +81,7 @@ void FStrngFill(FStrng *out, gchar * in)
     out->sp = (gchar*) g_malloc(length+1); 
     out->length = length;
     } 
-  for (i=0; i<length; i++) out->sp[i] = in[i]; out->sp[i] = 0; 
+  for (i=0; i<length; i++) {out->sp[i] = in[i];} out->sp[i] = 0; 
 } /* End StrngFill */ 
   
   
@@ -112,7 +112,7 @@ FStrng* subFstrng(FStrng* me, olong first, olong last)
   j=0;
   for (i=first; i<=last; i++) tout[j++] = me->sp[i]; 
   out = MakeFStrng(tout); 
-  if (tout) g_free(tout); tout = NULL;
+  if (tout) {g_free(tout);} tout = NULL;
   return out;
 }  /*  End of subFStrng  */ 
   
@@ -174,7 +174,7 @@ void FStrngCopy(FStrng* out, FStrng *in)
     {if (out->sp!=0) g_free(out->sp); out->sp=NULL;
     out->sp = (gchar*) g_malloc(in->length+1); 
     out->length = in->length;} 
-  for (i=0; i<in->length; i++) out->sp[i] = in->sp[i]; out->sp[i] = 0; 
+  for (i=0; i<in->length; i++) {out->sp[i] = in->sp[i];} out->sp[i] = 0; 
 }  /* End of FStrngCopy  */ 
   
 /**
@@ -216,7 +216,7 @@ FStrng* FStrngConcat (FStrng *s1, FStrng *s2)
   for (i=0; i<s2->length; i++) tout[j++] = s2->sp[i]; 
   tout[j] = 0; 
   out = MakeFStrng(tout); 
-  if (tout) g_free(tout); tout = NULL;
+  if (tout) {g_free(tout);} tout = NULL;
   return out; 
 }  /*  End FStrngConcat  */ 
   

@@ -1,6 +1,6 @@
 /* $Id$                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -158,33 +158,33 @@ void ObitUVCalBaselineInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
 void ObitUVCalBaseline (ObitUVCal *in, float time, olong ant1, olong ant2, 
 			ofloat *RP, ofloat *visIn, ObitErr *err)
 {
-  olong   blndx, lentry, blindx, iif, ipol, ifreq, ioff, joff, index, nstoke, iSubA, it1, it2, numIF;
+  olong   blndx, lentry, blindx, iif, ipol, ifreq, ioff, joff, index, nstoke, iSubA, it1, it2;
   gboolean   ccor;
   gboolean calBad;
   ofloat gwt, tvr, tvi, gr, gi, fblank = ObitMagicF();
   ObitUVCalBaselineS *me;
   ObitUVDesc *desc;
-  ObitUVSel *sel;
-  olong corID;
+  /*ObitUVSel *sel;*/
+  /*olong corID;*/
   gchar *routine="ObitUVCalBaseline";
 
   /* local pointers for structures */
   me   = in->baselineCal;
   desc = in->myDesc;
-  sel  = in->mySel;
+  /*sel  = in->mySel;*/
 
   /* Number of stokes correlations */
   nstoke = desc->inaxes[desc->jlocs];
 
-  /* number of IFs */
+  /* number of IFs
   if (desc->jlocif>=0) numIF = desc->inaxes[desc->jlocif];
-  else numIF = 1;
+  else numIF = 1; */
 
-  /* Correlator ID if in data */
+  /* Correlator ID if in data 
   if (desc->ilocid>=0) 
     corID = (olong)RP[desc->ilocid] + 0.5;
   else
-    corID = 1;
+    corID = 1;*/
 
   /* Subarray number in data */
   ObitUVDescGetAnts(desc, RP, &it1, &it2, &iSubA);
@@ -296,9 +296,9 @@ ObitUVCalBaselineSUnref (ObitUVCalBaselineS *in)
   if (in==NULL) return in;;
   in->BLTable    = ObitTableBLUnref((ObitTableBL*)in->BLTable);
   in->BLTableRow = ObitTableBLRowUnref((ObitTableBLRow*)in->BLTableRow);
-  if (in->CalApply)     g_free(in->CalApply); in->CalApply   = NULL;
-  if (in->CalPrior)     g_free(in->CalPrior); in->CalPrior   = NULL;
-  if (in->CalFollow)    g_free(in->CalFollow); in->CalFollow  = NULL;
+  if (in->CalApply)     {g_free(in->CalApply);} in->CalApply   = NULL;
+  if (in->CalPrior)     {g_free(in->CalPrior);} in->CalPrior   = NULL;
+  if (in->CalFollow)    {g_free(in->CalFollow);} in->CalFollow  = NULL;
 
   /* basic structure */
    g_free (in);
@@ -440,12 +440,11 @@ static void ObitUVCalBaselineUpdate (ObitUVCalBaselineS *in, ofloat time,
 static void ObitUVCalBaselineNewTime (ObitUVCalBaselineS *in, ofloat time,
 					ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitTableBL *BLTable = NULL;
   ObitTableBLRow *BLTableRow = NULL;
   ofloat *ftemp, ft, curtim=-1.0, fblank = ObitMagicF();
   olong nblank, i, irow, limit;
-  gboolean want, got1;
+  gboolean want;
   olong   ifno, lentry, ant1, ant2, blndx, ifoff;
   olong   index,  numbl;
   gchar *routine="ObitUVCalBaselineNewTime";
@@ -474,13 +473,12 @@ static void ObitUVCalBaselineNewTime (ObitUVCalBaselineS *in, ofloat time,
     
     /* read until selected time. */
     lentry = in->lenCalArrayEntry * in->numPol * (in->eIF - in->bIF + 1);
-    got1 = FALSE;
     limit = MAX (1, in->LastRowRead+1);
 
     /* loop over table */
     for (i= limit; i<=in->numRow; i++) { /* loop 80 */
       irow = i;
-      retCode = ObitTableBLReadRow (BLTable, irow, BLTableRow, err);
+      ObitTableBLReadRow (BLTable, irow, BLTableRow, err);
       in->LastRowRead = i;
       if (err->error) Obit_traceback_msg (err, routine, "BL Table");
       if (BLTableRow->status < 0) continue; /* entry flagged? */
@@ -498,7 +496,6 @@ static void ObitUVCalBaselineNewTime (ObitUVCalBaselineS *in, ofloat time,
       if (BLTableRow->Time > time) break;
       
       /* fill in values */
-      got1 = TRUE;
       in->PriorCalTime = BLTableRow->Time;
       
       /* which antennas */
@@ -555,7 +552,7 @@ static void ObitUVCalBaselineNewTime (ObitUVCalBaselineS *in, ofloat time,
     /* loop over table */
     for (i= limit; i<=in->numRow; i++) { /* loop 180 */
       irow = i;
-      retCode = ObitTableBLReadRow (BLTable, irow, BLTableRow, err);
+      ObitTableBLReadRow (BLTable, irow, BLTableRow, err);
       in->LastRowRead = i;
       if (err->error) Obit_traceback_msg (err, routine, "BL Table");
       if (BLTableRow->status < 0) continue; /* entry flagged? */

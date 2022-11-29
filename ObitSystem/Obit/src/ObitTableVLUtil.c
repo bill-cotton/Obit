@@ -146,7 +146,7 @@ void ObitTableVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
     maj = row->MajorAxis * 3600.0;
     min = row->MinorAxis * 3600.0;
     pa  = row->PosAngle;
-    for (i=0; i<8; i++) field[i] = row->Field[i]; field[i] = 0;
+    for (i=0; i<8; i++) {field[i] = row->Field[i];} field[i] = 0;
 
     /* Errors */
     ObitImageFitDataGaussErr (row->PeakInt, 

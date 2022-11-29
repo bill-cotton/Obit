@@ -1,7 +1,7 @@
 /* $Id$ */
 /* TextFile routines for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1999, 2002-2008
+*  Copyright (C) 1996,1999, 2002-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -89,15 +89,15 @@ void TextFileKill (TextFilePtr TFilePtr)
   if (!TFilePtr) return; /* anybody home */
 
 /* delete any characters string and buffer */
-  if (TFilePtr->FileName) g_free(TFilePtr->FileName); TFilePtr->FileName=NULL;
-  if (TFilePtr->directory) g_free(TFilePtr->directory); TFilePtr->directory=NULL;
+  if (TFilePtr->FileName) {g_free(TFilePtr->FileName);} TFilePtr->FileName=NULL;
+  if (TFilePtr->directory) {g_free(TFilePtr->directory);} TFilePtr->directory=NULL;
 
   /* need to close output file? */
   if (TFilePtr->file) fclose(TFilePtr->file);
   if (TFilePtr->zFile) gzclose(TFilePtr->zFile);
 
   /* delete structure */
-  if (TFilePtr) g_free(TFilePtr); TFilePtr=NULL;
+  if (TFilePtr) {g_free(TFilePtr);} TFilePtr=NULL;
 } /* end TextFileKill */
 
 /* get file specification                                                 */
@@ -129,7 +129,7 @@ void TextFileFind (int inout, TextFilePtr TFilePtr, TextFileProc OKfunc,
     wierdstring = XmStringCreateSimple (TFilePtr->directory);
     XtSetArg (wargs[0], XmNdirectory, wierdstring);
     XtSetValues (filebox, wargs, 1);
-    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL; 
+    if (wierdstring) {XmStringFree(wierdstring);} wierdstring = NULL; 
   }
 
 /* Shazam appear: */
@@ -158,7 +158,7 @@ olong TextFileOpen (TextFilePtr TFilePtr, olong inout)
 
   /* open for read */
   if (inout==1) { 
-   TFilePtr->zFile = gzopen((const char*)fullname, "rt");
+    TFilePtr->zFile = gzopen OF(((const char*)fullname, "rt"));
    if (TFilePtr->zFile==NULL) { /* open failed */
      MessageShow ("Error opening text file");
      return 0; } /* end of open failed */
@@ -442,8 +442,8 @@ void TextFileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
   cbs = (XmFileSelectionBoxCallbackStruct *) callData;
 
   /* delete any old file names */
-  if (TFilePtr->FileName)  g_free(TFilePtr->FileName);  TFilePtr->FileName=NULL;
-  if (TFilePtr->directory) g_free(TFilePtr->directory); TFilePtr->directory=NULL;
+  if (TFilePtr->FileName)  {g_free(TFilePtr->FileName);}  TFilePtr->FileName=NULL;
+  if (TFilePtr->directory) {g_free(TFilePtr->directory);} TFilePtr->directory=NULL;
   
   /* get file name */
   if (!XmStringGetLtoR (cbs->value, XmSTRING_DEFAULT_CHARSET, &filename))
@@ -476,7 +476,7 @@ void TextFileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
   XtUnmanageChild (filebox); 
   XtPopdown (XtParent (filebox)); 
   XtDestroyWidget(filebox); 
-  if (filename) XtFree(filename); filename = NULL;
+  if (filename) {XtFree(filename);} filename = NULL;
   
   /* call func if specified */
   XPtr = (XPointer)TFilePtr;

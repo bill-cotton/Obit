@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -223,7 +223,7 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   ObitErr *terr=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong iif, oif, nif, nchAvg, chInc, IFInc;
+  olong iif, oif, nif, nchAvg, chInc;
   olong iFQver, inFQRow, outFQRow, highFQver, maxIF=1;
   oint numIF;
   gboolean wanted;
@@ -263,13 +263,11 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   /* How many IFs on input? */
   if (inUV->myDesc->jlocif>=0) {
     nif   = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
-    IFInc = MAX (1, inUV->mySel->IFInc);   /* IF increment */
     maxIF = ((ObitUVDesc*)inUV->myIO->myDesc)->inaxes[((ObitUVDesc*)inUV->myIO->myDesc)->jlocif];
     /* but no more than selected */
     maxIF = MIN (maxIF, inUV->mySel->startIF+inUV->mySel->numberIF-1);
   } else {
     nif   = 1;
-    IFInc = 1;
     maxIF = 1;
   }
 

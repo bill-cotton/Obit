@@ -1,7 +1,7 @@
 /* $Id$  */
 /* position logging  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997-2008
+*  Copyright (C) 1996,1997-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -69,7 +69,7 @@ void DoLogger(void)
 {
   gboolean   valid, posOK;
   olong      ipos[7], ndim, i;
-  gchar       flux[20], equistr[7], pixel[23], line[100];
+  gchar       flux[20], equistr[7], pixel[23], line[132];
   gchar       axtype[3][9], label[3][30];
   odouble     pos[3];
   ofloat      pix[3], fblank, val, *pixP;

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* routines to load a FITS file to a ZPixmap for ObitView*/
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996-2021
+*  Copyright (C) 1996-2022
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -195,7 +195,7 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
   if (bugOut) { /* failure in histogram equalization/pixel range */
     MessageShow ( "Error in histogram analysis");
     /* Clean up mess and bail out */
-    if (eq_map) g_free(eq_map);  eq_map = NULL;
+    if (eq_map) {g_free(eq_map);}  eq_map = NULL;
     image->myDesc   = ObitImageDescUnref(image->myDesc);
     image->myPixels = ObitImageDescUnref(image->myPixels);
     image->valid = FALSE;  /* now no valid data */
@@ -280,7 +280,7 @@ void WorkingCursor(gboolean on, gboolean verbose)
   Display *dpy = XtDisplay(shell);
   XmString str = NULL;
   olong  newdialog;
-  Widget form, line2;
+  Widget form; /* line2;*/
   gchar cstring[121];
   
   /* keep track of how many times this is "locked" */
@@ -322,19 +322,20 @@ void WorkingCursor(gboolean on, gboolean verbose)
 					 XmNrightAttachment, XmATTACH_FORM,
 					 XmNleftAttachment,  XmATTACH_FORM,
 					 NULL);
-	if (str) XmStringFree(str); str = NULL;
+	if (str) {XmStringFree(str);} str = NULL;
 	
 	g_snprintf (cstring, 120, "Canceling FITS load behaves poorly");
 	str = XmStringCreateLocalized (cstring);
-	line2 = XtVaCreateManagedWidget ("Line2", xmLabelWidgetClass, 
-					 form, 
-					 XmNlabelString,   str,
-					 XmNtopAttachment, XmATTACH_WIDGET,
-					 XmNtopWidget,     line1,
-					 XmNrightAttachment, XmATTACH_FORM,
-					 XmNleftAttachment,  XmATTACH_FORM,
-					 NULL);
-	if (str) XmStringFree(str); str = NULL;
+	/*line2 = */
+	XtVaCreateManagedWidget ("Line2", xmLabelWidgetClass, 
+				 form, 
+				 XmNlabelString,   str,
+				 XmNtopAttachment, XmATTACH_WIDGET,
+				 XmNtopWidget,     line1,
+				 XmNrightAttachment, XmATTACH_FORM,
+				 XmNleftAttachment,  XmATTACH_FORM,
+				 NULL);
+	if (str) {XmStringFree(str);} str = NULL;
 	
 	/* Cancel button */
 	CancelButton = XtVaCreateManagedWidget ("Cancel", 
