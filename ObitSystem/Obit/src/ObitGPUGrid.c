@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2022                                          */
+/*;  Copyright (C) 2014-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -188,15 +188,18 @@ void ObitGPUGridClone  (ObitGPUGrid *in, ObitGPUGrid *out, ObitErr *err)
  * \param nfacet  Total number of facets
  * \param iimage  output Image as Obit
  * \param UVin    Input data
+ * \param doBuff  If TRUE allocate GPU data buffer 
  * \return the new object.
  */
-ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *iimage, ObitUV *UVin)
+ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *iimage, ObitUV *UVin, 
+				gboolean doBuff)
 {
   ObitGPUGrid* out;
   ObitImage *image = (ObitImage*)iimage;
   ObitUVDesc *uvDesc = UVin->myDesc;
   ObitImageDesc *imDesc = image->myDesc;
   olong nchan, nif, nVisPIO, lenvis, nplane;
+  int dobuff;
   /* ObitInfoType type;
      gint32 dim[MAXINFOELEMDIM];*/
  
@@ -214,6 +217,7 @@ ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *iimage, ObitUV 
   else                  nif = 1;
 
   /* How many planes? */
+  nplane = 1;  /* Just in case */
   if (ObitImageWBIsA(image)) {
        nplane = 1;  /* Note GPU gridding doesn't work for this */
    } else if (ObitImageMFIsA(image)) {
@@ -226,8 +230,10 @@ ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *iimage, ObitUV 
  
   /* Init - allocate structures */
 #if HAVE_GPU==1  /* Compiled with GPU?*/
+  if (doBuff) dobuff = 1;
+  else        dobuff = 0;
   ObitCUDAGridAlloc(out->cudaInfo, (long)nfacet, (long)nchan, (long)nif, 
-		    (long)nVisPIO, (long)lenvis, (long)nplane);
+		    (long)nVisPIO, (long)lenvis, (long)nplane, (int)dobuff);
 #endif  /* Compiled with  GPU?*/
 
   return out;

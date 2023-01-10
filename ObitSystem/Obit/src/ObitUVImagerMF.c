@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -569,7 +569,7 @@ void ObitUVImagerMFImage2 (ObitUVImagerMF *in, olong *field, gboolean doWeight,
   olong NumPar, myAuto;
   ofloat sumwts[2];
   ObitImage *theBeam=NULL;
-  gboolean *forceBeam=NULL, needBeam, doall, found;
+  gboolean *forceBeam=NULL, doGPUGrid, needBeam, doall, found;
   ObitUVImagerClassInfo *imgClass = (ObitUVImagerClassInfo*)in->ClassInfo;
   gchar        *dataParms[] = {  /* Imaging info */
     "xShift", "yShift",
@@ -591,6 +591,13 @@ void ObitUVImagerMFImage2 (ObitUVImagerMF *in, olong *field, gboolean doWeight,
   /* Copy imaging info if uvwork2 already defined */
   if (in->uvwork2) 
     ObitInfoListCopyList (in->uvdata2->info, in->uvwork2->info, dataParms);
+
+  /* GPU Gridding? */
+  doGPUGrid = FALSE;
+  if (!ObitInfoListGetTest(in->uvdata->info, "doGPUGrid", &type, dim, &doGPUGrid)) {
+    Obit_log_error(err, OBIT_Error,"%s doGPUGrid not defined", routine);
+    return;
+  }
 
   /* List of need to force making beam */
   forceBeam = g_malloc0(in->mosaic2->numberImages*sizeof(gboolean));
@@ -662,9 +669,10 @@ void ObitUVImagerMFImage2 (ObitUVImagerMF *in, olong *field, gboolean doWeight,
     goto shifty;
   } /* end single */
 
-  /* Multiple (including beams) - do in parallel */
+  /* Multiple (including beams) - do in parallel - different for GPU gridding*/
 
-  NumPar = imgClass->ObitUVImagerGetNumPar(inn, doBeam, err); /* How many to do? */
+  if (doGPUGrid)  NumPar = ObitUVGridGetNumPar(in->uvwork2, (Obit*)in->mosaic2, doBeam, err);
+  else NumPar = imgClass->ObitUVImagerGetNumPar(inn, doBeam, err); /* How many to do? */
 
   /* Get list of images */
   imageList = g_malloc0(in->mosaic2->numberImages*sizeof(ObitImage*));
@@ -1019,6 +1027,9 @@ olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, gboolean doBeam, ObitErr *err)
   else if (sizeof(olong*)==8) tSize =  mSize;  /*3.0e9; */
   else                        tSize = 1.0e9;  /* Shouldn't happen */
   out = tSize / bufSize;  /* How many fit in a tSize? */
+
+  /* DEBUG 
+  fprintf (stderr,"GetNumPar: out %d nSpec %d imSize %lg numVis %lg mSize %lg\n", out,nSpec,imSize,numVis,mSize);*/
 
   /* Better be at least 1 */
   Obit_retval_if_fail((out>=1), err, out,

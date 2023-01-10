@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021,2022                                          */
+/*;  Copyright (C) 2021,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -100,10 +100,11 @@ void ObitGPUGridClassInit (void);
 ObitGPUGrid* newObitGPUGrid (gchar* name);
 
 /** Public: Create/initialize CUDA GPUGrid structures */
-ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *image, ObitUV *UVin);
+ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *image, ObitUV *UVin,
+				gboolean doBuff);
 /** Typedef for definition of class pointer structure */
-typedef ObitGPUGrid* (*ObitGPUGridCreateFP) (gchar* name, 
-					     olong nfacet, Obit *image, ObitUV *UVin);
+typedef ObitGPUGrid* (*ObitGPUGridCreateFP) (gchar* name, olong nfacet, Obit *image, ObitUV *UVin,
+					     gboolean doBuff);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitGPUGridGetClass (void);

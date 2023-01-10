@@ -1138,8 +1138,10 @@ static gpointer ThreadClip (gpointer arg)
       }
       if (OK) continue;
       /* Must be bad */
-      indx = jy*nx+jx;
-      pixels[indx] = fblank;
+      if ((jy<ny) && (jx<nx)) {
+	indx = jy*nx+jx;
+	pixels[indx] = fblank;
+      }
     } /* end jx loop */
   } /* end jy loop */
   

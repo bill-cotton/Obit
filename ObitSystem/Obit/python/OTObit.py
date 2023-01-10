@@ -1627,7 +1627,7 @@ def uvtab(inUV, filename, outDisk, err, compress=False, \
     outHistory.TimeStamp(" Start Obit uvtab",err)
     # Full path may blow history limit
     s =filename.rfind('/');  s = max(0,s)
-    hline = "uvlod   / FITS file "+filename[s+1:]+" disk "+str(outDisk)
+    hline = "uvlod   / FITS file "+filename[s:]+" disk "+str(outDisk)
     outHistory.WriteRec(-1,hline,err)
     outHistory.Close(err)
     # History in header?
@@ -1738,10 +1738,10 @@ def imlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     History.PCopyHeader(inHistory, outHistory, err)
     # Add history
     outHistory.Open(History.READWRITE, err)
-    outHistory.TimeStamp(" Start Obit uvlod",err)
+    outHistory.TimeStamp(" Start Obit imlod",err)
     # Full path may blow history limit
     s =filename.rfind('/');  s = max(0,s)
-    hline = "uvlod   / FITS file "+filename[s+1:]+" disk "+str(inDisk)
+    hline = "imlod   / FITS file "+filename[s:]+" disk "+str(inDisk)
     outHistory.WriteRec(-1, hline,err)
     outHistory.Close(err)
     # Open to be sure to update fragile AIPS header

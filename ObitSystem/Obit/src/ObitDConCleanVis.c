@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2022                                          */
+/*;  Copyright (C) 2005-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -162,6 +162,10 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
 
 /** Private: Checks if fresh facets are "Done" */
 void CheckIfDone(ObitDConCleanVis* in, ObitErr *err);
+
+/** Private: Are any facets modified? */
+static gboolean anyDirty (ObitDConCleanVis *in);
+
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -570,7 +574,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   ObitDConCleanVis *in;
   ObitFArray **pixarray=NULL;
   gboolean done, fin=TRUE, quit=FALSE, doSub, bail, doMore, moreClean, notDone;
-  gboolean redo, isBeamCor, doAutoCen=FALSE;
+  gboolean redo, isBeamCor, isDirty, doAutoCen=FALSE;
   olong jtemp, i, *startCC=NULL, *newCC=NULL, count, maxAutoWinLoop, ifld;
   olong redoCnt=0, damnCnt=0, lastIter, lastFld, NoPixelCnt;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -872,8 +876,11 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   if (err->prtLv>1) ObitErrLog(err);  /* Progress Report */
   else ObitErrClear(err);
 
+  /* Any facets modified? */
+  isDirty = anyDirty (in);
+
   /* Subtract any remaining components from visibility data */
-  if (in->niter>0)
+  if ((in->niter>0) && isDirty)
     inClass->ObitDConCleanSub((ObitDConClean*)in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
@@ -883,9 +890,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
   /* Release working pixel arrays */
   pixarray = inClass->KillPxArray (in, pixarray);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Make final residuals */
-  if ((!bail) && (in->niter>0)) {
+  if ((!bail) && (in->niter>0) && isDirty) {
     inClass->ObitDConCleanResetChDone((ObitDConClean*)in, err);  /* Any resets needed */
     /* Make all stale fields */
     for (ifld=0; ifld<in->nfield; ifld++) in->currentFields[ifld] = ifld+1;
@@ -4897,3 +4905,19 @@ static void FindPeak (ObitDConCleanVis *in, ObitErr *err)
 
 } /* end  FindPeak  */
 
+/**
+ * Determine if any facets are modified - have unsubtracted CCs
+ * \param in     The Clean object
+ * \return TRUE if some modified
+ */
+static gboolean anyDirty (ObitDConCleanVis *in)
+{
+  olong i;
+  gboolean out=FALSE;
+  /* Loop over facets */
+  for (i=0; i<in->nfield; i++) {
+    if (!in->fresh[i]) return TRUE;
+  }
+
+  return out; /* Must be OK */
+} /* End anyDirty */

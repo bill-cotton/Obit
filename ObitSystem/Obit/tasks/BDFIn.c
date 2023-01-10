@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -150,6 +150,9 @@ void FlagIntent (ObitSDMData *SDMData, ObitUV* outData, ObitErr* err);
 /* Is a given time in next scan? */
 gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,  
 		  olong *curScanI, olong *nextScanNo, olong *SourID);
+/* Is a given time in next subscan? */
+gboolean nextSubscan(ObitSDMData *SDMData, olong curScan, odouble time,  
+		     olong *curScanI, olong *nextScanNo, olong *SourID);
 /* Nominal VLA sensitivity */
 ofloat nomSen(ASDMAntennaArray*  AntArray);
 /* Swallow NX Table */
@@ -3789,7 +3792,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong nState, *States=NULL;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
-  gboolean want, ChkVis, found=FALSE;
+  gboolean want, ChkVis;
   ObitIOAccess access;
   gchar *routine = "GetSysPowerInfo";
 
@@ -3934,18 +3937,10 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     if (inTab->rows[iRow]->antennaId<=-10) continue;
     
     /* Is this in the same scan?  Antennas may change but not SpWin */
-    if (nextScan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
-		&curScanI, &nextScanNo, &SourNo)) {
+    if (nextSubscan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
+		    &curScanI, &nextScanNo, &SourNo)) {
       curScan = nextScanNo;
       iMain = SDMData->iMain; /* Main table entry for this scan */
-
-      /* Is source number in SourceArray */
-      found = FALSE;
-      for (i=0; i<SDMData->SourceArray->nsou; i++) {
-	found = SourNo==SDMData->SourceArray->sou[i]->sourceNo;
-	if (found) break;
-      }
-      if (!found) continue;  /* Source in SourceArray? */
 
       /* Extract antenna info */
       AntArray = ObitSDMDataKillAntArray (AntArray);  /* Delete old */
@@ -3968,7 +3963,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       
     } /* End new scan */
       
-    if (!found) continue;  /* Source in SourceArray? */
+    /* if (!found) continue;  Source in SourceArray? */
 
     /* Save info to SY table row */
     outRow->Time          = inTab->rows[iRow]->timeInterval[0]-refJD;
@@ -4101,7 +4096,6 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong i, iRow, oRow, ver, maxAnt, SourNo, iMain;
   olong *antLookup=NULL, curScan, curScanI, nextScanNo;
   ObitIOAccess access;
-  gboolean found=FALSE;
   gchar *routine = "GetOTTInfo";
 
   /* error checks */
@@ -4171,18 +4165,10 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     if (inTab->rows[iRow]->antennaId<=-10) continue;
 
     /* Is this in the same scan?  Antennas may change but not SpWin */
-    if (nextScan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
-		&curScanI, &nextScanNo, &SourNo)) {
+    if (nextSubscan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
+		    &curScanI, &nextScanNo, &SourNo)) {
       curScan = nextScanNo;
       iMain = SDMData->iMain; /* Main table entry for this scan */
-
-      /* Is source number in SourceArray */
-      found = FALSE;
-      for (i=0; i<SDMData->SourceArray->nsou; i++) {
-	found = SourNo==SDMData->SourceArray->sou[i]->sourceNo;
-	if (found) break;
-      }
-      if (!found) continue;  /* Source in SourceArray? */
 
       /* Find it? */
       if (iMain>=SDMData->MainTab->nrows) continue;
@@ -4204,7 +4190,7 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       }
     } /* End new scan */
       
-    if (!found) continue;  /* Source in SourceArray? */
+    /* if (!found) continue;  Source in SourceArray? */
 
     /* Save info to OT table row */
     outRow->Time          = inTab->rows[iRow]->timeInterval[0]-refJD;
@@ -4627,6 +4613,55 @@ gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,
 
   return out;
 } /* end nextScan */
+
+/*----------------------------------------------------------------------- */
+/*  Is a given time in the current subscan?                               */
+/*   Input:                                                               */
+/*       SDMData  ASDM structure                                          */
+/*       curScan  Current scan number                                     */
+/*       time     Time to test in JD                                      */
+/*       curScanI Current scan index in ScanTab, updated on new scan      */
+/*       nextScan Scan number of next scan, updated on new scan           */
+/*       SourNo   Source number for next Scan, updated on new scan        */
+/*   Return:                                                              */
+/*       TRUE if time in another scan                                     */
+/*----------------------------------------------------------------------- */
+gboolean nextSubscan(ObitSDMData *SDMData, olong curScan, odouble time,  
+		     olong *curScanI, olong *nextScanNo, olong *SourNo)
+{
+  gboolean out = FALSE;
+  olong iScan = *curScanI;
+  olong i, souNo, jField;
+
+  /* New subscan? */
+  if ((iScan>=0) && (time<=SDMData->SubscanTab->rows[iScan]->endTime)) return out;
+  out = TRUE;
+
+  /* Find subscan whose end time greater than time - use last if not found */
+  iScan = MAX(0, iScan);
+  for (i=iScan; i<SDMData->SubscanTab->nrows; i++) {
+    if (time<=SDMData->SubscanTab->rows[i]->endTime) break;
+  }
+  iScan = MIN (i, SDMData->SubscanTab->nrows-1);
+  *curScanI   = iScan;
+  *nextScanNo = SDMData->SubscanTab->rows[iScan]->scanNumber;
+
+  /* Now lookup source as fieldName */
+  souNo = -1;
+  for (jField=0; jField<SDMData->SourceArray->nsou; jField++) {
+    if (!strcmp(SDMData->SubscanTab->rows[iScan]->fieldName,
+		SDMData->SourceArray->sou[jField]->fieldName)) {
+      souNo = SDMData->SourceArray->sou[jField]->sourceNo;
+      break;
+    }
+  } /* end loop through Source Array */
+  /* Find it? */
+  if (jField>=SDMData->SourceArray->nsou) return out;
+
+  *SourNo = souNo;
+
+  return out;
+} /* end nextSubscan */
 
 /*----------------------------------------------------------------------- */
 /*  Get nominal sensitivity if EVLA                                       */

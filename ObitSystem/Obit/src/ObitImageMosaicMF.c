@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1742,6 +1742,7 @@ void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, O
   ObitImage     *QImage=NULL, *UImage=NULL;
   ObitImageMF   *QImageMF=NULL, *UImageMF=NULL;
   ObitFArray    *accum=NULL;
+  ofloat fblank = ObitMagicF();
   gboolean incompatible=FALSE;
   gint32 dim[MAXINFOELEMDIM];
   olong naxis[2], nfield, ifield, nplane, loPlane, iplane, plane[5]={1,1,1,1,1};
@@ -1817,7 +1818,7 @@ void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, O
       ObitFArraySqrt (QImageMF->image);
       /* Weight 1/sigma */
       rms = ObitFArrayRMS (QImageMF->image);
-      if (rms>0.0) wt = 1./rms;
+      if ((rms!=fblank) && (rms>0.0)) wt = 1./rms;
       else continue;
       ObitFArraySMul (QImageMF->image, wt);
       sumwt += wt;

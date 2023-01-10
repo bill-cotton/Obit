@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -632,7 +632,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     if (nfacet==1) ifacet = 0;
     myGrid = (ObitUVGrid*)outImage->myGrid;
     if (myGrid->gridInfo==NULL) 
-      myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)outImage, inUV);
+      myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)outImage, inUV, TRUE);
     ObitGPUGridSetGPUStruct(myGrid->gridInfo, (Obit*)myGrid, chDone, ifacet, nfacet, 
 			    nplane, inUV, (Obit*)outImage, doBeam, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
@@ -837,7 +837,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
       myGrid->doGPUGrid = doGPUGrid;
       ifacet = 0; nfacet=1;
       /* Maybe not if (doBeam) {nfacet = 2; ifacet = 0;}*/
-      myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)outImage, inUV);
+      myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)outImage, inUV, TRUE);
       ObitGPUGridSetGPUStruct(myGrid->gridInfo, (Obit*)myGrid, chDone, ifacet, nfacet, 
 			      nplane, inUV, (Obit*)outImage, doBeam, err);
       if (err->error) Obit_traceback_msg (err, routine, outImage->name);
@@ -1008,7 +1008,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ObitImage **imArray=NULL;
   ObitUVGridClassInfo *gridClass;
   ObitImageClassInfo *imgClass;
-  gboolean doGPUGrid=FALSE;
+  gboolean doGPUGrid=FALSE, doneBeam=FALSE;
   union ObitInfoListEquiv InfoReal; 
   gchar *routine = "ObitImageUtilMakeImagePar";
 
@@ -1206,7 +1206,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       if (doBeam) nfacet *= 2;
       else        nfacet += nadd;
       if ((j==0) || (myGrid->gridInfo==NULL)) {  /* Init first facet */
-	myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)outImage[0], inUV);
+	myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)outImage[0], inUV, TRUE);
 	myGrid->doGPUGrid = doGPUGrid; myGrid->cuda_device = cuda_device;
       }
       /* Also beam? Beam preceeds image */
@@ -1214,10 +1214,13 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	theBeam = (ObitImage*)outImage[j]->myBeam; 
 	theBeam->myGrid = ObitUVGridRef(outImage[j]->myGrid);  /* Link grid info */
 	beamGrid = (ObitUVGrid*)theBeam->myGrid;
-	beamGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)theBeam, inUV);
-	beamGrid->doGPUGrid = doGPUGrid; beamGrid->cuda_device = cuda_device;
-	ObitGPUGridSetGPUStruct (myGrid->gridInfo, (Obit*)grids[j*bmInc], chDone,
-				 ifacet, nfacet, nplane, inUV, (Obit*)theBeam, TRUE, err);
+	if (!doneBeam) { /* Only one */
+	  beamGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, (Obit*)theBeam, inUV, FALSE);
+	  beamGrid->doGPUGrid = doGPUGrid; beamGrid->cuda_device = cuda_device;
+	  ObitGPUGridSetGPUStruct (myGrid->gridInfo, (Obit*)grids[j*bmInc], chDone,
+				   ifacet, nfacet, nplane, inUV, (Obit*)theBeam, TRUE, err);
+	  //doneBeam = TRUE;
+	}
 	if (err->error) Obit_traceback_msg (err, routine, outImage[j]->name);
 	theBeam->myGrid = ObitUVGridUnref(theBeam->myGrid);
 	ifacet++;

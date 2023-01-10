@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2020                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1007,114 +1007,94 @@ void ObitFArrayDeblank (ObitFArray *in, ofloat scalar)
  */
 ofloat ObitFArrayRMS (ObitFArray* in)
 {
-  olong i, j, modeCell=0, imHalf=0, ipHalf=0, numCell, pos[MAXFARRAYDIM];
+  olong i, j, modeCell=0, imHalf=0, ipHalf=0, numCell;
   olong i1, i2, ic, infcount;
-  ofloat amax, amin, omax, omin, tmax, sum, sum2, x, count, mean, arg, cellFact=1.0;
-  ofloat half, *histo = NULL, *thist=NULL;
-  ofloat rawRMS, fiddle, out = -1.0, fblank = ObitMagicF();
+  ofloat amax, amin, tmax, sum, sum2, x, count, mean, arg, cellFact=1.0;
+  ofloat s, s2, half, *histo = NULL, *thist=NULL;
+  ofloat rawRMS, rawMean, fiddle, out = -1.0, fblank = ObitMagicF();
   gboolean done = FALSE;
-  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads, ilast;
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  ollong icount, c;
   gboolean OK;
   FAFuncArg **threadArgs;
-#if HAVE_AVX512==1
-  CV16SF v, vb, vzero, vone, vcnt, vsum, vsum2, vt;
-  MASK16 msk;
-  ofloat tmp;
-#elif HAVE_AVX==1
-  CV8SF v, vb, vm, vzero, vone, vcnt, vsum, vsum2, vt;
-  ofloat tmp;
-#endif
  
-   /* error checks */
+  /* error checks */
   g_assert (ObitFArrayIsA(in));
   g_assert (in->array != NULL);
 
-  /* get max/min */
-  omax = ObitFArrayMax (in, pos);
-  omin = ObitFArrayMin (in, pos);
-  amax = omax;
-  amin = omin;
+  /* Initialize Threading for initial values */
+  nThreads = 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
+		    sizeof(ollong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
+		    &threadArgs);
+  
+  /* Divide up work */
+  nElem = in->arraySize;
+  nElemPerThread = nElem/nThreads;
+  nTh = nThreads;
+  if (nElem<1000000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
 
-  /* How many valid values? */
-  count = 0; sum = sum2 = 0.0; 
-#if HAVE_AVX512==1  /* 16 float Vector */
-  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
-  tmp = 0.0;
-  vzero.v  = _mm512_set1_ps(tmp);  /* vector of zeroes */
-  vcnt.v   = _mm512_set1_ps(tmp);  /* initialize counts */
-  vsum.v   = _mm512_set1_ps(tmp);  /* initialize sum */
-  vsum2.v  = _mm512_set1_ps(tmp);  /* initialize sum**2 */
-  tmp = 1.0;
-  vone.v   = _mm512_set1_ps(tmp);  /* vector of ones */
-  /* Do blocks of 16 as vector */
-  for (i=0; i<in->arraySize-16; i+=16) {
-    v.v  = _mm512_loadu_ps(&in->array[i]);
-    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
-    v.v  = _mm512_mask_blend_ps(msk, v.v,vzero.v);     /* replace blanks with zeroes */
-    vt.v = _mm512_mask_blend_ps(msk, vone.v, vzero.v); /* 1/0 for count */
-    vcnt.v = _mm512_add_ps(vcnt.v,vt.v);  /* sum counts */
-    vsum.v = _mm512_add_ps(vsum.v,v.v);   /* sum data */
-    v.v    = _mm512_mul_ps(v.v, v.v);     /* square */
-    vsum2.v = _mm512_add_ps(vsum2.v,v.v); /* sum data squared */
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
   }
-  ilast = i;  /* How far did I get? */
-  vcnt.v = _mm512_roundscale_ps(vcnt.v,32);  /* round */
-  for (i=0; i<16; i++) {
-    count += (olong)vcnt.f[i];
-    sum   += vsum.f[i];
-    sum2  += vsum2.f[i];
-  }
-#elif HAVE_AVX==1  /* Vector */
-  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
-  tmp = 0.0;
-  vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
-  vcnt.v   = _mm256_broadcast_ss(&tmp);  /* initialize counts */
-  vsum.v   = _mm256_broadcast_ss(&tmp);  /* initialize sum */
-  vsum2.v  = _mm256_broadcast_ss(&tmp);  /* initialize sum**2 */
-  tmp = 1.0;
-  vone.v   = _mm256_broadcast_ss(&tmp);  /* vector of ones */
-  /* Do blocks of 8 as vector */
-  for (i=0; i<in->arraySize-8; i+=8) {
-    v.v  = _mm256_loadu_ps(&in->array[i]);
-    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);    /* find blanks */
-    v.v  = _mm256_blendv_ps(v.v,vzero.v, vm.v);     /* replace blanks with zeroes */
-    vt.v = _mm256_blendv_ps(vone.v, vzero.v, vm.v); /* 1/0 for count */
-    vcnt.v = _mm256_add_ps(vcnt.v,vt.v);  /* sum counts */
-    vsum.v = _mm256_add_ps(vsum.v,v.v);   /* sum data */
-    v.v    = _mm256_mul_ps(v.v, v.v);     /* square */
-    vsum2.v = _mm256_add_ps(vsum2.v,v.v); /* sum data squared */
-  }
-  ilast = i;  /* How far did I get? */
-  vcnt.v = _mm256_round_ps(vcnt.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
-  for (i=0; i<8; i++) {
-    count += (olong)vcnt.f[i];
-    sum   += vsum.f[i];
-    sum2  += vsum2.f[i];
-  }
-#else /* Scalar */
-  ilast = 0;  /* Do all */
-#endif
-  for (i=ilast; i<in->arraySize; i++) if (in->array[i]!=fblank) {
-    count++;
-    sum  += in->array[i];
-    sum2 += in->array[i] * in->array[i];
-  }
-  if (count<5) return out; /* better have some */
 
-  /* Get raw RMS */
-  rawRMS = (sum2/count) - ((sum / count) * (sum / count));
+  /* Do operation */
+  OK = ObitThreadIterator (in->thread, nTh, 
+			   (ObitThreadFunc)ThreadFARMSSum,
+			   (gpointer**)threadArgs);
+
+  /* Check for problems */
+  if (!OK) return fblank;
+
+  /* sum parts */
+  icount = 0; sum = sum2 = 0.0; 
+  for (i=0; i<nTh; i++) {
+    if (threadArgs[i]->value!=fblank) {
+      c  = *(ollong*)(threadArgs[i]->arg1);
+      s  = *(ofloat*)(threadArgs[i]->arg2);
+      s2 = *(ofloat*)(threadArgs[i]->arg3);
+      icount += c;
+      sum    += s;
+      sum2   += s2;
+      /*fprintf (stderr,"%d %d %g %g %d %g %g \n",i,c,s,s2,count,sum,sum2); DEBUG*/
+    }
+  }
+
+  /* cleanup */
+  KillFAFuncArgs(nTh, threadArgs);
+
+  /* Initial values */
+  count = (ofloat)icount;
+  /* Better have something */
+  if (count<5) return fblank;
+  rawRMS = (sum2/icount) - ((sum / icount) * (sum / icount));
   if (rawRMS>0.0) rawRMS = sqrt(rawRMS);
-  if (rawRMS<(1.0e-5*MAX (fabs(omax), fabs(omin)))) return rawRMS;
+  rawMean = sum / icount;
+  /*fprintf(stderr,"Initial count %g rawRMS %g rawMean %g\n",count, rawRMS, rawMean);*/
+  amin = rawMean - rawRMS;
+  amax = rawMean + rawRMS;
 
-  /* Make histogram size such that the average cell has 30 entries */
-  numCell = count / 30;
+  /* Make histogram size such that the average cell has at least 30 entries */
+  numCell = icount / 30;
   numCell = MAX (100,  numCell);  /* but not too few */
   numCell = MIN (1000, numCell);  /* or too many */
 
-  /* Initialize Threading */
+  /* Initialize Threading for histogram */
   nThreads = 
     MakeFAFuncArgs (in->thread, in, NULL, NULL, 
-		    sizeof(olong),  sizeof(ollong), numCell*sizeof(ofloat),sizeof(ofloat), sizeof(ofloat), 
+		    sizeof(ollong),  sizeof(ollong), numCell*sizeof(ofloat),sizeof(ofloat), sizeof(ofloat), 
 		    sizeof(ollong), sizeof(ollong),
 		    &threadArgs);
   
@@ -1141,14 +1121,14 @@ ofloat ObitFArrayRMS (ObitFArray* in)
     hiElem = MIN (hiElem, nElem);
   }
 
- /* Loop until a reasonable number of values in peak of histogram */
+  /* Loop until a reasonable number of values in peak of histogram */
   infcount = 0;  /* Loop to check for endless loop */
   fiddle  = 1.0;  /* Factor to fiddle the half width */
   while (!done) {
 
     /* Don't do this forever */
     infcount++;
-    fiddle *= 0.9;
+    fiddle *= 0.95;
     if (infcount>20) {
       KillFAFuncArgs(nThreads, threadArgs);
       return rawRMS;}  /* bag it */
@@ -1168,13 +1148,16 @@ ofloat ObitFArrayRMS (ObitFArray* in)
     if (!OK) return fblank;
 
     /* Accumulate counts - histogram */
-    count = *(olong*)(threadArgs[0])->arg2;
+    icount = *(ollong*)(threadArgs[0])->arg2;
     histo = (ofloat*)(threadArgs[0]->arg3);
-    for (i=1; i<nTh; i++) {
-      count += *(olong*)(threadArgs[i])->arg2;
+    for (i=1; i<nTh; i++) {\
+      c     = *(ollong*)(threadArgs[i])->arg2;
+     /*fprintf (stderr,"%d ncell %ld c %ld under %ld over %ld amax %g amin %g  \n",i, ncell, c, under, over, ttmax, ttmin);*/
+      count += c;
       thist = (ofloat*)(threadArgs[i]->arg3);
       for (j=0; j<numCell; j++) histo[j] += thist[j];
     }
+    /*fprintf (stderr,"DEBUG total count %ld  \n",icount);*/
     /* Find mode cell */
     cellFact =  numCell / (amax - amin + 1.0e-20);
     modeCell = -1;
@@ -1186,6 +1169,17 @@ ofloat ObitFArrayRMS (ObitFArray* in)
       }
     }
     
+    /*fprintf (stderr,"DEBUG modeCell %d  cellFact %g\n",modeCell, cellFact);*/
+    /*ttmax = histo[modeCell];
+      fprintf (stderr,"%5.3f, %5.3f, %5.3f, %5.3f, %5.3f, %5.3f, %5.3f, %5.3f, %5.3f, %5.3f, %5.3f \n",
+      histo[modeCell-5*2]/ttmax,histo[modeCell-4*2]/ttmax,histo[modeCell-3*2]/ttmax,histo[modeCell-2*2]/ttmax,histo[modeCell-1*2]/ttmax,
+      histo[modeCell]/ttmax,
+      histo[modeCell+1*2]/ttmax,histo[modeCell+2*2]/ttmax,histo[modeCell+3*2]/ttmax,histo[modeCell+4*2]/ttmax,histo[modeCell+5*2]/ttmax);
+      
+      fprintf (stderr,"%8.4g, %8.4g, %8.4g, %8.4g, %8.4g, %8.4g, %8.4g, %8.4g, %8.4g, %8.4g, %8.4g \n",
+      histo[modeCell-5*2],histo[modeCell-4*2],histo[modeCell-3*2],histo[modeCell-2*2],histo[modeCell-1*2],
+      histo[modeCell],
+      histo[modeCell+1*2],histo[modeCell+2*2],histo[modeCell+3*2],histo[modeCell+4*2],histo[modeCell+5*2]);*/
     
     /* find half width of peak by finding number of cells positive 
        and negative from the mode the distribution stays above tmax/2.
@@ -1203,24 +1197,25 @@ ofloat ObitFArrayRMS (ObitFArray* in)
       /*else if (histo[i]>0.2*tmax) break;*/
     }
 
+    /*fprintf (stderr,"imHalf %d ipHalf %d diff %d\n",imHalf, ipHalf, ipHalf-imHalf); DEBUG*/
     /* acceptability tests */
-    /* ipHalf - imHalf must be greater than 10 and less than 50 */
-    if ((ipHalf-imHalf) < 10) {
+    /* ipHalf - imHalf must be greater than 25 and less than 50 */
+    if ((ipHalf-imHalf) < 25) {
       /* if peak completely unresolved */
       if ((ipHalf-imHalf)<=0) {  /* wild stab */
 	half = fiddle*0.5 / cellFact; /* ~ halfwidth? 1/2 cell */
       } else { /* partly resolved */
-	half = (fiddle*0.5 * (ipHalf-imHalf)) / cellFact; /* ~ halfwidth */
-      }
+	/*half = (fiddle*0.5 * (ipHalf-imHalf)) / cellFact;*/ /* ~ halfwidth */
+ 	half = (fiddle * (ipHalf-imHalf)) / cellFact; /* ~ halfwidth */
+     }
       mean = amin + (modeCell-0.5) /  cellFact;
-      /* don't spread over whole histogram - try for 25 cells*/
-      half *= numCell / 25.0; 
+      /* don't spread over whole histogram */
+      half *= numCell / 50.0; 
       /* Don't go below rawRMS */
       half = MAX(half,fiddle*rawRMS);
+      /*fprintf (stderr,"DEBUG half %g fiddle %g rawRMS %g\n",half,fiddle,rawRMS);*/
       amax = mean + half;
       amin = mean - half;
-      /* amin = MAX (amin, omin);
-	 amax = MIN (amax, omax);*/
       continue;  /* try it again */
     } else if ((ipHalf-imHalf) > 50) {  /* Spread too thinly? */
       mean = amin + (modeCell-0.5) /  cellFact;
@@ -1239,9 +1234,9 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
   /* determine RMS */
   out = (ipHalf - imHalf) / cellFact; /* FWHM */
-  out *= 2.35 / 2.0; /* Sigma */
+  out *= 2.35 / 2.0; /* to Sigma */
 
-  /* get second moment around mode +/- 3 sigma */
+  /* get second moment around mode +/- 3 FWHM */
   i1 = modeCell - 3 * (modeCell-imHalf);
   i1 = MAX (0, i1);
   i2 = modeCell + 3 * (ipHalf - modeCell);
@@ -1285,11 +1280,13 @@ ofloat ObitFArrayRMS (ObitFArray* in)
  */
 ofloat ObitFArrayRawRMS (ObitFArray* in)
 {
-  olong i, count;
-  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  ollong count;
+  olong i, nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
   ofloat sum, sum2, rawRMS, fblank = ObitMagicF();
   gboolean OK;
   FAFuncArg **threadArgs;
+  ollong c;
+  ofloat s,s2;
 
    /* error checks */
   g_assert (ObitFArrayIsA(in));
@@ -1298,7 +1295,7 @@ ofloat ObitFArrayRawRMS (ObitFArray* in)
   /* Initialize Threading */
   nThreads = 
     MakeFAFuncArgs (in->thread, in, NULL, NULL, 
-		    sizeof(olong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
+		    sizeof(ollong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
   /* Divide up work */
@@ -1335,9 +1332,13 @@ ofloat ObitFArrayRawRMS (ObitFArray* in)
   count = 0; sum = sum2 = 0.0; 
   for (i=0; i<nTh; i++) {
     if (threadArgs[i]->value!=fblank) {
-      count += *(olong*)(threadArgs[i]->arg1);
-      sum   += *(ofloat*)(threadArgs[i]->arg2);
-      sum2  += *(ofloat*)(threadArgs[i]->arg3);
+      c  = *(ollong*)(threadArgs[i]->arg1);
+      s  = *(ofloat*)(threadArgs[i]->arg2);
+      s2 = *(ofloat*)(threadArgs[i]->arg3);
+      count += c;
+      sum   += s;
+      sum2  += s2;
+      /*fprintf (stderr,"%d %d %g %g %d %g %g \n",i,c,s,s2,count,sum,sum2); DEBUG*/
     }
   }
 
@@ -1361,8 +1362,8 @@ ofloat ObitFArrayRawRMS (ObitFArray* in)
  */
 ofloat ObitFArrayRMS0 (ObitFArray* in)
 {
-  olong i, count;
-  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  ollong count;
+  olong i, nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
   ofloat sum, sum2, rawRMS, fblank = ObitMagicF();
   gboolean OK;
   FAFuncArg **threadArgs;
@@ -1374,7 +1375,7 @@ ofloat ObitFArrayRMS0 (ObitFArray* in)
   /* Initialize Threading */
   nThreads = 
     MakeFAFuncArgs (in->thread, in, NULL, NULL, 
-		    sizeof(olong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
+		    sizeof(ollong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
   
@@ -1412,7 +1413,7 @@ ofloat ObitFArrayRMS0 (ObitFArray* in)
   count = 0; sum = sum2 = 0.0; 
   for (i=0; i<nTh; i++) {
     if (threadArgs[i]->value!=fblank) {
-      count += *(olong*)(threadArgs[i]->arg1);
+      count += *(ollong*)(threadArgs[i]->arg1);
       sum   += *(ofloat*)(threadArgs[i]->arg2);
       sum2  += *(ofloat*)(threadArgs[i]->arg3);
     }
@@ -5002,20 +5003,23 @@ static gpointer ThreadFARMSSum (gpointer arg)
   olong      hiElem     = largs->last;
 
   /* local */
-  olong i, count, ilast;
+  olong i, ilast;
   ofloat sum, sum2, fblank = ObitMagicF();
+  ollong count;
 #if HAVE_AVX512==1
   CV16SF v, vb, vzero, vone, vcnt, vsum, vsum2, vt;
   MASK16 msk;
   ofloat tmp;
 #elif HAVE_AVX==1
-  CV8SF v, vb, vm, vzero, vone, vcnt, vsum, vsum2, vt;
+  CV8SF v, vb, vm, vzero,  vsum, vsum2;
+  /*CV8SF v, vb, vm, vzero, vone, vcnt, vsum, vsum2, vt;*/
   ofloat tmp;
+  ollong cnt, j;
 #endif
 
   if (hiElem<loElem) goto finish;
 
-  /* Loop over array */
+  /* Loop over array by vector type */
   count = 0; sum = sum2 = 0.0; 
 #if HAVE_AVX512==1  /* Vector */
   vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
@@ -5029,9 +5033,9 @@ static gpointer ThreadFARMSSum (gpointer arg)
   /* Do blocks of 16 as vector */
   for (i=loElem; i<hiElem-16; i+=16) {
     v.v  = _mm512_loadu_ps(&in->array[i]);
-    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ);    /* find blanks */
-    v.v  = _mm512_mask_blend_ps(msk,v.v,vzero.v); /* replace blanks with zeroes */
-    vt.v = _mm512_mask_blend_ps(msk,vone.v, vzero.v);
+    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk,v.v,vzero.v);     /* replace blanks with zeroes */
+    vt.v = _mm512_mask_blend_ps(msk,vone.v, vzero.v); /* 1 for good, 0 blank */
     vcnt.v = _mm512_add_ps(vcnt.v,vt.v);  /* sum counts */
     vsum.v = _mm512_add_ps(vsum.v,v.v);   /* sum data */
     v.v    = _mm512_mul_ps(v.v, v.v);     /* square */
@@ -5045,29 +5049,33 @@ static gpointer ThreadFARMSSum (gpointer arg)
     sum2  += vsum2.f[i];
   }
 #elif HAVE_AVX==1  /* Vector */
+  cnt = 0;
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = 0.0;
   vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
-  vcnt.v   = _mm256_broadcast_ss(&tmp);  /* initialize counts */
+  /*vcnt.v   = _mm256_broadcast_ss(&tmp);   initialize counts */
   vsum.v   = _mm256_broadcast_ss(&tmp);  /* initialize sum */
   vsum2.v  = _mm256_broadcast_ss(&tmp);  /* initialize sum**2 */
-  tmp = 1.0;
-  vone.v   = _mm256_broadcast_ss(&tmp);  /* vector of ones */
+  /*tmp = 1.0;
+    vone.v   = _mm256_broadcast_ss(&tmp);   vector of ones */
   /* Do blocks of 8 as vector */
   for (i=loElem; i<hiElem-8; i+=8) {
+    /* don't use AVX for counts */
+    for (j=i; j<i+8; j++) if (in->array[j]!=fblank) cnt++;
     v.v  = _mm256_loadu_ps(&in->array[i]);
-    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);     /* find blanks */
-    v.v  = _mm256_blendv_ps(v.v,vzero.v,vm.v); /* replace blanks with zeroes */
-    vt.v = _mm256_blendv_ps(vone.v, vzero.v, vm.v);
-    vcnt.v = _mm256_add_ps(vcnt.v,vt.v);  /* sum counts */
+    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v,vzero.v,vm.v);   /* replace blanks with zeroes */
+    /*vt.v = _mm256_blendv_ps(vone.v, vzero.v, vm.v);   1 for good, 0 blank */
+    /* vcnt.v = _mm256_add_ps(vcnt.v,vt.v);   sum counts - doesn't work so well */
     vsum.v = _mm256_add_ps(vsum.v,v.v);   /* sum data */
     v.v    = _mm256_mul_ps(v.v, v.v);     /* square */
     vsum2.v = _mm256_add_ps(vsum2.v,v.v); /* sum data squared */
   }
   ilast = i;  /* How far did I get? */
-  vcnt.v = _mm256_round_ps(vcnt.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+  /*vcnt.v = _mm256_round_ps(vcnt.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);   round */
+  count = cnt;
   for (i=0; i<8; i++) {
-    count += (olong)vcnt.f[i];
+    /*count += (olong)vcnt.f[i];*/
     sum   += vsum.f[i];
     sum2  += vsum2.f[i];
   }
@@ -5084,7 +5092,7 @@ static gpointer ThreadFARMSSum (gpointer arg)
     }
 
   /* Return values */
-  *(olong*)largs->arg1  = count;
+  *(ollong*)largs->arg1 = count; 
   *(ofloat*)largs->arg2 = sum;
   *(ofloat*)largs->arg3 = sum2;
 
@@ -5132,7 +5140,7 @@ static gpointer ThreadFAHisto (gpointer arg)
   /* local */
   olong  i, icell, ilast;
   ofloat cellFact, fblank = ObitMagicF();
-#if HAVE_AVX512==1
+#if HAVE_AVX512XXX==1
   CV16SF v, vb, vflag, vmin, vfac;
   IV16SF vcell;
   MASK16 msk;
@@ -5151,7 +5159,7 @@ static gpointer ThreadFAHisto (gpointer arg)
   cellFact =  numCell / (amax - amin + 1.0e-20);
   count = 0; under = 0; over = 0;
   for (i=0; i<numCell; i++) histo[i] = 0.0;
-#if HAVE_AVX512==1  /* 16 Vector */
+#if HAVE_AVX512XXX==1  /* 16 Vector - not sure it works right */
   vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
   tmp = -cellFact*amin;
   vflag.v  = _mm512_set1_ps(tmp);  /* flagged values */
@@ -5163,43 +5171,47 @@ static gpointer ThreadFAHisto (gpointer arg)
   for (i=loElem; i<hiElem-16; i+=16) {
     v.v    = _mm512_loadu_ps(&in->array[i]);            /* Data */
     msk    = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
-    v.v    = _mm512_mask_blend_ps(msk,v.v,vflag.v);    /* replace blanks */
+    v.v    = _mm512_mask_blend_ps(msk,v.v,vflag.v);     /* replace blanks */
     v.v    = _mm512_sub_ps(v.v,vmin.v);        /* -amin */
     v.v    = _mm512_mul_ps(v.v,vfac.v);        /* * fact */
-    v.v    = _mm512_roundscale_ps(v.v,32);  /* round */
+    v.v    = _mm512_roundscale_ps(v.v,32);     /* round cell number */
     vcell.v = _mm512_cvtps_epi32(v.v);
     for (j=0; j<16; j++) {
-      icell = vcell.i[j];
-      if (icell<0) under++;
-      else if (icell>=numCell) over++;
-      else histo[icell]++;
-      count ++;
+      if (in->array[i+j] != fblank) {
+	icell = vcell.i[j];
+	if (icell<0) under++;
+	else if (icell>=numCell) over++;
+	else histo[icell]++;
+	count++;
+      }
     }
   }
   ilast = i;  /* How far did I get? */
 #elif HAVE_AVX==1  /* Vector */
-  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  vb.v   = _mm256_broadcast_ss(&fblank); /* vector of blanks */
   tmp = -cellFact*amin;
   vflag.v  = _mm256_broadcast_ss(&tmp);  /* flagged values */
   tmp = amin;
-  vmin.v  = _mm256_broadcast_ss(&tmp);  /* amin */
+  vmin.v  = _mm256_broadcast_ss(&tmp);   /* amin */
   tmp = cellFact;
-  vfac.v = _mm256_broadcast_ss(&tmp);  /* fact */
+  vfac.v = _mm256_broadcast_ss(&tmp);    /* cell factor */
   /* Do blocks of 8 as vector */
   for (i=loElem; i<hiElem-8; i+=8) {
-    v.v    = _mm256_loadu_ps(&in->array[i]);         /* Data */
+    v.v    = _mm256_loadu_ps(&in->array[i]);        /* Data */
     vm.v   = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
     v.v    = _mm256_blendv_ps(v.v,vflag.v,vm.v);    /* replace blanks */
     v.v    = _mm256_sub_ps(v.v,vmin.v);        /* -amin */
-    v.v    = _mm256_mul_ps(v.v,vfac.v);        /* * fact */
-    v.v    = _mm256_round_ps(v.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+    v.v    = _mm256_mul_ps(v.v,vfac.v);        /* * cell factor */
+    v.v    = _mm256_round_ps(v.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round cell */
     vcell.v = _mm256_cvtps_epi32(v.v);
     for (j=0; j<8; j++) {
-      icell = vcell.i[j];
-      if (icell<0) under++;
-      else if (icell>=numCell) over++;
-      else histo[icell]++;
-      count ++;
+      if (in->array[i+j] != fblank) {
+	icell = vcell.i[j];
+	if (icell<0) under++;
+	else if (icell>=numCell) over++;
+	else histo[icell]++;
+	count++;
+      }
     }
   }
   ilast = i;  /* How far did I get? */
@@ -5208,11 +5220,11 @@ static gpointer ThreadFAHisto (gpointer arg)
 #endif
   for (i=ilast; i<hiElem; i++) {
     if (in->array[i]!=fblank){
-      icell = 0.5 + cellFact * (in->array[i]-amin);
+      icell = (olong)(0.49 + (cellFact * (in->array[i]-amin)));
       if (icell<0) under++;
       else if (icell>=numCell) over++;
       else histo[icell]++;
-      count ++;
+      count++;
     }
   }
 

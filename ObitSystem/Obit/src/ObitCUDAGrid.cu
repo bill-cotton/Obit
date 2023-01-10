@@ -1,6 +1,6 @@
 /* $Id: $        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021,2022                                          */
+/*;  Copyright (C) 2021,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -463,10 +463,11 @@ void grid_processWithStreams(int streams_used, CUDAGridInfo *cudaInfo,
  * \param nVisPIO  Number of vis records per transaction
  * \param lenvis   Length in floats of a vis record
  * \param nplane   Number of planes in image
+ * \param doBuff   If TRUE allocate buffer
  */
 extern "C"
 void ObitCUDAGridAlloc (CUDAGridInfo *cudaInfo, long nfacet, long nchan, long nif, 
-     long nVisPIO, long lenvis, long nplane) {
+     long nVisPIO, long lenvis, long nplane, int doBuff) {
   int i, ms;
   float *alloc;
 
@@ -561,7 +562,12 @@ void ObitCUDAGridAlloc (CUDAGridInfo *cudaInfo, long nfacet, long nchan, long ni
     checkCudaErrors(cudaEventCreate(&cudaInfo->h_gridInfo->cycleDone[i]));
     ms = nVisPIO*lenvis*sizeof(float)/GRID_STREAM_COUNT;
     // device data buffers per stream, save pointer for now
-    checkCudaErrors(cudaMalloc(&cudaInfo->h_gridInfo->h_d_data_in[i], ms));
+    if (doBuff) {
+      if (cudaInfo->h_gridInfo->h_d_data_in[i]==NULL) {
+        //fprintf (stderr,"i, ms %d %d \n",i, ms);	    
+        checkCudaErrors(cudaMalloc(&cudaInfo->h_gridInfo->h_d_data_in[i], ms));
+      }
+    }
   }
 
   /* Facet stuff */

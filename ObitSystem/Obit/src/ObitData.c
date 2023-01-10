@@ -803,8 +803,14 @@ ObitIOCode ObitDataCopyTables (ObitData *in, ObitData *out, gchar **exclude,
   if (ObitGenericData(in)) {
     FileType = getIOType (in->info, err);
     isAIPS = FileType==OBIT_IO_AIPS;
-  }
+  } else {  /* Doh! */
+    FileType = getIOType (in->info, err);
+    isAIPS = FileType==OBIT_IO_AIPS;
+ }
   if (ObitGenericData(out)) {
+    FileType = getIOType (out->info, err);
+    isAIPS = isAIPS || (FileType==OBIT_IO_AIPS);
+  } else { /* Doh! */
     FileType = getIOType (out->info, err);
     isAIPS = isAIPS || (FileType==OBIT_IO_AIPS);
   }

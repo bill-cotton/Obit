@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021                                               */
+/*;  Copyright (C) 2021,2023                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -44,7 +44,7 @@
 /* Public: Allocate Structures */
 extern "C"
 void ObitCUDAGridAlloc (CUDAGridInfo *gpuInfo, long nfacet, long nchan, long nif, 
-			long nVisPIO, long lenvis, long nplane);
+			long nVisPIO, long lenvis, long nplane, int doBuff);
 
 /* Public: Initialize gridding */
 extern "C"
@@ -70,7 +70,7 @@ void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo);
 
 /* Public: Allocate Structures */
 void ObitCUDAGridAlloc (CUDAGridInfo *gpuInfo, long nfacet, long nchan, long nif, 
-			long nVisPIO, long lenvis, long nplane);
+			long nVisPIO, long lenvis, long nplane, int doBuff);
 
 /* Public: Initialize gridding */
 void ObitCUDAGridInit (CUDAGridInfo *gpuInfo);

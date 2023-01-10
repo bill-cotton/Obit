@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1078,13 +1078,13 @@ olong ObitUVGridGetNumPar (ObitUV *inUV, Obit *mmosaic, gboolean doBeam, ObitErr
   } else nplane = 1;
     
   /* Include number of planes */
-  bufSize = numVis*lenVis + imSize*nplane;     /* Approx memory (words) per parallel image */
-  bufSize *= sizeof(ofloat);                   /* to bytes */
+  bufSize =  imSize*nplane;     /* Approx memory (words) per parallel image */
+  bufSize *= sizeof(ofloat);    /* to bytes */
 
   if (sizeof(olong*)==4)      tSize = 0.75e9;  /* Use sizeof a pointer type to get 32/64 bit */
   else if (sizeof(olong*)==8) tSize = mSize;   /* 1/2 GPU memory */
   else                        tSize = 1.0e9;   /* Shouldn't happen */
-  out = tSize / bufSize;  /* How many fit in a tSize? */
+  out = (tSize-numVis*lenVis) / bufSize;  /* How many fit in a tSize? */
 
   /* Better be at least 1 */
   Obit_retval_if_fail((out>=1), err, out,

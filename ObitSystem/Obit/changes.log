@@ -5272,3 +5272,31 @@ Summary: Cleanup, Bug fixes
 Summary: Bug fixes - get update right
   Obit/include/ObitSpectrumFit.h Obit/include/ObitSpectrumFitDef.h
 29 Nov. 2022, svn 646
+
+Summary: Bug fixes 
+  Obit/src/ObitFArray.c
+     Fixed issues in RMS and RawRMS
+  Obit/python/OTObit.py
+     Fixed history messages in imlod.
+  Obit/tasks/CubeClip.c
+     ThreadClip: Fix bug overflowing output.
+  Obit/src/ObitData.c
+     CopyTables: Fix bug determining if input or output was AIPS.
+  Obit/src/ObitImageMosaicMF.c
+     MergPoln: Include fblank in RMS as indicating no data.
+  Obit/src/ObitCUDAGrid.cu Obit/include/ObitCUDAGrid.h
+     Add argument doBuff to Alloc to indicate if data buffers desired
+  Obit/src/ObitGPUGrid.c Obit/include/ObitGPUGrid.h
+     Add argument doBuff to Create to indicate if data buffers desired
+  Obit/src/ObitImageUtil.c
+     Add doBuff arguments to call to Create to keep from excessive GPU 
+     allocations
+  Obit/src/ObitDConCleanVis.c
+     Deconvolve: Don't remake residuals at end if all are fresh
+  Obit/src/ObitUVImagerMF.c
+     Image2: If doGPUGrid call correct GetNumPar
+  Obit/src/ObitUVGrid.c
+     GetNumPar: For gridding only one buffer for all images (more-or-less)
+  Obit/tasks/BDFIn.c
+     Get correct source numbers for SY and OT tables for OTF data
+10 Jan 2023, svn 648
