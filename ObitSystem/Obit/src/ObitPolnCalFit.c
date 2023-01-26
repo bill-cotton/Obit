@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2022                                          */
+/*;  Copyright (C) 2012-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2315,10 +2315,10 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
   gsl_multifit_fdfsolver *solver = in->solver;
   gsl_matrix *covar              = in->covar;
   gsl_vector *work               = in->work;
-  gsl_matrix *J                  = NULL;
 #if HAVE_GSL2==1  /* Newer GSL*/
+  gsl_matrix *J                  = NULL;
   J = gsl_matrix_alloc (in->ndata, in->nparam);
-#endif
+#endif /* HAVE_GSL2 */ 
 
   if (err->error) return;  /* Error exists? */
   
@@ -2486,7 +2486,7 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
     gsl_multifit_fdfsolver_jac(solver, J);
 #else
     J = solver->J;
-#endif
+#endif /* HAVE_GSL2 */ 
     gsl_multifit_covar (J, 0.0, covar);
     /*gsl_multifit_covar (solver->J, 0.0, covar);*/
     for (iant=0; iant<in->nant; iant++) {

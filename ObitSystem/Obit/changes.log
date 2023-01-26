@@ -5317,3 +5317,8 @@ Summary: Bug fixes, plug memory leaks
   Obit/TDF/MFImage.TDF Obit/tasks/MFImage.c
      Add parameter GPU_no to specify GPU
 26 Jan 2023 svn 649
+
+Summary: GSL2 fixes
+  Obit/src/ObitPolnCalFit.c Obit/src/ObitRMFit.c Obit/src/ObitSpectrumFit.c
+    Fixes for GSL2
+26 Jan 2023 svn 650

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2022                                          */
+/*;  Copyright (C) 2013-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1726,10 +1726,10 @@ static void NLRMFit (NLRMFitArg *arg)
 
   /* Do fit */
 #ifdef HAVE_GSL
-  gsl_matrix *J                  = NULL;
 #if HAVE_GSL2==1  /* Newer GSL*/
+  gsl_matrix *J                  = NULL;
   J = gsl_matrix_alloc (2*arg->nlamb2, 2);
-#endif
+#endif /* HAVE_GSL2 */
   /* order EVPA, RM */
   gsl_vector_set(arg->work, 0, (double)arg->coef[1]);
   gsl_vector_set(arg->work, 1, (double)arg->coef[0]);
@@ -1780,7 +1780,7 @@ static void NLRMFit (NLRMFitArg *arg)
     gsl_multifit_fdfsolver_jac(arg->solver, J);
 #else
     J = arg->solver->J;
-#endif
+#endif /* HAVE_GSL2 */ 
     /* second argument removes degenerate col/row from Jacobean */
     gsl_multifit_covar (J, 1.0e-8, arg->covar);
     arg->coef[nterm+0] = sqrt(gsl_matrix_get(arg->covar, 1, 1));
