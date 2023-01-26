@@ -519,6 +519,7 @@ void ObitImageUtilMakeImageFileInfo (ObitInfoList *inList, ObitErr *err)
  *              as well as after.
  * \li "do3D"   OBIT_bool (1,1,1) 3D image, else 2D? [def TRUE]
  * \li "doGPUGrid" OBIT_bool (1,1,1) use GPU for Gridding [def FALSE]
+ * \li "GPU_no"    OBIT_long scalar GPU device number 0-rel [def 0]
  * \li "chDone"    OBIT_bool (nSpec,1,1) Array of flags indicating channels are done [all FALSE]
  * \param channel  Which frequency channel to image, 0->all.
  * \param err      Error stack, returns if not empty.
@@ -534,7 +535,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   ofloat sumwts, imMax, imMin, BeamTaper=0., BeamNorm=0.0, Beam[3];
   gchar *outName=NULL;
   ollong gpumem=0;
-  olong cuda_device=0; /* default GPU number*/
+  olong ldevice, cuda_device=0; /* default GPU number*/
   olong plane[5], pln, NPIO, oldNPIO, nfacet=1, ifacet=0;
   olong nplane=1, i, ichannel, icLo, icHi, norder=0, iorder=0;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
@@ -573,6 +574,9 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   ObitInfoListGetTest(inUV->info, "doGPUGrid", &type, (gint32*)dim, &InfoReal);
   doGPUGrid = InfoReal.itg;
   if (doGPUGrid) {
+    ldevice = cuda_device;
+    ObitInfoListGetTest(inUV->info, "GPU_no", &type, (gint32*)dim, &ldevice);
+    cuda_device = (int)ldevice;
     gpumem = ObitGPUGridSetGPU (cuda_device); /* initialize */
     Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding");
  }
@@ -993,7 +997,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ofloat sumwts, imMax, imMin, BeamTaper=0.0, Beam[3]={0.0,0.0,0.0};
   gchar outName[120];
   ollong gpumem=0;
-  olong cuda_device=0; /* default GPU number*/
+  olong ldevice, cuda_device=0; /* default GPU number*/
   olong i, j, ip, pln, ifacet, nfacet, nplane=1, nImage, nGain=0, *gainUse=NULL, gain;
   olong plane[5], NPIO, oldNPIO, *arrayNx=NULL, *arrayNy=NULL;
   olong doCalib = 0, norder, iorder, nadd=0, bmInc=1;
@@ -1027,6 +1031,9 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ObitInfoListGetTest(inUV->info, "doGPUGrid", &type, (gint32*)dim, &InfoReal);
   doGPUGrid = InfoReal.itg;
   if (doGPUGrid) {
+    ldevice = cuda_device;
+    ObitInfoListGetTest(inUV->info, "GPU_no", &type, (gint32*)dim, &ldevice);
+    cuda_device = (int)ldevice;
     gpumem = ObitGPUGridSetGPU (cuda_device); /* initialize */
     Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding");
  }
@@ -1455,7 +1462,14 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   for (j=0; j<nPar; j++) {
     outImage[j]->myGrid = ObitUVGridUnref(outImage[j]->myGrid);
   }
-  
+  /* Free Image Buffers */
+  for (j=0; j<nPar; j++) {
+    outImage[j]->image = ObitFArrayUnref(outImage[j]->image);
+    if (outImage[j]->myBeam)
+      ((ObitImage*)outImage[j]->myBeam)->image = 
+	ObitFArrayUnref(((ObitImage*)outImage[j]->myBeam)->image);
+   }
+ 
   g_free(imArray); 
   g_free(arrayNx);
   g_free(arrayNy);
@@ -5648,8 +5662,8 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   olong blc[2], trc[2], center[2], prtLv, iplane, plane[] = {1,1,1,1,1};
   ofloat peak, cellx, celly, fblank =  ObitMagicF();
   ofloat bmaj, bmin, bpa, dx, dy;
-  olong nmodel, nparm, corner[2], fdim[2];
-  ofloat Peak, RMSResid, peakResid, fluxResid, DeltaX,  DeltaY, parms[3];
+  olong itemp, nmodel, nparm, corner[2], fdim[2], hwid;
+  ofloat Peak, RMSResid, peakResid, fluxResid, DeltaX,  DeltaY, parms[3], BeamTapr;
   ObitFArray *beamData = NULL, *beamCenter = NULL, *matx = NULL;
   ObitImageDesc *desc=(ObitImageDesc*)beam->myIO->myDesc;
   ObitImageFit *imFit=NULL;
@@ -5715,17 +5729,23 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   /* Fit Gaussian */
   /* Initial model */
   Peak   = 1.0;
-  DeltaX = 11.0;
-  DeltaY = 11.0;
   nparm  = 3;
   parms[0]  = parms[1] = 6.0; parms[2] = 0.0;
   nmodel = 1;
+  /* Size of fitting region depends on BeamTapr, if any */
+  hwid = 25;
+  if (ObitInfoListGetTest(beam->myDesc->info, "BeamTapr", &type, dim, &BeamTapr)) {
+    itemp = (olong)(0.5+BeamTapr/celly);
+    hwid = MAX (hwid, itemp);
+  }
+  DeltaX = hwid+1; DeltaY = hwid+1;
+
   models = g_malloc0(sizeof(ObitFitModel*));
   models[0] = ObitFitModelCreate ("model", OBIT_FitModel_GaussMod, 
 				  Peak, DeltaX, DeltaY, nparm, parms);
   /* Fitting region */
-  corner[0] = center[0]+blc[0]-10; corner[1] = center[1]+blc[1]-10;
-  fdim[0]   = fdim[1] = 21;
+  corner[0] = center[0]+blc[0]-hwid; corner[1] = center[1]+blc[1]-hwid;
+  fdim[0]   = fdim[1] = 2*hwid+1;
   peakResid = fluxResid = RMSResid = 0.0;
   reg    = ObitFitRegionCreate ("reg", corner, fdim, Peak, 
 				RMSResid, peakResid, fluxResid, 
@@ -5733,11 +5753,12 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
 
   /* Fit in pixels/deg */
   imFit  = ObitImageFitCreate ("Fitter");
-  /* Fix Peak */
+  /* Fix Peak, pos */
   dim[0] = dim[1] = dim[2] = dim[3] = 1;
   ObitInfoListAlwaysPut(imFit->info, "FixFlux",  OBIT_bool, dim, &True);
+  ObitInfoListAlwaysPut(imFit->info, "FixPos",  OBIT_bool, dim, &True);
 
-  /* Turn off messages */
+  /* Turn off fitting messages */
   prtLv = err->prtLv;
   err->prtLv = 0;
   ObitImageFitFit (imFit, beam, reg, err);

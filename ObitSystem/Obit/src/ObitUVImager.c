@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2022                                          */
+/*;  Copyright (C) 2005-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -133,7 +133,7 @@ ObitUVImager* ObitUVImagerFromInfo (gchar *prefix, ObitInfoList *inList,
      "RAShift", "DecShift", "Sources", 
      "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
-     "RobustIF", "TaperIF", "MFTaper", "doGPU", "doGPUGrid",
+     "RobustIF", "TaperIF", "MFTaper", "doGPU", "doGPUGrid","GPU_no",
      NULL};
   gchar ctemp[50];
   gchar *routine = "ObitUVImagerFromInfo";
@@ -405,7 +405,7 @@ void ObitUVImagerWeight (ObitUVImager *in, ObitErr *err)
      "RAShift", "DecShift", "Sources",  "Beam",
      "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
-     "RobustIF", "TaperIF", "MFTaper", "doGPU", "doGPUGrid",
+     "RobustIF", "TaperIF", "MFTaper", "doGPU", "doGPUGrid","GPU_no",
      NULL};
   gchar *routine = "ObitUVImagerWeight";
 

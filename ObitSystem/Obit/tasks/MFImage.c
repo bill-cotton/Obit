@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1580,7 +1580,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect", "doRestart", "nTotal", "reFlux",
-    "numBeamTapes", "BeamTapes", "MResKnob", "doQU", "doGPU", "doGPUGrid",
+    "numBeamTapes", "BeamTapes", "MResKnob", "doQU", "doGPU", "doGPUGrid", "GPU_no",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -2750,7 +2750,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
     "nTaper", "Tapers", "MResKnob", "doQU",
     "doRestart", "nTotal", "reFlux", 
-    "nThreads", "doGPU","doGPUGrid","maxRealtime",
+    "nThreads", "doGPU","doGPUGrid","GPU_no","maxRealtime",
     NULL};
   gchar *routine = "MFImageHistory";
 
@@ -3051,7 +3051,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
     "doFull", "do3D", "FOV", "PBCor", "antSize", 
     "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "WtPower",
-    "MaxBaseline", "MinBaseline", "rotate", "Beam", "doGPUGrid", 
+    "MaxBaseline", "MinBaseline", "rotate", "Beam", "doGPUGrid", "GPU_no",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
     NULL

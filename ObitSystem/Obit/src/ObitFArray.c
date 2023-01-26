@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1073,7 +1073,7 @@ ofloat ObitFArrayRMS (ObitFArray* in)
   }
 
   /* cleanup */
-  KillFAFuncArgs(nTh, threadArgs);
+  KillFAFuncArgs(nThreads, threadArgs);
 
   /* Initial values */
   count = (ofloat)icount;

@@ -89,7 +89,7 @@ typedef struct {
 /**
  * Maximum number of vis per read for GPU based Gridding
  */
-#define GPU_NVISPIO 8192
+#define GPU_NVISPIO 1024
 
 /*---------------------------------- Structures ----------------------------*/
 /*---------------Public functions---------------------------*/

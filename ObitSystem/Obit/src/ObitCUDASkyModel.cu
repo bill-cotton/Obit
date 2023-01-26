@@ -3,7 +3,7 @@
 */
 /* $Id: $        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -775,6 +775,9 @@ void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuInfo)
 {
 
 #if HAVE_GPU==1  /* CUDA code */
+   // Reset GPU
+   cudaDeviceSynchronize();
+   cudaDeviceReset();
 #endif /* HAVE_GPU */
 
 } /*end ObitCUDASkyModelDFTShutdown */

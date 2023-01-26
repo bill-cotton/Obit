@@ -3,7 +3,7 @@
 */
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2015                                          */
+/*;  Copyright (C) 2014-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -214,12 +214,15 @@ void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   gboolean doCalSelect;
-  olong nVisPIO, oldnVisPIO, nSpec, *specIndex;
+  olong ldevice, nVisPIO, nSpec, *specIndex;
   odouble *specFreq;
   gchar *routine = "ObitGPUSkyModelDFTInit";
 
   /* Set GPU device, hard code 0 for now */
   in->gpuInfo->cuda_device = 0;
+  ldevice = in->gpuInfo->cuda_device;
+  ObitInfoListGetTest(uvdata->info, "GPU_no", &type, (gint32*)dim, &ldevice);
+  in->gpuInfo->cuda_device = (int)ldevice;
   ObitCUDASetGPU (in->gpuInfo->cuda_device);
   ObitCUDAResetGPU ();  /* Make sure reset */
 
@@ -229,7 +232,6 @@ void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
   /* reallocate data buffer on uvdata to locked memory
     first reset number of vis per IO */
   ObitUVClose (uvdata, err);
-  oldnVisPIO = MIN(1000, inDesc->nvis);
   ObitInfoListGetTest (uvdata->info, "nVisPIO", &type, dim,  
 		       &in->gpuInfo->oldnVisPIO);
   nVisPIO = MIN(10000, inDesc->nvis);
@@ -523,30 +525,49 @@ void ObitGPUSkyModelDFTShutdown (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *e
 {
   int i;
   gint32 dim[MAXINFOELEMDIM];
+  /*fprintf(stderr,"DEBUG in ObitGPUSkyModelDFTShutdown\n");*/
+  /* Something to do? */
+  if (in==NULL) return;
   // Free resources
-  ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_data);
-  ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_visInfo);
-  ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_visInfo);
-  ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_modelInfo);
-  ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_model[0]);
-  for (i =0; i<in->gpuInfo->nstream; ++i)    {
-    if (in->gpuInfo->stream)    ObitCUDAStreamDestroy((in->gpuInfo->stream)[i]);
-    if (in->gpuInfo->cycleDone) ObitCUDAEventDestroy((in->gpuInfo->cycleDone)[i]);
-    if (in->gpuInfo->d_data)    ObitCUDAUtilFreeGPU(in->gpuInfo->d_data[i]);
-  }
-  if (in->gpuInfo->stream)    g_free(in->gpuInfo->stream);
-  if (in->gpuInfo->cycleDone) g_free(in->gpuInfo->cycleDone);
-  if (in->gpuInfo->d_data)    g_free(in->gpuInfo->d_data);
+  if (in->gpuInfo) {
+    if (in->gpuInfo->h_data) 
+      {ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_data);    in->gpuInfo->h_data=NULL;}
+    if (in->gpuInfo->h_visInfo) {
+      if (in->gpuInfo->h_visInfo->d_freqRat) {
+	ObitCUDAUtilFreeGPU((float*)in->gpuInfo->h_visInfo->d_freqRat);
+	in->gpuInfo->h_visInfo->d_freqRat = NULL;
+      }
+      if (in->gpuInfo->h_visInfo->freqRat) {
+	ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_visInfo->freqRat);
+	in->gpuInfo->h_visInfo->freqRat = NULL;
+      }
+      ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_visInfo); in->gpuInfo->h_visInfo=NULL;
+    }
+    if (in->gpuInfo->d_visInfo)
+      {ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_visInfo);  in->gpuInfo->d_visInfo=NULL;}
+    if (in->gpuInfo->d_modelInfo)
+      {ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_modelInfo);in->gpuInfo->d_modelInfo=NULL;}
+    if (in->gpuInfo->d_model[0])
+      {ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_model[0]); in->gpuInfo->d_model[0]=NULL;}
+    for (i =0; i<in->gpuInfo->nstream; ++i)    {
+      if (in->gpuInfo->stream)    ObitCUDAStreamDestroy((in->gpuInfo->stream)[i]);
+      if (in->gpuInfo->cycleDone) ObitCUDAEventDestroy((in->gpuInfo->cycleDone)[i]);
+      if (in->gpuInfo->d_data)    
+	{ObitCUDAUtilFreeGPU(in->gpuInfo->d_data[i]); in->gpuInfo->d_data[i]=NULL;}
+    }
+    if (in->gpuInfo->stream)    {g_free(in->gpuInfo->stream);   in->gpuInfo->stream=NULL;}
+    if (in->gpuInfo->cycleDone) {g_free(in->gpuInfo->cycleDone);in->gpuInfo->cycleDone=NULL;}
+    if (in->gpuInfo->d_data)    {g_free(in->gpuInfo->d_data); in->gpuInfo->d_data=NULL;}
   
-  ObitCUDAResetGPU ();
+    /* Replace old nVisPIO */
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    ObitInfoListAlwaysPut (uvdata->info, "nVisPIO", OBIT_long, dim,  
+			   &in->gpuInfo->oldnVisPIO);
 
-   /* Replace old nVisPIO */
-  dim[0] = dim[1] = dim[2] = dim[3] = 1;
-  ObitInfoListAlwaysPut (uvdata->info, "nVisPIO", OBIT_long, dim,  
-			 &in->gpuInfo->oldnVisPIO);
-
- /* CALL CUDA */
-  ObitCUDASkyModelDFTShutdown (in->gpuInfo);
+    /* CALL CUDA */
+    ObitCUDASkyModelDFTShutdown (in->gpuInfo);
+    in->gpuInfo = NULL;
+  }
 } /*end ObitGPUSkyModelDFTShutdown */
 
 /**
@@ -643,29 +664,45 @@ void ObitGPUSkyModelClear (gpointer inn)
   if (in->gpuInfo) {
     if (in->gpuInfo->d_visInfo) {
       ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_visInfo);
+      in->gpuInfo->d_visInfo = NULL;
     }
     if (in->gpuInfo->h_visInfo) {
-      if (in->gpuInfo->h_visInfo->d_freqRat)
+      if (in->gpuInfo->h_visInfo->d_freqRat) {
 	ObitCUDAUtilFreeGPU((float*)in->gpuInfo->h_visInfo->d_freqRat);
-      if (in->gpuInfo->h_visInfo->freqRat)
+	in->gpuInfo->h_visInfo->d_freqRat = NULL;
+      }
+      if (in->gpuInfo->h_visInfo->freqRat) {
 	ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_visInfo->freqRat);
+	in->gpuInfo->h_visInfo->freqRat = NULL;
+      }
       ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_visInfo);
+      in->gpuInfo->h_visInfo = NULL;
     }
-    if (in->gpuInfo->d_freq)
+    if (in->gpuInfo->d_freq) {
       ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_freq);
-    if (in->gpuInfo->d_model[0])
+      in->gpuInfo->d_freq = NULL;
+    }
+    if (in->gpuInfo->d_model[0]) {
       ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_model[0]);
+      in->gpuInfo->d_model[0] = NULL;
+    }
     if (in->gpuInfo->d_modelInfo) {
       ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_modelInfo);
+      in->gpuInfo->d_modelInfo = NULL;
     }
     if (in->gpuInfo->h_modelInfo) {
-      if (in->gpuInfo->h_modelInfo->d_specIndex)
+      if (in->gpuInfo->h_modelInfo->d_specIndex) {
 	ObitCUDAUtilFreeGPU((float*)in->gpuInfo->h_modelInfo->d_specIndex);
-      if (in->gpuInfo->h_modelInfo->specIndex) 
+	in->gpuInfo->h_modelInfo->d_specIndex = NULL;
+      }
+      if (in->gpuInfo->h_modelInfo->specIndex) {
 	ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_modelInfo->specIndex);
+	in->gpuInfo->h_modelInfo->specIndex = NULL;
+      }
       ObitCUDAUtilFreeHost((float*)in->gpuInfo->h_modelInfo);
+      in->gpuInfo->h_modelInfo = NULL;
     }
-    g_free(in->gpuInfo);
+    g_free(in->gpuInfo); in->gpuInfo = NULL;
   }
   
   /* unlink parent class members */

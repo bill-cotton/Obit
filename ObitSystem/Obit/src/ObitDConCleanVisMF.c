@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -512,7 +512,7 @@ void  ObitDConCleanVisMFGetParms (ObitDCon *inn, ObitErr *err)
 
 /** 
  * Restore components removed from the residual image(s)
- * Wideband imaging version, supporting dual Q&U imagiig
+ * Wideband imaging version, supporting dual Q&U imaginig
  * Spectral orders higher than 0 are flux density weighted averages.
  * \param inn  The object to restore
  * \param err Obit error stack object.
@@ -742,6 +742,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 		 Don't know what this was supposed to do but it's not right */
 	      ObitInfoListGetTest(image2->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper2);
 	      /*??? bmaj = bmin = BeamTaper2; bpa   = 0.0;*/
+
 	      convl = ConvlCC (image1, outCC->tabVer, iplane, factor, bmaj, bmin, bpa, err);
 	      if ((in->isDual)&&(image1U))
 		convlU = ConvlCC (image1U, outCCU->tabVer, iplane, factor, bmaj, bmin, bpa, err);
@@ -749,11 +750,17 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 	      /* Sum */
 	      ObitFArrayAdd (accum, convl, accum);
 	      if ((in->isDual)&&(image1U)) ObitFArrayAdd (accumU, convlU, accumU);
-	      /* DEBUG save convl for 1=>5, 3=>5
-		 if ((jfield==5) && (ifield==15) && (iplane==0))
-		 ObitImageUtilArray2Image ("Dbug16to6.fits", 0, convl, err); 
-		 if ((jfield==3) && (ifield==13) && (iplane==0))
-		 ObitImageUtilArray2Image ("Dbug14to4.fits", 0, convl, err);  */
+	      /* DEBUG save convl for 9=>1, 21=>1 */
+	      if ((jfield==0) && (ifield==8) && (iplane==0)) {
+		ObitImageUtilArray2Image ("Dbug9to1.fits", 0, convl, err); 
+		fprintf (stderr, "\nXRestore: %d to %d tapers %f %f bmaj %f factor %f\n",
+			 ifield+1,jfield+1,BeamTaper1,BeamTaper2,bmaj, factor);
+	      }
+	      if ((jfield==0) && (ifield==21) && (iplane==0)) {
+		ObitImageUtilArray2Image ("Dbug22to1.fits", 0, convl, err); 
+		fprintf (stderr, "\nXRestore: %d to %d tapers %f %f bmaj %f factor %f\n",
+			 ifield+1,jfield+1,BeamTaper1,BeamTaper2,bmaj, factor);
+	      }
 	      
 	      convl = ObitFArrayUnref(convl);
 	      if (convlU) convlU = ObitFArrayUnref(convlU);

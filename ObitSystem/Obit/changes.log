@@ -5300,3 +5300,20 @@ Summary: Bug fixes
   Obit/tasks/BDFIn.c
      Get correct source numbers for SY and OT tables for OTF data
 10 Jan 2023, svn 648
+
+Summary: Bug fixes, plug memory leaks
+  Obit/include/ObitGPUGrid.h
+     Reduce number of vis loaded when using the GPU from 8K to 1K
+     8K was exceeding memory.
+  Obit/src/ObitImageUtil.c
+     FitBeam: use any BeamTapr to set size of fitting region.
+  Obit/src/ObitCUDAGrid.cu Obit/src/ObitCUDASkyModel.cu
+     Vain attempt to keep from filling memory
+  Obit/src/ObitFArray.c 
+     RMS: delete all FuncArgs (nThreads)
+  Obit/src/ObitCUDAUtil.cu Obit/src/ObitDConCleanVis.c Obit/src/ObitDConCleanVisMF.c Obit/src/ObitGPUSkyModel.c
+  Obit/src/ObitImageUtil.c Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c Obit/src/ObitUVImager.c Obit/src/ObitUVImagerMF.c
+     Plug memory leaks
+  Obit/TDF/MFImage.TDF Obit/tasks/MFImage.c
+     Add parameter GPU_no to specify GPU
+26 Jan 2023 svn 649

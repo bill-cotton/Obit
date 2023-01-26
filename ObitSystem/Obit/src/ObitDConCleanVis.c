@@ -892,6 +892,9 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   pixarray = inClass->KillPxArray (in, pixarray);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* Any facets modified? */
+  isDirty = anyDirty (in);
+
   /* Make final residuals */
   if ((!bail) && (in->niter>0) && isDirty) {
     inClass->ObitDConCleanResetChDone((ObitDConClean*)in, err);  /* Any resets needed */

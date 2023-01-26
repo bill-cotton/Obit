@@ -1,6 +1,6 @@
 /* $Id:  $        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014,2021                                          */
+/*;  Copyright (C) 2014-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -45,13 +45,16 @@
 #if HAVE_GPU==1  /* CUDA code */
 /* Public: Set device */
 /**
- * Assign a GPU
- * \param cuda_device GPU number to use
+ * Assign a GPU, maximum deviceCount-1
+ * \param cuda_device GPU number (0-rel) to use
  */
 extern "C"
 void ObitCUDASetGPU (int cuda_device)
 {
-  checkCudaErrors(cudaSetDevice(cuda_device));
+  int count, device;
+  checkCudaErrors(cudaGetDeviceCount(&count));
+  device = MIN (count-1, cuda_device);
+  checkCudaErrors(cudaSetDevice(device));
 } /* end ObitCUDASetGPU */
 
 /**
@@ -60,7 +63,8 @@ void ObitCUDASetGPU (int cuda_device)
 extern "C"
 void ObitCUDAResetGPU ()
 {
-  cudaDeviceReset();
+   cudaDeviceSynchronize();
+   cudaDeviceReset();
 } /* end ObitCUDAResetGPU */
 
 /**
@@ -323,15 +327,17 @@ void ObitCUDAUtilGPUAny2Host(void *host, void *GPU, int memsize, int* stream)
 
 /**
  * Return total global memory in device
- * \param    cuda_device GPU device 
+ * \param    cuda_device GPU device , not used
  * \return   memory size in bytes
  */
 extern "C"
 size_t ObitCUDAUtilMemory(int cuda_device)
 {
   cudaDeviceProp deviceProp;
-  checkCudaErrors(cudaSetDevice(cuda_device));
-  checkCudaErrors(cudaGetDeviceProperties(&deviceProp, cuda_device));
+  int device;
+  checkCudaErrors(cudaGetDevice(&device));
+  //???checkCudaErrors(cudaSetDevice(cuda_device));
+  checkCudaErrors(cudaGetDeviceProperties(&deviceProp, device));
   return deviceProp.totalGlobalMem;
 } /* end ObitCUDAUtilMemory */
 

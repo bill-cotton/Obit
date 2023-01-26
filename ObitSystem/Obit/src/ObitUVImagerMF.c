@@ -449,7 +449,7 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
      "RAShift", "DecShift", "Sources", "Beam", "targBeam", 
      "Catalog",  "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "Robust", "WtPower",
-     "RobustIF", "TaperIF", "MFTaper","doGPU", "doGPUGrid",
+     "RobustIF", "TaperIF", "MFTaper","doGPU", "doGPUGrid","GPU_no",
      NULL};
   gchar *routine = "ObitUVImagerWeight";
 
@@ -896,7 +896,7 @@ void ObitUVImagerMFGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
      "RAShift", "DecShift", "Sources", 
      "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
-     "RobustIF", "TaperIF", "MFTaper","doGPU", "doGPUGrid",
+     "RobustIF", "TaperIF", "MFTaper","doGPU", "doGPUGrid","GPU_no",
      NULL};
   gchar *routine = "ObitUVImagerMFGetInfo";
 

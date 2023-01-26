@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2022                                          */
+/*;  Copyright (C) 2004-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -768,6 +768,7 @@ void ObitSkyModelShutDownMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
   olong i;
   FTFuncArg *args;
 
+  /*fprintf(stderr,"DEBUG in ObitSkyModelShutDownMod \n");*/
   in->myInterp = ObitCInterpolateUnref(in->myInterp);
   in->plane    = ObitFArrayUnref(in->plane);
   ObitThreadPoolFree (in->thread);  /* Shut down any threading */
@@ -785,6 +786,9 @@ void ObitSkyModelShutDownMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
     } /* end if this a "base" threadArg */
   }
 #if HAVE_GPU==1  /*  GPU? */
+  gchar *routine = "ObitSkyModelShutDownMod";
+  ObitGPUSkyModelDFTShutdown(in->GPUSkyModel, uvdata, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
   in->GPUSkyModel = ObitGPUSkyModelUnref (in->GPUSkyModel);
 #endif /* HAVE_GPU */
 } /* end ObitSkyModelShutDownMod */

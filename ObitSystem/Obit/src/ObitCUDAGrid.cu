@@ -764,6 +764,7 @@ void ObitCUDAGridShutdown (CUDAGridInfo *cudaInfo) {
    if (cudaInfo->d_facetInfo) {cudaFree    (cudaInfo->d_facetInfo); cudaInfo->d_facetInfo = NULL;}
 
    // Reset GPU
+   cudaDeviceSynchronize();
    cudaDeviceReset();
 
   } /* end ObitCUDAGridShutdown */

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -932,6 +932,10 @@ void ObitSkyModelMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   if (in->specFreqHi)  {g_free(in->specFreqHi);}  in->specFreqHi = NULL;
   if (in->specIndex)   {g_free(in->specIndex);}   in->specIndex  = NULL;
 #if HAVE_GPU==1  /*  GPU? */
+  gchar *routine = "ObitSkyModelShutDownMod";
+  ObitGPUSkyModelDFTShutdown(in->GPUSkyModel, uvdata, err);
+  in->GPUSkyModel = NULL;
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
   in->GPUSkyModel = ObitGPUSkyModelUnref (in->GPUSkyModel);
 #endif /* HAVE_GPU */
 } /* end ObitSkyModelMFShutDownMod */
