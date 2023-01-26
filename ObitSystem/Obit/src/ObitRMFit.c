@@ -1726,8 +1726,8 @@ static void NLRMFit (NLRMFitArg *arg)
 
   /* Do fit */
 #ifdef HAVE_GSL
-#if HAVE_GSL2==1  /* Newer GSL*/
   gsl_matrix *J                  = NULL;
+#if HAVE_GSL2==1  /* Newer GSL*/
   J = gsl_matrix_alloc (2*arg->nlamb2, 2);
 #endif /* HAVE_GSL2 */
   /* order EVPA, RM */

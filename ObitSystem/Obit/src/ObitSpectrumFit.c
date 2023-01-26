@@ -1991,9 +1991,7 @@ static void NLFit (NLFitArg *arg)
   gsl_multifit_fdfsolver *solver=NULL;
   gsl_matrix *covar=NULL;
   gsl_vector *work=NULL;
-#if HAVE_GSL2==1  /* Newer GSL*/
   gsl_matrix *J=NULL;
-#endif /* HAVE_GSL2 */
 #endif /* HAVE_GSL */ 
  
   /* Initialize output */

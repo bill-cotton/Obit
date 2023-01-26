@@ -5322,3 +5322,8 @@ Summary: GSL2 fixes
   Obit/src/ObitPolnCalFit.c Obit/src/ObitRMFit.c Obit/src/ObitSpectrumFit.c
     Fixes for GSL2
 26 Jan 2023 svn 650
+
+Summary: GSL2 fixes, another try
+  Obit/src/ObitPolnCalFit.c Obit/src/ObitRMFit.c Obit/src/ObitSpectrumFit.c
+    Fixes for GSL2
+26 Jan 2023 svn 651

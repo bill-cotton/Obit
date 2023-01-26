@@ -2315,8 +2315,8 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
   gsl_multifit_fdfsolver *solver = in->solver;
   gsl_matrix *covar              = in->covar;
   gsl_vector *work               = in->work;
-#if HAVE_GSL2==1  /* Newer GSL*/
   gsl_matrix *J                  = NULL;
+#if HAVE_GSL2==1  /* Newer GSL*/
   J = gsl_matrix_alloc (in->ndata, in->nparam);
 #endif /* HAVE_GSL2 */ 
 
