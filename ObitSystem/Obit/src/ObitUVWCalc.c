@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2018                                          */
+/*;  Copyright (C) 2013-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -547,9 +547,9 @@ void ObitUVWCalcClear (gpointer inn)
   in->SouList  = ObitSourceListUnref (in->SouList);
   in->mySource = ObitSourceUnref (in->mySource);
   if (in->antIndex) g_free(in->antIndex);
-  if (in->xm) g_free(in->xm); in->xm = NULL;
-  if (in->ym) g_free(in->ym); in->xm = NULL;
-  if (in->zm) g_free(in->zm); in->xm = NULL;
+  if (in->xm) {g_free(in->xm); in->xm = NULL;}
+  if (in->ym) {g_free(in->ym); in->xm = NULL;}
+  if (in->zm) {g_free(in->zm); in->xm = NULL;}
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

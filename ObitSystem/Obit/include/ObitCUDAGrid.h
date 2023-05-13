@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021,2023                                               */
+/*;  Copyright (C) 2021,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -44,19 +44,19 @@
 /* Public: Allocate Structures */
 extern "C"
 void ObitCUDAGridAlloc (CUDAGridInfo *gpuInfo, long nfacet, long nchan, long nif, 
-			long nVisPIO, long lenvis, long nplane, int doBuff);
+			long nVisPIO, long lenvis, long nplane, long iGPU, int doBuff);
 
 /* Public: Initialize gridding */
 extern "C"
-void ObitCUDAGridInit (CUDAGridInfo *gpuInfo);
+void ObitCUDAGridInit (CUDAGridInfo *gpuInfo, long iGPU);
 
 /* Public: Grid a bufferload of visibilities */
 extern "C"
-void ObitCUDAGridGrid (CUDAGridInfo *in);
+void ObitCUDAGridGrid (CUDAGridInfo *in, long iGPU, int init);
 
 /* Public: Fold negative u to positive */
 extern "C"
-void ObitCUDAGridFlip (CUDAGridInfo *in);
+void ObitCUDAGridFlip (CUDAGridInfo *in, long iGPU);
 
 /* Public: Copy vis grid to locked host memory */
 extern "C"
@@ -64,28 +64,28 @@ void ObitCUDAGrid2CPU (CUDAGridInfo *in, long ifacet);
 
 /* Public: Shutdown gridding */
 extern "C"
-void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo);
+void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo, long iGPU);
 
 #else /* non cuda */
 
 /* Public: Allocate Structures */
 void ObitCUDAGridAlloc (CUDAGridInfo *gpuInfo, long nfacet, long nchan, long nif, 
-			long nVisPIO, long lenvis, long nplane, int doBuff);
+			long nVisPIO, long lenvis, long nplane, long iGPU, int doBuff);
 
 /* Public: Initialize gridding */
-void ObitCUDAGridInit (CUDAGridInfo *gpuInfo);
+void ObitCUDAGridInit (CUDAGridInfo *gpuInfo, long iGPU);
 
 /* Public: Grid a bufferload of visibilities */
-void ObitCUDAGridGrid (CUDAGridInfo *in);
+void ObitCUDAGridGrid (CUDAGridInfo *in, long iGPU, int init);
 
 /* Public: Fold negative u to positive */
-void ObitCUDAGridFlip (CUDAGridInfo *in);
+void ObitCUDAGridFlip (CUDAGridInfo *in, long iGPU);
 
 /* Public: Copy vis grid to locked host memory */
 void ObitCUDAGrid2CPU (CUDAGridInfo *in, long ifacet);
 
 /* Public: Shutdown gridding */
-void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo);
+void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo, long iGPU);
 
 #endif /* IS_CUDA */
 #endif /* OBITCUDAGRID_H */ 

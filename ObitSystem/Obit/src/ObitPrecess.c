@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -302,9 +302,8 @@ void ObitPrecessPrecess(odouble JD, ofloat equin, odouble deldat, olong dir,
  */
 void ObitPrecessGST0 (odouble JD, odouble *GSTUTC0, odouble *Rate)
 {
-  odouble UTC, TC, Eps, EqEq , DelPsi, DelEps, JD0, TU, GMSTM;
+  odouble TC, Eps, EqEq , DelPsi, DelEps, JD0, TU, GMSTM;
 
-  UTC = JD - 2400000.5;
   /* Get equation of equinoxes. */
   TC = (JD - 2433282.423) / 36524.21988;
   Eps = -46.850 * TC - 0.0034 * TC * TC + 0.0018 * TC * TC * TC;

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021,2022                                          */
+/*;  Copyright (C) 2021-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,7 +27,7 @@
 /*--------------------------------------------------------------------*/
 #ifndef OBITCUDAGRIDINFODEF_H 
 #define OBITCUDAGRIDINFODEF_H 
-#define GRID_STREAM_COUNT 2
+#define GRID_STREAM_COUNT 4
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitCUDAGridInfoDef.h
@@ -40,8 +40,12 @@
 /*---------------------------------- Structures ----------------------------*/
 /** Common info  */
 typedef struct  {
+/** Number of GPUs */
+int nGPU;
 /** Number of facets */
 int nfacet;
+/** Number of facets per GPU */
+int nfacetPerGPU;
 /** Number of planes per facets */
 int nplane;
 /** Number of channels */
@@ -70,9 +74,11 @@ int oldnVisPIO;
 int nStream;
 /** Print level */
 int prtLv;
-/* 0-rel Frequency plane per channel host*/
+/** list of GPU numbers */
+int *GPU_device_no;
+/** 0-rel Frequency plane per channel host*/
 int *h_freqPlane;
-/* 0-rel Frequency plane per channel device */
+/** 0-rel Frequency plane per channel device */
 int *d_freqPlane;
 /** Taper sigmas per channel/IF host */
 float *h_sigma1, *h_sigma2, *h_sigma3;
@@ -86,17 +92,17 @@ float *d_freqArr;
 float *h_convfn;
 /** gridding kernal order, given fractional cell fastest - device */
 float *d_convfn;
-/** Vis data locked buffer */
+/** Vis data locked buffer. */
 float *h_data_in;
-/** Vis data device buffer array of GRID_STREAM_COUNT buffers. */
-float **d_data_in;
-/** d_data_in Array in locked host memory. */
+/** Vis data device buffer. */
+float *d_data_in;
+/** d_data_in pointers per GPU array in locked host memory. */
 float **h_d_data_in;
 #if IS_CUDA==1
-  /* stream structures */
-  cudaStream_t *stream;
-  /* Stream events  */
-  cudaEvent_t *cycleDone;
+  /* stream structures per GPU */
+  cudaStream_t **stream;
+  /* Stream events per GPU */
+  cudaEvent_t **cycleDone;
 #else  /* Not CUDA */
   /* stream structures (cudaStream_t) */
   int **stream;
@@ -111,6 +117,8 @@ typedef struct  {
 int  doBeam;
 /** Size of facets (cells) per Facet */
 int nx, ny;
+/** GPU number for gridding - index in  GridInfo->GPU_device_no */
+int GPU_num;
 /** Scaling for u,v,w to cells */
 float uscale, vscale, wscale;
 /** shift parameters per facet (dxc, dyc, dzc) */
@@ -130,22 +138,39 @@ float *d_grid;
 } FacetInfo; 
 
 typedef struct  {
-/** which cuda enabled GPU? */
-long cuda_device;
-/** How much GPU global memory */
-size_t gpu_memory;
+/** which cuda enabled GPU? 
+long cuda_device;*/
+/** How many GPUs? */
+long nGPU;
+/** Number of facets */
+long nfacet;
 /* How many visibilities per I/O? */
 long nVisPIO;
-/* GPU base address */
-void* d_base;
+/** List of cuda device numbers */
+long *cuda_device;
+/** GPU index assignments per facet */
+long *FacetGPU;
+/** How much GPU global memory per GPU */
+size_t *gpu_memory;
+/** GPU base address (secret CUDAGridInfo) per gpu  */
+void** d_base;
+/** host base address (secret CUDAGridInfo) per gpu  */
+void** h_base;
 /** Information in common to all facets */
 GridInfo* h_gridInfo;
 GridInfo* d_gridInfo;
-/** Per facet information */
+/** Per facet host  info */
 FacetInfo** h_facetInfo;
+/** Per facet information */
 FacetInfo** d_facetInfo;
-/** d_facetInfo Array in locked host memory. */
-FacetInfo** h_d_facetInfo;
+/** d_facetInfo Array GPU pointers in  host memory. */
+FacetInfo*** h_d_facetInfo;
+/** d_gridInfo  GPU pointers in host memory. */
+GridInfo** h_d_gridInfo;
+/** device data pointers this gpu in device memory */
+float* d_data_in;
+/** host data pointers in host memory */
+float* h_data_in;
 /** DEBUG stuff */
 float *h_grid_debug, *d_grid_debug;
 } CUDAGridInfo; 

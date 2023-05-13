@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -895,7 +895,6 @@ void ObitFFTClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   ObitFFT *in = inn;
-  olong i;
 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -903,16 +902,15 @@ void ObitFFTClear (gpointer inn)
   /* delete this class members */
   in->thread    = ObitThreadUnref(in->thread);
 #if HAVE_FFTW3==1  /* FFTW 3 version */
-  i = 0;
-  if (in->CPlan) fftwf_destroy_plan(in->CPlan); in->CPlan = NULL;
-  if (in->RPlan) fftwf_destroy_plan(in->RPlan); in->RPlan = NULL;
+  if (in->CPlan) {fftwf_destroy_plan(in->CPlan); in->CPlan = NULL;}
+  if (in->RPlan) {fftwf_destroy_plan(in->RPlan); in->RPlan = NULL;}
 
 #elif HAVE_FFTW==1  /* FFTW 2 version */
-  i = 0;
-  if (in->CPlan)  fftwnd_destroy_plan(in->CPlan); in->CPlan = NULL;
-  if (in->RPlan) rfftwnd_destroy_plan(in->RPlan); in->RPlan = NULL;
+  if (in->CPlan)  {fftwnd_destroy_plan(in->CPlan); in->CPlan = NULL;}
+  if (in->RPlan) {rfftwnd_destroy_plan(in->RPlan); in->RPlan = NULL;}
 
 #elif HAVE_GSL==1  /* Else try GSL version */
+  olong i;
   for (i=0; i<in->rank; i++) {
     if (in->CWavetab[i]!=NULL)  gsl_fft_complex_wavetable_float_free(in->CWavetab[i]);     in->CWavetab[i]=NULL;
     if (in->HCWavetab[i]!=NULL) gsl_fft_halfcomplex_wavetable_float_free(in->HCWavetab[i]);in->HCWavetab[i]=NULL;

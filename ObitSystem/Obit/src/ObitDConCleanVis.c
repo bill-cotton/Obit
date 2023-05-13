@@ -3938,7 +3938,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
  * Uses autoShift only for flux densities above 0.1 x autoCenFlux
  * Includes allowed range of BeamTaper
  * Sets values of in->maxBeamTaper and in->minBeamTaper
- * Sets minFlux for selected taper to 0.5 * the ratio of the beam areas
+ * Sets minFlux for selected taper to the ratio of the beam areas
  * to no taper case.
  * \param in     The Clean object
  * \param fresh  List of flags indicating freshly made
@@ -4083,18 +4083,29 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
     /* Is this one done? */
     if (in->cleanable[i]<in->minFlux[i]) test = 0.0;
 
-    /* If SNR<5 degrade */
-    if (in->imgPeakRMS[i]<1.5) test *= 0.0;
-    else if (in->imgPeakRMS[i]<2.5) test *= 0.25;
+    /* If SNR<5 degrade - careful, this measure is not always what it appears */
+    if (in->imgPeakRMS[i]<1.5) test *= 0.25;
+    else if (in->imgPeakRMS[i]<2.5) test *= 0.50;
     else if (in->imgPeakRMS[i]<5.0) test *= 0.75;
     if (test>bestTest) {
       bestTest = test;
       best     = j;
     }
     if (test>0.0) done = FALSE;  /* Finished CLEAN? */
-      if (err->prtLv>=2) 
-	Obit_log_error(err, OBIT_InfoErr,"Resoln. %d objective fn %f", 
-		   j, test);
+    /* DEBUG */
+    if ((test<=0.0) && (err->prtLv>=2)) {
+      /* Explain */
+      Obit_log_error(err, OBIT_InfoErr,"DEBUG best %d bestTest %f bestTap %d", 
+		     best,bestTest,bestTap[j]);
+      Obit_log_error(err, OBIT_InfoErr,"DEBUG cleanable %f minFlux %f quality %f", 
+		     in->cleanable[i],in->minFlux[i],in->quality[i]);
+      Obit_log_error(err, OBIT_InfoErr,"DEBUG in->imgPeakRMS[i] %f", 
+		     in->imgPeakRMS[i]);
+    }
+    /* end DEBUG */
+    if (err->prtLv>=2) 
+      Obit_log_error(err, OBIT_InfoErr,"Resoln. %d objective fn %f", 
+		     j, test);
   } /* End loop testing */
 
   /* Set taper */

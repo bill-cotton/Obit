@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 1996,1997-2008-2008                                */
+/*;  Copyright (C) 1996,1997-2008-2023                                */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -319,7 +319,7 @@ olong ObitPositionXYpix(odouble coord[2], ObitImageDesc *desc,
 olong ObitPositionXYpixLM(odouble coord[2], ObitImageDesc *desc,
 			 odouble doff[2])
 {
-  odouble dz, r, ra0, dec0, ra, dec, coss, sins, dt, da, dd, sint, ddx, ddy;
+  odouble r, ra0, dec0, ra, dec, coss, sins, dt, da, dd, sint, ddx, ddy;
   odouble l, m=0.0, geo1, geo2, geo3, sinr, cosr;
   odouble cond2r=1.745329252e-2, deps=1.0e-5, twopi=6.28318530717959;
   odouble xpos, ypos;
@@ -338,7 +338,6 @@ olong ObitPositionXYpixLM(odouble coord[2], ObitImageDesc *desc,
   /* default values - linear */
   doff[0] = xpos - desc->crval[0];
   doff[1] = ypos - desc->crval[1];
-  dz = 0.0;
   
   /*     check axis increments - bail out if either 0 */
   if ((desc->cdelt[0]==0.0) || (desc->cdelt[1]==0.0)) {doff[0]=0.0; doff[1]=0.0; return 2;}

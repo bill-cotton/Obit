@@ -1,6 +1,6 @@
 /* $Id: $   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2015                                          */
+/*;  Copyright (C) 2014-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -213,7 +213,6 @@ ObitGPUFInterpolate* ObitGPUFInterpolateCreate (gchar* name, ObitFArray *inArray
 
   /* Only if building with GPU enabled */
 #if HAVE_GPU==1  /* GPU? Real versions */
-  int memsize;
   out = newObitGPUFInterpolate(name);
 
   /* Make GPU versions of arrays */
@@ -231,7 +230,6 @@ ObitGPUFInterpolate* ObitGPUFInterpolateCreate (gchar* name, ObitFArray *inArray
   if (err->error) Obit_traceback_val (err, routine, inArray->name, out);
 
  /* GPU FInterpolate structure */
-  memsize = sizeof(CUDAFInterpolate);
   out->FInterpolate = newCUDAFInterpolateCreate(out->inArray->FArray, hwidth, STREAM_COUNT);
   out->hwidth  = MAX (1, MIN (4, hwidth));
   out->nx      = inArray->naxis[0];

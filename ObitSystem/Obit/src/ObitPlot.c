@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -378,7 +378,7 @@ void ObitPlotXYPlot (ObitPlot* in, olong symbol,
   in->yLog = FALSE;
 
   /* using index for x? */
-  if (x!=0) xx = x;
+  if (x!=0) xx = (PLFLT*)x;
   else { /* yes */
     xx = g_malloc0(n*sizeof(PLFLT));
     for (i=0; i<n; i++) xx[i] = (PLFLT)i;
@@ -849,7 +849,7 @@ void ObitPlotXYOver (ObitPlot* in, olong symbol,
   doSymbol  = symbol!=0;
 
   /* using index for x? */
-  if (x!=0) xx = x;
+  if (x!=0) xx = (PLFLT*)x;
   else { /* yes */
     xx = g_malloc0(n*sizeof(PLFLT));
     for (i=0; i<n; i++) xx[i] = (PLFLT)i;
@@ -1216,7 +1216,7 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
     levs[0] = (PLFLT)lev;
     for (i=1; i<npc; i++) levs[i] = levs[i-1]*cntfac;
     pllsty ((PLINT)1);  /* Solid lines */
-    plcont (map, (PLINT)nx, (PLINT)ny, (PLINT)1, (PLINT)nx, 
+    plcont ((PLFLT **)map, (PLINT)nx, (PLINT)ny, (PLINT)1, (PLINT)nx, 
 	    (PLINT)1, (PLINT)ny, levs, (PLINT)npc, 
 	    plplotCoord, (PLPointer)in);
   }
@@ -1226,7 +1226,7 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
     levs[0] = (PLFLT)(-lev);
     for (i=1; i<nnc; i++) levs[i] = levs[i-1]*cntfac;
     pllsty ((PLINT)2); /* dashed lines */
-    plcont (map, (PLINT)nx, (PLINT)ny, (PLINT)1, (PLINT)nx, 
+    plcont ((PLFLT **)map, (PLINT)nx, (PLINT)ny, (PLINT)1, (PLINT)nx, 
 	    (PLINT)1, (PLINT)ny, levs, (PLINT)nnc, 
 	    plplotCoord, (PLPointer)in);
     pllsty ((PLINT)1); /* back to solid lines */
@@ -1804,7 +1804,7 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   for (i=0; i<=nlevel; i++) clevel[i] = minval + (i-1)*delta;;
 
   /* Plot  */
-  plshades (map, (PLINT)nx, (PLINT)ny, NULL, 
+  plshades ((PLFLT **)map, (PLINT)nx, (PLINT)ny, NULL, 
 	   (PLFLT)xmin, (PLFLT)xmax, (PLFLT)ymin, (PLFLT)ymax, 
 	    clevel, nlevel+1, 0, 0, 0,
 	    plfill, (PLBOOL)0, 
@@ -2129,7 +2129,7 @@ void ObitPlotXYErr (ObitPlot* in, olong symbol,
   in->yLog = FALSE;
 
   /* using index for x? */
-  if (x!=0) xx = x;
+  if (x!=0) xx = (PLFLT*)x;
   else { /* yes */
     xx = g_malloc0(n*sizeof(PLFLT));
     for (i=0; i<n; i++) xx[i] = (PLFLT)i;
@@ -2280,7 +2280,7 @@ void ObitPlotXYErr (ObitPlot* in, olong symbol,
     }
     yp = logy;
   } else {
-    yp = y;
+    yp = (PLFLT*)y;
   }
 
   /* If autosetting the range, expand a bit */
@@ -2601,7 +2601,7 @@ void ObitPlotMarkCross (ObitPlot* in, ObitImage *image, olong n,
 		      image->myDesc->crota[1], &image->myDesc->ctype[0][4],
 		      &xpixo, &ypixo);
 #ifdef HAVE_PLPLOT  /* Only if plplot available */
-    plplotCoord (xpixo, ypixo, &xcen, &ycen, (PLPointer)in);
+    plplotCoord (xpixo, ypixo, (PLFLT*)&xcen, (PLFLT*)&ycen, (PLPointer)in);
     dx = size * image->myDesc->cdelt[0] * in->scalex;
     dy = size * image->myDesc->cdelt[1] * in->scaley;
 #endif /* HAVE_PLPLOT */
@@ -2868,7 +2868,9 @@ void  ObitPlotSetLineWidth (ObitPlot* in, olong lwidth, ObitErr *err)
 /****************** plplot implementation *************************/
 #ifdef HAVE_PLPLOT  /* Only if plplot available */
   /* Call plplot routine */
-  plwid ((PLINT)lwidth);
+  plwid ((PLINT)lwidth); 
+  /* plwidth ((PLINT)lwidth);  DAMN this was plwid in older versions of plplot */
+
 #endif /* HAVE_PLPLOT */
 
 /****************** pgplot implementation *************************/
@@ -3381,7 +3383,7 @@ void  ObitPlotDrawCurve (ObitPlot* in, olong n, ofloat *x, ofloat *y,
   }
 
   /* Call plplot routine */
-  plline ((PLINT)n, xp, yp);
+  plline ((PLINT)n, (PLFLT *)xp, (PLFLT *)yp);
 
   /* Flush the buffer */
   plflush();
@@ -3579,7 +3581,7 @@ void ObitPlotClear (gpointer inn)
 
   /* free this class members */
   in->thread    = ObitThreadUnref(in->thread);
-  if (in->info) ObitInfoListUnref (in->info); in->info = NULL;
+  if (in->info) {ObitInfoListUnref (in->info);} in->info = NULL;
   
   in->myImage = ObitImageUnref(in->myImage);
   in->myErr   = ObitErrUnref(in->myErr);

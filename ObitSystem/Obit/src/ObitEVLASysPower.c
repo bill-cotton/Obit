@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2015                                          */
+/*;  Copyright (C) 2012-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -261,8 +261,7 @@ ObitEVLASysPower* ObitEVLASysPowerCreate (gchar* name, ObitErr *err)
  */
 void ObitEVLASysPowerInitFile  (ObitEVLASysPower *in, gchar *DataFile, ObitErr *err)
 {
-  ObitIOCode retCode;
-  olong i, count, maxStr, itemp;
+  olong i, maxStr, itemp;
   gchar *startInfo, *endInfo, *next, *start, *prior, *tstr;
   gchar *ord[10];
   /* gchar *tableUID=NULL, *containerUID=NULL; */
@@ -287,7 +286,7 @@ void ObitEVLASysPowerInitFile  (ObitEVLASysPower *in, gchar *DataFile, ObitErr *
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Fill Buffer */
-  retCode = ObitEVLASysPowerFillBuffer (in, err);
+  ObitEVLASysPowerFillBuffer (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Parse xml header - first find limits */
@@ -324,56 +323,48 @@ void ObitEVLASysPowerInitFile  (ObitEVLASysPower *in, gchar *DataFile, ObitErr *
   ord[7]    = g_strstr_len (in->current, maxStr, "<requantizerGain/>");
 
   /* antennaId = 0 */
-  count = 0;
   in->ordantennaId = 0;
   for (i=0; i<8; i++) {
     if ((i!=0) && (ord[i]<ord[0])) in->ordantennaId++;
   }
 
   /*spectralWindowId  = 1 */
-  count = 0;
   in->ordspectralWindowId = 0;
   for (i=0; i<8; i++) {
     if ((i!=1) && (ord[i]<ord[1])) in->ordspectralWindowId++;
   }
 
   /* feedId = 2 */
-  count = 0;
   in->ordfeedId = 0;
   for (i=0; i<8; i++) {
     if ((i!=2) && (ord[i]<ord[2])) in->ordfeedId++;
   }
 
   /* timeInterval = 3 */
-  count = 0;
   in->ordtimeInterval = 0;
   for (i=0; i<8; i++) {
     if ((i!=3) && (ord[i]<ord[3])) in->ordtimeInterval++;
   }
 
   /* numReceptor = 4 */
-  count = 0;
   in->ordnumReceptor = 0;
   for (i=0; i<8; i++) {
     if ((i!=4) && (ord[i]<ord[4])) in->ordnumReceptor++;
   }
 
   /* switchedPowerDifference = 5 */
-  count =0;
   in->ordswitchedPowerDifference = 0;
   for (i=0; i<8; i++) {
     if ((i!=5) && (ord[i]<ord[5])) in->ordswitchedPowerDifference++;
   }
 
   /* switchedPowerSum = 6 */
-  count = 0;
   in->ordswitchedPowerSum = 0;
   for (i=0; i<8; i++) {
     if ((i!=6) && (ord[i]<ord[6])) in->ordswitchedPowerSum++;
   }
 
   /* requantizerGain = 7 */
-  count = 0;
   in->ordrequantizerGain = 0;
   for (i=0; i<8; i++) {
     if ((i!=7) && (ord[i]<ord[7])) in->ordrequantizerGain++;
@@ -730,7 +721,7 @@ static gchar* ESPparse_quote_str(gchar *string, olong maxChar,
     n++;
   }
   out = g_malloc(n+1);
-  for (i=0; i<n; i++) out[i] = b[i]; out[i] = 0;
+  for (i=0; i<n; i++) {out[i] = b[i];} out[i] = 0;
   *next = b + n;
 
   return out;
@@ -949,7 +940,7 @@ gchar* ESPparse_str(gchar *buffer,
   /* output string */
   out = g_malloc(len+1);
   b = *next;
-  for (i=0; i<len; i++) out[i] = b[i]; out[i] = 0;
+  for (i=0; i<len; i++) {out[i] = b[i];} out[i] = 0;
   *next += len;
 
   return out;

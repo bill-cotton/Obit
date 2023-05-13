@@ -7,7 +7,7 @@
  - currently antenna offset correction turned off 
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -396,14 +396,15 @@ ObitIoN2SolNTableModel(ObitTableNI *NITable, ObitTableNIRow *NIRow,
 #endif
 
   olong   j, iif;
-  ofloat phase, el, az, parAng, chad, shad, ora, odec, cra, cdec;
+  ofloat phase, el, az, chad, shad, ora, odec, cra, cdec;
+  /* ofloat parAng,  */
   ofloat zaE, zaN, zaC, cE, cN, b[3], uvw[3], xyz[3];
   ofloat dx, dy;
-  odouble cir, x=0.0, y=0.0, z=0.0, delayc, ratec, 
-    ddec, dra, rate, pdly, dpdly, sind, cosd;
+  odouble delayc, ddec, dra, pdly;
+  /* odouble cir, sind, cosd, rate, ratec, x=0.0, y=0.0, z=0.0, */
   odouble ArrLong, ArrLat, AntLst, HrAng, cosdec, sindec, darg, darg2, daz;
 
-  cir = CI * RADSEC;
+  /*cir = CI * RADSEC;*/
 
   /* get local hour angle */
   
@@ -422,9 +423,9 @@ ObitIoN2SolNTableModel(ObitTableNI *NITable, ObitTableNIRow *NIRow,
   darg = sin (ArrLat) * sindec + cos (ArrLat) * cosdec * chad;
   el = (1.570796327 - acos (MIN (darg, 1.000)));
 
-  /* Source parallactic angle */
+  /* Source parallactic angle 
   parAng = atan2 (cos(ArrLat) * shad, 
-		  (sin(ArrLat)*cosdec - cos(ArrLat)*sindec*chad));
+		  (sin(ArrLat)*cosdec - cos(ArrLat)*sindec*chad));*/
 
   /* Source azimuth */
   darg  = sindec*cos(ArrLat) - cosdec*sin(ArrLat)*chad;
@@ -470,9 +471,9 @@ ObitIoN2SolNTableModel(ObitTableNI *NITable, ObitTableNIRow *NIRow,
   /* delay and rate in sec and  sec/sec. (want corrections). 
      the formulae are written  for the right hand coordinate  system. */
   /* uncorrected rate */
-  x = b[0]; y = b[1]; z = b[2];
+  /*DEBUG x = b[0]; y = b[1]; z = b[2];*/
   /*DEBUG delay = CI * ( (x * chad - y * shad) * cosdec + z * sindec);*/
-  rate  = cir * (-x * shad - y * chad) * cosdec;
+  /*DEBUG rate  = cir * (-x * shad - y * chad) * cosdec;*/
 
   /* position shift in this direction  */
   dra  =  0.0;
@@ -508,18 +509,17 @@ ObitIoN2SolNTableModel(ObitTableNI *NITable, ObitTableNIRow *NIRow,
   shad = sin (HrAng - dra);
 
   /* correct declination */
-  sind = sin (dec + ddec);
-  cosd = cos (dec + ddec);
+  /*sind = sin (dec + ddec);*/
+  /*cosd = cos (dec + ddec);*/
 
   /* corrected delay and rate - 
      for delay only need component due to apparent position shift */
   /*DEBUGdelayc = CI * ( (x * chad - y * shad) * cosd + z * sind);*/
   delayc = CI*(uvw[0]*xyz[0] + uvw[1]*xyz[1] + uvw[2]*xyz[2]);
-  ratec  = cir * (-x * shad - y * chad) * cosd;
+  /*DEBUGratec  = cir * (-x * shad - y * chad) * cosd;*/
 
   /* correction of delay (turns/Hz) and rate */
   pdly  = delayc;
-  dpdly = ratec - rate;
 
   /* set corrections */
   for (iif = 0; iif < numIF; iif++) {

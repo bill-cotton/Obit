@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2013                                          */
+/*;  Copyright (C) 2012-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -316,8 +316,8 @@ void ObitPolCalListClear (gpointer inn)
     if (in->ANlist[i]) g_free(in->ANlist[i]);
 
   /* delete members */
-  if (in->ANlist) g_free(in->ANlist); in->ANlist = NULL;
-  if (in->RLPhaseDiff) g_free(in->RLPhaseDiff); in->RLPhaseDiff = NULL;
+  if (in->ANlist) {g_free(in->ANlist); in->ANlist = NULL;}
+  if (in->RLPhaseDiff) {g_free(in->RLPhaseDiff); in->RLPhaseDiff = NULL;}
  
  /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

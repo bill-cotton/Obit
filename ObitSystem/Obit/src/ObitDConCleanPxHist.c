@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -204,7 +204,6 @@ void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field,
 				ObitDConCleanWindow *window, 
 				gboolean isLast, ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitImage *image=NULL;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -237,10 +236,10 @@ void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field,
   dim[0] = 1;
   ObitInfoListPut (image->info, "IOBy", OBIT_long, dim, &IOsize, err);
  
-  retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+  ObitImageOpen (image, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
-  retCode = ObitImageRead (image, image->image->array, err);
+  ObitImageRead (image, image->image->array, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
   /* Create histogram */
@@ -300,7 +299,7 @@ void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field,
     data += nx;
   }
 
-  retCode = ObitImageClose (image, err);
+  ObitImageClose (image, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
   /* Free Image array? */
@@ -336,7 +335,6 @@ void ObitDConCleanPxHistAdd (ObitDConCleanPxHist *in, olong field,
 			     ObitDConCleanWindow *window, 
 			     gboolean isLast, ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitImage *image=NULL;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -369,10 +367,10 @@ void ObitDConCleanPxHistAdd (ObitDConCleanPxHist *in, olong field,
   dim[0] = 1;
   ObitInfoListPut (image->info, "IOBy", OBIT_long, dim, &IOsize, err);
  
-  retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+  ObitImageOpen (image, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
-  retCode = ObitImageRead (image, image->image->array, err);
+  ObitImageRead (image, image->image->array, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
   /* Update histogram */
@@ -398,7 +396,7 @@ void ObitDConCleanPxHistAdd (ObitDConCleanPxHist *in, olong field,
     data += nx;
   }
 
-  retCode = ObitImageClose (image, err);
+  ObitImageClose (image, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
   /* Free Image array? */

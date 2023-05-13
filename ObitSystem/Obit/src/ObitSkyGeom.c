@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2020                                          */
+/*;  Copyright (C) 2004-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -829,7 +829,7 @@ ObitSkyGeomXYPixLM(odouble xpos, odouble ypos, odouble xref, odouble yref,
 		   ofloat xinc, ofloat yinc, ofloat rot, gchar *type, 
 		   odouble *dx, odouble *dy)
 {
-  odouble dz, r, ra0, dec0, ra, dec, coss, sins, dt, da, dd, sint, ddx, ddy;
+  odouble r, ra0, dec0, ra, dec, coss, sins, dt, da, dd, sint, ddx, ddy;
   odouble l, m=0.0, geo1, geo2, geo3, sinr, cosr;
   odouble cond2r=1.745329252e-2, deps=1.0e-5, twopi=6.28318530717959;
   olong   i, itype;
@@ -845,7 +845,6 @@ ObitSkyGeomXYPixLM(odouble xpos, odouble ypos, odouble xref, odouble yref,
   /* default values - linear */
   *dx = xpos - xref;
   *dy = ypos - yref;
-  dz = 0.0;
   /*     check axis increments - bail out if either 0 */
   if ((xinc==0.0) || (yinc==0.0)) {*dx=0.0; *dy=0.0; return 2;}
   

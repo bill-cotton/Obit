@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021                                               */
+/*;  Copyright (C) 2021,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -45,3 +45,7 @@ ObitGPUGridFlipFP ObitGPUGridFlip;
 ObitGPUGrid2HostFP ObitGPUGrid2Host;
 /** Function pointer to shutdown */
 ObitGPUGridShutdownFP ObitGPUGridShutdown;
+/** Function pointer to  MakeThreadArgs*/
+ObitGPUGridMakeThreadArgsFP ObitGPUGridMakeThreadArgs;
+/** Function pointer to Kill ThreadArgs */
+ObitGPUGridKillThreadArgsFP ObitGPUGridKillThreadArgs;

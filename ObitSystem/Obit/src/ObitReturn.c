@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -174,7 +174,7 @@ static ObitIOCode ObitReturnEntry(ObitFile *myFile, gchar* name, ObitInfoType ty
   g_assert(data!=NULL);
 
   /* inite output line */
-  for (j=0; j<199; j++) line[j] = ' ';  line[j] = 0;
+  for (j=0; j<199; j++) {line[j] = ' ';}  line[j] = 0;
 
   /* Write header line by type */
   switch (type) {
@@ -214,7 +214,7 @@ static ObitIOCode ObitReturnEntry(ObitFile *myFile, gchar* name, ObitInfoType ty
     lstr =  MAX (1, dim[0]);
     nstr = size/lstr;
     for (i=0; i<nstr; i++) {
-      for (j=0; j<lstr; j++) line[j] = cdata[j];  line[j] = '\n'; line[j+1] = 0;
+      for (j=0; j<lstr; j++) {line[j] = cdata[j];}  line[j] = '\n'; line[j+1] = 0;
       cdata += lstr;
       retCode = ObitFileWriteLine (myFile, line, err);
       if (err->error) Obit_traceback_val (err, routine, "Output Dumper", retCode);

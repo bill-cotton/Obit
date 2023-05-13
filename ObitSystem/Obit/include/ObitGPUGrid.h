@@ -89,7 +89,7 @@ typedef struct {
 /**
  * Maximum number of vis per read for GPU based Gridding
  */
-#define GPU_NVISPIO 1024
+#define GPU_NVISPIO 8192
 
 /*---------------------------------- Structures ----------------------------*/
 /*---------------Public functions---------------------------*/
@@ -100,11 +100,11 @@ void ObitGPUGridClassInit (void);
 ObitGPUGrid* newObitGPUGrid (gchar* name);
 
 /** Public: Create/initialize CUDA GPUGrid structures */
-ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *image, ObitUV *UVin,
-				gboolean doBuff);
+ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, olong nGPU, olong *GPUs, 
+				Obit *image, ObitUV *UVin, gboolean doBuff);
 /** Typedef for definition of class pointer structure */
-typedef ObitGPUGrid* (*ObitGPUGridCreateFP) (gchar* name, olong nfacet, Obit *image, ObitUV *UVin,
-					     gboolean doBuff);
+typedef ObitGPUGrid* (*ObitGPUGridCreateFP) (gchar* name, olong nfacet, olong nGPU, olong *GPUs, 
+					     Obit *image, ObitUV *UVin, gboolean doBuff);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitGPUGridGetClass (void);
@@ -125,12 +125,15 @@ typedef void (*ObitGPUGridInitGPUFP) (ObitGPUGrid *in,
 
 /** Public: copy griding parameters to GPU(CUDA) structues */
 void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
-			      olong ifacet, olong nfacet, olong nplane, ObitUV *UVin, 
+			      olong ifacet, olong nfacet, 
+			      olong iGPU, olong nGPU, olong device,
+			      olong nplane, ObitUV *UVin, 
 			      Obit *imagee, gboolean doBeam, ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef void (*ObitGPUGridSetGPUStructFP) (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
-					   olong ifacet, olong nfacet, olong nplane,
-					   ObitUV *UVin, Obit *imagee,
+					   olong ifacet, olong nfacet, 
+					   olong iGPU, olong nGPU, olong device,
+					   olong nplane,  ObitUV *UVin, Obit *imagee,
 					   gboolean doBeam, ObitErr *err);
 
 /* Public: Setup GPU */
@@ -157,6 +160,14 @@ typedef void (*ObitGPUGrid2HostFP)
 /* Public: Shutdown */
 void ObitGPUGridShutdown (ObitGPUGrid *in, ObitUV *uvdata, ObitErr *err);
 typedef void (*ObitGPUGridShutdownFP) (ObitGPUGrid *in, ObitUV *uvdata, ObitErr *err);
+
+/* Make GPUGridThread args */
+void ObitGPUGridMakeThreadArgs(ObitGPUGrid *in, ObitThread *thread);
+typedef void (*ObitGPUGridMakeThreadArgsFP) (ObitGPUGrid *in);
+
+/* Kill GPUGridThread args */
+void ObitGPUGridKillThreadArgs(ObitGPUGrid *in);
+typedef void (*ObitGPUGridKillThreadArgsFP) (ObitGPUGrid *in);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

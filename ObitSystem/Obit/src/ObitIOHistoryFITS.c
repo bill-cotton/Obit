@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -176,7 +176,6 @@ gboolean ObitIOHistoryFITSSame (ObitIO *in, ObitInfoList *in1,
  */
 void ObitIOHistoryFITSZap (ObitIOHistoryFITS *in, ObitErr *err)
 {
-  ObitIOCode retCode;
   gchar *routine = "ObitIOHistoryFITSZap";
 
   /* Don't bother if NULL */
@@ -189,8 +188,8 @@ void ObitIOHistoryFITSZap (ObitIOHistoryFITS *in, ObitErr *err)
 
   /* Open and close if table not yet instantiated */
   if (in->table) {
-    retCode = ObitIOHistoryFITSOpen (in, OBIT_IO_ReadWrite, in->info, err);
-    retCode = ObitIOHistoryFITSClose(in, err);
+    ObitIOHistoryFITSOpen (in, OBIT_IO_ReadWrite, in->info, err);
+    ObitIOHistoryFITSClose(in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 

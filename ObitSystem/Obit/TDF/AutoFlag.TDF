@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2014
+;;  Copyright (C) 2005-2023
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ AutoFlag   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 AutoFlag:  Obit radio interferometry data editing software
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inFile                              FITS input uvdata if Type=='FITS'
 **PARAM** str 12
 inName                              Input multisource UV data AIPS
@@ -77,7 +77,7 @@ BPVer                               Bandpass table version
 flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
-**PARAM** str 48
+**PARAM** str 128
 outFile                             FITS uvdata for output FG table
 **PARAM** str 12
 outName                             AIPS name for output FG table

@@ -521,9 +521,11 @@ void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV *UVin, ObitErr *er
   ofloat temp;
   olong ip, itemp, doCalib;
   ObitThreadGrid *grids=NULL;
-  ObitGPUGrid *GPUGrid=NULL;
   gboolean doCalSelect;
   gchar *routine="ObitUVGridReadUVPar";
+#if HAVE_GPU==1  /*  GPU?*/
+  ObitGPUGrid *GPUGrid=NULL; 
+#endif /*  GPU?*/
 
   /* error checks */
   if (err->error) return;
@@ -1054,9 +1056,9 @@ olong ObitUVGridGetNumPar (ObitUV *inUV, Obit *mmosaic, gboolean doBeam, ObitErr
 
   if (err->error) return out;
 
-  /* 2/3 GPU memory size */
+  /* 1/2 GPU memory size */
 #if HAVE_GPU==1  /* CUDA code */
-  mSize = 0.66*((odouble)ObitCUDAUtilMemory(0));
+  mSize = 0.5*((odouble)ObitCUDAUtilMemory(0));
 #else           /* Not compiled with GPU */  
   mSize = 0;  out = 0;
   Obit_log_error(err, OBIT_InfoErr, "%s: Not compiled with GPU",routine);

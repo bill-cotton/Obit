@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2008                                          */
+/*;  Copyright (C) 2006,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -64,7 +64,7 @@ void ObitPosLableUtilAxisLabel(odouble pos, gchar* axis, gchar* label)
   isStokes = !strncmp(axis, rectypes[8], 4);
   
   /* make label (strip minus signs) */
-  for (i=0;i<4;i++) label[i] = ' '; label[4] = 0;
+  for (i=0;i<4;i++) {label[i] = ' ';} label[4] = 0;
   for (i=0;i<4;i++) {if (axis[i]==minus[0]) break; label[i]=axis[i];}
  recog = FALSE;  /* look for recognized position types */
  for (i=0;i<8;i++) recog = recog || (!strcmp (label, rectypes[i]));
@@ -131,7 +131,7 @@ void ObitPosLabelUtilRA2HMS (odouble ra, gchar* rach, gchar* rast)
   temp = temp*60.0; s = (ofloat)temp;
   
   /* make label - use output as temp  */
- for (i=0;i<4;i++) rast[i] = ' '; rast[4] = 0;
+  for (i=0;i<4;i++) {rast[i] = ' ';} rast[4] = 0;
  for (i=0;i<4;i++) {if (rach[i]==minus[0]) break; rast[i]=rach[i];}
   recog = 0;  /* look for recognized types */
   for (i=0;i<8;i++) recog = recog || (!strcmp (rast, rectypes[i]));
@@ -171,7 +171,7 @@ void ObitPosLabelUtilDec2DMS(odouble dec, gchar* decch, gchar* decst)
   if (dec<0.0) sign[0]=minus[0];   /* sign */
   
   /* make label - use output as temp  */
-  for (i=0;i<4;i++) decst[i] = ' '; decst[4] = 0;
+  for (i=0;i<4;i++) {decst[i] = ' ';} decst[4] = 0;
  for (i=0;i<4;i++) {if (decch[i]==minus[0]) break; decst[i]=decch[i];}
  recog = 0;  /* look for recognized types */
   for (i=0;i<8;i++) recog = recog || (!strcmp (decst, rectypes[i]));

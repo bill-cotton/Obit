@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -217,7 +217,6 @@ gboolean ObitIOTableAIPSSame (ObitIO *in, ObitInfoList *in1,
  */
 void ObitIOTableAIPSZap (ObitIOTableAIPS *in, ObitErr *err)
 {
-  ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitFile *myFile=NULL;
   gchar *routine = "ObitIOTableAIPSZap";
 
@@ -228,7 +227,7 @@ void ObitIOTableAIPSZap (ObitIOTableAIPS *in, ObitErr *err)
 
    /* Close if still open */
   if ((in->myStatus==OBIT_Modified) || (in->myStatus==OBIT_Active)) {
-    retCode = ObitIOTableAIPSClose (in, err);
+    ObitIOTableAIPSClose (in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
   /* Get Table file */
@@ -275,7 +274,7 @@ ObitIOTableAIPS* ObitIOTableAIPSCopy  (ObitIOTableAIPS *in,
     /* derive object name */
     outName = g_strconcat ("Copy: ",in->name,NULL);
     out = newObitIOTableAIPS(outName, NULL, err);
-    if (outName) g_free(outName); outName = NULL;
+    if (outName) {g_free(outName); outName = NULL;}
   }
 
   /* deep copy any base class members */
@@ -320,7 +319,6 @@ ObitIOCode ObitIOTableAIPSOpen (ObitIOTableAIPS *in, ObitIOAccess access,
   gint32 dim[IM_MAXDIM];
   ObitInfoType type;
   ObitTableDesc* desc;
-  ObitTableSel* sel;
   gsize bsize;
   gchar *routine = "ObitIOTableAIPSOpen";
 
@@ -333,7 +331,6 @@ ObitIOCode ObitIOTableAIPSOpen (ObitIOTableAIPS *in, ObitIOAccess access,
     {in->myStatus = OBIT_Active; in->access = access; return OBIT_IO_OK;}
 
   desc = in->myDesc; /* descriptor pointer */
-  sel  = in->mySel;  /* selector pointer */
 
   /* get instructions from info */
   if(!ObitInfoListGet(info, "Disk", &type, (gint32*)dim, 
@@ -704,7 +701,6 @@ ObitIOCode ObitIOTableAIPSWriteRow (ObitIOTableAIPS *in, olong rowno,
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableDesc* desc;
-  ObitTableSel* sel;
   olong size, len, ilen, offset, ioff, iRow, nRows, row;
   ObitFilePos wantPos;
   olong  *idata = (olong*)data;
@@ -721,7 +717,6 @@ ObitIOCode ObitIOTableAIPSWriteRow (ObitIOTableAIPS *in, olong rowno,
   g_assert (data != NULL);
 
   desc = in->myDesc;                /* Table descriptor pointer */
-  sel  = in->mySel;                 /* selector pointer */
   ilen = desc->lrow / sizeof(olong); /* Size of row in gints */
   len   = desc->lrow;               /* Size of row in bytes */
   size  = desc->lrow;               /* Size of transfer in bytes */

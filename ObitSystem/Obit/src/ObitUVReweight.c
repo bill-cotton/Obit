@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2017                                          */
+/*;  Copyright (C) 2005-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -60,17 +60,17 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOCode iretCode, oretCode;
   gboolean doCalSelect;
   olong iwt, jwt, firstVis=1, startVis=1, endVis=1, suba;
-  olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
+  olong lastSourceID, curSourceID, lastSubA;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc, *scrDesc;
   ObitUV *scrUV=NULL;
-  ofloat timeAvg, lastTime=-1.0, timeOff, subAOff;
+  ofloat timeAvg, timeOff, subAOff;
   olong BIF, BChan;
   olong nVisPIO, ant1, ant2;
   olong ncorr, numAnt, itemp; 
-  ollong lltmp, numBL, blindx, indx, jndx, i, j, k, countAll;
+  ollong lltmp, numBL, blindx, indx, jndx, i, j, countAll;
   ollong *blLookup=NULL;
   gboolean gotOne, done, incompatible;
   ofloat *acc=NULL, *sortWt=NULL, maxWt, mednWt, *Buffer;
@@ -200,7 +200,6 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Baseline tables */
   blLookup = g_malloc0 (numAnt*sizeof(ollong));
   blLookup[0] = 0;
-  k = 0;
   for (i=1; i<numAnt; i++) {
     blLookup[i] = blLookup[i-1] + numAnt-i;
   }
@@ -248,7 +247,6 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       if (scrDesc->ilocsu>=0) curSourceID = Buffer[scrDesc->ilocsu];
       if (startTime < -1000.0) {  /* Set time window etc. if needed */
 	startTime = curTime;
-	lastTime  = curTime;
 	endTime   = startTime +  timeAvg;
 	lastSourceID = curSourceID;
       }
@@ -261,9 +259,6 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
-	  if (scrDesc->ilocfq>=0) lastFQID = (olong)(Buffer[scrDesc->ilocfq]+0.5);
-	  else lastFQID = 0;
-	  lastTime = curTime;
 	  
 	  /* Accumulate
 	     (1,*) =  count 

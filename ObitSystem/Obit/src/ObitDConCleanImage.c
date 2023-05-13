@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -642,7 +642,6 @@ void ObitDConCleanImageClear (gpointer inn)
  */
 static void  GetXfer (ObitDConCleanImage *in, ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitImage *Beam = NULL;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -676,13 +675,13 @@ static void  GetXfer (ObitDConCleanImage *in, ObitErr *err)
   dim[0] = 1;
   ObitInfoListPut (Beam->info, "IOBy", OBIT_long, dim, &IOsize, err);
  
-  retCode = ObitImageOpen (Beam, OBIT_IO_ReadOnly, err);
+  ObitImageOpen (Beam, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, Beam->name);
 
-  retCode = ObitImageRead (Beam, Beam->image->array, err);
+  ObitImageRead (Beam, Beam->image->array, err);
   if (err->error) Obit_traceback_msg (err, routine, Beam->name);
 
-  retCode = ObitImageClose (Beam, err);
+  ObitImageClose (Beam, err);
   if (err->error) Obit_traceback_msg (err, routine, Beam->name);
 
   /* Make FFTs */

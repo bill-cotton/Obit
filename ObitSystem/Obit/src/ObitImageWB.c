@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -602,7 +602,7 @@ void ObitImageWBFullInstantiate (ObitImageWB *in, gboolean exist, ObitErr *err)
 void ObitImageWBSetOrder (ObitImageWB *in, olong order, 
 			  ObitErr *err)
 {
-  olong i, j, num, naxis[2]; /*ndim=2*/
+  olong i, j, num; /*, naxis[2], ndim=2*/
   /*gchar *routine = "ObitImageWBSetOrder";*/
   
   /* error checks */
@@ -614,8 +614,8 @@ void ObitImageWBSetOrder (ObitImageWB *in, olong order,
   num = MAX(1,(in->order+1));
   
   /* Define ResidArr  */
-  naxis[0] = in->myDesc->inaxes[0];
-  naxis[1] = in->myDesc->inaxes[1];
+  /*naxis[0] = in->myDesc->inaxes[0];
+    naxis[1] = in->myDesc->inaxes[1];*/
   in->ResidArr = g_malloc0(num*sizeof(ObitFArray*));
   for (i=0; i<num; i++) {
     /*in->ResidArr[i-1] = ObitFArrayCreate ("ResidArr", ndim, naxis);*/
@@ -1206,7 +1206,6 @@ static void doDecomp (ObitFArray* in1, ObitFArray* in2, ObitFArray* in3,
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   DecompFuncArg **threadArgs;
 
   /* Initialize Threading */
@@ -1248,9 +1247,9 @@ static void doDecomp (ObitFArray* in1, ObitFArray* in2, ObitFArray* in3,
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadDecomp,
-			   (gpointer**)threadArgs);
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadDecomp,
+		      (gpointer**)threadArgs);
 
   /* Free local objects */
   KillDecompFuncArgs(nThreads, threadArgs);

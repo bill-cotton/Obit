@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -398,7 +398,7 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   ofloat temp, xCells, yCells, farr[10], *fptr, sigma2u, sigma2v, cpa, spa;
   ofloat ftemp1, ftemp2;
-  olong   i, j, itemp, *iptr, nfield, nif;
+  olong   i, j, itemp, *iptr, nif;
   gboolean gotIt;
   gchar *routine = "ObitUVWeightInput";
 
@@ -458,7 +458,6 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   }
   /* Should be odd */
   in->nvGrid = ((in->nvGrid-1)/2) * 2 + 1;
-  nfield = dim[0];   /* Number of fields */
   
   /* Image cell size */
   if (!ObitInfoListGetP(uvdata->info, "xCells", &type, dim, (gpointer*)&fptr)) {
@@ -1111,7 +1110,7 @@ static void ProcessGrid (ObitUVWeight* in, ObitErr *err)
  */
 static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 {
-  olong ivis, nvis, ifreq, nfreq, iu, iv, lGridRow, lGridCol=0;
+  olong ivis, nvis, ifreq, nfreq, iu, iv, lGridCol=0;
   olong istok, nstok;
   olong ifq, iif, nif, loFreq, hiFreq;
   ofloat *grid=NULL, *u, *v, *w, *vis, *vvis, *fvis, *ifvis, *wt;
@@ -1185,7 +1184,6 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   if (doUnifWt) {
     g_assert (in->wtGrid != NULL);
 
-    lGridRow = in->wtGrid[0]->naxis[0]; /* length of row */
     lGridCol = in->wtGrid[0]->naxis[1]; /* length of column */
     /* guardband (90%)in wavelengths */
     guardu = (0.9 * (ofloat)in->wtGrid[0]->naxis[0]) / fabs(in->UScale);

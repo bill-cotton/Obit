@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2019                                          */
+/*;  Copyright (C) 2008-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -522,7 +522,7 @@ static void FindTabBeam (ObitBeamShape *in)
       0.007726, 0.007875};
     naxis[0] = Pncell;   /* Create/fill FArray with beam shape for interpolator */
     tFA = ObitFArrayCreate("TempFA", ndim, naxis);
-    for (j=0; j<Pncell; j++) tFA->array[j] = Pbeam[j]*Pbeam[j];  /* Voltage to power */
+    for (j=0; j<Pncell; j++) tFA->array[j] = Pbeam[j]*Pbeam[j];  /* Voltage to power - looks OK */
     in->myFI = newObitFInterpolateCreate ("Interp", tFA, in->myDesc, hwidth);
     tFA = ObitFArrayUnref(tFA);    /* Unreference temp FA */
     break;

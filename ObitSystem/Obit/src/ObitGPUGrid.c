@@ -66,7 +66,65 @@ static ObitGPUGridClassInfo myClassInfo = {FALSE};
 /*--------------- File Global Variables  ----------------*/
 
 
+/*---------------Private structures----------------*/
+/* MultiGPUGrid threaded function argument */
+typedef struct {
+  /* gpu number (0-rel) */
+  olong        gpu;
+  /* thread number, >0 -> no threading  */
+  olong        ithread;
+  /* init thread? */
+  gboolean init;
+  /* ObitThread object */
+  ObitThread    *thread;
+  /* Data for MultiGPU gridding */
+  CUDAGridInfo *cudaInfo;
+} MultiGPUGridFuncArg;
+
+#if HAVE_GPU==1  /* compiled with GPU?*/
+/**
+ * Private: Threaded MultiGPUGrid 
+ * Callable as thread
+ * Arguments are given in the structure passed as arg
+ * \param arg Pointer to MultiGPUGridFuncArg argument with elements:
+ * \li gpu      GPU number (0-rel)
+ * \li thread   ObitThread object used to run thread
+ * \li iThread  Thread number (0-rel), <0-> not parallel
+ * \li cudaInfo Structure need to call multiGPU function
+ * \li first  First (1-rel) vis in uvdata buffer to process this thread
+ * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
+ * \li ithread thread number, <0-> no threads
+ * \li err Obit error stack object.
+ * \return NULL
+ */
+static gpointer ThreadMultiGPUGrid (gpointer args)
+{
+  /* Get arguments from structure */
+  MultiGPUGridFuncArg *largs = (MultiGPUGridFuncArg*)args;
+  olong gpu              = largs->gpu;
+  ObitThread *thread     = largs->thread;
+  olong ithread          = largs->ithread;
+  gboolean init          = largs->init;
+  CUDAGridInfo *cudaInfo = largs->cudaInfo;
+
+  /* errors */
+  if ((gpu<0) || (gpu>=cudaInfo->h_gridInfo->nGPU)) goto finish;
+
+  ObitCUDASetGPU(gpu);  /* Set GPU */
+  ObitCUDAGridGrid(cudaInfo, (int)gpu, (int)init);
+  largs->init = FALSE;
+  /* Indicate completion if run from thread pool */
+  finish: 
+  if (ithread>=0)
+    ObitThreadPoolDone (thread, (gpointer)&ithread);
+  
+ return NULL;
+} /* end ThreadMultiGPUGrid */
+ #endif /* compiled with GPU?*/
+
+
 /*---------------Private function prototypes----------------*/
+
 /** Private: Initialize newly instantiated object. */
 void  ObitGPUGridInit  (gpointer in);
 
@@ -186,26 +244,39 @@ void ObitGPUGridClone  (ObitGPUGrid *in, ObitGPUGrid *out, ObitErr *err)
  * Creates an ObitGPUGrid 
  * \param name    An optional name for the object.
  * \param nfacet  Total number of facets
+ * \param nGPU    Number of GPUs to use
+ * \param GPUs    List of GPU numbers (0-rel)
  * \param iimage  output Image as Obit
  * \param UVin    Input data
  * \param doBuff  If TRUE allocate GPU data buffer 
  * \return the new object.
  */
-ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *iimage, ObitUV *UVin, 
-				gboolean doBuff)
+ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, olong nGPU, olong *GPUs, 
+				Obit *iimage, ObitUV *UVin, gboolean doBuff)
 {
-  ObitGPUGrid* out;
+  ObitGPUGrid* out=NULL;
+#if HAVE_GPU==1  /* compiled with GPU?*/
   ObitImage *image = (ObitImage*)iimage;
   ObitUVDesc *uvDesc = UVin->myDesc;
   ObitImageDesc *imDesc = image->myDesc;
-  olong nchan, nif, nVisPIO, lenvis, nplane;
+  olong i, iGPU;
   int dobuff;
+  olong nchan, nif, nVisPIO, lenvis, nplane;
   /* ObitInfoType type;
      gint32 dim[MAXINFOELEMDIM];*/
  
   /* Create basic structure */
   out = newObitGPUGrid (name);
+  out->GPUGridArgs = NULL;
   out->cudaInfo = g_malloc0(sizeof(CUDAGridInfo));
+  out->cudaInfo->h_gridInfo = NULL;
+  out->cudaInfo->d_data_in=NULL;
+  out->cudaInfo->nGPU = nGPU;
+  out->cudaInfo->cuda_device = g_malloc0(2*nGPU*sizeof(olong));  /* Pad */
+  for (i=0; i<nGPU; i++) out->cudaInfo->cuda_device[i] = GPUs[i];
+  out->cudaInfo->FacetGPU = g_malloc0((nfacet*10)*sizeof(olong)); /* Pad - why needed? */
+  iGPU = -1;
+  for (i=0; i<nfacet; i++) {iGPU = (iGPU+1)%nGPU; out->cudaInfo->FacetGPU[i] = iGPU;}
 
   /* Number of vis per IO */
   nVisPIO = MIN(GPU_NVISPIO, uvDesc->nvis);
@@ -229,13 +300,18 @@ ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *iimage, ObitUV 
     }
  
   /* Init - allocate structures */
-#if HAVE_GPU==1  /* Compiled with GPU?*/
+
   if (doBuff) dobuff = 1;
   else        dobuff = 0;
-  ObitCUDAGridAlloc(out->cudaInfo, (long)nfacet, (long)nchan, (long)nif, 
-		    (long)nVisPIO, (long)lenvis, (long)nplane, (int)dobuff);
-#endif  /* Compiled with  GPU?*/
+  /* Loop over GPUs */
+   for (iGPU=0; iGPU<nGPU; iGPU++) {
+    ObitGPUGridSetGPU (GPUs[iGPU]); /* Set GPU */
+    ObitCUDAGridAlloc(out->cudaInfo, (long)nfacet, (long)nchan, (long)nif, 
+		      (long)nVisPIO, (long)lenvis, (long)nplane, (long)iGPU, 
+		      (int)dobuff);
+   }
 
+#endif  /* Compiled with  GPU?*/
   return out;
 } /* end ObitGPUGridCreate */
 
@@ -268,6 +344,9 @@ ollong ObitGPUGridSetGPU (int cuda_device)
  *                 If NULL then no channels are "done".
  * \param ifacet   0-rel Facet number, initialize on 0, only even if doBeam
  * \param nfacet   Number of facets
+ * \param iGPU     0-rel GPU number
+ * \param nGPU     Number of GPUs
+ * \param device   CUDA Device number
  * \param nplane   Number of planes in grid
  * \param UVin     Uv data object to be gridded.
  * \param imagee   Image to be gridded (as Obit*)
@@ -277,45 +356,56 @@ ollong ObitGPUGridSetGPU (int cuda_device)
  * \param err      ObitErr stack for reporting problems.
  */
 void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
-			      olong ifacet, olong nfacet, olong nplane, 
-			      ObitUV *UVin, Obit *imagee, gboolean doBeam, ObitErr *err)
+			      olong ifacet, olong nfacet, olong iGPU, olong nGPU, olong device,
+			      olong nplane, ObitUV *UVin, Obit *imagee, gboolean doBeam, 
+			      ObitErr *err)
 {
+#if HAVE_GPU==1  /* compiled with GPU?*/
   olong nVisPIO, oldnVisPIO;
   ObitUVDesc *uvDesc = UVin->myDesc;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-#if HAVE_GPU==1  /* compiled with GPU?*/
 
   ObitImageDesc *imDesc = ((ObitImage*)imagee)->myDesc;
   ObitIOAccess access;
   gboolean doCalSelect;
-  olong i, j, n, nchan, nx, ny, nchanIF, nSpec, last;
+  olong i, j, n, nchan, nx, ny, nchanIF, nSpec, last, nfacetPerGPU=0;
+  ollong gpu_memsize;
   odouble *specFreq=NULL, *specFreqLo=NULL, *specFreqHi=NULL;
   gchar keyword[24];
   ObitUVGrid *imGrid=(ObitUVGrid*)((ObitImage*)imagee)->myGrid, *uvGrid=(ObitUVGrid*)uvgrid;
   ObitUVGridMF *uvGridMF=(ObitUVGridMF*)uvgrid;
-  CUDAGridInfo* gpuInfo;
+  CUDAGridInfo* cudaInfo;
   FacetInfo** facetInfo;
   GridInfo* gridInfo;
-#endif /* compiled with GPU?*/
   gchar *routine="ObitGPUGridSetGPUStruct";
+
+  /* Set GPU device to use */
+  gpu_memsize = ObitGPUGridSetGPU (device); 
 
   /* Number of vis per IO */
   nVisPIO = MIN(GPU_NVISPIO, uvDesc->nvis);
   ObitInfoListGetTest (UVin->info, "nVisPIO", &type, dim, &nVisPIO);
   oldnVisPIO = nVisPIO;
 
-  /* to be sure */
-#if HAVE_GPU==1  /* compiled with GPU?*/
+  /* Number of facets per GPU */
+  nfacetPerGPU = (olong)(((ofloat)nfacet)/((ofloat)nGPU)+0.999);
+
   /* Init */
   nchan = uvDesc->inaxes[uvDesc->jlocf];
   nchanIF = nchan * uvDesc->inaxes[uvDesc->jlocif];
   if (ifacet==0) {  /* create/allocate */
-    gpuInfo = in->cudaInfo;  /* pointer to host structure */
-    gpuInfo->gpu_memory = ObitCUDAUtilMemory((int)in->cuda_device);
-    gridInfo = gpuInfo->h_gridInfo;   /* Host Info common to all grids */
-    gridInfo->nfacet     = nfacet;
-    gpuInfo->d_base = (void*)ObitCUDAUtilAllocGPU(sizeof (CUDAGridInfo));
+    cudaInfo = in->cudaInfo;  /* pointer to host structure */
+    cudaInfo->gpu_memory = g_malloc0(nGPU*sizeof(size_t));
+    cudaInfo->gpu_memory[iGPU] = (size_t)gpu_memsize;
+    cudaInfo->FacetGPU[ifacet] = iGPU;
+    gridInfo = cudaInfo->h_gridInfo;   /* Host Info common to all grids */
+    gridInfo->nfacet       = nfacet;
+    gridInfo->nGPU         = nGPU;
+    gridInfo->nfacetPerGPU = nfacetPerGPU;
+    gridInfo->GPU_device_no  = (int*)ObitCUDAUtilAllocHost((nGPU+1)*sizeof(int));
+    gridInfo->GPU_device_no[iGPU]  = (int)device;
+    /* NO! cudaInfo->d_base = (void*)ObitCUDAUtilAllocGPU(sizeof (CUDAGridInfo));*/
 
     gridInfo->nplane     = nplane;
     gridInfo->nchan      = nchanIF;  /* Lower levels don't care about IF */
@@ -333,7 +423,7 @@ void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
     n = uvGrid->convWidth * uvGrid->convNperCell;
     for (i=0; i<n; i++) gridInfo->h_convfn[i] = uvGrid->convfn->array[i];
 
-    facetInfo = gpuInfo->h_facetInfo;   /* Array of per facet structs */;
+    facetInfo = cudaInfo->h_facetInfo;   /* Array of per facet structs */;
     gridInfo->prtLv = err->prtLv; /* Print level */
 
     /* For ImageMF set freqPlane */
@@ -387,12 +477,18 @@ void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
 	if (chDone[i]) gridInfo->h_freqPlane[i] = nplane+100;
       }
     } /* end channel done flag */
+
+    /* Initialize Thread arguments */
+    ObitGPUGridMakeThreadArgs(in, UVin->thread);
   
   } /* end create/allocate */
 
-  gpuInfo   = in->cudaInfo;           /* pointer to host structure */
-  facetInfo = gpuInfo->h_facetInfo;   /* Array of per facet structs */;
-  gridInfo  = gpuInfo->h_gridInfo;    /* Host Info common to all grids */
+  cudaInfo   = in->cudaInfo;                /* pointer to host structure */
+  facetInfo = cudaInfo->h_facetInfo;        /* Array of per facet structs */;
+  gridInfo  = cudaInfo->h_gridInfo;         /* Host Info common to all grids */
+  gridInfo->GPU_device_no[iGPU]  = device;  /* GPU device to use */
+  facetInfo[ifacet]->GPU_num = iGPU;        /* index of GPU */
+  cudaInfo->gpu_memory[iGPU]  = ObitCUDAUtilMemory((int)cudaInfo->h_gridInfo->GPU_device_no[iGPU]);
     
   /* Grid size 
      Grids have half convolving fn width extra x cells */
@@ -444,8 +540,8 @@ void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
     ObitUVOpen (UVin, access, err);
     if (err->error) Obit_traceback_msg (err, routine, UVin->name);
   }
-  /* Copy to GPU ofter last facet */
-if (ifacet>=(nfacet-1)) ObitCUDAGridInit(gpuInfo);
+  /* Initialize grid and each facet when done */
+  if (ifacet>=(nfacet-nGPU)) ObitCUDAGridInit(cudaInfo, (long)iGPU);
 #endif /* HAVE_GPU */
 
 } /* end  ObitGPUGridSetGPUStruct */
@@ -468,15 +564,23 @@ void ObitGPUGrid2GPU (ObitGPUGrid *in, ObitUV *uvdata, ObitErr *err)
 } /* end ObitGPUGrid2GPU */
 
 /**
- * Grid a bufferload of visibilities
+ * Grid a bufferload of visibilities, threaded over GPUs
  * \param in      Input object
  * \param err     Obit error stack object.
  */
 void ObitGPUGridGrid (ObitGPUGrid *in, ObitErr *err)
 {
 #if HAVE_GPU==1  /* Compiled with GPU?*/
-  /* CALL CUDA */
-  ObitCUDAGridGrid (in->cudaInfo);
+  /* Use threading over GPUs to grid this buffer load */
+  MultiGPUGridFuncArg **largs = (MultiGPUGridFuncArg**)in->GPUGridArgs;
+  olong nGPU = in->cudaInfo->h_gridInfo->nGPU;
+  gboolean OK;
+  gchar* routine="ObitGPUGridGrid";
+  OK = ObitThreadIterator (largs[0]->thread, nGPU, 
+			   (ObitThreadFunc)ThreadMultiGPUGrid, 
+			   in->GPUGridArgs);
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
 #endif  /* Compiled with  GPU?*/
 } /* end ObitGPUGridGrid */
 
@@ -488,8 +592,12 @@ void ObitGPUGridGrid (ObitGPUGrid *in, ObitErr *err)
 void ObitGPUGridFlip (ObitGPUGrid *in, ObitErr *err)
 {
 #if HAVE_GPU==1  /* Compiled with GPU?*/
+  olong iGPU=0;
   /* CALL CUDA */
-  ObitCUDAGridFlip (in->cudaInfo);
+  for (iGPU=0; iGPU<in->cudaInfo->h_gridInfo->nGPU; iGPU++) {
+    ObitGPUGridSetGPU (in->cudaInfo->h_gridInfo->GPU_device_no[iGPU]); /* Set GPU */
+    ObitCUDAGridFlip (in->cudaInfo, (long)iGPU);
+  }
 #endif  /* Compiled with  GPU?*/
 } /* end ObitGPUGridFlip */
 
@@ -505,29 +613,33 @@ void ObitGPUGrid2Host (ObitGPUGrid *in, olong ifacet, ObitCArray **grid, ObitErr
 {
 #if HAVE_GPU==1  /* Compiled with GPU?*/
   size_t memsize = grid[0]->naxis[0] * 2 * sizeof(float);  // size of Grid row in bytes
-  olong iplane, iy, lirow, lorow, halfWidth, indx;
-  /* Copy to host memory - loop over planes extracting to grid*/
-  ObitCUDAGrid2CPU (in->cudaInfo, (long)ifacet);
-  halfWidth  = in->cudaInfo->h_gridInfo->convWidth/2;  /* convolving fn halfwidth (width odd) */
-  lorow = grid[0]->naxis[0];
-  lirow = lorow + halfWidth;
-  for (iplane=0; iplane<in->cudaInfo->h_gridInfo->nplane; iplane++) {
-    /* copy to FFT CArray buffers */
-    /* Trim rows by half width*2 floats */
-    indx = iplane * in->cudaInfo->h_facetInfo[ifacet]->sizeGrid;
-    for (iy=0; iy<grid[0]->naxis[1]; iy++) {
-      memcpy(&grid[iplane]->array[2*iy*lorow], 
-	     &in->cudaInfo->h_facetInfo[ifacet]->h_grid[indx+2*(iy*lirow+halfWidth)], memsize);
-    } /* end row loop */
-    /* Swaparonie */
-    ObitCArray2DCenter(grid[iplane]);
-  } /* end plane loop */
+  olong iplane, iy, lirow, lorow, halfWidth, indx, iGPU;
+
+   iGPU = in->cudaInfo->FacetGPU[ifacet];
+   ObitGPUGridSetGPU (in->cudaInfo->h_gridInfo->GPU_device_no[iGPU]); /* Set GPU */
+
+   /* Copy to host memory - loop over planes extracting to grid*/
+   ObitCUDAGrid2CPU (in->cudaInfo, (long)ifacet);
+   halfWidth  = in->cudaInfo->h_gridInfo->convWidth/2;  /* convolving fn halfwidth (width odd) */
+   lorow = grid[0]->naxis[0];
+   lirow = lorow + halfWidth;
+   for (iplane=0; iplane<in->cudaInfo->h_gridInfo->nplane; iplane++) {
+     /* copy to FFT CArray buffers */
+     /* Trim rows by half width*2 floats */
+     indx = iplane * in->cudaInfo->h_facetInfo[ifacet]->sizeGrid;
+     for (iy=0; iy<grid[0]->naxis[1]; iy++) {
+       memcpy(&grid[iplane]->array[2*iy*lorow], 
+	      &in->cudaInfo->h_facetInfo[ifacet]->h_grid[indx+2*(iy*lirow+halfWidth)], memsize);
+     } /* end row loop */
+     /* Swaparonie */
+     ObitCArray2DCenter(grid[iplane]);
+   } /* end plane loop */
 #endif  /* Compiled with  GPU?*/
 } /* end ObitGPUGrid2Host */
 
 /**
  * Shutdown  ObitGPUGrid 
- * \param in      Iniput object
+ * \param in      Input object
  * \param uvdata  UV data being operated on
  * \param err     Obit error stack object.
  */
@@ -540,7 +652,19 @@ void ObitGPUGridShutdown (ObitGPUGrid *in, ObitUV *uvdata, ObitErr *err)
     gint32 dim[MAXINFOELEMDIM];
     oldnVisPIO = in->cudaInfo->h_gridInfo->oldnVisPIO;*/
   // Free resources GPU and locked memory
-  ObitCUDAGridShutdown(in->cudaInfo);
+  olong nGPU, iGPU=0;
+  nGPU = in->cudaInfo->h_gridInfo->nGPU;
+  for (iGPU=0; iGPU<nGPU; iGPU++) {
+    ObitGPUGridSetGPU (in->cudaInfo->h_gridInfo->GPU_device_no[iGPU]); /* Set GPU */
+    ObitCUDAGridShutdown(in->cudaInfo, iGPU); /* Free allocations */
+  }
+  ObitGPUGridKillThreadArgs(in);        /* Free Gridding thread arguments */
+  ObitThreadPoolFree (uvdata->thread);  /* Stop thread pool */
+  if (in->GPUGridArgs)          g_free(in->GPUGridArgs);
+  if (in->cudaInfo->gpu_memory) g_free(in->cudaInfo->gpu_memory);
+  if (in->cudaInfo->FacetGPU)   g_free(in->cudaInfo->FacetGPU);
+  if (in->cudaInfo->cuda_device) 
+    {g_free(in->cudaInfo->cuda_device); in->cudaInfo->cuda_device=NULL;}
   g_free(in->cudaInfo); in->cudaInfo = NULL;
 
   /* Replace old nVisPIO
@@ -549,6 +673,52 @@ void ObitGPUGridShutdown (ObitGPUGrid *in, ObitUV *uvdata, ObitErr *err)
 			 &oldnVisPIO); */
 #endif  /* Compiled with  GPU?*/
 } /*end ObitGPUGridShutdown */
+
+/**
+ * Make GPUGridThread args
+ * \param in      Input GPUGridobject
+ * \param thread  ObitThread from which threading is to be run
+ */
+void ObitGPUGridMakeThreadArgs (ObitGPUGrid *in, ObitThread *thread)
+{
+#if HAVE_GPU==1  /* Compiled with GPU?*/
+  olong iGPU=0, nGPU;
+  MultiGPUGridFuncArg* largs;
+  if ((in==NULL) || (in->cudaInfo==NULL) || (in->cudaInfo->h_gridInfo==NULL)) return;
+  nGPU = in->cudaInfo->h_gridInfo->nGPU;
+  if (in->GPUGridArgs==NULL) {
+    in->GPUGridArgs = g_malloc0(nGPU*sizeof(MultiGPUGridFuncArg*));
+    for (iGPU=0; iGPU<nGPU; iGPU++) {  
+      in->GPUGridArgs[iGPU] = g_malloc0(sizeof(MultiGPUGridFuncArg));
+      largs = (MultiGPUGridFuncArg*)in->GPUGridArgs[iGPU];
+      largs->gpu      = iGPU;
+      largs->ithread  = iGPU;
+      largs->thread   = thread;
+      largs->init     = TRUE;
+      largs->cudaInfo = in->cudaInfo;
+    }
+  }
+#endif  /* Compiled with  GPU?*/
+} /*end ObitGPUGridMakeThreadArgs */
+
+/**
+ * Kill ThreadArgs
+ * \param in      Input GPUGridobject
+ */
+void ObitGPUGridKillThreadArgs(ObitGPUGrid *in)
+{
+#if HAVE_GPU==1  /* Compiled with GPU?*/
+  olong iGPU=0, nGPU;
+  if ((in==NULL) || (in->cudaInfo==NULL) || (in->cudaInfo->h_gridInfo==NULL)) return;
+  nGPU = in->cudaInfo->h_gridInfo->nGPU;
+  if (in->GPUGridArgs) {
+    for (iGPU=0; iGPU<nGPU; iGPU++) {
+      if (in->GPUGridArgs[iGPU]) g_free(in->GPUGridArgs[iGPU]);
+    }
+    g_free(in->GPUGridArgs); in->GPUGridArgs=NULL;
+  }
+#endif  /* Compiled with  GPU?*/
+} /*end ObitGPUGridKillThreadArgs */
 
 /**
  * Initialize global ClassInfo Structure.
@@ -604,6 +774,8 @@ static void ObitGPUGridClassInfoDefFn (gpointer inClass)
   theClass->ObitGPUGridFlip = (ObitGPUGridFlipFP)ObitGPUGridFlip;
   theClass->ObitGPUGrid2Host = (ObitGPUGrid2HostFP)ObitGPUGrid2Host;
   theClass->ObitGPUGridShutdown = (ObitGPUGridShutdownFP)ObitGPUGridShutdown;
+  theClass->ObitGPUGridMakeThreadArgs = (ObitGPUGridMakeThreadArgsFP)ObitGPUGridMakeThreadArgs;
+  theClass->ObitGPUGridKillThreadArgs = (ObitGPUGridKillThreadArgsFP)ObitGPUGridKillThreadArgs;
 } /* end ObitGPUGridClassDefFn */
 
 /*---------------Private functions--------------------------*/

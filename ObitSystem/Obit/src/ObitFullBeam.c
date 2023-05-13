@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2019                                          */
+/*;  Copyright (C) 2009-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -316,8 +316,6 @@ ofloat ObitFullBeamValue (ObitFullBeam* in,
   ofloat beamValue=0.0;
   ofloat pixel[3], fblank = ObitMagicF();
   odouble coord[2];
-  ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "ObitFullBeamValue";
 
   if (err->error) return beamValue;  /* Previous error? */

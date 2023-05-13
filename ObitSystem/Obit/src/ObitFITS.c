@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -258,7 +258,7 @@ ObitFITSFilename (olong disk, gchar* fileName, ObitErr *err)
   /* if disk <0 just return fileName */
   if (disk<=0) {
     out = g_strdup (fileName);
-    ObitTrimTrail(out);  /* Trim any trailing blanks */
+    ObitTrimTrailNoBlank(out);  /* Trim any trailing blanks */
     return out;
   }
   if (!myFITSInfo->initialized) /* FITS directories uninitialized */
@@ -277,7 +277,7 @@ ObitFITSFilename (olong disk, gchar* fileName, ObitErr *err)
     out = g_strconcat ("!", ObitFITSDirname(disk, err), &fileName[1], NULL);
   else
     out = g_strconcat (ObitFITSDirname(disk, err), fileName, NULL);
-  ObitTrimTrail(out);  /* Trim any trailing blanks */
+  ObitTrimTrailNoBlank(out);  /* Trim any trailing blanks */
   
   return out;
 } /* end ObitFITSFilename */

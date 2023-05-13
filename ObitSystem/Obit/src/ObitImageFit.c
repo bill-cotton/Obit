@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2019                                          */
+/*;  Copyright (C) 2006-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -462,7 +462,7 @@ void ObitImageFitClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  if (in->info) ObitInfoListUnref (in->info); in->info = NULL;
+  if (in->info) {ObitInfoListUnref (in->info); in->info = NULL;}
   in->image = ObitUnref(in->image);
   in->reg   = ObitUnref(in->reg);
   in->data  = ObitUnref(in->data);

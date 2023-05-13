@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2020                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -163,7 +163,7 @@ ObitImageSelBuffer (ObitFArray *buffer, ObitImageDesc* desc,
 {
   ObitFArray *out = buffer;
   olong ndim=0, naxis[2];
-  ollong inSize, need;
+  ollong inSize, need=0;
 
   /* error checks */
   if (desc==NULL) return out; 
@@ -184,7 +184,7 @@ ObitImageSelBuffer (ObitFArray *buffer, ObitImageDesc* desc,
     naxis[0] = sel->trc[0] - sel->blc[0] + 1;
     naxis[1] = sel->trc[1] - sel->blc[1] + 1;
     need = (ollong)(naxis[0]) * (ollong)(naxis[1]);
-  }
+  } else need = (ollong)(naxis[0]) * (ollong)(naxis[1]);
 
   /* Is this big enough? */
   if (buffer) {

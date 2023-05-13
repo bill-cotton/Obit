@@ -1,6 +1,6 @@
 /* $Id$            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2018                                          */
+/*;  Copyright (C) 2002-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -274,7 +274,7 @@ gboolean ObitIsA (gpointer in, gconstpointer class)
 
 
 /**
- * Trims trailing blanks from string
+ * Trims trailing blanks from string, blank any nonascii characters
  * Inserts Null after last non blank, at least one character always left.
  * \param str String to trim
  */
@@ -282,10 +282,34 @@ void ObitTrimTrail (gchar *str)
 {
   olong i;
   for (i=strlen(str); i>0; i--) {
+    if ((str[i]<0) || (str[i]>=127)) str[i] = ' ';  /* Non ascii */
     if (str[i]==' ') str[i] = 0;
     if (str[i]!=0) break;
   }
 } /* end ObitTrimTrail */
+
+/**
+ * Trims trailing blanks from string, blank any nonascii characters
+ * No embedded blanks will be passed
+ * Inserts Null after last non blank, at least one character always left.
+ * \param str String to trim
+ */
+void ObitTrimTrailNoBlank (gchar *str)
+{
+  olong i, j, l;
+  l = strlen(str);
+  for (i=l; i>0; i--) {
+    if ((str[i]<0) || (str[i]>=127)) str[i] = ' ';  /* Non ascii */
+    if (str[i]==' ') str[i] = 0;
+    if (str[i]!=0) break;
+  }
+  /* Now search the other way */
+  for (i=1;i<l; i++) {
+    if (str[i]==' ') {str[i] = 0; break;}
+  }
+  /* Zero the rest */
+  for (j=i;j<l; j++) str[j] = 0;
+} /* end ObitTrimTrailNoBlank */
 
 /**
  * Compare two strings allowing for various combinations of

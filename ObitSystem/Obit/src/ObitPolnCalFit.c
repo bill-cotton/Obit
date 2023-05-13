@@ -990,6 +990,9 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     /* average flux densities of input data */
     for (i=0; i<in->nsou; i++) {
       if (in->souFit[i][0]) in->souParm[i*4+0] = in->souFlux[i];
+      /* Patch bad Q,U */
+      if (isnan(in->souParm[i*4+1])) in->souParm[i*4+1]=0.0;
+      if (isnan(in->souParm[i*4+2])) in->souParm[i*4+2]=0.0;
     } /* End initializing source flux densities */
 
     if (in->prtLv>=2) {
@@ -2318,7 +2321,7 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
   gsl_matrix *J                  = NULL;
 #if HAVE_GSL2==1  /* Newer GSL*/
   J = gsl_matrix_alloc (in->ndata, in->nparam);
-#endif /* HAVE_GSL2 */ 
+#endif
 
   if (err->error) return;  /* Error exists? */
   
@@ -2486,7 +2489,7 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
     gsl_multifit_fdfsolver_jac(solver, J);
 #else
     J = solver->J;
-#endif /* HAVE_GSL2 */ 
+#endif
     gsl_multifit_covar (J, 0.0, covar);
     /*gsl_multifit_covar (solver->J, 0.0, covar);*/
     for (iant=0; iant<in->nant; iant++) {
@@ -2633,6 +2636,13 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     begChi2 = GetChi2 (in->nThread, in,  polnParmUnspec, 0,
 		       &ParRMS, &XRMS, NULL, NULL, err);  /* Initial value */
     if (iter==0) in->initChiSq = begChi2;  /* Save initial */
+    /* Test for bad solutions */
+    if (isnan(ParRMS) || isnan(XRMS)) {
+      Obit_log_error(err, OBIT_InfoErr, "Bad solution - resetting");
+      ObitErrLog(err); 
+      ResetAllSoln(in); XRMS=0.0; ParRMS=0.0;  in->XRMS=0.0; in->ParRMS=0.0;  /* Reset */
+      return FALSE;
+      }
     /* Test for valid data */
     if (begChi2<=0.0) {
       Obit_log_error(err, OBIT_InfoErr, "No valid data");
@@ -2955,7 +2965,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
  * \param d2Chi2       [out] Second derivative of Chi2 wrt parameter
  *                     May be NULL if not needed
  * \param err          Obit error stack object.
- * \return             Chi^2
+ * \return             Chi^2, <0 -> something went wrong
  */
 static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in, 
 			PolnParmType paramType, olong paramNumber,
@@ -3026,6 +3036,12 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
     }
   }
   if (sumWt>0.0) Chi2 /= sumWt;
+
+  /* Better have some observations */
+  if ((nPobs<=0) || (nXobs<=0)) {
+    Obit_log_error(err, OBIT_InfoWarn,"Problem in Chi squared");
+    return -1.0;
+  }
 
   /* output RMSes */
   *ParRMS = sqrt (sumParResid / nPobs);

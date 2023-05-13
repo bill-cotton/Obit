@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -237,7 +237,6 @@ void ObitIOUVAIPSRename (ObitIO *in, ObitInfoList *info,
  */
 void ObitIOUVAIPSZap (ObitIOUVAIPS *in, ObitErr *err)
 {
-  ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableList *tableList=NULL;
   ObitTable *table=NULL;
   ObitFile *myFile=NULL;
@@ -256,7 +255,7 @@ void ObitIOUVAIPSZap (ObitIOUVAIPS *in, ObitErr *err)
 
   /* Close if still open */
   if ((in->myStatus==OBIT_Modified) || (in->myStatus==OBIT_Active)) {
-    retCode = ObitIOUVAIPSClose (in, err);
+    ObitIOUVAIPSClose (in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 
@@ -391,7 +390,6 @@ ObitIOCode ObitIOUVAIPSOpen (ObitIOUVAIPS *in, ObitIOAccess access,
   gint32 dim[IM_MAXDIM];
   ObitInfoType type;
   ObitUVDesc* desc;
-  ObitUVSel* sel;
   gchar *routine = "ObitIOUVAIPSOpen";
 
   /* error checks */
@@ -406,7 +404,6 @@ ObitIOCode ObitIOUVAIPSOpen (ObitIOUVAIPS *in, ObitIOAccess access,
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
 
   desc = in->myDesc; /* descriptor pointer */
-  sel  = in->mySel;  /* selector pointer */
 
   /* get instructions from info */
   if(!ObitInfoListGet(info, "Disk", &type, (gint32*)dim, 

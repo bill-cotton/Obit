@@ -2,7 +2,7 @@
 /* this version        2008-10-01 20:20:00  juan.uson      */
 /* J1 extended with large angle approximation              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -366,7 +366,6 @@ ObitTableCC *ObitPBUtilCCCor(ObitImage *image, olong inCCver, olong *outCCver,
   olong i, j, ver, irow, orow, nSpec, offset=0;
   gchar keyword[20];
   gboolean isSpec=FALSE;
-  ObitSkyModelCompType modType;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "ObitPBUtilCCCor";
@@ -443,7 +442,7 @@ ObitTableCC *ObitPBUtilCCCor(ObitImage *image, olong inCCver, olong *outCCver,
 	      ObitInfoListGetTest(image->myDesc->info, keyword, &type, dim, &specFreq[i]);
 	    } /* end loop reading frequencies */
 	    /* Get model type and offset in record of start of spectrum */
-	    modType = CCRow->parms[3] + 0.5;
+	    /*modType = CCRow->parms[3] + 0.5;*/
 	    /* Offset in record */
 	    offset = 4;
 	    /* end initialize */

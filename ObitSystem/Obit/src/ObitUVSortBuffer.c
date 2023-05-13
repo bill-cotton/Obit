@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2015                                          */
+/*;  Copyright (C) 2009-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -490,11 +490,11 @@ void ObitUVSortBufferClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  if (in->info)       ObitInfoListUnref (in->info); in->info = NULL;
+  if (in->info)       {ObitInfoListUnref (in->info); in->info = NULL;}
   if (in->thread)     in->thread   = ObitThreadUnref (in->thread);
   if (in->myUVdata)   in->myUVdata = ObitUVUnref(in->myUVdata);
-  if (in->myBuffer)   g_free(in->myBuffer);    in->myBuffer   = NULL;
-  if (in->SortStruct) g_free(in->SortStruct);  in->SortStruct = NULL;
+  if (in->myBuffer)   {g_free(in->myBuffer);    in->myBuffer   = NULL;}
+  if (in->SortStruct) {g_free(in->SortStruct);  in->SortStruct = NULL;}
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

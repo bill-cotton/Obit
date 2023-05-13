@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -423,7 +423,7 @@ ObitIOCode ObitIOImageFITSOpen (ObitIOImageFITS *in, ObitIOAccess access,
     /* must strip any leading "!" for read/write */
     if (in->FileName[0]=='!') strncpy (tempStr, (gchar*)&in->FileName[1], 200);
     else strncpy (tempStr, in->FileName, 200);
-    ObitTrimTrail(tempStr);  /* Trim any trailing blanks */
+    ObitTrimTrailNoBlank(tempStr);  /* Trim any trailing blanks */
 
     /* cfitsio refuses to open a file readwrite after it has been opened
        readonly so first try opening readwrite even if requested ReadOnly.
@@ -477,7 +477,7 @@ ObitIOCode ObitIOImageFITSOpen (ObitIOImageFITS *in, ObitIOAccess access,
     /* must strip any leading "!" for read/write */
     if (in->FileName[0]=='!') strncpy (tempStr, (gchar*)&in->FileName[1], 200);
     else strncpy (tempStr, in->FileName, 200);
-    ObitTrimTrail(tempStr);  /* Trim any trailing blanks */
+    ObitTrimTrailNoBlank(tempStr);  /* Trim any trailing blanks */
 
     /* If output doesn't exist open Write only */
     if (ObitFileExist(tempStr, err)) {  /* File already exists */
@@ -535,7 +535,7 @@ ObitIOCode ObitIOImageFITSOpen (ObitIOImageFITS *in, ObitIOAccess access,
     /* must strip any leading "!" for read/write */
     if (in->FileName[0]=='!') strncpy (tempStr, (gchar*)&in->FileName[1], 200);
     else strncpy (tempStr, in->FileName, 200);
-    ObitTrimTrail(tempStr);  /* Trim any trailing blanks */
+    ObitTrimTrailNoBlank(tempStr);  /* Trim any trailing blanks */
 
     /* CURSE YOU CFITSIO!!! */
     /* Open read/write to see if it's there */
@@ -1087,44 +1087,44 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
 
   strncpy (desc->teles, "        ", IMLEN_VALUE-1); 
   fits_read_key_str (in->myFptr, "TELESCOP", (char*)cdata[0], (char*)commnt, &status);
-  if (status==0) strncpy (desc->teles, cdata[0], IMLEN_VALUE); desc->teles[IMLEN_VALUE-1] = 0;
+  if (status==0) {strncpy (desc->teles, cdata[0], IMLEN_VALUE); desc->teles[IMLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   strncpy (desc->instrument, "        ", IMLEN_VALUE-1); 
   fits_read_key_str (in->myFptr, "INSTRUME", (char*)cdata[0], (char*)commnt, &status);
-  if (status==0) strncpy (desc->instrument, cdata[0], IMLEN_VALUE); desc->instrument[IMLEN_VALUE-1] = 0;
+  if (status==0) {strncpy (desc->instrument, cdata[0], IMLEN_VALUE); desc->instrument[IMLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   strncpy (desc->observer, "        ", IMLEN_VALUE-1); 
   fits_read_key_str (in->myFptr, "OBSERVER", (char*)cdata[0], (char*)commnt, &status);
-  if (status==0) strncpy (desc->observer, cdata[0], IMLEN_VALUE);desc->observer[IMLEN_VALUE-1] = 0;
+  if (status==0) {strncpy (desc->observer, cdata[0], IMLEN_VALUE);desc->observer[IMLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   strncpy (desc->object, "        ", IMLEN_VALUE-1);
   fits_read_key_str (in->myFptr, "OBJECT", (char*)cdata[0], (char*)commnt, &status);
-  if (status==0) strncpy (desc->object, cdata[0], IMLEN_VALUE); desc->object[IMLEN_VALUE-1] = 0;
+  if (status==0) {strncpy (desc->object, cdata[0], IMLEN_VALUE); desc->object[IMLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   strncpy (desc->bunit, "        ", IMLEN_VALUE-1); 
   fits_read_key_str (in->myFptr, "BUNIT", (char*)cdata[0], (char*)commnt, &status);
-  if (status==0) strncpy (desc->bunit, cdata[0], IMLEN_VALUE); desc->bunit[IMLEN_VALUE-1] = 0;
+  if (status==0) {strncpy (desc->bunit, cdata[0], IMLEN_VALUE); desc->bunit[IMLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   strncpy (desc->obsdat, "        ", IMLEN_VALUE-1); 
   fits_read_key_str (in->myFptr, "DATE-OBS", (char*)cdata[0], (char*)commnt, &status);
-  if (status==0)  strncpy (desc->obsdat, cdata[0], IMLEN_VALUE); desc->obsdat[IMLEN_VALUE-1] = 0;
+  if (status==0)  {strncpy (desc->obsdat, cdata[0], IMLEN_VALUE); desc->obsdat[IMLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   today = ObitToday();
   strncpy (desc->date, today, IMLEN_VALUE-1);
   if (today) g_free(today);
   fits_read_key_str (in->myFptr, "DATE-MAP", (char*)cdata[0], (char*)commnt, &status);
-  if (status==0)  strncpy (desc->date, cdata[0], IMLEN_VALUE); desc->date[IMLEN_VALUE-1] = 0;
+  if (status==0)  {strncpy (desc->date, cdata[0], IMLEN_VALUE); desc->date[IMLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   strncpy (desc->origin, "        ", IMLEN_VALUE-1); 
   fits_read_key_str (in->myFptr, "ORIGIN", (char*)cdata[0], (char*)commnt, &status);
-  if (status==0)  strncpy (desc->origin, cdata[0], IMLEN_VALUE); desc->origin[IMLEN_VALUE-1] = 0;
+  if (status==0) { strncpy (desc->origin, cdata[0], IMLEN_VALUE); desc->origin[IMLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   for (i=0; i<IM_MAXDIM; i++) strncpy (desc->ctype[i], "        ", IMLEN_KEYWORD-1);
@@ -1132,7 +1132,8 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
   fits_read_keys_str (in->myFptr, "CTYPE", 1, IM_MAXDIM, cdum, &nfound, 
 		      &status);
     if (status==0) {
-      for (i=0; i<nfound; i++) strncpy (desc->ctype[i], cdata[i], IMLEN_KEYWORD-1); desc->ctype[i][IMLEN_KEYWORD-1] = 0;
+      for (i=0; i<nfound; i++) strncpy (desc->ctype[i], cdata[i], IMLEN_KEYWORD-1); 
+      desc->ctype[i][IMLEN_KEYWORD-1] = 0;
     }
   if (status==KEY_NO_EXIST) status = 0;
 

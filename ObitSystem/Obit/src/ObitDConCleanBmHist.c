@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -223,7 +223,6 @@ ObitDConCleanBmHistCreate (gchar* name, ObitImage *Beam, ObitErr *err)
 void ObitDConCleanBmHistUpdate (ObitDConCleanBmHist *in, ObitImage *Beam,
 				olong *plane, ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
@@ -245,10 +244,10 @@ void ObitDConCleanBmHistUpdate (ObitDConCleanBmHist *in, ObitImage *Beam,
   dim[0] = 1;
   ObitInfoListPut (Beam->info, "IOBy", OBIT_long, dim, &IOsize, err);
  
-  retCode = ObitImageOpen (Beam, OBIT_IO_ReadOnly, err);
+  ObitImageOpen (Beam, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, Beam->name);
 
-  retCode = ObitImageRead (Beam, Beam->image->array, err);
+  ObitImageRead (Beam, Beam->image->array, err);
   if (err->error) Obit_traceback_msg (err, routine, Beam->name);
 
   /* Create histogram */
@@ -280,7 +279,7 @@ void ObitDConCleanBmHistUpdate (ObitDConCleanBmHist *in, ObitImage *Beam,
     data += nx;
   }
 
-  retCode = ObitImageClose (Beam, err);
+  ObitImageClose (Beam, err);
   if (err->error) Obit_traceback_msg (err, routine, Beam->name);
 
   /* Free Image array? */

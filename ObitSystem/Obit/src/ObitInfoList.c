@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2016                                          */
+/*;  Copyright (C) 2002-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -205,7 +205,6 @@ ObitInfoList* ObitInfoListCopyData (ObitInfoList* in, ObitInfoList* out)
       telem = ObitInfoElemCopy(elem);
       out->list = g_slist_prepend(out->list, telem); /* add to new list */
     }
-  loop:
     tmp = g_slist_next(tmp);
   }
 
@@ -262,7 +261,6 @@ void  ObitInfoListCopyList (ObitInfoList* in, ObitInfoList* out, gchar **list)
 	out->list = g_slist_prepend(out->list, telem); /* add to output list */
       }
     }
-  loop:
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyList */
@@ -322,7 +320,6 @@ void ObitInfoListCopyListRename(ObitInfoList* in, ObitInfoList* out,
 	out->list = g_slist_prepend(out->list, telem); /* add to output list */
       }
     }
-  loop:
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyListRename */
@@ -368,7 +365,6 @@ void ObitInfoListCopyAddPrefix(ObitInfoList* in, ObitInfoList* out,
       out->list = g_slist_prepend(out->list, telem); /* add to output list */
     }
     g_free(newName);
-  loop:
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyAddPrefix */
@@ -427,7 +423,6 @@ void ObitInfoListCopyWithPrefix(ObitInfoList* in, ObitInfoList* out,
       }
       g_free(newName);
     } /* end if wanted */
-  loop:
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyWithPrefix */

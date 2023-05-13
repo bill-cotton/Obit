@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -221,7 +221,6 @@ void ObitIOImageAIPSRename (ObitIO *in, ObitInfoList *info,
  */
 void ObitIOImageAIPSZap (ObitIOImageAIPS *in, ObitErr *err)
 {
-  ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableList *tableList=NULL;
   ObitTable *table=NULL;
   ObitFile *myFile=NULL;
@@ -236,7 +235,7 @@ void ObitIOImageAIPSZap (ObitIOImageAIPS *in, ObitErr *err)
 
    /* Close if still open */
   if ((in->myStatus==OBIT_Modified) || (in->myStatus==OBIT_Active)) {
-    retCode = ObitIOImageAIPSClose (in, err);
+    ObitIOImageAIPSClose (in, err);
     if (err->error) /* add traceback on error */
       Obit_traceback_msg (err, routine, in->name);
   }
@@ -360,7 +359,6 @@ ObitIOCode ObitIOImageAIPSOpen (ObitIOImageAIPS *in, ObitIOAccess access,
   gint32 dim[IM_MAXDIM];
   ObitInfoType type;
   ObitImageDesc* desc;
-  ObitImageSel* sel;
   gchar *routine = "ObitIOImageAIPSOpen";
 
   /* error checks */
@@ -372,7 +370,6 @@ ObitIOCode ObitIOImageAIPSOpen (ObitIOImageAIPS *in, ObitIOAccess access,
   g_assert (in->mySel != NULL);
 
   desc = in->myDesc; /* descriptor pointer */
-  sel  = in->mySel;  /* selector pointer */
 
   /* set defaults */
   desc->IOsize = OBIT_IO_byRow;
@@ -499,7 +496,7 @@ ObitIOCode ObitIOImageAIPSRead (ObitIOImageAIPS *in, ofloat *data,
   ObitImageDesc* desc;
   ObitImageSel* sel;
   gsize size;
-  olong offset, len=0, lRow, iRow, nRows=0;
+  olong offset, len=0, iRow, nRows=0;
   olong row, plane, plane4, plane5, plane6, plane7;
   ObitFilePos wantPos;
   olong  i, ipos[IM_MAXDIM];
@@ -590,7 +587,6 @@ ObitIOCode ObitIOImageAIPSRead (ObitIOImageAIPS *in, ofloat *data,
   ipos[6] = MAX(1,plane7);
 
   size = len * sizeof(ofloat);           /* transfer size in bytes */
-  lRow = desc->inaxes[0]*sizeof(ofloat); /* length of transfer in bytes */
 
   offset = 0; /* offset in buffer */
 
@@ -803,7 +799,6 @@ ObitIOImageAIPSReadDescriptor (ObitIOImageAIPS *in, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitImageDesc* desc;
-  ObitImageSel* sel;
   gchar *HeaderFile, keyName[9], blob[256];
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   AIPSint buffer[260];
@@ -823,7 +818,6 @@ ObitIOImageAIPSReadDescriptor (ObitIOImageAIPS *in, ObitErr *err)
   for (i=0; i<256; i++) buffer[i] = 0;
 
   desc = in->myDesc; /* Image descriptor pointer */
-  sel  = in->mySel;  /* selector pointer */
 
   /* Set file name */
   HeaderFile = ObitAIPSFilename (OBIT_AIPS_Header, in->disk, in->CNO, 

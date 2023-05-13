@@ -882,13 +882,15 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
 
 #if HAVE_GPU==1  /*  GPU?*/
   /* Init GPU, create object if necessary */
-  if (in->GPUSkyModel==NULL)
-    in->GPUSkyModel = ObitGPUSkyModelCreate ("GPU", "DFT");
-  const ObitGPUSkyModelClassInfo *GPUClass;
-  GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
-  if ((in->doGPU) && (in->modelMode==OBIT_SkyModel_DFT))
-    GPUClass->ObitGPUSkyModelDFTInit(in->GPUSkyModel, (Obit*)in, uvdata, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (in->doGPU) {
+    if (in->GPUSkyModel==NULL)
+      in->GPUSkyModel = ObitGPUSkyModelCreate ("GPU", "DFT");
+    const ObitGPUSkyModelClassInfo *GPUClass;
+    GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
+    if (in->modelMode==OBIT_SkyModel_DFT)
+      GPUClass->ObitGPUSkyModelDFTInit(in->GPUSkyModel, (Obit*)in, uvdata, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+  }
 #endif /* HAVE_GPU */
 } /* end ObitSkyModelMFInitMod */
 
@@ -951,16 +953,18 @@ void ObitSkyModelMFInitModel (ObitSkyModel* in, ObitErr *err)
 #if HAVE_GPU==1  /*  GPU? */
   gchar *routine = "ObitSkyModelInitModel";
   const ObitGPUSkyModelClassInfo *GPUClass;
-  GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
-  if ((in->doGPU) && (in->modelMode==OBIT_SkyModel_DFT) && 
-      ((in->modType==OBIT_SkyModel_PointMod)      || 
-       (in->modType==OBIT_SkyModel_PointModSpec)  || 
-       (in->modType==OBIT_SkyModel_PointModTSpec) ||
-       (in->modType==OBIT_SkyModel_GaussMod)      || 
-       (in->modType==OBIT_SkyModel_GaussModSpec)  || 
-       (in->modType==OBIT_SkyModel_GaussModTSpec)))
-    GPUClass->ObitGPUSkyModelDFTSetMod (in->GPUSkyModel, (Obit*)in, in->comps, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (in->doGPU) {
+    GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
+    if ((in->modelMode==OBIT_SkyModel_DFT) && 
+	((in->modType==OBIT_SkyModel_PointMod)      || 
+	 (in->modType==OBIT_SkyModel_PointModSpec)  || 
+	 (in->modType==OBIT_SkyModel_PointModTSpec) ||
+	 (in->modType==OBIT_SkyModel_GaussMod)      || 
+	 (in->modType==OBIT_SkyModel_GaussModSpec)  || 
+	 (in->modType==OBIT_SkyModel_GaussModTSpec)))
+      GPUClass->ObitGPUSkyModelDFTSetMod (in->GPUSkyModel, (Obit*)in, in->comps, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+  } /* end if using GPU */
 #endif /* HAVE_GPU */
 } /* end ObitSkyModelMFInitModel */
 

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -168,7 +168,7 @@ ObitAntennaList* ObitAntennaListCopy  (ObitAntennaList *in, ObitAntennaList *out
     /* derive object name */
     outName = g_strconcat ("Copy: ",in->name,NULL);
     out = newObitAntennaList(outName);
-    if (outName) g_free(outName); outName = NULL;
+    if (outName) {g_free(outName); outName = NULL;}
   }
   
   /* deep copy any base class members */
@@ -489,8 +489,8 @@ void ObitAntennaListClear (gpointer inn)
     in->ANlist[i] = ObitAntennaUnref (in->ANlist[i]);
 
   /* delete members */
-  if (in->ANlist) g_free(in->ANlist); in->ANlist = NULL;
-  if (in->RLPhaseDiff) g_free(in->RLPhaseDiff); in->RLPhaseDiff = NULL;
+  if (in->ANlist) {g_free(in->ANlist); in->ANlist = NULL;}
+  if (in->RLPhaseDiff) {g_free(in->RLPhaseDiff); in->RLPhaseDiff = NULL;}
  
  /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -119,8 +119,8 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
   ObitInfoType type;
   ofloat t0, endTime;
   ofloat lastTime=-1.0;
-  olong iRow, oRow, i, ia, lrec;
-  olong  numSubA, nfreq;
+  olong iRow, oRow, i, ia;
+  olong  numSubA;
   oint numPoln=0, numIF=0, numTerm=0, numAnt=0, numOrb=0, numPCal=0;
   ObitAntennaList **antList=NULL;
   ObitOpacity *Opac=NULL;
@@ -132,7 +132,6 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
   ofloat      *opac=NULL, *TCals1=NULL, *TCals2=NULL, *gain1=NULL, *gain2=NULL;
   odouble     *freqs=NULL;
   olong       maxTerm = 4;
-  ObitIOCode  retCode;
   gchar *tname;
   gchar *routine = "ObitGainCalCalc";
  
@@ -162,10 +161,9 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
 
   /* open UV data to fully instantiate if not already open */
   if ((inData->myStatus==OBIT_Inactive) || (inData->myStatus==OBIT_Defined)) {
-    retCode = ObitUVOpen (inData, OBIT_IO_ReadOnly, err);
+    ObitUVOpen (inData, OBIT_IO_ReadOnly, err);
     if (err->error) Obit_traceback_val (err, routine, inData->name, outCal);
   }
-  lrec = inData->myDesc->lrec;
   t0 = -1.0e20;
 
   /* Init/Open index table */
@@ -231,7 +229,6 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
   if (doOpac) {
     opac  = g_malloc0(numIF*sizeof(ofloat));
     freqs = g_malloc0(numIF*sizeof(odouble));
-    nfreq = numIF;
     for (i=0; i<numIF; i++) freqs[i] = desc->freqIF[i];
     Opac = ObitOpacityCreate ("Opacity", inData);
   }/* End init opacity */
@@ -539,7 +536,7 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
   if (err->error) goto cleanup;
   
   /* Close NX table */
-  retCode = ObitTableNXClose (NXTab, err);
+  ObitTableNXClose (NXTab, err);
   if (err->error) goto cleanup;
 
   /* Cleanup */
@@ -809,7 +806,7 @@ static void CalcGain (ObitTableRow *row, olong numIF, olong numPoln, olong maxTe
   ofloat sum, za, elev, g, arg;
   ofloat fblank = ObitMagicF();
   ofloat *Tsys1=PwrSum1, *Tsys2=PwrSum2;   /* Alias work array */
-  olong i, iIF, indx, Ant, SubA, SourID, FreqID;
+  olong i, iIF, indx, Ant, SubA, SourID;
   ofloat Time;
   gchar *routine = "ObitGainCal:CalcGain";
 
@@ -824,14 +821,12 @@ static void CalcGain (ObitTableRow *row, olong numIF, olong numPoln, olong maxTe
     Ant    = SNRow->antNo;
     SubA   = MAX (1, SNRow->SubA);
     SourID = SNRow->SourID;
-    FreqID = SNRow->FreqID;
   } else {
     CLRow = (ObitTableCLRow*)row;
     Time   = CLRow->Time;
     Ant    = CLRow->antNo;
     SubA   = MAX (1, CLRow->SubA);
     SourID = CLRow->SourID;
-    FreqID = CLRow->FreqID;
   }
 
 

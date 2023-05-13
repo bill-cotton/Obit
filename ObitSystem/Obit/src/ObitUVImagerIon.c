@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -575,7 +575,7 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong *field, gboolean doWeight,
     tabtype = g_strdup(snTab->tabType); /* Save ephemerial values */
     lver = snTab->tabVer;
     ObitUVZapTable (data, tabtype, lver, err);
-    if (tabtype) g_free (tabtype); tabtype = NULL;
+    if (tabtype) {g_free (tabtype); tabtype = NULL;}
     ObitUVUpdateTables (data, err);  /* Update disk header */
     snTab = ObitTableSNUnref(snTab);
   }

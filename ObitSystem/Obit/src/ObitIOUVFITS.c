@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -275,7 +275,6 @@ void ObitIOUVFITSRename (ObitIO *in, ObitInfoList *info,
  */
 void ObitIOUVFITSZap (ObitIOUVFITS *in, ObitErr *err)
 {
-  ObitIOCode retCode = OBIT_IO_SpecErr;
   int status = 0;
   gchar tempStr[201];
   gchar *routine = "ObitIOUVFITSZap";
@@ -287,7 +286,7 @@ void ObitIOUVFITSZap (ObitIOUVFITS *in, ObitErr *err)
 
   /* Close if still open */
   if ((in->myStatus==OBIT_Modified) || (in->myStatus==OBIT_Active)) {
-    retCode = ObitIOUVFITSClose (in, err);
+    ObitIOUVFITSClose (in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 
@@ -1723,12 +1722,12 @@ ObitIOCode ObitIOUVFITSReadDescriptor (ObitIOUVFITS *in, ObitErr *err)
   strncpy (desc->date, today, UVLEN_VALUE-1);
   if (today) g_free(today);
   fits_read_key_str (in->myFptr, "DATE-MAP", (char*)cdata, (char*)commnt, &status);
-  if (status==0)  strncpy (desc->date, cdata, UVLEN_VALUE-1);  desc->date[UVLEN_VALUE-1] = 0;
+  if (status==0)  {strncpy (desc->date, cdata, UVLEN_VALUE-1);  desc->date[UVLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   strncpy (desc->origin, "        ", UVLEN_VALUE-1); 
   fits_read_key_str (in->myFptr, "ORIGIN", (char*)cdata, (char*)commnt, &status);
-  if (status==0)  strncpy (desc->origin, cdata, UVLEN_VALUE-1); desc->origin[UVLEN_VALUE-1] = 0;
+  if (status==0)  {strncpy (desc->origin, cdata, UVLEN_VALUE-1); desc->origin[UVLEN_VALUE-1] = 0;}
   if (status==KEY_NO_EXIST) status = 0;
 
   dtemp = 0.0;
@@ -2993,7 +2992,7 @@ void  ObitIOUVKeysOtherRead(ObitIOUVFITS *in, olong *lstatus,
 			       ObitErr *err)
 {
   gchar keywrd[FLEN_KEYWORD], value[FLEN_VALUE], commnt[FLEN_COMMENT+1];
-  gchar *first, *last, *anF, *aT, dtype, svalue[FLEN_VALUE];
+  gchar *first, *last, *aT, dtype, svalue[FLEN_VALUE];
   int i, j, k, l, keys, morekeys, status=(int)*lstatus;
   olong ivalue;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -3064,7 +3063,6 @@ void  ObitIOUVKeysOtherRead(ObitIOUVFITS *in, olong *lstatus,
 	  
 	  break;
 	case 'L':  /* logical 'T', 'F' */
-	  anF   = index (value,'F'); /* Logical */
 	  aT    = index (value,'T'); /* Logical */
 	  bvalue = FALSE;
 	  if (aT!=NULL) bvalue = TRUE;
@@ -3176,7 +3174,7 @@ static ObitIOCode WriteAIPSUVHeader (ObitIOUVFITS *in, ObitErr *err)
     /* Indicate time units for u,v,w */
     strncpy (strtemp, desc->ptype[i], 9); strtemp[8] = 0;
     if ((desc->ilocu==i) || (desc->ilocv==i) || (desc->ilocw==i)) strtemp[3] = '-';
-    if (desc->iloct==i) strncpy (strtemp, "DATE    ", 9); strtemp[8] = 0;
+    if (desc->iloct==i) {strncpy (strtemp, "DATE    ", 9); strtemp[8] = 0;}
     ObitFileFITSWriteHisKeyStr (in->myFptr, (char*)keyword, strtemp, NULL, err);
     scale = 1.0 / (MAX (1.0, desc->freq));
     if ((desc->ilocu==i) || (desc->ilocv==i) || (desc->ilocw==i)) {

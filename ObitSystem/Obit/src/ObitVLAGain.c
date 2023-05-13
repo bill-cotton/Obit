@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2012                                          */
+/*;  Copyright (C) 2010,2012,2023                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -136,12 +136,12 @@ static void GetGainCurves (olong nTerm,
 void ObitVLAGainParseGain (olong Ant, odouble JD, odouble Freq, 
 			   olong nfreq, odouble *gainFreq, ofloat **gain)
 {
-  olong i, iarray=-1, n, iline, date, sdate, edate, antno, yr, mo, day;
+  olong i, iarray=-1, iline, date, sdate, edate, antno, yr, mo, day;
   ofloat avgGain[5] = {1.0, 0.0,0.0,0.0,0.0};  /* Flat gain if all else fails */
   ofloat **garray=NULL;   /* Gains for up to eight frequencies */
   odouble farray[8] = {0.,0.,0.,0.,0.,0.,0.,0.};     /* Frequencies of gains */
   olong narray=0;        /* Number of frequencies found */
-  gboolean found, gotBand;
+  gboolean gotBand;
   /* gain curve file for the EVLA.  bjb.  2012sep20.                     */
   /* the format of the lines looks like:                                 */
   /* bb aa yyy1m1d1 yyy2m2d2 c0 c1 c2 c3                                 */
@@ -878,7 +878,7 @@ void ObitVLAGainParseGain (olong Ant, odouble JD, odouble Freq,
   if (strncmp(datestr, "BAD DATE", 8)) {
     /* parse date */
     datestr[4] = ' '; datestr[7] = ' ';  /* remove '-' */
-    n = sscanf (datestr, "%4d%3d%3d", &yr, &mo, &day);
+    sscanf (datestr, "%4d%3d%3d", &yr, &mo, &day);
     
   } else {  /* having a bad day - make it April 1, 2010 */
     yr  = 2010;
@@ -893,7 +893,6 @@ void ObitVLAGainParseGain (olong Ant, odouble JD, odouble Freq,
   /*Q 48425.0  0 20120101 21000101  7.1791E-03 -4.8166E-04  7.5139E-06  0.0000E+00*/
   /* Loop through table */
   iline   = 0;
-  found   = FALSE;
   gotBand = FALSE;
   while (gainLines[iline]) {
     line = gainLines[iline];
@@ -905,7 +904,7 @@ void ObitVLAGainParseGain (olong Ant, odouble JD, odouble Freq,
     gotBand = TRUE;
 
     /* Parse antenna, start and end dates for line */
-    n = sscanf(&line[1], "%lf %d %d %d", &tfreq, &antno, &sdate, &edate);
+    sscanf(&line[1], "%lf %d %d %d", &tfreq, &antno, &sdate, &edate);
     /* New frequency? */
     if ((iarray<0) || (farray[iarray]<=0.0)) {
       iarray++;
@@ -931,8 +930,8 @@ void ObitVLAGainParseGain (olong Ant, odouble JD, odouble Freq,
     /* Save average parameters */
     if (antno==0) {
       /* parse reference ant values */
-      n = sscanf(&line[30], "%f %f %f %f", 
-		 &avgGain[0], &avgGain[1], &avgGain[2], &avgGain[3]);
+      sscanf(&line[30], "%f %f %f %f", 
+	     &avgGain[0], &avgGain[1], &avgGain[2], &avgGain[3]);
     }  /* end average antenna */
 
     /* Start past JD? */
@@ -940,11 +939,10 @@ void ObitVLAGainParseGain (olong Ant, odouble JD, odouble Freq,
     /* Right antenna and In range? */
     if ((Ant==antno) && (date>sdate) && (date<edate)) {
       /* Got it */
-      found = TRUE;
       /* parse coefficients */
-      n = sscanf(&line[30], "%f %f %f %f", 
-		 &garray[iarray][0], &garray[iarray][1], 
-		 &garray[iarray][2], &garray[iarray][3]);
+      sscanf(&line[30], "%f %f %f %f", 
+	     &garray[iarray][0], &garray[iarray][1], 
+	     &garray[iarray][2], &garray[iarray][3]);
     }
     iline++;    /* next entry */
   } /* end loop over table */

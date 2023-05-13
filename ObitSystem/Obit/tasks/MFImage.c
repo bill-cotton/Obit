@@ -1562,7 +1562,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   olong        nchan,  BChan, EChan, order, chInc, chAvg;
   olong        istok, kstok, nstok, bstok, estok, qstok=-1, ustok=-1;
   olong        BIF, EIF, nif, inver, outver, maxPixel, nTotal=0;
-  gboolean     first, doFlat, btemp, autoWindow, doQU, isDual, Tr=TRUE, doVPol, do3D;
+  gboolean     first, doFlat, btemp, autoWindow, doQU, isDual=FALSE, Tr=TRUE, doVPol, do3D;
   ofloat       maxFBW, alpha, reFlux=1.0e-12;
   gchar        Stokes[5], *chStokes=" IQUVRL ", *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */

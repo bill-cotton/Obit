@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -577,7 +577,6 @@ gboolean ObitDConCleanVisWBAutoWindow(ObitDConClean *inn, olong *fields, ObitFAr
   gboolean newWin=FALSE, doMore=FALSE;
   ObitImage *image=NULL;
   ObitFArray *usePixels;
-  ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  i, j, best, field, blc[IM_MAXDIM], trc[IM_MAXDIM];
@@ -616,9 +615,9 @@ gboolean ObitDConCleanVisWBAutoWindow(ObitDConClean *inn, olong *fields, ObitFAr
       dim[0] = 1;
       ObitInfoListAlwaysPut (image->info, "IOBy", OBIT_long, dim, &IOsize);
       
-      retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
-      retCode = ObitImageRead (image, image->image->array, err);
-      retCode = ObitImageClose (image, err);
+      ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+      ObitImageRead (image, image->image->array, err);
+      ObitImageClose (image, err);
       if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
       usePixels = image->image;  /* Pointer to image buffer */
       
@@ -677,13 +676,13 @@ gboolean ObitDConCleanVisWBAutoWindow(ObitDConClean *inn, olong *fields, ObitFAr
     dim[0] = 1;
     ObitInfoListAlwaysPut (image->info, "IOBy", OBIT_long, dim, &IOsize);
     
-    retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+    ObitImageOpen (image, OBIT_IO_ReadOnly, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
     
-    retCode = ObitImageRead (image, image->image->array, err);
+    ObitImageRead (image, image->image->array, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
     
-    retCode = ObitImageClose (image, err);
+    ObitImageClose (image, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
     usePixels = image->image;  /* Pointer to image buffer */
 
@@ -1456,7 +1455,7 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
     /* Set imaging order */
     if (fabs(in->cleanable[field-1]) < in->OrdFlux[1]) 
       ((ObitImageWB*)in->mosaic->images[field-1])->curOrder = 1;
-      if (fabs(in->cleanable[field-1]) < in->OrdFlux[0]) 
+    if (fabs(in->cleanable[field-1]) < in->OrdFlux[0]) 
       ((ObitImageWB*)in->mosaic->images[field-1])->curOrder = 0;
   /* DEBUG   */
   fprintf (stderr,"DEBUG Field %d RMS %f \n",
@@ -2227,7 +2226,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
   ofloat dU, dV, UU, VV, texp;
   ofloat konst, xmaj, xmin, cpa, spa, b1, b2, b3, bb2, bb3;
   ofloat taper, norm, *grid, tx, ty;
-  olong i, j, nx, ny, ndim, naxis[2];
+  olong i, j, nx, ny, naxis[2];
 
   /* Image info - descriptor should still be valid */
   nx = imDesc->inaxes[imDesc->jlocr];
@@ -2254,7 +2253,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
   b3 = - 2.0 * spa * cpa * (xmaj*xmaj - xmin*xmin);
   
   /* pointer to complex grid */
-  ndim = 2; naxis[0] = 0; naxis[1] = 0; 
+  naxis[0] = 0; naxis[1] = 0; 
   grid = ObitCArrayIndex(uvGrid, naxis);
   
   /* loop over uv array */  

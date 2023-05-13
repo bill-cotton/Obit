@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -383,7 +383,7 @@ ObitFArray* ObitFeatherUtilMakeBeamMask (ObitImage *inImage, ObitFFT *inFFT,
  */
 void ObitFeatherUtilCreateModel (ObitImage *image, ObitFArray *outArray)
 {
-  ofloat beamMaj, beamMin, beamPA, *cdelt, *crpix, *crota, amp, Cen[2], GauMod[3];
+  ofloat beamMaj, beamMin, beamPA, *cdelt, amp, Cen[2], GauMod[3];
   olong *inaxes;
 
   /* Checks */
@@ -396,8 +396,6 @@ void ObitFeatherUtilCreateModel (ObitImage *image, ObitFArray *outArray)
   beamMin = image->myDesc->beamMin;
   beamPA  = image->myDesc->beamPA;
   cdelt   = image->myDesc->cdelt;
-  crpix   = image->myDesc->crpix;
-  crota   = image->myDesc->crota;
   inaxes  = image->myDesc->inaxes;
 
   /* Check that beam OK */

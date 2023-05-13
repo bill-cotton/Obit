@@ -5,7 +5,7 @@
 /* $Id$  */
 /* Obit task to restore and/or flatten an image mosaic                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020                                               */
+/*;  Copyright (C) 2021                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -799,8 +799,9 @@ ObitImageMosaic* getMosaic (ObitInfoList *myInput, ObitErr *err)
   /* How many fields? */
   nmaps = 1;
   ObitInfoListGetTest(myInput, "nfield", &type, dim, &nmaps);
+  Obit_retval_if_fail((nmaps>=1), err, mosaic, "%s: nfield not specified", routine);
 
- /* Create local image array */
+  /* Create local image array */
   image = g_malloc(nmaps*sizeof(ObitImage*));
 
   /* File type - could be either AIPS or FITS use DataType2 (default DataType) */
@@ -983,7 +984,8 @@ ObitImageMosaic* getMosaic (ObitInfoList *myInput, ObitErr *err)
   /* Field of view */
   mosaic->FOV = 0.0;
   ObitInfoListGetTest(myInput, "FOV", &type, dim, &mosaic->FOV);
-   
+  Obit_retval_if_fail(( mosaic->FOV>0.0), err, mosaic, "%s: FOV not specified", routine);
+  
   /* cleanup */
   if (image) {
     for (i=0; i<nmaps; i++) image[i] = ObitImageUnref(image[i]);

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021                                               */
+/*;  Copyright (C) 2021,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -31,7 +31,7 @@
  * ObitGPUGrid structure members for this and any derived classes.
  */
 #include "ObitDef.h"  /* Parent class instance definitions */
-/** which cuda enabled GPU? */
-olong cuda_device;
 /** CUDA gridding info */
 CUDAGridInfo *cudaInfo;
+/** thread function argument pointers */
+gpointer **GPUGridArgs;

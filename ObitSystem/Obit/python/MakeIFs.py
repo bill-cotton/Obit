@@ -2,7 +2,7 @@
 """
 # $Id: 
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012-2017
+#  Copyright (C) 2012-2023
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -281,10 +281,12 @@ def DescAddIF (inUV, outUV, nIF, err):
     d["inaxes"][jlocif] = nIF
     d["inaxes"][jlocf]  = nchan
     outUV.Desc.Dict = d
-    UV. PGetIODesc(outUV).Dict = d  # And your little dog too
+    UV.PGetIODesc(outUV).Dict = d  # And your little dog too
     # Update
     outUV.UpdateDesc(err)
     outUV.Open(UV.WRITEONLY,err)
+    outUV.Close(err)
+    outUV.Open(UV.READWRITE, err)  # Seems needed to get everything synched
     outUV.Close(err)
     #outUV.Header(err)
     OErr.printErrMsg(err,"Error converting Descriptor")

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2010                                          */
+/*;  Copyright (C) 2006-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -78,7 +78,7 @@ void ObitIOTableFITSUtilReadTableList(ObitData *in, ObitErr *err)
   if (FileName[0]=='!') strncpy (tempStr, (gchar*)&FileName[1], 200);
   else strncpy (tempStr, FileName, 200);
   if (FileName) g_free(FileName); 
-  ObitTrimTrail(tempStr);  /* Trim any trailing blanks */
+  ObitTrimTrailNoBlank(tempStr);  /* Trim any trailing blanks */
 
   /* cfitsio refuses to open a file readwrite after it has been opened
      readonly so first try opening readwrite

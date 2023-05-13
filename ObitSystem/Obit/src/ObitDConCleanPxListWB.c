@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2011                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -488,7 +488,7 @@ void ObitDConCleanPxListWBUpdate (ObitDConCleanPxList *inn,
   ObitImageWB *image=NULL;
   ObitFArray *inFArrays[10]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,};
   olong i, field,  ifld, number, excess, ix, iy, nx, ny, pos[2], skipCnt;
-  olong nplanes, iplane, naxis[2], nfield, nCCparms, parmoff;
+  olong nplanes, iplane, nfield, nCCparms, parmoff;
   olong ip, lox, loy, hix, hiy, order, maxOrder, xoff, yoff;
   ofloat *data=NULL, *data1=NULL, *data2=NULL, *data3=NULL, fblank=ObitMagicF();
   gboolean blewIt=FALSE, *mask=NULL, rebuild=FALSE;
@@ -597,8 +597,6 @@ void ObitDConCleanPxListWBUpdate (ObitDConCleanPxList *inn,
     
     /* Loop over planes of flux, spectra (if given) and save in inFArray[*] */
     nplanes = 1 + order;
-    naxis[0] = image->myDesc->inaxes[0];
-    naxis[1] = image->myDesc->inaxes[1];
     for (iplane=0; iplane<nplanes; iplane++) {
       /* If pixarray given use it instead of the flux plane */
       inFArrays[iplane]  = ObitFArrayUnref(inFArrays[iplane]);
@@ -1475,7 +1473,8 @@ gpointer ThreadCLEAN2 (gpointer args)
   olong iresid, iXres, iYres, lpatch, beamPatch, iBeam, field, pos[2];
   ofloat *beam00=NULL, *beam10=NULL, *beam01=NULL, *beam11=NULL;
   ofloat *beam02=NULL, *beam20=NULL, *beam21=NULL, *beam12=NULL, *beam22=NULL;
-  odouble A00=0.0, A10=0.0, A01=0.0, A11=0.0, A20=0.0, A02=0.0, A21=0.0, A12=0.0, A22=0.0, R0, R1, R2;
+  odouble A00=0.0,A01=0.0, A11=0.0, A02=0.0, A12=0.0, A22=0.0, R0, R1, R2;
+  /* odouble  A10=0.0, A20=0.0, A21=0.0, */
 
   /* Do subtraction if peak non zero */
   field  = in->pixelFld[ipeak];
@@ -1528,11 +1527,11 @@ gpointer ThreadCLEAN2 (gpointer args)
       pos[0] = lpatch/2; pos[1] = lpatch/2;
       A00 = *ObitFArrayIndex(in->BeamPatch00[field-1], pos);
       A01 = *ObitFArrayIndex(in->BeamPatch01[field-1], pos);
-      A10 = *ObitFArrayIndex(in->BeamPatch10[field-1], pos);
+      /*A10 = *ObitFArrayIndex(in->BeamPatch10[field-1], pos);*/
       A11 = *ObitFArrayIndex(in->BeamPatch11[field-1], pos);
-      A20 = *ObitFArrayIndex(in->BeamPatch20[field-1], pos);
+      /*A20 = *ObitFArrayIndex(in->BeamPatch20[field-1], pos);*/
       A02 = *ObitFArrayIndex(in->BeamPatch02[field-1], pos);
-      A21 = *ObitFArrayIndex(in->BeamPatch21[field-1], pos);
+      /*A21 = *ObitFArrayIndex(in->BeamPatch21[field-1], pos);*/
       A12 = *ObitFArrayIndex(in->BeamPatch12[field-1], pos);
       A22 = *ObitFArrayIndex(in->BeamPatch22[field-1], pos);
       iDelta = 1.0 / (A02*A02*A11 - 2.0*A01*A02*A12 + A01*A01*A22 + A00*(A12*A12-A11*A22));
