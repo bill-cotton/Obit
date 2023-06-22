@@ -536,7 +536,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   ofloat sumwts, imMax, imMin, BeamTaper=0., BeamNorm=0.0, Beam[3];
   gchar *outName=NULL;
   ollong *gpumem=NULL;
-  olong *ldevice, *cuda_device=NULL, iGPU=-1, num_GPU=1; 
+  olong ldevice[20], *cuda_device=NULL, iGPU=-1, num_GPU=1; 
   olong plane[5], pln, NPIO, oldNPIO, nfacet=1, ifacet=0;
   olong nplane=1, i, ichannel, icLo, icHi, norder=0, iorder=0;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
@@ -577,9 +577,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   doGPUGrid = InfoReal.itg;
   if (doGPUGrid) {
     /* How many GPUs? */
-    ldevice = NULL;
-    ObitInfoListGetP(inUV->info, "GPU_no", &type, (gint32*)dim, (gpointer)&ldevice);
-    if (ldevice) {
+    if (ObitInfoListGetTest(inUV->info, "GPU_no", &type, (gint32*)dim, ldevice)) {
       /* Count, ignore -1s  */
       num_GPU = 0;
       for (i=0; i<dim[0]; i++) if (ldevice[i]>=0) num_GPU++;
@@ -587,6 +585,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
       cuda_device = g_malloc0((num_GPU+10)*sizeof(olong));  /* Hack (+10) for sarao bug*/
       gpumem =      g_malloc0((num_GPU+10)*sizeof(ollong));
       for (i=0; i<num_GPU; i++) {
+	if ((ldevice[i]<0) || (ldevice[i]>50)) ldevice[i] = i;  /* Sanity check */
 	cuda_device[i] = (int)ldevice[i];
 	gpumem[i] =      ObitGPUGridSetGPU (cuda_device[i]); /* initialize */
       }
@@ -1068,6 +1067,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       cuda_device = g_malloc0((num_GPU+10)*sizeof(olong));
       gpumem =      g_malloc0((num_GPU+10)*sizeof(olong));
       for (i=0; i<num_GPU; i++) {
+	if ((ldevice[i]<0) || (ldevice[i]>50)) ldevice[i] = i;  /* Sanity check */
 	cuda_device[i] = ldevice[i];
 	gpumem[i] =      ObitGPUGridSetGPU (cuda_device[i]); /* initialize */
       }

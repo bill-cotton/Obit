@@ -214,15 +214,15 @@ void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   gboolean doCalSelect;
-  olong ldevice, nVisPIO, nSpec, *specIndex;
+  olong ldevice[20], nVisPIO, nSpec, *specIndex;
   odouble *specFreq;
   gchar *routine = "ObitGPUSkyModelDFTInit";
 
   /* Set GPU device, hard code 0 for now */
   in->gpuInfo->cuda_device = 0;
-  ldevice = in->gpuInfo->cuda_device;
-  ObitInfoListGetTest(uvdata->info, "GPU_no", &type, (gint32*)dim, &ldevice);
-  in->gpuInfo->cuda_device = (int)ldevice;
+  ldevice[0] = in->gpuInfo->cuda_device;
+  ObitInfoListGetTest(uvdata->info, "GPU_no", &type, (gint32*)dim, ldevice);
+  in->gpuInfo->cuda_device = (int)ldevice[0];
   ObitCUDASetGPU (in->gpuInfo->cuda_device);
   ObitCUDAResetGPU ();  /* Make sure reset */
 
