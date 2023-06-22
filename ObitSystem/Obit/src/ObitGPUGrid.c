@@ -667,6 +667,9 @@ void ObitGPUGridShutdown (ObitGPUGrid *in, ObitUV *uvdata, ObitErr *err)
     {g_free(in->cudaInfo->cuda_device); in->cudaInfo->cuda_device=NULL;}
   g_free(in->cudaInfo); in->cudaInfo = NULL;
 
+  /* Give message */
+  if (err->prtLv>=2)
+    Obit_log_error(err, OBIT_InfoErr, "Finished GPU Gridding");
   /* Replace old nVisPIO
   dim[0] = dim[1] = dim[2] = dim[3] = 1;
   ObitInfoListAlwaysPut (uvdata->info, "nVisPIO", OBIT_long, dim,  

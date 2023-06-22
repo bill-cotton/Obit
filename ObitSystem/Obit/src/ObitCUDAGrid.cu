@@ -33,8 +33,6 @@ void ObitCUDAUtilPointerType(void *ptr, char *label);
 
 #include "ObitCUDAGrid.h"
 #include "ObitCUDAGridInfoDef.h"
-#include "ObitErr.h"
-/*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitCUDAGrid.cu
  * Primitive CUDA routines
@@ -325,8 +323,8 @@ void ObitCUDAGridAlloc (CUDAGridInfo *cudaInfo, long nfacet, long nchan, long ni
     memset (cudaInfo->h_gridInfo, 0, sizeof(GridInfo)); // zero
     cudaInfo->h_gridInfo->nStream = GRID_STREAM_COUNT;
     // stream, events arrays per GPU 
-    cudaInfo->h_gridInfo->stream    = (cudaStream_t**)g_malloc0(nGPU*sizeof(cudaStream_t*));
-    cudaInfo->h_gridInfo->cycleDone = (cudaEvent_t**)g_malloc0(nGPU*sizeof(cudaEvent_t*));
+    cudaInfo->h_gridInfo->stream    = (cudaStream_t**)malloc(nGPU*sizeof(cudaStream_t*));
+    cudaInfo->h_gridInfo->cycleDone = (cudaEvent_t**)malloc(nGPU*sizeof(cudaEvent_t*));
   }
   GridInfo* gridInfo    = cudaInfo->h_gridInfo;      // grid specifications
   gridInfo->nfacet = nfacet;
@@ -436,8 +434,8 @@ void ObitCUDAGridAlloc (CUDAGridInfo *cudaInfo, long nfacet, long nchan, long ni
 
   // Streams - only on host
   cudaInfo->h_gridInfo->nStream   = GRID_STREAM_COUNT;
-  cudaInfo->h_gridInfo->stream[iGPU]    = (cudaStream_t*)g_malloc0(GRID_STREAM_COUNT*sizeof(cudaStream_t));
-  cudaInfo->h_gridInfo->cycleDone[iGPU] = (cudaEvent_t*) g_malloc0(GRID_STREAM_COUNT*sizeof(cudaEvent_t)); 
+  cudaInfo->h_gridInfo->stream[iGPU]    = (cudaStream_t*)malloc(GRID_STREAM_COUNT*sizeof(cudaStream_t));
+  cudaInfo->h_gridInfo->cycleDone[iGPU] = (cudaEvent_t*) malloc(GRID_STREAM_COUNT*sizeof(cudaEvent_t)); 
 
   // create streams, events this device
   for (i=0; i<GRID_STREAM_COUNT; i++) {
@@ -670,7 +668,7 @@ void grid_processWithStreams(int streams_used, CUDAGridInfo *cudaInfo,
     dim3 numBlocks, thPerBlock;
     float *h_grid_debug=cudaInfo->h_grid_debug, *d_grid_debug=cudaInfo->d_grid_debug;
     // float *debug=NULL; // DEBUG
-    gboolean initdebug=h_grid_debug==NULL;
+    int initdebug=h_grid_debug==NULL;
     ms = 1000*sizeof(float);
     // Initialize debug arrays 
     if (h_grid_debug==NULL) checkCudaErrors(cudaMallocHost(&h_grid_debug, ms));
@@ -732,9 +730,9 @@ void grid_processWithStreams(int streams_used, CUDAGridInfo *cudaInfo,
 	  if (nfacet<8) {maxCh = 32; maxVis=32; maxFacet=1;}
 	  else          {maxCh = 16; maxVis=8;  maxFacet=8;}
           // Process current, vis (maxVis/block), chan(maxCh/block), loop over facet
- 	  nVisBlock = (olong)(0.9999+dovis/(float)maxVis); 
-	  nChBlock  = (olong)(0.9999+nchan/(float)maxCh); 
-	  nFacetBlock =  (olong)(0.9999+nfacet/(float)maxFacet);
+ 	  nVisBlock = (long)(0.9999+dovis/(float)maxVis); 
+	  nChBlock  = (long)(0.9999+nchan/(float)maxCh); 
+	  nFacetBlock =  (long)(0.9999+nfacet/(float)maxFacet);
 	  numBlocks.x = nVisBlock; numBlocks.y = nChBlock; thPerBlock.x = maxVis; thPerBlock.y = maxCh;
 	  numBlocks.z = nFacetBlock; thPerBlock.z = maxFacet; 
 	  if (dovis<=maxVis)  {numBlocks.x = 1; thPerBlock.x = dovis;}
@@ -793,8 +791,8 @@ void ObitCUDAGridFlip (CUDAGridInfo *cudaInfo, long iGPU) {
      // Is this facet on this GPU?
      if (iGPU==cudaInfo->FacetGPU[i]) {  // This one in this GPU?
        nrow = 1+h_facetInfo[i]->ny/2;
-       numBlocks.x = (olong)(0.9999+nrow/((float)nrowBlock)); 
-       numBlocks.y = (olong)(0.9999+nplane/((float)nplaneBlock)); 
+       numBlocks.x = (long)(0.9999+nrow/((float)nrowBlock)); 
+       numBlocks.y = (long)(0.9999+nplane/((float)nplaneBlock)); 
        thPerBlock.x = nrowBlock;thPerBlock.y = nplaneBlock;
        if (nrow<=nrowBlock)     {numBlocks.x = 1; thPerBlock.x = nrow;}
        if (nplane<=nplaneBlock) {numBlocks.y = 1; thPerBlock.y = nplane;}
@@ -892,8 +890,8 @@ void ObitCUDAGridShutdown (CUDAGridInfo *cudaInfo, long iGPU) {
     if (h_gridInfo->h_sigma3)     {cudaFreeHost(h_gridInfo->h_sigma3);     h_gridInfo->h_sigma3 = NULL;}
     if (h_gridInfo->h_convfn)     {cudaFreeHost(h_gridInfo->h_convfn);     h_gridInfo->h_convfn = NULL;}
     if (h_gridInfo->GPU_device_no){cudaFreeHost(h_gridInfo->GPU_device_no);h_gridInfo->GPU_device_no = NULL;}
-    if (h_gridInfo->stream)       {g_free(h_gridInfo->stream);             h_gridInfo->stream    = NULL;}
-    if (h_gridInfo->cycleDone)    {g_free(h_gridInfo->cycleDone);          h_gridInfo->cycleDone = NULL;}
+    if (h_gridInfo->stream)       {free(h_gridInfo->stream);             h_gridInfo->stream    = NULL;}
+    if (h_gridInfo->cycleDone)    {free(h_gridInfo->cycleDone);          h_gridInfo->cycleDone = NULL;}
 
     // Facet stuff 
     for (i=0; i<h_gridInfo->nfacet; i++) {

@@ -1,6 +1,6 @@
 /* $Id$            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -126,6 +126,9 @@ static inline ofloat ObitMagicF (void)
 
 /** Public: trim trailing blanks from string */
 void ObitTrimTrail (gchar *str);
+
+/** Public: trim trailing blanks from string - no embedded strings allowed */
+void ObitTrimTrailNoBlank (gchar *str);
 
 /** Public: compare strings */
 gboolean ObitStrCmp (gchar *str1, gchar *str2, olong maxlen);

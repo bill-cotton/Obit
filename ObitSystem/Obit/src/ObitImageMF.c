@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1692,6 +1692,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   
   /* Reference frequency from data if not set */
   if (in->refFreq<1.0) in->refFreq = in->myDesc->crval[in->myDesc->jlocf];
+  else in->refFreq = refFreq;
   refFreq = in->refFreq;
 
   /* Specified Weights? */
@@ -1829,6 +1830,8 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   /* Update output header to reference Frequency */
   fitter->outDesc = ObitImageDescRef(in->myDesc); /* Desc to fitter */
   fitter->outDesc->crval[fitter->outDesc->jlocf] = fitter->refFreq;
+  /* Save Alpha reference frequency */
+  ObitInfoListAlwaysPut (fitter->outDesc->info, "RFALPHA", OBIT_double, dim, &fitter->refFreq);
 
   /* Write output */
   ObitSpectrumWriteOutput(fitter, (ObitImage*)out, err);

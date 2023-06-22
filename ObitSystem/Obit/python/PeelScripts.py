@@ -299,7 +299,7 @@ def ImagePeel(uvsub, peelPos, err, \
     return mfp
     # end ImagePeel
 
-def SubPeel(uv, source, imp, uvp, err, addBack=False, seq=999, \
+def SubPeel(uv, source, imp, uvp, err, addBack=False, seq=999, disk=3,  \
                 flagVer=0, nThreads=1, doGPU=False, noScrat=[0,0,0], taskLog='', debug=False):
     """
     Subtract Peel model w/ solutions, then optionally add back w/o corruptions
@@ -315,6 +315,7 @@ def SubPeel(uv, source, imp, uvp, err, addBack=False, seq=999, \
     * uvp       UV data the result of peel (ImagePeel)
     * err       Python Obit Error/message stack
     * seq       Sequence number for output
+    * disk      Output disk number
     * addBack   Add model back to data w/o corruptions? Not recommended.
     * flagVer   FG table to apply, -1=> no flag
     * nThreads  number of threads to use
@@ -334,8 +335,8 @@ def SubPeel(uv, source, imp, uvp, err, addBack=False, seq=999, \
     # Split main data set
     OErr.PLog(err, OErr.Info, "Copy data"); OErr.printErr(err)
     split = ObitTask('Split'); setname(uv,split)
-    split.outDisk = split.inDisk; split.outSeq = seq; split.outClass = 'UPeel'
-    split.Sources[0] = source; split.flagVer = flagVer
+    split.outDisk = disk; split.outSeq = seq; split.outClass = 'UPeel'
+    split.Sources[0] = source; split.flagVer = flagVer; split.passAll=True
     if uv.GetHighVer('AIPS SN')>0:
         split.doCalib = 2; split.gainUse = 0; split.doCalWt = True
     else:
@@ -352,9 +353,9 @@ def SubPeel(uv, source, imp, uvp, err, addBack=False, seq=999, \
         datauv = UV.newPAUV('data',source[0:8],outClass,outDisk,outSeq, True,  err)
     # Make data set with the model peel source with peel cal applied
     uvsub = ObitTask('UVSub'); setname(uv,uvsub); uvsub.outName = source[0:12]
-    uvsub.outDisk = uvsub.inDisk; uvsub.outSeq = 1; uvsub.outClass = 'Model'
+    uvsub.outDisk = disk; uvsub.outSeq = 1; uvsub.outClass = 'Model'
     uvsub.Sources[0] = source; uvsub.flagVer = flagVer
-    uvsub.doCalib = -1; uvsub.gainUse = 0; 
+    uvsub.doCalib = -1; uvsub.gainUse = 0; uvsub.passAll=True
     set2name(imp,uvsub); uvsub.CCVer=1; uvsub.nfield = 1;
     uvsub.Cmethod = 'DFT'; uvsub.Opcode = 'MODL'; uvsub.PBCor = False;
     uvsub.noScrat = noScrat; uvsub.noNeg = False;

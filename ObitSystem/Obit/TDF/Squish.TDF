@@ -3,7 +3,7 @@
 ;! Compress image cube along third axis
 ;# Task Obit
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 200-,2014
+;;  Copyright (C) 2000,2014,2023
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ Squish    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 Squish:  Compress image cube along third axis
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type of file
-**PARAM** str 48
+**PARAM** str 128
 inFile                             input Filename if FITS image
 **PARAM** str 12
 inName                             Input image name
@@ -50,7 +50,7 @@ BLC             0.0      4096.0    Bottom left corner of image
 **PARAM** int 7
 TRC             0.0      4096.0    Top right corner of image
                                      0=>entire image
-**PARAM** str 48
+**PARAM** str 128
 outFile                            output Filename if FITS image
 **PARAM** str 12
 outName                            Output name.

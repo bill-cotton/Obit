@@ -2185,7 +2185,7 @@ static gpointer ThreadRMSynFit (gpointer arg)
   ofloat fblank = ObitMagicF();
   olong j, ntest=1, nvalid, numb, nlamb2, iLast;
   ofloat minDL, maxDL, dRM, tRM, sumQWt=0.0, sumUWt=0.0, bestRM=0.0;
-  ofloat bestQ=0.0, bestU=0.00, sumrQ, sumrU, sumW=0.0, EVPA, amp;
+  ofloat bestQ=0.0, bestU=0.00, sumrQ, sumrU, sumW=0.0, EVPA, amp, ft;
   double aarg, varaarg;
   odouble amb, res, best, test;
 #if HAVE_AVX512==1
@@ -2242,8 +2242,11 @@ static gpointer ThreadRMSynFit (gpointer arg)
 	  /* Statistical weight */
 	  larg->Qvar[i] = (in->QRMS[i]*in->QRMS[i]);
 	  larg->Uvar[i] = (in->URMS[i]*in->URMS[i]);
-	  larg->Qweight[i] = 1.0 / in->QRMS[i];
-	  larg->Uweight[i] = 1.0 / in->URMS[i];
+	  /*larg->Qweight[i] = 1.0 / in->QRMS[i];
+	    larg->Uweight[i] = 1.0 / in->URMS[i];*/
+	  /* Average Q, U weights */
+	  ft = 0.5*(in->QRMS[i]+in->URMS[i]);
+	  larg->Qweight[i] = larg->Uweight[i] = 1.0 / ft;
 	  sumQWt += larg->Qweight[i];
 	  sumUWt += larg->Qweight[i];
 	  /* End if datum valid */
@@ -2251,27 +2254,27 @@ static gpointer ThreadRMSynFit (gpointer arg)
 	  larg->Qweight[i] = 0.0;
 	  larg->Uweight[i] = 0.0;
 	}
-	/* DEBUG
-	if ((ix==669) && (iy==449)) { 
-	  fprintf (stderr,"%3d q=%g u=%g qs=%g us=%g wt=%f\n",
-		   i, larg->Qobs[i], larg->Uobs[i], in->QRMS[i], in->URMS[i], larg->Qweight[i]);
-	} */
-      } /* end loop over frequencies */
+	/* DEBUG */
+	/*if ((ix==143) && (iy==276)) { 
+	  fprintf (stderr,"%3d q=%g u=%g qs=%g us=%g qwt=%f uwt=%f \n",
+		   i, larg->Qobs[i], larg->Uobs[i], in->QRMS[i], in->URMS[i], larg->Qweight[i], larg->Uweight[i]);
+		   }*/
+      } /* end i loop over frequencies */
       
       /* Fit coef[0]=RM, coef[1]=amp, coef[2]=phase, coef[3]=RMS Q,U */
       /* get  values count valid data*/
       numb   = 0; sumW = 0.0;
       for (i=0; i<larg->nlamb2; i++) {
 	if ((larg->Qweight[i]>0.0) && (larg->Uweight[i]>0.0)) {
-	  larg->x[numb] = larg->lamb2[i] - larg->refLamb2;
+	  larg->x[i] = larg->lamb2[i] - larg->refLamb2;
 	  /* Weight of polarized amplitude */
 	  aarg    = fabs(larg->Uobs[i]/larg->Qobs[i]);
 	  varaarg = aarg*aarg*(larg->Qvar[i]/(larg->Qobs[i]*larg->Qobs[i]) + 
 			       larg->Uvar[i]/(larg->Uobs[i]*larg->Uobs[i]));
-	  larg->w[numb] = (1.0+aarg*aarg)/varaarg;
-	  larg->q[numb] = larg->Qobs[i];
-	  larg->u[numb] = larg->Uobs[i];
-	  sumW  += larg->w[numb];
+	  larg->w[i] = (1.0+aarg*aarg)/varaarg;
+	  larg->q[i] = larg->Qobs[i];
+	  larg->u[i] = larg->Uobs[i];
+	  sumW  += larg->w[i];
 	  /* DEBUG
 	     fprintf (stderr, "%3d x=%8.5f q=%8.5f u=%8.5f w=%8.5g \n ",
 	     numb,larg->x[numb], larg->q[numb],larg->u[numb],larg->w[numb]);
@@ -2280,8 +2283,10 @@ static gpointer ThreadRMSynFit (gpointer arg)
 	     i,larg->lamb2[i]-larg->refLamb2, larg->Qobs[i], larg->Uobs[i],larg->Pobs[i], 
 	     larg->Qweight[i], larg->Uweight[i]);*/
 	  numb++;
+	} else {  /* flagged */
+	  larg->x[i] = larg->w[i] = larg->q[i] = larg->u[i] = 0.0;
 	}
-      }
+      } /* end i loop over subband */
       nvalid = numb;
       /* enough data? */
       if ((nvalid<=2) || ((((ofloat)nvalid)/((ofloat)larg->nlamb2)) < larg->minFrac)) {
@@ -2408,23 +2413,31 @@ static gpointer ThreadRMSynFit (gpointer arg)
 	} 
 
 	test = sumrQ*sumrQ + sumrU*sumrU;
-	/* DEBUG 
-	   fprintf (stderr," i=%d test=%g  tRM %f sum Q=%f sum U=%f pen %f\n",
-	   i, test, tRM, sumrQ, sumrU,  penFact*abs(i-ntest/2));*/
+	/* DEBUG */
+	/*if ((tRM>10.) && (tRM<30.) && (ix==143) && (iy==276)) { 
+	  EVPA = 0.5 * atan2(sumrU, sumrQ);
+	  fprintf (stderr," ii=%d ix=%d iy=%d test=%g  tRM %f EVPA %f sum Q=%f sum U=%f\n",
+		   ii,ix, iy, test, tRM, EVPA,sumrQ, sumrU);
+		   }*/
 	/* end DEBUG */
 	if (test>best) {
-	  besti = i;
+	  besti = ii;
 	  best = test;
 	  bestRM = tRM;
 	  bestQ = sumrQ;
 	  bestU = sumrU;
 	}
-      }
-      /* Get chi sq for fit */
+      } /* end ii (tRM) loop */
       EVPA = 0.5 * atan2(bestU, bestQ);
       bestQ /= sumQWt; bestU /= sumUWt; 
       amp = sqrtf(bestU*bestU + bestQ*bestQ);
       tRM = bestRM;
+      /* DEBUG*/
+      /*if ((ix==143) && (iy==276)) { 
+	fprintf (stderr, "ix=%d iy=%d amp=%f EVPA=%f bestRM=%f  besti=%d,best=%f bestQ=%f bestU=%f dRM=%f\n",
+		 ix, iy, amp, EVPA,bestRM, besti, best, bestQ,bestU,dRM);
+		 }*/
+      /* Get chi sq for fit */
       /* Loop over data samples - first phases to convert to ref Lamb2 */
       for (j=0; j<larg->nlamb2; j++) 
 	larg->wrk1[j]= 2*tRM * (larg->lamb2[j]-larg->refLamb2) + 2.0*EVPA;

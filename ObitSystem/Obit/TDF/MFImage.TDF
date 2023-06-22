@@ -33,7 +33,7 @@ MFImage   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 MFImage:  Wideband imaging
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
-**PARAM** str 128
+**PARAM** str 48
 inFile                              FITS input uvdata if Type=='FITS'
 **PARAM** str 12
 inName                              Input multisource UV data AIPS
@@ -309,8 +309,8 @@ nThreads            0              Max. number of threads to use
 doGPU            0                 Use GPU for sky model if available
 **PARAM** boo 1 **DEF** F
 doGPUGrid        0                 Use GPU for gridding if available
-**PARAM** int 1 **DEF** 0
-GPU_no           0                 GPU number to use
+**PARAM** int 10 **DEF** -1
+GPU_no           -1                GPU numbers to use, -1 terminates
 **PARAM** str 128
 taskLog                            Logfile to write task messages to
 **PARAM** int 10
@@ -798,9 +798,10 @@ Adverbs:
   doGPU.......If software is built for a GPU and one is available
               True=> use it for the DFT model calculation, 
               otherwise use the CPU
-  doGPUGrid...If software is built for a GPU and one is available
+  doGPUGrid...If software is built for a GPU and one+ is available
               True=use it for gridding visibilities.
-  GPU_no......GPU number to use if multiple are available, 0-rel
+  GPU_no......List of GPU numbers to use in gridding, 0-rel
+              The list is terminated by a -1.
   taskLog.....Log file to write messages to INSTEAD of the terminal
               This is useful in long runs or batch files.
               Path is absolute or relative to where the task 

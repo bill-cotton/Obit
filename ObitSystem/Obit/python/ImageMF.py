@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical ImageMF class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2010-2021
+#  Copyright (C) 2010-2023
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import Obit, _Obit, Table, FArray, OErr, Image, ImageDesc, InfoList, History, AIPSDir, OSystem
 import TableList, AIPSDir, FITSDir, ImageFit, FitRegion, FitModel
-import OData
+import OData, ImageUtil
 import SkyGeom, math
 from six.moves import range
 #import AIPSData

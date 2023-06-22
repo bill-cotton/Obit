@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2002-2012
+#;  Copyright (C) 2002-2023
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -52,8 +52,9 @@ ALL_CFLAGS = $(CFLAGS) @GSL_CFLAGS@ @GLIB_CFLAGS@ @PLPLOT_CFLAGS@ \
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $<
 	mv $@.o $(LIBDIR)
 
+noAIPS=ObitAIPSFortran.c ObitAIPSObject.c  # don't compile ancient AIPS stuff
 # get list of all c source files (*.c) files
-AllC := $(filter-out ObitAIPSFortran.c, $(filter-out ObitAIPSObject.c, $(wildcard *.c)))
+AllC := $(filter-out $(noAIPS), $(wildcard *.c))
 OBJECTS := $(patsubst %.c,%.o, $(AllC))
 
 CTARGETS := $(addprefix $(LIBDIR),$(OBJECTS))

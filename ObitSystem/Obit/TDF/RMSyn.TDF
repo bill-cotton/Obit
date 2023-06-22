@@ -3,7 +3,7 @@
 ;! Rotation measure synthesis
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2021-2022
+;;  Copyright (C) 2021-2023
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ RMSyn    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 RMSyn:    Rotation measure synthesis
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inQFile                            input Q Filename if FITS image
 **PARAM** str 12
 inQName                            Q Image name (name)
@@ -42,7 +42,7 @@ inQClass                           Q Image name (class)
 inQSeq            0.0       9999.0 Q Image name (seq. #)
 **PARAM** int 1
 inQDisk           0.0         99.0 Q Disk  #
-**PARAM** str 48
+**PARAM** str 128
 inUFile                            input U Filename if FITS image
 **PARAM** str 12
 inUName                            U Image name (name)
@@ -58,7 +58,7 @@ BLC               0.0     128000.0 Bottom left corner of image
 **PARAM** int 7
 TRC               0.0     128000.0  Top right corner of image
                                      0=>entire image
-**PARAM** str 48
+**PARAM** str 128
 outFile                            output Filename if FITS image
 **PARAM** str 12
 outName                            Output name.
@@ -71,7 +71,7 @@ outSeq         -1.0      9999.0    Output image seq. #.
 outDisk                            Output disk #
 **PARAM** boo 1 **DEF** F
 doPhase                            Write phase image?
-**PARAM** str 48
+**PARAM** str 128
 out2File                           output phase if FITS image
 **PARAM** str 12
 out2Name                           Output phase iname.

@@ -4,7 +4,7 @@
 ;! Append UV data
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2012-2013
+;;  Copyright (C) 2012-2023
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ UVAppend   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 UVAppend   Obit Task to append uv data
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inFile                             FITS input uvdata if Type=='FITS'
 **PARAM** str 12
 inName                             Input UV file name (name)
@@ -105,7 +105,7 @@ timeAvg                            Time (min) over which to determine
                                    weighting
 **PARAM** str 4
 outDType                           "FITS" or "AIPS" type of output
-**PARAM** str 48
+**PARAM** str 128
 outFile                            FITS output uvdata if Type=='FITS'
 **PARAM** str 12
 outName                            Output UV AIPS file name

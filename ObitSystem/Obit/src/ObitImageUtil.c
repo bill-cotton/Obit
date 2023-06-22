@@ -584,20 +584,21 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
       num_GPU = 0;
       for (i=0; i<dim[0]; i++) if (ldevice[i]>=0) num_GPU++;
       if (num_GPU<=0) {num_GPU=1; ldevice[0]=0;}  /* defaults to cuda device 0 */
-      cuda_device = g_malloc0((num_GPU+1)*sizeof(olong));
-      gpumem =      g_malloc0((num_GPU+1)*sizeof(ollong));
+      cuda_device = g_malloc0((num_GPU+10)*sizeof(olong));  /* Hack (+10) for sarao bug*/
+      gpumem =      g_malloc0((num_GPU+10)*sizeof(ollong));
       for (i=0; i<num_GPU; i++) {
 	cuda_device[i] = (int)ldevice[i];
 	gpumem[i] =      ObitGPUGridSetGPU (cuda_device[i]); /* initialize */
       }
     } else {  /* default GPU = 0 */
       num_GPU = 1;
-      cuda_device = g_malloc0((num_GPU+1)*sizeof(olong));
-      gpumem      = g_malloc0((num_GPU+1)*sizeof(ollong));
+      cuda_device = g_malloc0((num_GPU+10)*sizeof(olong));
+      gpumem      = g_malloc0((num_GPU+10)*sizeof(ollong));
       cuda_device[0] = 0;
       gpumem[0]      = ObitGPUGridSetGPU (cuda_device[0]); /* initialize */
     }
-    Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding with %d GPUs",num_GPU);
+    if (err->prtLv>=2)
+      Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding with %d GPUs",num_GPU);
   } /* end using GPU */
 
   /* Need new gridding member? */
@@ -1064,20 +1065,21 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       num_GPU = 0;
       for (i=0; i<dim[0]; i++) if (ldevice[i]>=0) num_GPU++;
       if (num_GPU<=0) {num_GPU=1; ldevice[0]=0;}  /* defaults to cude device 0 */
-      cuda_device = g_malloc0((num_GPU+1)*sizeof(olong));
-      gpumem =      g_malloc0((num_GPU+1)*sizeof(olong));
+      cuda_device = g_malloc0((num_GPU+10)*sizeof(olong));
+      gpumem =      g_malloc0((num_GPU+10)*sizeof(olong));
       for (i=0; i<num_GPU; i++) {
 	cuda_device[i] = ldevice[i];
 	gpumem[i] =      ObitGPUGridSetGPU (cuda_device[i]); /* initialize */
       }
     } else {  /* default GPU = 0 */
       num_GPU = 1;
-      cuda_device = g_malloc0((num_GPU+1)*sizeof(olong));
-      gpumem      = g_malloc0((num_GPU+1)*sizeof(olong));
+      cuda_device = g_malloc0((num_GPU+10)*sizeof(olong));
+      gpumem      = g_malloc0((num_GPU+10)*sizeof(olong));
       cuda_device[0] = 0;
       gpumem[0]      = ObitGPUGridSetGPU (cuda_device[0]); /* initialize */
     }
-    Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding  with %d GPUs",num_GPU);
+    if (err->prtLv>=2)
+      Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding  with %d GPUs",num_GPU);
   } /* end using GPU */
 
   /* Need new gridding member? */
