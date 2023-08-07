@@ -463,22 +463,55 @@ def PHeader (inImage, err):
     # end PHeader
     
 
-def PFitSpec (inImage, err, antSize=0.0, nOrder=1, corAlpha=0.0):
+def PFitSpec (inImage, err, nOrder=1, corAlpha=0.0, maxSNR=False, \
+              doPBCor=False, PBmin=None, doTab=False, \
+              refFreq=None, antSize=None, minFlux=0.0, Weights=None):
     """
     Fit spectrum to each pixel of an ImageMF
 
+    Can run with multiple threads if enabled:
+    OSystem.PAllowThreads(2)  # 2 threads
     * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     * antSize   = If > 0 make primary beam corrections assuming antenna
                   diameter (m) antSize
     * nOrder    = Order of fit, 0=intensity, 1=spectral index,
                   2=also curvature
     * corAlpha  = Spectral index correction to apply before fitting
-    * err       = Python Obit Error/message stack
+    * maxSNR    = Maximize SNR? 
+    * refFreq   = Reference frequency for fit [def ref for inImage]
+    * minFlux   = Min. broadband flux density to attempt a spectral fit.
+                  If nonzero, then all flux densities are the weighted average
+                  and only any fitted spectral indices and errors are output.
+                  default 0
+    * Weights   = OBIT_float (?,1,1 per channel) if given, use these
+                  weights rather than 1/rms^2 NOTE:
+                  1/sqrt(sum(weights)) should give the broadband RMS!
+                  Default None.
+    * doPBCor   = If true do primary beam correction. [def False]
+    * PBmin     = Minimum beam gain correction
+                  One per frequency or one for all, def 0.05,
+                  1.0 => no gain corrections
+    * doTab     = Use tabulated beam if available
     """
     ################################################################
-    inImage.List.set("nOrder",nOrder)
-    inImage.List.set("corAlpha",corAlpha, ttype='float')
+    inImage.List.set("nOrder",     nOrder)
+    inImage.List.set("corAlpha",   corAlpha,   ttype='float')
+    inImage.List.set("minFlux",    minFlux,    ttype='float')
+    inImage.List.set("maxSNR" ,    maxSNR,     ttype='boolean')
+    inImage.List.set("doPBCor",    doPBCor,    ttype='boolean')
+    inImage.List.set("doTab"  ,    doTab,      ttype='boolean')
+    if refFreq:
+        inImage.List.set("refFreq",  refFreq,  ttype='double')
+    if antSize:
+        inImage.List.set("antSize",  antSize,  ttype='float')
+    if PBmin:
+        inImage.List.set("PBmin",    PBmin,    ttype='float')
+    if Weights:
+        inImage.List.set("Weights",  Weights,  ttype='float')
+
     Obit.ImageMFFitSpec(inImage.me, antSize, err.me)
+    OErr.printErr(err)
     # end PFitSpec
 
 def PFitSpec2 (inImage, outImage, err, nterm=2, \
@@ -518,9 +551,9 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
                   If nonzero, then all flux densities are the weighted average
                   and only any fitted spectral indices and errors are output.
                   default 0
-    * Weights   = OBIT_float (?,1,1 per channel) 
-                  if given, use these weights rather than 1/rms^2
-                  NOTE: 1/sqrt(sum(weights)) should give the broadband RMS!
+    * Weights = OBIT_float (?,1,1 per channel) if given, use these
+                  weights rather than 1/rms^2 NOTE:
+                  1/sqrt(sum(weights)) should give the broadband RMS!
                   Default None.
    """
     ################################################################
@@ -545,10 +578,11 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
         inImage.List.set("Weights",  Weights,  ttype='float')
 
     Obit.ImageMFFitSpec2(inImage.me, outImage.me, err.me)
+    OErr.printErr(err)
     # end PFitSpec2
 
-def PEffFqCorr (fitImage, rawImage, err, corAlpha=-0.7, \
-                doPBCor=False, PBmin=None, antSize=None, doTab=False):
+def PEffFqCorr (fitImage, rawImage, err, corAlpha=-0.7, calFract=None,  \
+                doPBCor=False, PBmin=None, antSize=None, doTab=False, Weights=None):
     """
     Correct flux density plane for effective frequency
 
@@ -564,6 +598,8 @@ def PEffFqCorr (fitImage, rawImage, err, corAlpha=-0.7, \
     * rawImage  = Raw ImageMF
     * err       = Python Obit Error/message stack
     * corAlpha  = Spectral index correction to apply before fitting
+    * calFract  = Calibration error as fraction of flux
+                  One per frequency or one for all, def 0.05
     * doPBCor   = If true do primary beam correction. [def False]
     * PBmin     = Minimum beam gain correction
                   One per frequency or one for all, def 0.05,
@@ -571,6 +607,10 @@ def PEffFqCorr (fitImage, rawImage, err, corAlpha=-0.7, \
     * antSize   = Antenna diameter (m) for PB gain corr, 
                   One per frequency or one for all, def 25.0
     * doTab     = Use tabulated beam if available
+    * Weights = OBIT_float (?,1,1 per channel) if given, use these
+                  weights rather than 1/rms^2 NOTE:
+                  1/sqrt(sum(weights)) should give the broadband RMS!
+                  Default None.
      """
     ################################################################
     fitImage.List.set("doPBCor",    doPBCor,    ttype='boolean')
@@ -580,8 +620,13 @@ def PEffFqCorr (fitImage, rawImage, err, corAlpha=-0.7, \
         fitImage.List.set("PBmin",    PBmin,    ttype='float')
     if antSize:
         fitImage.List.set("antSize",   antSize, ttype='float')
+    if Weights:
+        fitImage.List.set("Weights",  Weights,  ttype='float')
+    if calFract:
+        fitImage.List.set("calFract",  calFract,  ttype='float')
 
     Obit.ImageMFEffFqCorr(fitImage.me, rawImage.me, err.me)
+    OErr.printErr(err)
     # end PEffFqCorr
 
 def PMFPBCor (inIm, err, antSize=25, minGain=0.05):

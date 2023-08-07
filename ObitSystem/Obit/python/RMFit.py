@@ -98,7 +98,7 @@ class RMFit(Obit.RMFit):
         Otherwise a coarse RM synthesis is done followed by a nonlinear least
         squares fit.  Best for high SNR data.
         Can run with multiple threads if enabled:
-        OSystem.PAllowThreads(2)  # 2 threads
+        OSystem.PAllowThreads(16)  # 16 threads
         self     = RMFit object, parameters on List:
             refLamb2  double scalar Reference lambda^2 for fit [def ref for inQImage]
             minQUSNR  float min. SNR for Q and U pixels [def 3.0]
@@ -118,9 +118,8 @@ class RMFit(Obit.RMFit):
                    Should be defined but not created.
                    If doRMSyn: plane 1=RM (rad/m^2), 2=EVPA(rad), 3=amp (Jy), 4=Chi^2
                    else
-                   Planes 1->nterm are coefficients per pixel (rad m^2, rad)
-                   Planes nterm+1->2*nterm are uncertainties in coefficients
-                   Plane 2*nterm+1 = Chi squared of fit
+                   Planes plane 1=RM (rad/m^2), 2=EVPA(rad), 3=amp (Jy),
+                   Planes 4= err RM (rad/m^2), 5=err EVPA(rad), 6 = chi^2
         err      = Obit error stack
         """
         ################################################################

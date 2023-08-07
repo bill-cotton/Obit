@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2020                                          */
+/*;  Copyright (C) 2011-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -60,7 +60,7 @@ ofloat ObitExpCalc(ofloat arg)
 void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
 {
   olong i, nleft;
-#if   HAVE_AVX512==1
+#if   HAVE_AVX512XX==1
   olong ndo;
   CV16SF varg, vexp;
 #elif   HAVE_AVX==1
@@ -77,7 +77,7 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
   i     = 0;   /* None done yet */
 
  /** AVX512 implementation */
-#if   HAVE_AVX512==1
+#if   HAVE_AVX512XX==1
   /* Loop in groups of 16 */
   ndo = nleft - nleft%16;  /* Only full groups of 16 */
   for (i=0; i<ndo; i+=16) {

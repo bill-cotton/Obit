@@ -3378,6 +3378,11 @@ void ObitSkyModelGetInput (ObitSkyModel* in, ObitErr *err)
   if (!ObitInfoListIsA(in->info)) return;
   InfoReal.itg = 0;type = OBIT_oint;
 
+  /* GPU wanted? */
+  InfoReal.itg = (olong)in->doGPU; type = OBIT_bool;
+  ObitInfoListGetTest(in->info, "doGPU", &type, (gint32*)dim, &InfoReal);
+  in->doGPU = InfoReal.itg;
+
   /* Channel range */
   ObitInfoListGetTest(in->info, "BChan", &type, (gint32*)dim, &InfoReal);
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
@@ -3429,11 +3434,6 @@ void ObitSkyModelGetInput (ObitSkyModel* in, ObitErr *err)
   ObitInfoListGetTest(in->info, "noNeg", &type, (gint32*)dim, &InfoReal);
   in->noNeg = InfoReal.itg;
 
-  /* GPU wanted? */
-  InfoReal.itg = (olong)in->doGPU; type = OBIT_bool;
-  ObitInfoListGetTest(in->info, "doGPU", &type, (gint32*)dim, &InfoReal);
-  in->doGPU = InfoReal.itg;
-
   /* Relative Primary Beam correction wanted? */
   InfoReal.itg = (olong)in->doPBCor; type = OBIT_bool;
   ObitInfoListGetTest(in->info, "PBCor", &type, (gint32*)dim, &InfoReal);
@@ -3459,10 +3459,13 @@ void ObitSkyModelGetInput (ObitSkyModel* in, ObitErr *err)
   ObitInfoListGetTest(in->info, "ModelType", &type, (gint32*)dim, &InfoReal);
   in->modelType = InfoReal.itg;
 
-  /* Model mode */
-  InfoReal.itg = (olong)OBIT_SkyModel_Fastest; type = OBIT_long;
+  /* Model mode - only DFT for doGPU*/
+  type = OBIT_long;
+  if (in->doGPU) InfoReal.itg = (olong)OBIT_SkyModel_DFT; 
+  else           InfoReal.itg = (olong)OBIT_SkyModel_Fastest; 
   ObitInfoListGetTest(in->info, "Mode", &type, (gint32*)dim, &InfoReal);
   in->modelMode = InfoReal.itg;
+  if (in->doGPU) in->modelMode = (olong)OBIT_SkyModel_DFT; /* Force it */
 
   /* Point model flux density */
   InfoReal.flt = 0.0; type = OBIT_float;

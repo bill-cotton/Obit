@@ -3058,7 +3058,7 @@ static inline void SkyModel2DDot (olong n, ofloat *v1, ofloat *v2, ofloat *v3,
  */
  static inline void SkyModelVMul (olong n, ofloat *v1, ofloat *v2, ofloat *ov) {
   olong i, ilast;
-#if HAVE_AVX512==1
+#if HAVE_AVX512XX==1
   v16sf vv1, vv2;
 #elif HAVE_AVX==1
   v8sf vv1, vv2;
@@ -3066,8 +3066,8 @@ static inline void SkyModel2DDot (olong n, ofloat *v1, ofloat *v2, ofloat *v3,
 
   if (n<=0) return;
   ilast = 0;
-  /* AVX512 in blocks of 16 */
-#if HAVE_AVX512==1
+  /* AVX512 in blocks of 16 - gives segv - disable */
+#if HAVE_AVX512XX==1
   for (i=ilast; i<n; i+=16) {
   if (ilast+16>n) break;
   ilast = i+16;

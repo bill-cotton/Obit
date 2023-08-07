@@ -1914,6 +1914,9 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
  *                   correction to apply, def = 0.0
  * \li            calFract   float (?,1,1) Calibration error as fraction of flux
  *                           One per frequency or one for all, def 1.0e-5,
+ * \li            Weights    OBIT_float (?,1,1 per channel) 
+ *                           if given use these weights rather than 1/rms^2
+ *                           NOTE: 1/sqrt(sum(weights)) should give the broadband RMS!
  * \param in2     Image with un PBCorred full ImageMF w/ spectral cube
  * \param err     Obit error stack object.
  */
@@ -1921,18 +1924,20 @@ void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err)
 {
   ofloat corAlpha=0.0;
   olong plane[5] = {1,1,1,1,1};
-  olong nIn, nx, ny, iplane, naxis[2]; 
-  odouble *freqs=NULL, refFreq;
+  olong nIn, nx, ny, iplane, nwt=0,  naxis[2]; 
+  odouble *freqs=NULL, refFreq=-1.0;
   ofloat pbmin, antsize, calfract, *PBmin=NULL, *antSize=NULL, *RMS=NULL, *calFract=NULL;
-  ofloat iRefFreq, wt, fblank = ObitMagicF();
+  ofloat iRefFreq, wt, *weights=NULL, fblank = ObitMagicF();
   gboolean doPBCor=FALSE, doTab=FALSE;
   ObitImage *workIm=NULL;
   ObitFArray *wtArr=NULL, *accumWt=NULL, *accumWtFq=NULL;
   ObitInfoType type;
+  ObitHistory *outHist=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gint32 PBdim[MAXINFOELEMDIM], ASdim[MAXINFOELEMDIM], CFdim[MAXINFOELEMDIM];
+  gchar hiCard[73], *TF[2]={"False","True"};
   gchar *PBParms[] = {"doPBCor","calFract","PBmin","antSize","doTab",
-		       NULL};
+		      NULL};
   gchar *routine = "ObitImageMFEffFqCor";
 
   /* error checks */
@@ -1953,6 +1958,16 @@ void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err)
   		      "%s: NO spectra in %s", 
 		      routine, in->name);
 
+  /* Check Specified Weights? */
+  ObitInfoListGetP (in->info, "Weights",   &type, dim, (gpointer)&weights);
+  if (weights) {
+    nwt = dim[0]; /* How many weights? */
+    Obit_return_if_fail((nwt==in->nSpec), err, 
+  		      "%s: Number of Weights incompatible with data %d %d", 
+			routine, nwt, in->nSpec);
+    Obit_log_error(err, OBIT_InfoErr, "Using provided Weights");
+    ObitErrLog(err); }
+
   /* Tell about it */
   Obit_log_error(err, OBIT_InfoErr, "Correcting for effective frequency");
   ObitErrLog(err); 
@@ -1969,6 +1984,8 @@ void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err)
     Obit_log_error(err, OBIT_InfoErr, "doPBCor=%d",doPBCor);
     Obit_log_error(err, OBIT_InfoErr, "doTab=%d",doTab);
     Obit_log_error(err, OBIT_InfoErr, "corAlpha=%f",corAlpha);
+    if (calFract)
+      Obit_log_error(err, OBIT_InfoErr, "calFract=%f",(odouble)calFract[0]);
     ObitErrLog(err); 
   }
   
@@ -1981,7 +1998,7 @@ void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err)
   if (doPBCor) {
     workIm = newObitImageMFScratch ((ObitImage*)in2, err);
     if (err->error) goto cleanup;
-    /* Get fitting parameters, copy to fitter */
+    /* Get fitting parameters */
     ObitInfoListCopyList (in->info, workIm->info, PBParms);
   }
 
@@ -2002,7 +2019,7 @@ void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err)
     else                               pbmin = 0.01;
     if (calFract && (CFdim[0]>=iplane+1)) calfract = calFract[iplane];
     if (calFract && (CFdim[0]==1))        calfract = calFract[0];
-    else                                  calfract = 1.0e-5;
+    else                                  calfract = 0.0;
     plane[0] = iplane+in->maxOrder+2; 
     /* Get PB correction image  if requested */
     if (doPBCor) {
@@ -2023,7 +2040,12 @@ void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err)
     ObitFArrayMul(in2->image, in2->image, in2->image);  /* Square */
     /* Use as weight - same as in SpectrumFitter */
     if ((RMS[iplane]>1.0e-10) && (RMS[iplane]!=fblank)) {
-      wt = RMS[iplane]*RMS[iplane];
+      /* Override weights? */
+      if (nwt>0) {
+	wt = 1.0/weights[iplane];
+      } else {
+	wt = RMS[iplane]*RMS[iplane];
+      }
       ObitFArraySAdd(in2->image, wt);
       ObitFArrayDiv(wtArr, in2->image, wtArr);
     } else {
@@ -2032,12 +2054,11 @@ void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err)
 	   
     /* Frequency */
     freqs[iplane] = in->specFreq[iplane];
-
     /* Accumulate */
     ObitFArrayAdd(accumWt, wtArr, accumWt);
     ObitFArraySMul(wtArr, (ofloat)freqs[iplane]);
     ObitFArrayAdd(accumWtFq, wtArr, accumWtFq);
-  } /* end loop over planes */
+ } /* end loop over planes */
 
   /* Get effective Frequency image */
   ObitFArrayDiv(accumWtFq, accumWt, accumWtFq);
@@ -2068,6 +2089,38 @@ void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err)
   /* DEBUG 
   ObitImageUtilArray2Image ("EffFqCorr.fits",0, wtArr,err);*/
   /* Cleanup */
+  /* History */
+  /* Copy any history  unless Scratch */
+  if (!in->isScratch) {
+    outHist  = newObitDataHistory((ObitData*)in, OBIT_IO_ReadOnly, err);
+    /* Add parameters */
+    ObitHistoryOpen (outHist, OBIT_IO_ReadWrite, err);
+    ObitHistoryTimeStamp (outHist, "ObitImageMFEffFqCorr", err);
+    if (calFract) {
+      g_snprintf ( hiCard, 72, "EffFqCorr  calFract = %f",calFract[0]);
+      ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    }
+    g_snprintf ( hiCard, 72, "EffFqCorr  doPBCor = %s",TF[doPBCor]);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    if (PBmin) {
+      g_snprintf ( hiCard, 72, "EffFqCorr  PBmin = %f",PBmin[0]);
+      ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    }
+    if (antSize) {
+      g_snprintf ( hiCard, 72, "EffFqCorr  antSize = %f",antSize[0]);
+      ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    }
+    g_snprintf ( hiCard, 72, "EffFqCorr  corAlpha = %f",corAlpha);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    if (nwt>0)
+      g_snprintf ( hiCard, 72, "EffFqCorr  Weights = %f %f %f...",
+		   weights[0], weights[1], weights[2]);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    ObitHistoryClose (outHist, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    outHist = ObitHistoryUnref(outHist);
+  }
+
  cleanup:
   g_free(freqs);
   g_free(RMS);
@@ -2150,7 +2203,7 @@ odouble ObitImageMFGetPlaneFreq (ObitImage *image)
     return Freq;
   }
   /* Get from header List or header if missing, term planes will get main header freq. */
-  sprintf(keyword,"FREQ%4.4d", plane-nterm);
+  sprintf(keyword,"FREQ%4.4d", plane-nterm+1);
   if (!ObitInfoListGetTest(image->myDesc->info, keyword, &type, dim, &Freq)) {
     if (image->myDesc->jlocf>=0) 
       Freq = image->myDesc->crval[image->myDesc->jlocf];

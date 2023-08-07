@@ -74,7 +74,6 @@ static void Fitter (ObitRMFit* in, ObitErr *err);
 static void WriteOutput (ObitRMFit* in, ObitImage *outImage, 
 			 ObitErr *err);
 
-
 #ifdef HAVE_GSL
 /** Private: Solver function evaluation */
 static int RMFitFunc (const gsl_vector *x, void *params, 
@@ -161,6 +160,9 @@ static void NLRMFit (NLRMFitArg *arg);
 
 /** Private: coarse search */
 static olong RMcoarse (NLRMFitArg *arg);
+
+/** Private: Determine amplitude for fit */
+static float RMFitAmp (NLRMFitArg *arg);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -533,8 +535,8 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   in->lamb2      = g_malloc0(in->nlamb2*sizeof(odouble));
 
   /* How many output planes? */
-  if (in->doError) nOut = 1+in->nterm*2;
-  else nOut = in->nterm;
+  if (in->doError) nOut = 2+in->nterm*2;
+  else nOut = 1+in->nterm;
   /* always 4 for doRMSyn */
   if (in->doRMSyn) nOut = 4;
 
@@ -746,8 +748,8 @@ void ObitRMFitImArr (ObitRMFit* in, olong nimage,
   in->lamb2      = g_malloc0(in->nlamb2*sizeof(odouble));
 
   /* How many output planes? */
-  if (in->doError) nOut = 1+in->nterm*2;
-  else nOut = in->nterm;
+  if (in->doError) nOut = 2+in->nterm*2;
+  else nOut = 1+in->nterm;
     
   /* Define term arrays */
   in->outFArrays = g_malloc0((nOut)*sizeof(ObitFArray*));
@@ -943,7 +945,7 @@ ofloat* ObitRMFitSingle (olong nlamb2, olong nterm, odouble refLamb2, odouble *l
   arg->wrk1           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->wrk2           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->wrk3           = g_malloc0(arg->nlamb2*sizeof(ofloat));
-  arg->coef           = g_malloc0(3*arg->nterm*sizeof(ofloat));
+  arg->coef           = g_malloc0((1+3*arg->nterm)*sizeof(ofloat));
   for (i=0; i<nlamb2; i++) {
     arg->lamb2[i]   = lamb2[i];
     arg->Qvar[i]    = qsigma[i]*qsigma[i];
@@ -1079,7 +1081,7 @@ gpointer ObitRMFitMakeArg (olong nlamb2, olong nterm, odouble refLamb2,
   arg->wrk1           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->wrk2           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->wrk3           = g_malloc0(arg->nlamb2*sizeof(ofloat));
-  arg->coef           = g_malloc0(3*arg->nterm*sizeof(ofloat));
+  arg->coef           = g_malloc0((1+3*arg->nterm)*sizeof(ofloat));
   for (i=0; i<nlamb2; i++) {
     arg->lamb2[i]        = lamb2[i];
   }
@@ -1354,10 +1356,11 @@ void ObitRMFitClear (gpointer inn)
  * \li third is the polarized amplitude at 0 lambda^2
  * \li fouurth is the sum of the statistical weights
  * Otherwise, the results are stored in outFArrays:
- * \li first entry is the RM at the reference lambda^2
+ * \li first entry is the RM (rad/m^2)
  * \li second is the EVLA (rad) at the reference lambda^2
- * \li entries nterm+1->nterm*2 RMS uncertainties on coefficients
- * \li entry 1+nterm*2 = the Chi squared of the fit
+ * \li third is polarized amplitude (Jy)
+ * \li entries nterm+2->nterm*2 RMS uncertainties on coefficients (not Amp)
+ * \li entry 2+nterm*2 = the Chi squared of the fit
  *
  * \param  in  RMFit to fit
  * \param  err Obit error stack object.
@@ -1420,9 +1423,9 @@ static void Fitter (ObitRMFit* in, ObitErr *err)
     args->wrk2        = g_malloc0(args->nlamb2*sizeof(ofloat));
     args->wrk3        = g_malloc0(args->nlamb2*sizeof(ofloat));
     if (args->doError)
-      args->coef      = g_malloc0(3*args->nterm*sizeof(ofloat));
+      args->coef      = g_malloc0((1+3*args->nterm)*sizeof(ofloat));
     else
-      args->coef      = g_malloc0(args->nterm*sizeof(ofloat));
+      args->coef      = g_malloc0((2+args->nterm)*sizeof(ofloat));
    /* GSL implementation */
 #ifdef HAVE_GSL
     args->solver = NULL; args->covar = NULL; args->work = NULL;
@@ -1526,7 +1529,8 @@ static void Fitter (ObitRMFit* in, ObitErr *err)
  * \param outImage Image cube with fitted spectra.
  *                 Should be defined but not created.
  *                 Planes 1->nterm are coefficients per pixel
- *                 Planes nterm+1->2*nterm are uncertainties in coefficients
+ *                 Plane 3 = amplitude
+ *                 Planes nterm+2->2*nterm are uncertainties in coefficients
  * \param err      Obit error stack object.
  */
 static void WriteOutput (ObitRMFit* in, ObitImage *outImage, 
@@ -1564,8 +1568,8 @@ static void WriteOutput (ObitRMFit* in, ObitImage *outImage,
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
   /* How many output planes? */
-  if (in->doError) nOut = 1+in->nterm*2;
-  else nOut = in->nterm;
+  if (in->doError) nOut = 2+in->nterm*2;
+  else nOut = 1+in->nterm;
   /* always 4 for doRMSyn */
   if (in->doRMSyn) nOut = 4;
 
@@ -1623,8 +1627,8 @@ static gpointer ThreadNLRMFit (gpointer arg)
   }
 
   /* How many output planes */
-  if (in->doError) nOut = 1+in->nterm*2;
-  else nOut = in->nterm;
+  if (in->doError) nOut = 2+in->nterm*2;
+  else nOut = 1+in->nterm;
 
   /* Loop over pixels in Y */
   indx = lo*in->nx  -1;  /* Offset in pixel arrays */
@@ -1679,7 +1683,7 @@ static gpointer ThreadNLRMFit (gpointer arg)
 	for (i=0; i<nOut; i++) 
 	  in->outFArrays[i]->array[indx]  = larg->coef[i];
       } else { /* only values */
- 	for (i=0; i<in->nterm; i++) 
+ 	for (i=0; i<(1+in->nterm); i++) 
 	  in->outFArrays[i]->array[indx] = larg->coef[i];
       }
 
@@ -1696,25 +1700,25 @@ static gpointer ThreadNLRMFit (gpointer arg)
 
 /**
  * Fit RM and EVPA at the reference lambda^2
- * Only fits for up to 5 terms
+ * Only fits for up to 6 terms
  * \param arg      NLRMFitArg structure
  *                 fitted parameters returned in arg->in->coef
- *                 RM, EVPA, sig RM, sig EVPA, chi2
+ *                 RM, EVPA, amp, sig RM, sig EVPA, chi2
  */
 static void NLRMFit (NLRMFitArg *arg)
 {
   olong iter=0, i, nterm=2, nvalid;
-  ofloat sumwt, fblank = ObitMagicF();
+  ofloat sumwt, amp, fblank = ObitMagicF();
   double chi2;
   int status;
  
   /* Initialize output */
   if (arg->doError) 
-    for (i=0; i<2*nterm+1; i++) arg->coef[i] = 0.0;
+    for (i=0; i<2*nterm+2; i++) arg->coef[i] = 0.0;
   else
-    for (i=0; i<nterm; i++) arg->coef[i]  = 0.0;
+    for (i=0; i<=nterm; i++) arg->coef[i]  = 0.0;
   /* Blank */
-  arg->coef[0] =  arg->coef[1] = fblank;
+  arg->coef[0] =  arg->coef[1] = arg->coef[2] = fblank;
   
   /* try to unwrap EVPA, get data to be fitted, returns number of valid data 
      and crude fits */
@@ -1773,6 +1777,9 @@ static void NLRMFit (NLRMFitArg *arg)
   /* Get fitted values - switch order to RM, EVPA*/
   arg->coef[0] = (ofloat)gsl_vector_get(arg->solver->x, 1);
   arg->coef[1] = (ofloat)gsl_vector_get(arg->solver->x, 0);
+  /* Amplitude */
+  amp = RMFitAmp (arg);
+  arg->coef[2] = amp;
   
   /* Errors wanted? */
   if (arg->doError) {
@@ -1783,9 +1790,9 @@ static void NLRMFit (NLRMFitArg *arg)
 #endif /* HAVE_GSL2 */ 
     /* second argument removes degenerate col/row from Jacobean */
     gsl_multifit_covar (J, 1.0e-8, arg->covar);
-    arg->coef[nterm+0] = sqrt(gsl_matrix_get(arg->covar, 1, 1));
-    arg->coef[nterm+1] = sqrt(gsl_matrix_get(arg->covar, 0, 0));
-    arg->coef[4] = chi2;
+    arg->coef[nterm+1] = sqrt(gsl_matrix_get(arg->covar, 1, 1));
+    arg->coef[nterm+2] = sqrt(gsl_matrix_get(arg->covar, 0, 0));
+    arg->coef[nterm+3] = chi2;
   } /* end of get errors */
   
   /* Cleanup */
@@ -2482,4 +2489,56 @@ static gpointer ThreadRMSynFit (gpointer arg)
 
   return NULL;
 } /* end ThreadRMSynFit */
+
+/**
+ * Determine the polarized amplitude corresponding to a solution
+ * \param arg      NLRMFitArg structure
+ *                 fitted parameters returned in arg->in->coef
+ *                 RM, EVPA, sig RM, sig EVPA, chi2
+ * \return unwraped polarized amplitude
+ */
+static float RMFitAmp (NLRMFitArg *arg)
+{
+  ofloat amp, fblank = ObitMagicF();
+  olong nlamb2  = arg->nlamb2;
+  odouble RM, EVPA, sumQW, sumQWt, sumUW, sumUWt;
+  ofloat Qval, Uval;
+  size_t i, j;
+
+  /* get model parameters */
+  EVPA = (double)arg->coef[1];
+  RM   = (double)arg->coef[0];
+  /* Valid? */
+  amp = fblank;
+  if ((EVPA==fblank) || (RM==fblank)) return amp;
+  sumQW = sumQWt = sumUW = sumUWt = 0.0;  /* Init sums */
+
+  /* First compute model phases */
+  for (j=0; j<nlamb2; j++) 
+    arg->wrk1[j] = 2*(EVPA + RM * (arg->lamb2[j]-arg->refLamb2));
+  /* then sine/cosine */
+  ObitSinCosVec (nlamb2, arg->wrk1, arg->wrk3, arg->wrk2);
+  /* Loop over data  */
+  for (i=0; i<nlamb2; i++) {
+    /* Q model = arg->Pobs[i] * arg->wrk2[i]  */
+    if ((arg->Qobs[i]!=fblank) && (arg->Qweight[i]>0.0)) {
+      Qval = arg->Pobs[i] * arg->wrk2[i];
+      sumQWt += arg->Qweight[i];
+      sumQW  += Qval * arg->Qweight[i];
+    }
+    /* U model = arg->Pobs[i] * arg->wrk3[i]  */
+    if ((arg->Uobs[i]!=fblank) && (arg->Uweight[i]>0.0)) {
+      Uval = arg->Pobs[i] * arg->wrk3[i];
+      sumUWt += arg->Uweight[i];
+      sumUW  += Uval * arg->Uweight[i];
+    }
+  } /* End loop over data */
+
+  /* Any valid data? */
+  if ((sumQWt<=0.0) || (sumUWt<=0.0)) return amp;
+  Qval = sumQW / sumQWt; Uval = sumUW / sumUWt;
+  amp = (ofloat)sqrt(Qval*Qval+Uval*Uval);
+  
+  return amp;
+} /*  end RMFitAmp */
 

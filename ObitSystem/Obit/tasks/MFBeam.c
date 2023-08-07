@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2021                                          */
+/*;  Copyright (C) 2011-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1503,7 +1503,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect", 
-    "numBeamTapes", "BeamTapes", "MResKnob",
+    "numBeamTapes", "BeamTapes", "MResKnob", "doGPUGrid", "GPU_no",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -2812,7 +2812,7 @@ void MFBeamHistory (gchar *Source, ObitInfoList* myInput,
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF", "doSub",
     "nTaper", "Tapers", "MResKnob",
-    "nThreads",
+    "nThreads","doGPUGrid","GPU_no",
     NULL};
   gchar *routine = "MFBeamHistory";
 
@@ -3575,8 +3575,8 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
-    "nxBeam", "nyBeam", "Alpha", "doCalSelect",
-    "numBeamTapes", "BeamTapes", "MResKnob", "doGPU",
+    "nxBeam", "nyBeam", "Alpha", "doCalSelect","doGPUGrid", "GPU_no",
+    "numBeamTapes", "BeamTapes", "MResKnob", 
     NULL
   };
   gchar *routine = "BeamOne";
