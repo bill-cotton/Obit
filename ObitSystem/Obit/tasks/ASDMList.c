@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Summarize contents of ASDM                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -591,6 +591,9 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
     g_snprintf (line, 90, "Scan=%d config=%d Source=%s Code='%s' time= %s-%s", 
 		ScanTab->rows[iScan]->scanNumber,configID,
 		ScanTab->rows[iScan]->sourceName, calCode, begString, endString);
+    ObitPrinterWrite (myPrint, line, &quit, err);
+    if (quit) goto Quit;
+    g_snprintf (line, 90, "   ScanID=uid_%s",MainTab->rows[iMain]->entityId);
     ObitPrinterWrite (myPrint, line, &quit, err);
     if (quit) goto Quit;
     if (err->error) Obit_traceback_msg (err, routine, myPrint->name);

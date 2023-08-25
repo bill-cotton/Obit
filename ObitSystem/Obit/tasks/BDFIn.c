@@ -2339,6 +2339,7 @@ ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outDa
   gchar *filename;
   gchar *ignoreIntent[]={"CALIBRATE_POINTING","UNSPECIFIED","INTERNAL_CALIBRATION", 
 			 "SYSTEM_CONFIGURATION", NULL};
+  gchar *subscanIgnoreIntent = "UNSPECIFIED";
   gchar *routine = "GetData";
 
   /* error checks */
@@ -2475,7 +2476,28 @@ ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outDa
 	continue;
       }
     }
-    
+
+    /* Drop "MAP_ANTENNA_BEAM" if subscan intent is "UNSPECIFIED" - HACK for EVLA */
+    if (!strncmp(SDMData->ScanTab->rows[ScanId]->scanIntent[0],"MAP_ANTENNA_BEAM", 16)) {
+	drop = FALSE;
+	olong iSubScan, scanNumber, subscanNumber;
+	scanNumber    = SDMData->MainTab->rows[iMain]->scanNumber;
+	subscanNumber = SDMData->MainTab->rows[iMain]->subscanNumber;
+	for (iSubScan=0; iSubScan<SDMData->SubscanTab->nrows; iSubScan++) {  /* Search table */
+	  if ((SDMData->SubscanTab->rows[iSubScan]->scanNumber==scanNumber) &&
+	      (SDMData->SubscanTab->rows[iSubScan]->subscanNumber==subscanNumber)) {
+	    drop = !strncmp(SDMData->SubscanTab->rows[iSubScan]->subscanIntent,
+			    subscanIgnoreIntent, 11);
+	    break;
+	  }
+	}
+	if (drop) {
+	  Obit_log_error(err, OBIT_InfoErr, "Drop UNSPECIFIED scan %3.3d subscan %3.3d", scanNumber, subscanNumber);
+	  ObitErrLog(err);
+	  continue;
+	}
+      } /* end EVLA OTF Holography Hack */
+
     /* Get filename */
     filename = g_strconcat (dataroot, "/ASDMBinary/uid_", SDMData->MainTab->rows[iMain]->entityId, NULL);
     /* Complain and bail if file doesn't exist */

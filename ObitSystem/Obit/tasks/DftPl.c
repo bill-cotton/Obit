@@ -34,6 +34,9 @@
 #include "ObitUV.h"
 #include "ObitPlot.h"
 #include "ObitAIPSDir.h"
+#include "ObitPosLabelUtil.h"
+#include <math.h>
+void sincos(double x, double *sin, double *cos); /* Fooey */
 
 /* internal prototypes */
 /* Get inputs */
@@ -626,17 +629,18 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   olong ncorr, nrparm;
-  ollong i, indx, iindx=0;
+  ollong i, ii, indx, iindx=0;
   ObitIOAccess access;
   ObitUVDesc *inDesc;
   olong lastSourceID, curSourceID;
-  olong ilocu, ilocv;
-  ofloat u, v, curTime, startTime, endTime;
-  ofloat *inBuffer;
-  odouble irefFreq;
+  olong ilocu, ilocv, ilocw;
+  ofloat curTime, startTime, endTime;
+  ofloat phaseSign, *inBuffer;
+  odouble ra, dec, ra0, dec0, phase, cp, sp, u, v, w;
   olong ivis=0, cnt, iplot,maxPlot=*nplot;
   gboolean done, gotOne, doShift;
-  ofloat timeAvg, shift[2], sumWt, sumTime, sumRe, sumRe2, phase;
+  ofloat timeAvg, shift[2], sumWt, sumTime, sumRe, sumRe2, dxyzc[3];
+  gchar *rach="RA  ", rast[15], *decch="DEC ", decst[21];
   gchar *routine = "AvgData";
 
   /* error checks */
@@ -649,6 +653,17 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
 
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inData, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine, inData->name);
+  /* Get descriptors */
+  inDesc  = inData->myDesc;
+  ilocu = inDesc->ilocu; ilocv = inDesc->ilocv; ilocw = inDesc->ilocw;
+  /* data info */
+  ncorr   = inData->myDesc->ncorr;
+  nrparm  = inData->myDesc->nrparm;
+
   /* Other control */
   timeAvg = 0.25;
   ObitInfoListGetTest(inData->info, "timeAvg", &type, dim, &timeAvg);
@@ -656,23 +671,22 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
   timeAvg /= 60.*24.;  /* to days */
   shift[0] = shift[1] = 0.0;
   ObitInfoListGetTest(inData->info, "Shift", &type, dim, shift);
-  /* to radians * 2 pi */
-  shift[0] *= AS2RAD * 2.0 * G_PI;
-  shift[1] *= AS2RAD * 2.0 * G_PI;
+  ra   = ra0  = inDesc->crval[inDesc->jlocr];
+  dec  = dec0 = inDesc->crval[inDesc->jlocd];
+  if (cos(DG2RAD*dec0)!=0.0) ra = ra0 + shift[0] / 3600.0 / cos(DG2RAD*dec0);
+  dec = dec0 + shift[1] / 3600.0;
+  ObitSkyGeomShiftSIN (ra0, dec0, 0.0, ra, dec, dxyzc);
   doShift = ((shift[0]!=0.0) || (shift[1]!=0.0));
-  
-  /* test open to fully instantiate input and see if it's OK */
-  iretCode = ObitUVOpen (inData, access, err);
-  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
-    Obit_traceback_msg (err, routine, inData->name);
-  /* Get descriptors */
-  inDesc  = inData->myDesc;
-  ilocu = inDesc->ilocu; ilocv = inDesc->ilocv;
-  irefFreq = 1.0 / inDesc->freq;
-  /* data info */
-  ncorr   = inData->myDesc->ncorr;
-  nrparm  = inData->myDesc->nrparm;
 
+  /* Tell where the shift is to */
+  if (doShift) {
+    ObitPosLabelUtilRA2HMS (ra, rach, rast);
+    ObitPosLabelUtilDec2DMS(dec, decch, decst);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Shifted to %s = %s, %s = %s", rach, rast, decch, decst);
+    ObitErrLog(err); 
+  }
+ 
   /* Initialize things */
   startTime = -1.0e20;
   endTime   =  1.0e20;
@@ -711,6 +725,14 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
 	lastSourceID = curSourceID;
       }
 
+      /* U,V,W */
+      u = inBuffer[iindx+ilocu]; v = inBuffer[iindx+ilocv]; w = inBuffer[iindx+ilocw];
+      if (u<=0.0) {
+	phaseSign = -1.0;
+      } else { /* no flip */
+	phaseSign = 1.0;
+      }
+
       /* Still in current interval/source? */
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
@@ -724,10 +746,10 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
 	    sumTime += curTime;
 	    /* Shift? */
 	    if (doShift) {
-	      u = (ofloat)inBuffer[ilocu]*inDesc->freqArr[i]*irefFreq;  /* Scale to freq */
-	      v = (ofloat)inBuffer[ilocv]*inDesc->freqArr[i]*irefFreq;
-	      phase = shift[0]*u + shift[1]*v;
-	      inBuffer[indx] = inBuffer[indx]*cos(phase) - inBuffer[indx+1]*sin(phase);
+	      ii = i/inDesc->inaxes[inDesc->jlocs];
+	      phase = phaseSign*(+dxyzc[0]*u + dxyzc[1]*v + dxyzc[2]*w)*inDesc->fscale[ii];  /* Scale to freq */
+	      sincos (phase, &sp, &cp);
+	      inBuffer[indx] = inBuffer[indx]*cp - inBuffer[indx+1]*sp;
 	    }
 	    sumRe   += inBuffer[indx]*inBuffer[indx+2];
 	    sumRe2  += inBuffer[indx]*inBuffer[indx]*inBuffer[indx+2];

@@ -1805,6 +1805,7 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
 		if (in->SourceTab->rows[iSource]->sysVel) 
 		  out->sou[iOut]->sysVel[kSW]       = in->SourceTab->rows[iSource]->sysVel[0];
 		kSW++;
+		out->sou[iOut]->numLines = kSW;
 	      }
 	    }  /* end Spectral window selected */
 	  } /* End if has source Id */

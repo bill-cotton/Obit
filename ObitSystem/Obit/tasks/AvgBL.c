@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Average data on multiple baselines               .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2022                                          */
+/*;  Copyright (C) 2014-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -38,6 +38,9 @@
 #include "ObitUVUtil.h"
 #include "ObitTableAN.h"
 #include "ObitAIPSDir.h"
+#include "ObitPosLabelUtil.h"
+#include <math.h>
+void sincos(double x, double *sin, double *cos); /* Fooey */
 
 /* internal prototypes */
 /* Get inputs */
@@ -116,6 +119,14 @@ int main ( int argc, char **argv )
 
   /* Copy Averaging */
   ObitUVBLAvg(inData, outData, err);
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
+
+  /* Make sure there is no SU table on output */
+  ObitUVZapTable (outData, "AIPS SU", -1, err);
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
+
+  /* Make sure there is no PD table on output */
+  ObitUVZapTable (outData, "AIPS PD", -1, err);
   if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* History */
@@ -523,10 +534,10 @@ ObitInfoList* defaultInputs(ObitErr *err)
 ObitInfoList* defaultOutputs(ObitErr *err)
 {
   ObitInfoList *out = newObitInfoList();
-  /*  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-      ofloat ftemp;
-      gchar *routine = "defaultOutputs";"*/
-
+  /*gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+    gchar *strTemp;
+    gchar *routine = "defaultOutputs";*/
+  
   /* error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return out;
@@ -554,9 +565,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   g_assert (ObitInfoListIsA(myInput));
 
   /* Output AIPS UV file class */
-  strncpy(strTemp, "AvgBL", 6);
+  strncpy(strTemp, "     ", 6);
   ObitInfoListGetTest(myInput, "outClass", &type, dim, strTemp);
-  if (!strncmp(strTemp, "AvgBL", 5)) {
+  if (!strncmp(strTemp, "     ", 5)) {
       strncpy(strTemp, "AvgBL", 6);
       dim[0] = strlen (strTemp); dim[1] = 1;
       ObitInfoListAlwaysPut (myInput, "outClass", OBIT_string, dim, strTemp);
@@ -760,14 +771,17 @@ void AvgBLHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
-  gboolean doCalSelect;
-  olong i, j, indx, jndx;
+  gboolean doCalSelect, doShift=FALSE;
+  olong i, ii, j, indx, jndx;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
+  olong ilocu, ilocv, ilocw;
   ofloat timeAvg, lastTime=-1.0e3, lastSou=-1.0, Shift[]={0.0,0.0};
-  ofloat *accVis=NULL;
+  ofloat visRe, visIm, wt, phaseSign, dxyzc[3]={0.,0.,0.}, *accVis=NULL;
+  odouble ra, dec, ra0, dec0, phase, cp, sp, u, v, w;
+  gchar *rach="RA  ", rast[15], *decch="DEC ", decst[21];
   gchar *routine = "ObitUVBLAvg";
  
   /* error checks */
@@ -780,10 +794,8 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim, &timeAvg);
   timeAvg /= 1440.;    /* To days */
 
-  /* Position shift */
+  /* Position shift - Full 3D */
   ObitInfoListGetTest(inUV->info, "Shift", &type, dim, Shift);
-  Shift[0] /= 206265.;  /* to radians */
-  Shift[1] /= 206265.;  /* to radians */
 
   /* Clone from input */
   ObitUVClone (inUV, outUV, err);
@@ -801,8 +813,9 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   outUV->bufferSize = -1;
 
   /* Open Files  */
- iretCode = ObitUVOpen (inUV, access, err);
- oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  iretCode = ObitUVOpen (inUV, access, err);
+  ObitUVSelSetDesc(inUV->myDesc, inUV->mySel, outUV->myDesc,err);
+  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine,inUV->name, outUV);
   outUV->buffer = inUV->buffer;
@@ -810,7 +823,30 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Get descriptors */
   inDesc  = inUV->myDesc;
   outDesc = outUV->myDesc;
+  ilocu = inDesc->ilocu; ilocv = inDesc->ilocv; ilocw = inDesc->ilocw;
+   
+  /* Shift */
+  doShift = ((Shift[0]!=0.0) || (Shift[1]!=0.0));
+  if (doShift) {
+    ra   = ra0  = inDesc->crval[inDesc->jlocr];
+    dec  = dec0 = inDesc->crval[inDesc->jlocd];
+    if (cos(DG2RAD*dec0)!=0.0) ra = ra0 + Shift[0] / 3600.0 / cos(DG2RAD*dec0);
+    dec = dec0 + Shift[1] / 3600.0;
+    ObitSkyGeomShiftSIN (ra0, dec0, 0.0, ra, dec, dxyzc);
 
+    /* Set shifted position in output */
+    outDesc->crval[outDesc->jlocr] = ra;
+    outDesc->crval[outDesc->jlocd] = dec;
+
+    /* Tell where the shift is to */
+    ObitPosLabelUtilRA2HMS (ra, rach, rast);
+    ObitPosLabelUtilDec2DMS(dec, decch, decst);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Shifted to %s = %s, %s = %s", rach, rast, decch, decst);
+    ObitErrLog(err); 
+    /*fprintf (stderr,"dxyzc= %g %g %g\n",dxyzc[0], dxyzc[1],dxyzc[2]);*/
+  } /* end do Shift */
+ 
   /* Create accumulation array */
   accVis = g_malloc0(inDesc->lrec*sizeof(ofloat));
 
@@ -827,9 +863,17 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
     /* Accumulate data */
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
+      indx = i*inDesc->lrec;
+      /* U,V,W */
+      u = inUV->buffer[indx+ilocu]; v = inUV->buffer[indx+ilocv]; w = inUV->buffer[indx+ilocw];
+      if (u<=0.0) {  /* Want them all on the same side even though not gridding */
+	phaseSign = -1.0;
+      } else { /* no flip */
+	phaseSign = 1.0;
+      }
       /* New source or integration? */
-      if ((inUV->buffer[inDesc->iloct]>(lastTime+timeAvg)) ||
-	  ((inDesc->ilocsu>=0)&&(lastSou!=inUV->buffer[inDesc->ilocsu]))) {
+      if ((inUV->buffer[indx+inDesc->iloct]>(lastTime+timeAvg)) ||
+	  ((inDesc->ilocsu>=0)&&(lastSou!=inUV->buffer[indx+inDesc->ilocsu]))) {
 	/* Average etc */
 	accVis[inDesc->ilocu] = accVis[inDesc->ilocv] = 1.0;
 	accVis[inDesc->iloct] = lastTime + 0.5*timeAvg;
@@ -837,33 +881,46 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	else {
 	  accVis[inDesc->iloca1] = 1.0; accVis[inDesc->iloca2] = 2.0;
 	}
-	if (inDesc->ilocsu>=0) 	accVis[inDesc->ilocsu] = lastSou;
+	if ((lastSou<=0) && (inUV->mySel->numberSourcesList==1))
+	  lastSou = inUV->mySel->sources[0];
+	if (inDesc->ilocsu>=0) accVis[inDesc->ilocsu] = (ofloat)lastSou;
 	jndx = inDesc->nrparm;
 	for (j=0; j<inDesc->ncorr; j++) { /* loop over correlations */
-	  if (inUV->buffer[jndx+2]>0.0) {
+	  if (accVis[jndx+2]>0.0) {
 	    accVis[jndx]   /= accVis[jndx+2];
 	    accVis[jndx+1] /= accVis[jndx+2];
+	  } else {
+	    accVis[jndx] = accVis[jndx+1] = accVis[jndx+2] = 0.0;
 	  }
-	  jndx += inDesc->incs;
+	  jndx += 3;
 	}
 	/* Write */
  	outDesc->numVisBuff = 1;
 	oretCode = ObitUVWrite (outUV, accVis, err);
 	if (err->error) goto cleanup;
-	for (i=0; i<inDesc->lrec; i++) accVis[i] = 0.0;  /* Reset */
-	lastTime = inUV->buffer[inDesc->iloct];
-	lastSou  = inUV->buffer[inDesc->ilocsu];
+	for (ii=0; ii<inDesc->lrec; ii++) accVis[ii] = 0.0;  /* Reset */
+	lastTime = inUV->buffer[indx+inDesc->iloct];
+	lastSou  = inUV->buffer[indx+inDesc->ilocsu];
       } /* End write average */
       indx = i*inDesc->lrec + inDesc->nrparm;
       jndx = inDesc->nrparm;
       for (j=0; j<inDesc->ncorr; j++) { /* loop over correlations */
-	if (inUV->buffer[indx+2]>0.0) {
-	  accVis[jndx]   += inUV->buffer[indx]*inUV->buffer[indx+2];
-	  accVis[jndx+1] += inUV->buffer[indx+1]*inUV->buffer[indx+2];
-	  accVis[jndx+2] += inUV->buffer[indx+2];
-	}
-	indx += inDesc->incs;
-	jndx += inDesc->incs;
+	wt = inUV->buffer[indx+2];
+	if (wt>0.0) {
+	  /* Shift? */
+	  if (doShift) {
+	    ii = j/inDesc->inaxes[inDesc->jlocs];
+	    phase = phaseSign*(+dxyzc[0]*u + dxyzc[1]*v + dxyzc[2]*w)*inDesc->fscale[ii];  /* Scale to freq */
+	    sincos (phase, &sp, &cp);
+	    visRe = (ofloat)(inUV->buffer[indx]*cp - inUV->buffer[indx+1]*sp);
+	    visIm = (ofloat)(inUV->buffer[indx]*sp + inUV->buffer[indx+1]*cp);
+	  } else {
+	    visRe = inUV->buffer[indx]; visIm = inUV->buffer[indx+1];
+	  }
+	  accVis[jndx]   += visRe*wt;  accVis[jndx+1] += visIm*wt; accVis[jndx+2] += wt;
+	} /* end if valid */
+	indx += 3;
+	jndx += 3;
       } /* end loop over correlations */
     } /* end loop over visibilities */
   } /* end loop processing data */
@@ -878,12 +935,14 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (inDesc->ilocsu>=0) accVis[inDesc->ilocsu] = lastSou;
   jndx = inDesc->nrparm;
   for (j=0; j<inDesc->ncorr; j++) { /* loop over correlations */
-    if (inUV->buffer[jndx+2]>0.0) {
+    if (accVis[jndx+2]>0.0) {
       accVis[jndx]   /= accVis[jndx+2];
       accVis[jndx+1] /= accVis[jndx+2];
+    } else {
+      accVis[jndx] = accVis[jndx+1] = accVis[jndx+2] = 0.0;
     }
-    jndx += inDesc->incs;
-  }
+    jndx += 3;
+  } /* end loop over corrections */
   /* Write */
   outDesc->numVisBuff = 1;
   oretCode = ObitUVWrite (outUV, accVis, err);
