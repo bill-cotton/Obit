@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -763,6 +763,7 @@ void ObitUVCalInit  (gpointer inn)
   in->lastTime    = -1.0e10;
   in->lastSu      = -1;
   in->doLin2Cir   = FALSE;
+  in->keepLin     = FALSE;
   in->PAReal      = 1.0;
   in->PAImag      = 0.0;
   in->SmoothConvFn= NULL;

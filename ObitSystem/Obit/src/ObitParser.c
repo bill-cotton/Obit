@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -97,6 +97,9 @@ ObitIOCode ObitParserParse(gchar *infile, ObitInfoList *list, ObitErr *err)
   retCode = ObitFileClose (myFile, err);
   if ((retCode!=OBIT_IO_OK) || (err->error)) 
     Obit_traceback_val (err, routine, infile, retCode);
+
+  /* Check GPU request - see if compiled in - turn off if not */
+  ObitHaveGPU (list, err);
 
   /* Cleanup */
   myFile = ObitFileUnref(myFile);

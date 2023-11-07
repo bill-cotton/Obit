@@ -1,7 +1,7 @@
 /* $Id$  */
-/* Obit Task apply calibration snd write multi source files */
+/* Obit Task to apply calibration and write multi source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -845,8 +845,8 @@ void doSplat (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Stokes", "UVRange", "timeRange", "FreqID", "Sources", "souCode", "Qual", 
     "BIF", "EIF", "BChan", "EChan", "subA", "doCalWt", "dropSubA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", 
-    "doPol", "PDVer", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
-    "NumChAvg", "ChanSel",
+    "doPol", "PDVer", "keepLin", "Mode", "corrType", "BLVer", "InputAvgTime", 
+    "timeAvg", "NumChAvg", "ChanSel",
     NULL  };
   gchar *ANInclude[] = {"AIPS AN", NULL};
   gchar *PDInclude[] = {"AIPS PD", NULL};
@@ -979,7 +979,8 @@ void SplatHistory (ObitInfoList* myInput, ObitUV* inData,
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg",
     "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "PDVer", "BLVer", "timeAvg", "avgFreq", "chAvg",  "ChanSel",
+    "doPol", "PDVer", "keepLin", "BLVer", 
+    "timeAvg", "avgFreq", "chAvg",  "ChanSel",
     "InputAvgTime",  "dropSubA",  "doWtCal",  "corrType",  "nThreads", 
     NULL};
   gchar *routine = "SplatHistory";

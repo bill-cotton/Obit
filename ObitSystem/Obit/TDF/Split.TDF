@@ -3,7 +3,7 @@
 ;!  Obit Radio interferometry software
 ;# Task Obit UV Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2021
+;;  Copyright (C) 2007-2023
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -77,6 +77,8 @@ doPol            -1.0       10.0   If >0 correct polarization.
 **PARAM** int 1 **DEF** 1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
+**PARAM** boo 1 **DEF** F
+keepLin                            True => Keep poln in linear
 **PARAM** int 1
 flagVer                            Flag table version
 **PARAM** int 1
@@ -210,6 +212,9 @@ Adverbs:
   PDVer......AIPS PD table to use for per channel instrumental
              polarization corrections if doPol=True. 0=> highest
              -1 => use IF corrections from AIPS AN table.
+  keepLin....If the input data is in a linear feed basis (XX,YY,XY,YX)
+             and doPol=T, then leave in a linear basis.  
+             Otherwise convert to circular (RR,LL,RL,LR)
   flagVer....specifies the version of the flagging table to be applied.
              0 => highest numbered table. <0 => no flagging to be
              applied.

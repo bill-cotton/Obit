@@ -248,7 +248,8 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
   gchar        *parm[] = {"DoCalSelect", "Stokes", 
 			  "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "IFDrop",
-			  "doPol", "PDVer", "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
+			  "doPol", "PDVer", "keepLin", 
+			  "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
 			  "Subarray", "dropSubA", "FreqID", "timeRange", "UVRange",
 			  "InputAvgTime", "Sources", "souCode", "Qual", "Antennas",
 			  "corrType", "passAll", "doBand", "Smooth", 
@@ -3569,6 +3570,10 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     }
   }
+
+  /* Keep linear feed input as linear feed ooutput after poln cal? */
+  cal->keepLin = FALSE;
+  ObitInfoListGetTest(in->info, "keepLin", &type, dim, &cal->keepLin);
 
   /* Start up calibration - finish output Descriptor, and Selector */
   ObitUVCalStart ((ObitUVCal*)in->myIO->myCal, (ObitUVSel*)in->myIO->mySel, 

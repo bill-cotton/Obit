@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task apply calibration and write single source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2021                                          */
+/*;  Copyright (C) 2007-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -895,7 +895,7 @@ void doSplit (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "Stokes", "UVRange", "timeRange", "FreqID", "souCode", "Qual", 
     "BIF", "EIF", "BChan", "EChan", "subA", "doCalWt", "passAll", "dropSubA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", 
-    "doPol", "PDVer", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
+    "doPol", "PDVer", "keepLin", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
     "NumChAvg", "ChanSel",
     NULL  };
   gchar        *outParms[] = {  /* Parameters for output data */
@@ -1009,7 +1009,8 @@ void SplitHistory (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg",
     "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA", "passAll",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "PDVer", "BLVer", "timeAvg", "avgFreq", "chAvg",  "ChanSel",
+    "doPol", "PDVer", "keepLin", "BLVer", 
+    "timeAvg", "avgFreq", "chAvg",  "ChanSel",
     "InputAvgTime",  "dropSubA",  "doWtCal",  "corrType", "nThreads", 
     NULL};
   gchar *routine = "SplitHistory";

@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020,2021                                          */
+/*;  Copyright (C) 2020-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -261,10 +261,10 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
   odouble sumd;
   ocomplex tcpx;
   
-  /* error checks */
+  /* error checks 
   g_assert (ObitMatxIsCompatible(in1, in2));
   g_assert (ObitMatxIsCompatible(in1, out));
-  g_assert (in1->naxis[0]==in1->naxis[1]);  /* Square */
+  g_assert (in1->naxis[0]==in1->naxis[1]);  */ /* Square */
 
   n = in1->naxis[0];
   switch (in1->type) {
@@ -274,8 +274,8 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
 	sumr = 0.0;
 	indxo = ic + ir*n;
 	for (ii=0; ii<n; ii++) {
-	  indx1 = (ii*n + ic);
-	  indx2 = (ii + ir*n);
+	  indx1 = (ii + ir*n);
+	  indx2 = (ii*n + ic);
 	  sumr += in1->flt[indx1]*in2->flt[indx2];
 	}
 	out->flt[indxo]   = sumr;
@@ -288,8 +288,8 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
 	indxo = (ic + ir*n);
 	COMPLEX_SET (out->cpx[indxo], 0.0, 0.0);
 	for (ii=0; ii<n; ii++) {
-	  indx1 = (ii*n + ic);
-	  indx2 = (ii + ir*n);
+	  indx1 = (ii + ir*n);
+	  indx2 = (ii*n + ic);
 	  COMPLEX_MUL2(tcpx, in1->cpx[indx1], in2->cpx[indx2]);
 	  COMPLEX_ADD2 (out->cpx[indxo], out->cpx[indxo], tcpx);
 	}
@@ -302,8 +302,8 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
 	sumd = 0.0;
 	indxo = ic + ir*n;
 	for (ii=0; ii<n; ii++) {
-	  indx1 = (ii*n + ic);
-	  indx2 = (ii + ir*n);
+	  indx1 = (ii + ir*n);
+	  indx2 = (ii*n + ic);
 	  sumd += in1->dbl[indx1]*in2->dbl[indx2];
 	}
 	out->dbl[indxo]   = sumd;
@@ -317,6 +317,80 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
  /* end row loop */
   
 } /* end ObitMatxMatrixMult */
+
+/**
+ *  Matrix inner multiply of a matrix  by the conjugate transpose of another matrix
+ *  out = in1 * in2
+ * in1, in2 and out are square matrices of the same dimension
+ * \param in1  Input object
+ * \param in2  Input object, conjugate transposed used
+ * \param out  Output object
+ */
+void ObitMatxMultCT (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
+{
+  olong ir, ic, ii, n;
+  olong indx1, indx2, indxo;
+  ofloat sumr;
+  odouble sumd;
+  ocomplex tcpx, tcpx2;
+  
+  /* error checks 
+  g_assert (ObitMatxIsCompatible(in1, in2));
+  g_assert (ObitMatxIsCompatible(in1, out));
+  g_assert (in1->naxis[0]==in1->naxis[1]);*/  /* Square */
+
+  n = in1->naxis[0];
+  switch (in1->type) {
+  case OBIT_Real:
+    for (ir=0; ir<n; ir++) {
+      for (ic=0; ic<n; ic++) {
+	sumr = 0.0;
+	indxo = ic + ir*n;
+	for (ii=0; ii<n; ii++) {
+	  indx1 = (ii + ir*n);
+	  indx2 = (ii + ic*n);
+	  sumr += in1->flt[indx1]*in2->flt[indx2];
+	}
+	out->flt[indxo]   = sumr;
+      }
+    }
+    break;
+  case OBIT_Complex:
+    for (ir=0; ir<n; ir++) {
+      for (ic=0; ic<n; ic++) {
+	indxo = (ic + ir*n);
+	COMPLEX_SET (out->cpx[indxo], 0.0, 0.0);
+	for (ii=0; ii<n; ii++) {
+	  indx1 = (ii + ir*n);
+	  indx2 = (ii + ic*n);
+	  COMPLEX_CONJUGATE(tcpx2, in2->cpx[indx2]);
+	  COMPLEX_MUL2(tcpx, in1->cpx[indx1], tcpx2);
+	  COMPLEX_ADD2 (out->cpx[indxo], out->cpx[indxo], tcpx);
+	}
+      }
+    }
+    break;
+  case OBIT_Double:
+    for (ir=0; ir<n; ir++) {
+      for (ic=0; ic<n; ic++) {
+	sumd = 0.0;
+	indxo = ic + ir*n;
+	for (ii=0; ii<n; ii++) {
+	  indx1 = (ii + ir*n);
+	  indx2 = (ii + ic*n);
+	  sumd += in1->dbl[indx1]*in2->dbl[indx2];
+	}
+	out->dbl[indxo]   = sumd;
+      }
+    }
+    break;
+  default:
+     g_assert_not_reached(); /* unknown, barf */
+   };
+
+ /* end row loop */
+  
+} /* end ObitMatxMultCT */
 
 /**
  *  Add corresponding elements of the array.
@@ -440,6 +514,38 @@ void ObitMatxZero (ObitMatx* in)
 } /* end ObitMatxZero */
 
 /**
+ * Set the matrix to a unit matrix - must be square 2D matrix
+ * \param in      Input object
+ */
+void ObitMatxUnit (ObitMatx* in)
+{
+  olong i, n;
+  ofloat val[3] = {1.0,0.0,0.0};
+
+  n = in->naxis[0]; /* dimension */
+  switch (in->type) {
+  case OBIT_Real:
+    for (i=0; i<in->arraySize; i++) in->flt[i] = 0.0;
+    /* Diagonal terms */
+    for (i=0; i<n; i++) in->flt[i*n+i] = 1.0;
+    break;
+  case OBIT_Complex:
+    /* Zero */
+    for (i=0; i<in->arraySize/2; i++) COMPLEX_SET(in->cpx[i], val[1], val[2]); 
+    /* Diagonal terms */
+    for (i=0; i<n; i++) COMPLEX_SET(in->cpx[i*n+i], val[0], val[1]); 
+    break;
+  case OBIT_Double:
+    for (i=0; i<in->arraySize/2; i++) in->dbl[i] = 0.0;
+    /* Diagonal terms */
+    for (i=0; i<n; i++) in->dbl[i*n+i] = 1.0;
+    break;
+  default:
+     g_assert_not_reached(); /* unknown, barf */
+   };
+} /* end ObitMatxUnit */
+
+/**
  * Fills values in a 2x2 complex ObitMatx 
  * \param matx  ObitMatx to fill
  * \param R00   Real part of element (0,0)
@@ -459,7 +565,80 @@ void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I0
   val[0] = R01; val[1]= I01; ObitMatxSet(matx, val, 0, 1);
   val[0] = R10; val[1]= I10; ObitMatxSet(matx, val, 1, 0);
   val[0] = R11; val[1]= I11; ObitMatxSet(matx, val, 1, 1);
-} /* end ObitMatxSet2 */
+} /* end ObitMatxSet2C */
+
+/**
+ * Fetch values in a 2x2 complex ObitMatx 
+ * \param matx  ObitMatx to fetch values from
+ * \param R00   Real part of element (0,0)
+ * \param I00   Imaginary part of element (0,0)
+ * \param R01   Real part of element (0,1)
+ * \param I01   Imaginary part of element (0,1)
+ * \param R10   Real part of element (1,0)
+ * \param I10   Imaginary part of element (1,0)
+ * \param R11   Real part of element (1,1)
+ * \param I11   Imaginary part of element (1,1)
+ */
+void ObitMatxGet2C(ObitMatx *matx, ofloat* R00, ofloat *I00, ofloat *R01, ofloat *I01, 
+		   ofloat *R10, ofloat *I10, ofloat *R11, ofloat *I11)
+{
+  ofloat val[2];
+  ObitMatxGet(matx, 0, 0, val); *R00 = val[0]; *I00 = val[1];
+  ObitMatxGet(matx, 0, 1, val); *R01 = val[0]; *I01 = val[1];
+  ObitMatxGet(matx, 1, 0, val); *R10 = val[0]; *I10 = val[1];
+  ObitMatxGet(matx, 1, 1, val); *R11 = val[0]; *I11 = val[1];
+} /* end ObitMatxGet2C */
+
+/**
+ * Invert 2x2 matrix 
+ * \param in    ObitMatx to invert
+ * \param out   Inverted ObitMatx
+ */
+/** Invert 2x2 matrix */
+void ObitMatxInv2x2(ObitMatx *in, ObitMatx *out)
+{
+  ofloat fDet;
+  ocomplex oDet, ct1, ct2, cone;
+  odouble dDet;
+  /* error checks */
+  g_assert (ObitMatxIsCompatible(in, out));
+  g_assert (in->naxis[0]==2 && out->naxis[1]==2);  /* 2x2 */
+
+  switch (in->type) {
+  case OBIT_Real:
+    fDet = in->flt[0]*in->flt[3] - in->flt[1]*in->flt[2];
+    if (fDet>0.0) fDet = 1.0 / fDet;
+    else          fDet = 1.0;
+    out->flt[0] = +in->flt[3]*fDet;
+    out->flt[1] = -in->flt[1]*fDet;
+    out->flt[2] = -in->flt[2]*fDet;
+    out->flt[3] = +in->flt[0]*fDet;
+    break;
+  case OBIT_Complex:
+    COMPLEX_MUL2(ct1, in->cpx[0], in->cpx[3]);
+    COMPLEX_MUL2(ct2, in->cpx[1], in->cpx[2]);
+    COMPLEX_SUB (oDet, ct1, ct2);
+    COMPLEX_SET (cone, 1.0, 0.0);
+    COMPLEX_DIV (ct1, cone, oDet);  /* 1/Determinate, 1 if zero */
+    COMPLEX_MUL2(out->cpx[0], in->cpx[3], ct1);
+    COMPLEX_MUL2(ct2,         in->cpx[1], ct1); COMPLEX_NEGATE (out->cpx[1], ct2);
+    COMPLEX_MUL2(ct2,         in->cpx[2], ct1); COMPLEX_NEGATE (out->cpx[2], ct2);
+    COMPLEX_MUL2(out->cpx[3], in->cpx[0], ct1);
+    break;
+  case OBIT_Double:
+    dDet = in->dbl[0]*in->dbl[3] - in->dbl[1]*in->dbl[2];
+    if (dDet>0.0) dDet = 1.0 / dDet;
+    else          dDet = 1.0;
+    out->dbl[0] = +in->dbl[3]*dDet;
+    out->dbl[1] = -in->dbl[1]*dDet;
+    out->dbl[2] = -in->dbl[2]*dDet;
+    out->dbl[3] = +in->dbl[0]*dDet;
+    break;
+  default:
+     g_assert_not_reached(); /* unknown, barf */
+   };
+
+}  /* end ObitMatxInv2x2 */
 
 /** Inverse perfect linear feed Jones matrix */
 void ObitMatxIPerfLinJones(ObitMatx *out)
@@ -491,6 +670,29 @@ void ObitMatxIPerfLinJones(ObitMatx *out)
   COMPLEX_SET (out->cpx[1], -(Jones[2]*Det[0]-Jones[3]*Det[1]), -(Jones[2]*Det[1]+Jones[3]*Det[0]));
   COMPLEX_SET (out->cpx[0],   Jones[6]*Det[0]-Jones[7]*Det[1],    Jones[6]*Det[1]+Jones[7]*Det[0]);
 } /* end ObitMatxIPerfLinJonesJones */
+
+/** Inverse perfect circular feed Jones matrix 
+    Really just the perfect linear Jones matrix */
+void ObitMatxIPerfCirJones(ObitMatx *out)
+{
+  ofloat elp_x=0.0, elp_y=0.0, ori_x=0.0, ori_y=G_PI*0.5;
+  ofloat angle[4], sina[4], cosa[4], Jones[8];
+
+  angle[0] = G_PI*0.25+elp_x; angle[1] = G_PI*0.25-elp_y;
+  angle[2] = ori_x;           angle[3] = ori_y;
+  ObitSinCosVec(4, angle, sina, cosa);
+
+  Jones[0] =  cosa[0]*cosa[2]; Jones[1] = -cosa[0]*sina[2];
+  Jones[2] =  sina[0]*cosa[2]; Jones[3] =  sina[0]*sina[2];
+  Jones[4] =  sina[1]*cosa[3]; Jones[5] = -sina[1]*sina[3];
+  Jones[6] =  cosa[1]*cosa[3]; Jones[7] =  cosa[1]*sina[3];
+  
+  /* Matrix out */
+  COMPLEX_SET (out->cpx[0], Jones[0], Jones[1]);
+  COMPLEX_SET (out->cpx[1], Jones[2], Jones[3]);
+  COMPLEX_SET (out->cpx[2], Jones[4], Jones[5]);
+  COMPLEX_SET (out->cpx[3], Jones[6], Jones[7]); 
+} /* end ObitMatxIPerfCirJones */
 
 /**
  *  Outer 2x2 complex multiply
@@ -610,11 +812,14 @@ static void ObitMatxClassInfoDefFn (gpointer inClass)
   theClass->ObitMatxIsCompatible = 
     (ObitMatxIsCompatibleFP)ObitMatxIsCompatible;
   theClass->ObitMatxMult   = (ObitMatxMultFP)ObitMatxMult;
+  theClass->ObitMatxMultCT = (ObitMatxMultCTFP)ObitMatxMultCT;
   theClass->ObitMatxAdd    = (ObitMatxAddFP)ObitMatxAdd;
   theClass->ObitMatxSub    = (ObitMatxSubFP)ObitMatxSub;
   theClass->ObitMatxCTrans = (ObitMatxCTransFP)ObitMatxCTrans;
   theClass->ObitMatxZero   = (ObitMatxZeroFP)ObitMatxZero;
+  theClass->ObitMatxUnit   = (ObitMatxUnitFP)ObitMatxUnit;
   theClass->ObitMatxSet2C  = (ObitMatxSet2CFP)ObitMatxSet2C;
+  theClass->ObitMatxGet2C  = (ObitMatxGet2CFP)ObitMatxGet2C;
   theClass->ObitMatxIPerfLinJones = (ObitMatxIPerfLinJonesFP)ObitMatxIPerfLinJones;
   theClass->ObitMatxOuterMult2C   = (ObitMatxOuterMult2CFP)ObitMatxOuterMult2C;
 } /* end ObitMatxClassDefFn */

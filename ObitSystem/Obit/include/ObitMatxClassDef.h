@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020                                               */
+/*;  Copyright (C) 2020,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -33,6 +33,8 @@ ObitMatxCreateFP ObitMatxCreate;
 ObitMatxIsCompatibleFP ObitMatxIsCompatible;
 /** Function pointer to Multiply. */
 ObitMatxMultFP ObitMatxMult;
+/** Function pointer to Multiply by conjugate transpose. */
+ObitMatxMultCTFP ObitMatxMultCT;
 /** Function pointer to Add. */
 ObitMatxAddFP ObitMatxAdd;
 /** Function pointer to Subract. */
@@ -41,8 +43,12 @@ ObitMatxSubFP ObitMatxSub;
 ObitMatxCTransFP ObitMatxCTrans;
 /** Function pointer to Zero values. */
 ObitMatxZeroFP ObitMatxZero;
+/** Function pointer to write unit matrix. */
+ObitMatxUnitFP ObitMatxUnit;
 /** Function pointer to set 2x2 complex values. */
 ObitMatxSet2CFP ObitMatxSet2C;
+/** Function pointer to get 2x2 complex values. */
+ObitMatxGet2CFP ObitMatxGet2C;
 /** Function pointer to Inverse perfect linear feed Jones matrix */
 ObitMatxIPerfLinJonesFP ObitMatxIPerfLinJones;
 /** Function pointer to Outer 2x2 complex multiply */

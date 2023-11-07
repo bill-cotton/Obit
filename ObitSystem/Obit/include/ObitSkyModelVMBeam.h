@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2020                                          */
+/*;  Copyright (C) 2009-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -38,6 +38,8 @@
 #include "ObitSkyModelVM.h"
 #include "ObitImageInterp.h"
 #include "ObitBeamShape.h"
+#include "ObitMatx.h"
+#include "ObitComplex.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -213,6 +215,13 @@ void  ObitSkyModelVMBeamChose (ObitSkyModel* in, ObitUV* uvdata);
 void ObitSkyModelVMBeamGetInfo (ObitSkyModel *in, gchar *prefix, 
 				ObitInfoList *outList, 
 				ObitErr *err);
+
+/** Public: Jones correct and average SkyModel components */
+void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes, gboolean isCirc, 
+				    ofloat *compFlux, ofloat *sinArr, ofloat *cosArr,
+				    ObitMatx **Jones1, ObitMatx **Jones2,
+				    ObitMatx **workVis, ObitMatx *work1, ObitMatx *work2,
+				    ObitMatx *sumVis);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

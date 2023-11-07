@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Average data on multiple baselines               .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2023                                          */
+/*;  Copyright (C) 2023                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -606,7 +606,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     "Sources", "souCode", "Qual", "Stokes", "timeRange", "UVRange",
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
-    "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
+    "doPol", "PDVer", "keepLin", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
     "timeAvg", "Shift",
      NULL};
   gchar *routine = "getInputData";
@@ -717,7 +717,7 @@ void AvgBLHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "FreqID", "BChan", "EChan", "BIF", "EIF", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
-    "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
+    "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "keepLin", "flagVer", 
     "doBand", "BPVer", "Smooth",  "corrType", "timeAvg", "Shift",
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};
@@ -778,8 +778,8 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
   olong ilocu, ilocv, ilocw;
-  ofloat timeAvg, lastTime=-1.0e3, lastSou=-1.0, Shift[]={0.0,0.0};
-  ofloat visRe, visIm, wt, phaseSign, dxyzc[3]={0.,0.,0.}, *accVis=NULL;
+  ofloat timeAvg, lastTime=-1.0e3, lastSou=-1.0, Shift[]={0.0,0.0}, dShift[]={0.,0.};
+  ofloat visRe, visIm, wt, dxyzc[3]={0.,0.,0.}, *accVis=NULL;
   odouble ra, dec, ra0, dec0, phase, cp, sp, u, v, w;
   gchar *rach="RA  ", rast[15], *decch="DEC ", decst[21];
   gchar *routine = "ObitUVBLAvg";
@@ -828,11 +828,13 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Shift */
   doShift = ((Shift[0]!=0.0) || (Shift[1]!=0.0));
   if (doShift) {
-    ra   = ra0  = inDesc->crval[inDesc->jlocr];
-    dec  = dec0 = inDesc->crval[inDesc->jlocd];
-    if (cos(DG2RAD*dec0)!=0.0) ra = ra0 + Shift[0] / 3600.0 / cos(DG2RAD*dec0);
-    dec = dec0 + Shift[1] / 3600.0;
-    ObitSkyGeomShiftSIN (ra0, dec0, 0.0, ra, dec, dxyzc);
+    dShift[0] = Shift[0]/3600.; dShift[1] = Shift[1]/3600.; /* In degrees */
+    ObitUVDescShiftPosn (inDesc, dShift[0], dShift[1], dxyzc, err);
+    if (err->error) goto cleanup;
+    /* Shifted position */
+    ra0  = inDesc->crval[inDesc->jlocr];
+    dec0 = inDesc->crval[inDesc->jlocd];
+    ObitSkyGeomXYShift (ra0, dec0, dShift[0], dShift[1], ObitUVDescRotate(inDesc), &ra, &dec);
 
     /* Set shifted position in output */
     outDesc->crval[outDesc->jlocr] = ra;
@@ -866,11 +868,7 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       indx = i*inDesc->lrec;
       /* U,V,W */
       u = inUV->buffer[indx+ilocu]; v = inUV->buffer[indx+ilocv]; w = inUV->buffer[indx+ilocw];
-      if (u<=0.0) {  /* Want them all on the same side even though not gridding */
-	phaseSign = -1.0;
-      } else { /* no flip */
-	phaseSign = 1.0;
-      }
+      
       /* New source or integration? */
       if ((inUV->buffer[indx+inDesc->iloct]>(lastTime+timeAvg)) ||
 	  ((inDesc->ilocsu>=0)&&(lastSou!=inUV->buffer[indx+inDesc->ilocsu]))) {
@@ -910,7 +908,7 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  /* Shift? */
 	  if (doShift) {
 	    ii = j/inDesc->inaxes[inDesc->jlocs];
-	    phase = phaseSign*(+dxyzc[0]*u + dxyzc[1]*v + dxyzc[2]*w)*inDesc->fscale[ii];  /* Scale to freq */
+	    phase = -(+dxyzc[0]*u + dxyzc[1]*v + dxyzc[2]*w)*inDesc->fscale[ii];  /* Scale to freq */
 	    sincos (phase, &sp, &cp);
 	    visRe = (ofloat)(inUV->buffer[indx]*cp - inUV->buffer[indx+1]*sp);
 	    visIm = (ofloat)(inUV->buffer[indx]*sp + inUV->buffer[indx+1]*cp);

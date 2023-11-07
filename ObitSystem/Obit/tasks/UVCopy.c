@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to copy uv data                        .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2022                                          */
+/*;  Copyright (C) 2005-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -577,7 +577,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     "Sources", "souCode", "Qual", "Stokes", "timeRange", "UVRange",
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
-    "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
+    "doPol", "PDVer", "keepLin", "Smooth", "Antennas",  "subA", 
+    "Sources", "souCode", "Qual",
      NULL};
   gchar *routine = "getInputData";
 
@@ -824,7 +825,7 @@ void UVCopyHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "inFile",  "inDisk", "inName", "inClass", "inSeq","timeRange","UVRange",
     "FreqID", "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "Stokes", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
-    "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
+    "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "keepLin", "flagVer", 
     "doBand", "BPVer", "Smooth",  "corrType", 
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};

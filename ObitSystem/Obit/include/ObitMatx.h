@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020                                               */
+/*;  Copyright (C) 2020-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -49,7 +49,7 @@ enum obitMatxType{
 }; /* end enum obitMatxType */
 typedef enum obitMatxType ObitMatxType;
 /*--------------Class definitions-------------------------------------*/
-/** ObitXML Class structure. */
+/** ObitMatx Class structure. */
 typedef struct {
 #include "ObitMatxDef.h"
 } ObitMatx;
@@ -76,6 +76,23 @@ typedef struct {
  * in = object to reference
  */
 #define ObitMatxIsA(in) ObitIsA (in, ObitMatxGetClass())
+
+/**
+ * Test if a Matrix is blanked, checks 1st element
+ * \li matx = ObitMatx structure modify.
+ */
+static inline gboolean ObitMatxIsBlank(ObitMatx *matx) {
+  ofloat fblank = ObitMagicF();
+  gboolean out=FALSE;
+  if (matx->type==OBIT_Real) {
+    out = matx->flt[0]==fblank;
+  } else if (matx->type==OBIT_Complex) {
+     out = matx->cpx[0].real==fblank;
+  } else { /* Double */
+    out = FALSE;  /* no test */
+  }
+  return out;
+} /* end ObitMatxIsBlank */
 
 /**
  * Routine for setting an element
@@ -112,6 +129,18 @@ static inline void ObitMatxSet(ObitMatx *matx, void *val, olong i1, olong i2) {
     matx->dbl[i1+i2*matx->naxis[0]] = *((odouble*)val);}
 } /* end ObitMatxSet */
 
+/** Fill 2x2 */
+void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I01, 
+		   ofloat R10, ofloat I10, ofloat R11, ofloat I11);
+typedef void (*ObitMatxSet2CFP) (ObitMatx *matx, ofloat R00, ofloat I00, 
+				 ofloat R01, ofloat I01,  ofloat R10, ofloat I10, 
+				 ofloat R11, ofloat I11);
+/** Fetch 2x2 */
+void ObitMatxGet2C(ObitMatx *matx, ofloat *R00, ofloat *I00, ofloat *R01, ofloat *I01, 
+		   ofloat *R10, ofloat *I10, ofloat *R11, ofloat *I11);
+typedef void (*ObitMatxGet2CFP) (ObitMatx *matx, ofloat *R00, ofloat *I00, 
+				 ofloat *R01, ofloat *I01,  ofloat *R10, ofloat *I10, 
+				 ofloat *R11, ofloat *I11);
 /** Create empty (0) matrix */
 ObitMatx* ObitMatxCreate(ObitMatxType type, olong ndim, olong *naxis);
 typedef ObitMatx* (*ObitMatxCreateFP) (ObitMatxType type, olong ndim, olong *naxis);
@@ -124,6 +153,9 @@ typedef gboolean (*ObitMatxIsCompatibleFP) (ObitMatx *in1, ObitMatx *in2);
 /** Multiply */
 void ObitMatxMult(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
 typedef void (*ObitMatxMultFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
+/** Multiply by conjugate transpose */
+void ObitMatxMultCT(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
+typedef void (*ObitMatxMultCTFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
 /** Add */
 void ObitMatxAdd(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
 typedef void (*ObitMatxAddFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
@@ -136,7 +168,12 @@ typedef void (*ObitMatxCTransFP) (ObitMatx *in, ObitMatx *out);
 /** Zero values */
 void ObitMatxZero(ObitMatx *out);
 typedef void (*ObitMatxZeroFP) (ObitMatx *in);
-/** Fill 2x2 */
+/** Unit matrix */
+void ObitMatxUnit(ObitMatx *out);
+typedef void (*ObitMatxUnitFP) (ObitMatx *in);
+/** Invert 2x2 matrix */
+void ObitMatxInv2x2(ObitMatx *in, ObitMatx *out);
+/** Fill 2x2 complex */
 void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I01, 
 		   ofloat R10, ofloat I10, ofloat R11, ofloat I11);
 typedef void (*ObitMatxSet2CFP) (ObitMatx *matx, ofloat R00, ofloat I00, 
@@ -144,6 +181,9 @@ typedef void (*ObitMatxSet2CFP) (ObitMatx *matx, ofloat R00, ofloat I00,
 				 ofloat R11, ofloat I11);
 /** Inverse perfect linear feed Jones matrix */
 void ObitMatxIPerfLinJones(ObitMatx *in);
+typedef void (*ObitMatxIPerfLinJonesFP) (ObitMatx *out);
+/** Inverse perfect circular feed Jones matrix */
+void ObitMatxIPerfCirJones(ObitMatx *in);
 typedef void (*ObitMatxIPerfLinJonesFP) (ObitMatx *out);
 /** Outer 2x2 complex multiply*/
 void ObitMatxOuterMult2C(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);

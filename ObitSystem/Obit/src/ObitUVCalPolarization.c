@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,11 +27,12 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitUVDesc.h"
+#include "ObitSinCos.h"
+#include "ObitComplex.h"
+#include "ObitMatx.h"
 #include "ObitUVCalPolarizationDef.h"
 #include "ObitUVCalPolarization.h"
 #include "ObitTablePD.h"
-#include "ObitSinCos.h"
-#include "ObitComplex.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -78,6 +79,9 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 static void MatxVec4Mult(ofloat* in1, ofloat* in2, ofloat* out);
 /** Private: Muller matrix from outer product of Jones matrices */
 static void MatxOuter(ofloat* in1, ofloat* in2, ofloat* out);
+/** Private: Convert circular to linear basis (RR,LL...->YY,YY */
+static void 
+Cir2Lin (ObitUVCal *in, float time, olong ant1, olong ant2, ofloat *RP, ofloat *visIn);
 /*----------------------Public functions---------------------------*/
 /**
  * Initialize structures for polarization Calibration .
@@ -150,8 +154,7 @@ void ObitUVCalPolarizationInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   /* Entry per channel or IF? */
   if (me->perChan) size = 32 * me->numIF * me->numChan;
   else             size = 32 * me->numIF;
-  me->PolCal   = g_realloc(me->PolCal, size*sizeof(ofloat));
-
+  me->PolCal     = g_realloc(me->PolCal, size*sizeof(ofloat));
   /* Init time, source */
   me->curTime   = -1.0e20;
   me->curSourID = -1;
@@ -183,7 +186,7 @@ void ObitUVCalPolarizationInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
  * early on to remove the parallactic angle.  In this case, the instrumental polarization 
  * is constant, i.e.correction terms are not a function of parallactic angle whereas the 
  * corrected data must have RL,LR rotated by the parallactic angle.
- * The VLBI stype calibration (OBIT_UVPoln_ELORI, OBIT_UVPoln_VLBI) require that the data 
+ * The VLBI style calibration (OBIT_UVPoln_ELORI, OBIT_UVPoln_VLBI) require that the data 
  * be corrected for the effects of parallactic angle prior to any self calibration.
  * In this case, the polarization corrections rotate with parallactic angle but the 
  * corrected data need no further rotation.
@@ -232,7 +235,7 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
   if ((me->polType==OBIT_UVPoln_Unknown)  || (me->polType==OBIT_UVPoln_NoCal))
     me->polType = in->antennaLists[SubA-1]->polType;
 
-   /* Data Freq id */
+  /* Data Freq id */
   if (desc->ilocfq >= 0) FreqID = RP[desc->ilocfq] + 0.1;
   else  FreqID = 0;
 
@@ -385,9 +388,8 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       } else {
 	dtemp[2] = visIn[joff+6]; dtemp[3] = visIn[joff+7];
 	dtemp[4] = visIn[joff+9]; dtemp[5] = visIn[joff+10];
-     }
-      /* Now apply calibration by multiplying the inverse Mueller matrix by 
-	 the data vector. */
+      }
+ 
       if (me->perChan) jndex = (ifoff + choff);
       else             jndex = ifoff;
       /* Is poln cal flagged? */
@@ -416,32 +418,38 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       /* Done if in->numStok < 4) */
       if (in->numStok < 4) {choff += 32; continue;}
       
-      /* correct RL,LR for parallactic angle and ionospheric Faraday rotation: */
-      if (cal!=NULL) {
-	loff = (iif - 1) * cal->numLambda + ifreq - 1;
-	Lambda2 = cal->Lambda[loff]*cal->Lambda[loff];
-	gr1 = gr * cos (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2])) -  
-	  gi * sin (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2]));
-	gi1 = gi * cos (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2])) +  
-	  gr * sin (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2]));
-      } else {
-	gr1 = gr;
-	gi1 = gi;
-      }
-      
-      /* Correct RL */
-      jrl = joff + 2*desc->incs;
-      tr = visIn[jrl];
-      ti = visIn[jrl+1];
-      visIn[jrl]   = tr * gr1 - ti * gi1;
-      visIn[jrl+1] = ti * gr1 + tr * gi1;
-      
-      /* Correct LR */
-      jlr = joff + 3*desc->incs;
-      tr = visIn[jlr];
-      ti = visIn[jlr+1];
-      visIn[jlr]   = tr * gr1 + ti * gi1;
-      visIn[jlr+1] = ti * gr1 - tr * gi1;
+      /* If it was in linear basis and keepLin then rotate to linear */
+      if ((in->keepLin) & (!me->circFeed)) {
+	/* Transform */
+	Cir2Lin(in, time, ant1, ant2, RP, &visIn[joff+0]);
+      } else { /* better be in circular basis */
+	/* correct RL,LR for parallactic angle and ionospheric Faraday rotation: */
+	if (cal!=NULL) {
+	  loff = (iif - 1) * cal->numLambda + ifreq - 1;
+	  Lambda2 = cal->Lambda[loff]*cal->Lambda[loff];
+	  gr1 = gr * cos (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2])) -  
+	    gi * sin (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2]));
+	  gi1 = gi * cos (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2])) +  
+	    gr * sin (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2]));
+	} else {
+	  gr1 = gr;
+	  gi1 = gi;
+	}
+	
+	/* Correct RL */
+	jrl = joff + 2*desc->incs;
+	tr = visIn[jrl];
+	ti = visIn[jrl+1];
+	visIn[jrl]   = tr * gr1 - ti * gi1;
+	visIn[jrl+1] = ti * gr1 + tr * gi1;
+	
+	/* Correct LR */
+	jlr = joff + 3*desc->incs;
+	tr = visIn[jlr];
+	ti = visIn[jlr+1];
+	visIn[jlr]   = tr * gr1 + ti * gi1;
+	visIn[jlr+1] = ti * gr1 - tr * gi1;
+      }  /* end rotate RL/LR for parallactic angle/IFR */
       choff += 32;   /* Channel offset in PolCal */
     } /* end loop over channels L300: */
     ifoff += 32*chdelta;  /* IF offset in PolCal */
@@ -483,6 +491,7 @@ ObitUVCalPolarizationSUnref (ObitUVCalPolarizationS *in)
   if (in->curCosPA) g_free(in->curCosPA);
   if (in->curSinPA) g_free(in->curSinPA);
   if (in->PolCal)   g_free(in->PolCal);
+  if (in->C2L_Matrix) ObitMatxUnref(in->C2L_Matrix);
   if (in->Jones) {
     for (i=0; i<in->numAnt; i++) if (in->Jones[i]) g_free(in->Jones[i]);
     g_free(in->Jones);
@@ -513,6 +522,7 @@ newObitUVCalPolarizationS (ObitUVCal *in)
   out->curCosPA     = NULL;
   out->curSinPA     = NULL;
   out->PolCal       = NULL;
+  out->C2L_Matrix   = NULL;
   out->Jones        = NULL;
   out->PCal         = NULL;
 
@@ -1372,3 +1382,59 @@ static void MatxOuter(ofloat* in1, ofloat* in2, ofloat* out)
   }
   } /* end  MatxOuter */
 
+/**
+ * Convert circular (RR,LL..) to linear (XX,YY...)
+ * \param in     Calibration Object.
+ * \param time  Time of datum
+ * \param ant1  first antenna number of baseline
+ * \param ant2  second antanna of baseline.
+ * \param RP     Random parameters array.
+ * \param visIn  input/output visibility as an array of floats
+ */
+static void 
+Cir2Lin (ObitUVCal *in, float time, olong ant1, olong ant2, ofloat *RP, ofloat *visIn)
+{
+  gboolean flag;
+  ObitUVDesc *desc = in->myDesc;
+  ObitUVCalPolarizationS *me = in->polnCal;
+  ObitMatx *Jones = NULL;
+  olong j, incs=desc->incs;
+  olong ndim=2, naxis[]={4,1};
+
+
+  /* Need rotation matrix? Work arrays?*/
+  if (me->C2L_Matrix==NULL) {
+    naxis[1] = 4;
+    me->C2L_Matrix = ObitMatxCreate(OBIT_Complex, ndim, naxis);
+    naxis[1] = 1;
+    if (in->workMatx1==NULL) in->workMatx1 = ObitMatxCreate(OBIT_Complex, ndim, naxis);
+    if (in->workMatx2==NULL) in->workMatx2 = ObitMatxCreate(OBIT_Complex, ndim, naxis);
+    Jones = ObitMatxCreate(OBIT_Complex, ndim, naxis);
+    ObitMatxIPerfCirJones(Jones);  /* Inverse perfect feed */
+    ObitMatxOuterMult2C(Jones, Jones, me->C2L_Matrix);
+    Jones =  ObitMatxUnref(Jones); /* cleanup */
+  } /* end create rotation matrix */
+ 
+ /* Convert vis to linear - assume weights are OK and are from input linear */
+ /* anything flagged? -> zero all */
+ flag = FALSE;  for (j=0; j<12; j+=3) if (visIn[j+2]<=0.0) {flag = TRUE; break;}
+ if (flag) {
+   for (j=0; j<12; j++) visIn[j] = 0.0;
+   return;
+ }
+ /* Load input vector [RR,RL,LR,LL]*/
+ ObitMatxSet(in->workMatx1, (void*)&visIn[0],      0, 0);
+ ObitMatxSet(in->workMatx1, (void*)&visIn[2*incs], 1, 0);
+ ObitMatxSet(in->workMatx1, (void*)&visIn[3*incs], 2, 0);
+ ObitMatxSet(in->workMatx1, (void*)&visIn[incs],   3, 0);
+
+ /* Multiply by inverse Muller matrix */
+ ObitMatxVec4Mult(me->C2L_Matrix, in->workMatx1, in->workMatx2);
+
+ /* unload output vector from [XX,YY,XY,YX] */
+ ObitMatxGet(in->workMatx2, 0, 0, (void*)&visIn[0]); 
+ ObitMatxGet(in->workMatx2, 3, 0, (void*)&visIn[incs]);
+ ObitMatxGet(in->workMatx2, 1, 0, (void*)&visIn[2*incs]);
+ ObitMatxGet(in->workMatx2, 2, 0, (void*)&visIn[3*incs]);
+ 
+} /* end Cir2Lin */

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2020                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -158,3 +158,5 @@ ofloat lastTime;
 olong lastSu;
 /** Need to convert Linear to circular?  */
 gboolean doLin2Cir;
+/** Keep in Linear feed basis after Poln cal? */
+gboolean keepLin;

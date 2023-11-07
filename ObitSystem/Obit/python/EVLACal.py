@@ -7717,7 +7717,7 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     for cno in catNos: # loop over images
         image = getname(cno)
         mess = "INFO Creating contour plot for image " \
-        + string.strip(image.Aname) + ' . ' + string.strip(image.Aclass)
+        + image.Aname.strip() + ' . ' + image.Aclass.strip()
         printMess(mess, logfile)
 
         # Run KNTR to make plot

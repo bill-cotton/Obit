@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -98,6 +98,8 @@ typedef struct {
   odouble curSinDec;
   /** Polarication calibration from AIPS PD table */
   ObitPolCalList *PCal;
+  /** Rotation matrix to convert circular basis to linear */
+  ObitMatx *C2L_Matrix;
 } ObitUVCalPolarizationS;
 #endif /* OBITUVCALPOLARIZATIONDEF_H */ 
 

@@ -68,6 +68,20 @@ typedef struct {
 }G_STMT_END  
 
 /**
+ * divide one complex number by another
+ * out = in1 / in2
+ * \li [out]out  = output complex
+ * \li [in] in1  = input complex 
+ * \li [in] in2  = input complex 
+ */
+#define COMPLEX_DIV(out, in1, in2) G_STMT_START{ \
+  if ((in2.real*in2.real+in2.imag*in2.imag)!=0.0) { \
+    out.real = (in1.real*in2.real+in1.imag*in2.imag) / (in2.real*in2.real+in2.imag*in2.imag); \
+    out.imag = (in1.imag*in2.real-in1.real*in2.imag) / (in2.real*in2.real+in2.imag*in2.imag); \
+  } else {out.real = 1.0; out.imag = 1.0;} \
+}G_STMT_END
+
+/**
  * Add 2 complex values
  * out = in1 + in2
  * \li [out]out  = output complex

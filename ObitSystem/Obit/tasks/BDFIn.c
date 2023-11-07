@@ -2478,7 +2478,9 @@ ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outDa
     }
 
     /* Drop "MAP_ANTENNA_BEAM" if subscan intent is "UNSPECIFIED" - HACK for EVLA */
-    if (!strncmp(SDMData->ScanTab->rows[ScanId]->scanIntent[0],"MAP_ANTENNA_BEAM", 16)) {
+    ScanId    = SDMData->MainTab->rows[iMain]->scanNumber;
+    if ((ScanId<SDMData->ScanTab->nrows) &&
+	!strncmp(SDMData->ScanTab->rows[ScanId]->scanIntent[0],"MAP_ANTENNA_BEAM", 16)) {
 	drop = FALSE;
 	olong iSubScan, scanNumber, subscanNumber;
 	scanNumber    = SDMData->MainTab->rows[iMain]->scanNumber;

@@ -927,7 +927,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
     "BIF", "EIF", "BCHAN", "ECHAN",
     "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM", "doGPU", "passAll",
     NULL};
-  gchar schar[] = {'I','Q','U','U','V'};
+  gchar schar[] = {'I','Q','U','V'};
   gchar *routine = "getInputSkyModel";
 
   /* error checks */

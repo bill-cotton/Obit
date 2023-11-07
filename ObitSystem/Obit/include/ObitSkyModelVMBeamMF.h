@@ -37,7 +37,8 @@
 #include "ObitUV.h"
 #include "ObitSkyModelVMBeam.h"
 #include "ObitImageInterp.h"
-
+#include "ObitMatx.h"
+#include "ObitComplex.h"
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitSkyModelVMBeamMF.h

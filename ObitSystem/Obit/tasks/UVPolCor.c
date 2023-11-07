@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to correct off-axis instrumental polarization in UV data      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2022                                          */
+/*;  Copyright (C) 2009-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -689,9 +689,9 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "antSize", OBIT_float, dim, &ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* do3D, Always True */
+  /* do3D, Always FALSE */
   dim[0] = 1; dim[1] = 1;
-  btemp = TRUE;
+  btemp = FALSE;
   ObitInfoListPut (out, "do3D", OBIT_bool, dim, &btemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
@@ -959,7 +959,7 @@ ObitSkyModelVMBeamMF* getInputSkyModel (ObitInfoList *myInput, ObitUV *inData,
   ObitImage    **image=NULL;
   ObitInfoType type;
   ObitTableCC *inCC=NULL;
-  gboolean     mrgCC=FALSE, doCmplx=FALSE, do3D=TRUE;
+  gboolean     mrgCC=FALSE, doCmplx=FALSE, do3D=FALSE;
   oint         noParms, CCVer;
   olong        Aseq, disk, cno, i, nparm, nmaps, channel, numAntType;
   gchar        *Type, *strTemp, inFile[129], inRoot[129];
@@ -971,6 +971,9 @@ ObitSkyModelVMBeamMF* getInputSkyModel (ObitInfoList *myInput, ObitUV *inData,
   ofloat       modptflx,  modptxof, modptyof, modptypm[8];
   olong        inVer;
   gchar        name[101];
+  gchar        *skyModelParms[] = {  /* skyModel parameters to save*/
+    "prtLv", "noNeg",
+    NULL};
   gchar        *dataParms[] = {  /* Control parameters */
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "antSize", "Factor", 
     "minFlux", "Mode", "ModelType", "REPLACE", "Stokes", 
@@ -1113,8 +1116,8 @@ ObitSkyModelVMBeamMF* getInputSkyModel (ObitInfoList *myInput, ObitUV *inData,
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       } /* end loop over fields */
       
-      /* get do3D from first image */
-      do3D = image[0]->myDesc->do3D;
+      /* Save parameters */
+      ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
       
     } else { /* Unknown type - barf and bail */
       Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
@@ -1266,7 +1269,7 @@ void UVPoCoHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "nmaps", "CCVer", "BComp",  "EComp", "Flux",
     "outDType", "outFile",  "outDisk",  "outName", "outClass", "outSeq",
     "Cmethod", "Cmodel", "Factor",  "Opcode", 
-    "modelFlux", "modelPos", "modelParm",
+    "modelFlux", "modelPos", "modelParm", "noNeg",
     "mrgCC", "PBCor", "antSize", "Alpha",
     "nThreads",
     NULL};

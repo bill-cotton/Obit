@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2022                                          */
+/*;  Copyright (C) 2014-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -284,7 +284,7 @@ ObitSkyModelVMPolnCreate (gchar* name, ObitUV *uvdata,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong i, number;
-  gboolean forceDFT, forceTemp;
+  gboolean forceDFT, forceTemp, doPol=FALSE;
   gchar *routine = "ObitSkyModelVMPolnCreate";
 
   /* Error tests */
@@ -341,9 +341,14 @@ ObitSkyModelVMPolnCreate (gchar* name, ObitUV *uvdata,
   if (err->error) Obit_traceback_val (err, routine, uvdata->name, out);
 
   /* swallow PD table */
-  out->PDVer = 1;
-  ObitInfoListGetTest(uvdata->info, "PDVer", &type, dim, &out->PDVer);
-  digestPDTable (out, uvdata, out->PDVer, err);
+  ObitInfoListGetTest(uvdata->info, "doPol", &type, dim, &doPol);
+  if (doPol) {
+    out->PDVer = 1;
+    ObitInfoListGetTest(uvdata->info, "PDVer", &type, dim, &out->PDVer);
+    digestPDTable (out, uvdata, out->PDVer, err);
+  } else {
+    out->numAnt = uvdata->myDesc->numAnt[0];  /* Subarray? */
+  }
 
   /* Fourier transform routines - DFT only */
   out->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMPolnFTDFT;
@@ -384,7 +389,7 @@ ObitSkyModelVMPolnCreate (gchar* name, ObitUV *uvdata,
     ObitImageClose(image0, err);
     if (err->error) Obit_traceback_val (err, routine, uvdata->name, out);
     image0->image =  ObitFArrayUnref(image0->image);  /* free buffer */
-    out->nSpecQ = PolnMFFreqInfo (out, image0, uvdata, &out->AlphaV, &out->AlphaVRefF, 
+    out->nSpecV = PolnMFFreqInfo (out, image0, uvdata, &out->AlphaV, &out->AlphaVRefF, 
 				  &out->specFreqV, &out->specIndexV, &forceTemp);
   }
   
@@ -506,7 +511,7 @@ void ObitSkyModelVMPolnInitMod (ObitSkyModel* inn, ObitUV *uvdata,
       mosaic    = in->mosaicU;
       StartComp = in->startUComp;
       EndComp   = in->endUComp;
-    } else if (j==4) {    /* Stokes V */
+    } else if (j==3) {    /* Stokes V */
       mosaic    = in->mosaicV;
       StartComp = in->startVComp;
       EndComp   = in->endVComp;
@@ -934,7 +939,7 @@ gboolean ObitSkyModelVMPolnLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata
       nSpec     = &in->nSpecU;
       specFreq  = in->specFreqU;
       priorAlpha = in->AlphaU; priorAlphaRefF = in->AlphaURefF;
-    } else if (iModStok==4) {    /* Stokes V */
+    } else if (iModStok==3) {    /* Stokes V */
       mosaic    = in->mosaicV;
       StartComp = in->startVComp;
       EndComp   = in->endVComp;
@@ -1845,7 +1850,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 	/* Subarray 0-rel */
 	ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	/* Update */
-	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
 	if (err->error) {
 	  ObitThreadLock(in->thread);  /* Lock against other threads */
 	  Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",

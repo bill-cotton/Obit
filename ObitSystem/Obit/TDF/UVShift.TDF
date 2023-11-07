@@ -1,7 +1,7 @@
-; $Id$
-; AvgBL
+; $Id$ 
+; UVFix
 ;---------------------------------------------------------------
-;! Average data on multiple baselines
+;! Shift the phase tracking center of a UV data.
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
 ;;  Copyright (C) 2023
@@ -29,8 +29,8 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-UVFix      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-UVFix      Average data over baseline
+UVShift    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+UVShift    Shift the phase tracking center of a UV data.
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type of input
 **PARAM** str 48
@@ -48,11 +48,11 @@ Sources                            Sources to copy
 **PARAM** int 1 **DEF** -1
 Qual            -10.0              Source qualifier -1=>any
 **PARAM** str 4
-souCode                             Calibrator code '    '=>any
+souCode                            Calibrator code '    '=>any
 **PARAM** float 2
-timeRange                           Time range to process.
+timeRange                          Time range to process.
 **PARAM** float 2
-UVRange         0.                 Min & max baseline (klambda)
+UVRange         0.                  Min & max baseline (klambda)
 **PARAM** int 1
 FreqID                              Freq. ID to select.
 **PARAM** int 1 **DEF** 1
@@ -66,7 +66,7 @@ EIF               0.0     9999.0    Highest IF (0=>BIF to last)
 **PARAM** int 1 **DEF** 1
 subA                                Subarray
 **PARAM** int 50
-Antennas         0.0     1000.0     List of antennas to calibrate
+Antennas         0.0     1000.0     List of antennas to include
 **PARAM** int 1
 doCalib          -1.0        2.0   If >0 calibrate data
                                    = 2 calibrate weights
@@ -89,8 +89,6 @@ doBand           -1.0       10.0   If >0 apply bandpass cal.
 BPVer                              Bandpass table version
 **PARAM** float 3
 Smooth                             Smoothing function. 
-**PARAM** float 1
-timeAvg                            Output data averaging (min)
 **PARAM** float 2
 Shift                              RA,Dec shift in asec
 **PARAM** str 4
@@ -110,8 +108,8 @@ Compress                           True => write compressed data
 **PARAM** str 128
 taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
-UVFix
-Task:  Average data over baseline
+UVShift
+Task:  Shift the phase tracking center of a UV data.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -148,14 +146,12 @@ Adverbs:
   EIF........Highest IF to process 0=> do BIF to highest.
              Note: not all data sets will have IFs.
   subA.......Sub-array number to use. Only one allowed
-  Antennas...A list of the antennas to  have solutions
-             determined. If any number is negative then all
-             antennas listed  are NOT to be used to determine
-             solutions and all others are. All 0 => use all.
+  Antennas...A list of the antennas to copy..
+             If any number is negative then all antennas listed are 
+             NOT to be included and all others are. All 0 => use all.
   doCalib....If >0, calibrate the data using information in the
              specified Cal (CL) table for multi-source or SN table for
-             single-source data.  If > 1.5, also calibrate the weights
-             (new for VLA, normal for VLBI).  
+             single-source data.  If > 1.5, also calibrate the weights.
   gainUse....Version number of the CL table to apply to multi-source
              files or the SN table for single-source files.
              0 => highest.
@@ -207,7 +203,6 @@ Adverbs:
                function has value - in channels.  Defaults: 1,3,1,4
                times Smooth(2) used when input Smooth(3) < net
                Smooth(2).
-  timeAvg....Averaging time in min for output.
   Shift......RA, Dec shift in asec.
   outDType..'FITS' or 'AIPS'  type of output
   outFile....Output UV FITS file name.

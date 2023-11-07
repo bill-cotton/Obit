@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -100,7 +100,7 @@ ObitUVCalSelectXYInit (ObitUVCal *in, olong kstoke0, olong nstoke,
 static void 
 ObitUVCalSelectYXInit (ObitUVCal *in, olong kstoke0, olong nstoke, 
 		      olong ivpnt, ObitErr *err);
-/** Private: Convert liner to circular basis (YY,YY...->RR,LL... */
+/** Private: Convert linear to circular basis (YY,YY...->RR,LL... */
 static void 
 Lin2Cir (ObitUVCal *in, ObitUVDesc *desc, ofloat *RP, ofloat *visIn, ofloat *visOut);
 
@@ -175,6 +175,9 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
     crotapoln= outDesc->crota[outDesc->jlocs];
     cdeltpoln= outDesc->cdelt[outDesc->jlocs];
     crvalpoln= outDesc->crval[outDesc->jlocs];
+    /*...unless input is linear and keepLin */
+    if ((inDesc->crval[inDesc->jlocs]<-4) && (in->keepLin))
+      outDesc->crval[outDesc->jlocs] = crvalpoln = inDesc->crval[inDesc->jlocs];
   } else knpoln = 0;
 
   if (outDesc->jlocf>=0) {
@@ -777,7 +780,7 @@ ObitUVCalSelectQInit (ObitUVCal *in, olong kstoke0, olong nstok,
       return;
     }
     /* Need to convert linears to circular? */
-    if (kstoke0<-4) {in->doLin2Cir = TRUE; jstoke0 = kstoke0+4;}
+    if (kstoke0<-4) { jstoke0 = kstoke0+4; in->doLin2Cir = TRUE;}
     else jstoke0 = kstoke0;
     /* Data will always be uncompressed by the time it gets here */
     incs = 3 * in->myDesc->incs / in->myDesc->inaxes[0];
@@ -832,7 +835,7 @@ ObitUVCalSelectUInit (ObitUVCal *in, olong kstoke0, olong nstok,
     }
 
     /* Need to convert linears to circular? */
-    if (kstoke0<-4) {in->doLin2Cir = TRUE; jstoke0 = kstoke0+4;}
+    if (kstoke0<-4) {jstoke0 = kstoke0+4; in->doLin2Cir = TRUE;}
     else jstoke0 = kstoke0;
     
     /* Data will always be uncompressed by the time it gets here */
@@ -892,7 +895,7 @@ ObitUVCalSelectVInit (ObitUVCal *in, olong kstoke0, olong nstok,
     }
     
     /* Need to convert linears to circular? */
-    if (kstoke0<-4) {in->doLin2Cir = TRUE; jstoke0 = kstoke0+4;}
+    if (kstoke0<-4) {jstoke0 = kstoke0+4; in->doLin2Cir = TRUE;}
     else jstoke0 = kstoke0;
 
     /* Data will always be uncompressed by the time it gets here */

@@ -35,6 +35,7 @@
 #include <math.h>
 #include "ObitTypes.h"
 #include "ObitErr.h"
+#include "ObitInfoList.h"
 /** 
  * \file Obit.h
  * Base class of Obit library.
@@ -135,6 +136,32 @@ gboolean ObitStrCmp (gchar *str1, gchar *str2, olong maxlen);
 
 /** Public: return today's date as  yyyy-mm-dd*/
 gchar* ObitToday (void);
+
+/** 
+ * Public: Is GPU support compiled? 
+ * If FALSE and GPU is requested, turn it off and give warning
+ * \param myInput  ObitInfoList with parameters.
+ * \param err ObitErr for any warning.
+ * \return TRUE or FALSE depending on HAVE_GPU
+ */
+static inline gboolean ObitHaveGPU (ObitInfoList *myInput, ObitErr *err) {
+#if HAVE_GPU==1  /*  GPU? */
+  return TRUE;   /* all good */
+#else
+  /* See if GPU asked for */
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM]= {1,1,1,1,1};
+  gboolean doGPU=FALSE, doGPUGrid=FALSE;
+  ObitInfoListGetTest(myInput, "doGPU",     &type, dim, &doGPU);
+  ObitInfoListGetTest(myInput, "doGPUGrid", &type, dim, &doGPUGrid);
+  if (!(doGPU || doGPUGrid)) return FALSE;
+  /* Turn off and warn*/
+  dim[0] = 1; type = OBIT_bool;
+  ObitInfoListAlwaysPut (myInput, "doGPU",     type, dim, &doGPU);
+  ObitInfoListAlwaysPut (myInput, "doGPUGrid", type, dim, &doGPUGrid);
+  Obit_log_error(err, OBIT_InfoWarn, "Turned off doGPU, not compiled in.");
+  #endif
+} /* end ObitHaveGPU  */
 
 /** Function pointers for private functions */
 typedef void (*ObitInitFP)      (gpointer in);
