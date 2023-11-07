@@ -129,13 +129,13 @@ static inline void ObitMatxSet(ObitMatx *matx, void *val, olong i1, olong i2) {
     matx->dbl[i1+i2*matx->naxis[0]] = *((odouble*)val);}
 } /* end ObitMatxSet */
 
-/** Fill 2x2 */
+/** Fill 2x2  complex */
 void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I01, 
 		   ofloat R10, ofloat I10, ofloat R11, ofloat I11);
 typedef void (*ObitMatxSet2CFP) (ObitMatx *matx, ofloat R00, ofloat I00, 
 				 ofloat R01, ofloat I01,  ofloat R10, ofloat I10, 
 				 ofloat R11, ofloat I11);
-/** Fetch 2x2 */
+/** Fetch 2x2  complex */
 void ObitMatxGet2C(ObitMatx *matx, ofloat *R00, ofloat *I00, ofloat *R01, ofloat *I01, 
 		   ofloat *R10, ofloat *I10, ofloat *R11, ofloat *I11);
 typedef void (*ObitMatxGet2CFP) (ObitMatx *matx, ofloat *R00, ofloat *I00, 
@@ -173,18 +173,12 @@ void ObitMatxUnit(ObitMatx *out);
 typedef void (*ObitMatxUnitFP) (ObitMatx *in);
 /** Invert 2x2 matrix */
 void ObitMatxInv2x2(ObitMatx *in, ObitMatx *out);
-/** Fill 2x2 complex */
-void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I01, 
-		   ofloat R10, ofloat I10, ofloat R11, ofloat I11);
-typedef void (*ObitMatxSet2CFP) (ObitMatx *matx, ofloat R00, ofloat I00, 
-				 ofloat R01, ofloat I01,  ofloat R10, ofloat I10, 
-				 ofloat R11, ofloat I11);
 /** Inverse perfect linear feed Jones matrix */
 void ObitMatxIPerfLinJones(ObitMatx *in);
 typedef void (*ObitMatxIPerfLinJonesFP) (ObitMatx *out);
 /** Inverse perfect circular feed Jones matrix */
 void ObitMatxIPerfCirJones(ObitMatx *in);
-typedef void (*ObitMatxIPerfLinJonesFP) (ObitMatx *out);
+typedef void (*ObitMatxIPerfCirJonesFP) (ObitMatx *out);
 /** Outer 2x2 complex multiply*/
 void ObitMatxOuterMult2C(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
 typedef void (*ObitMatxOuterMult2CFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
