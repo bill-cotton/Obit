@@ -116,7 +116,7 @@ Data selection, calibration and editing parameters on List member:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2019
+#  Copyright (C) 2004-2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -323,8 +323,10 @@ class UV(Obit.UV, OData.OData):
         # Set first vis?
         if firstVis:
             d = self.IODesc.Dict
-            d["firstVis"] = firstVis-1
-            self.IODesc.Dict = d
+            chk = (d["firstVis"] == firstVis-1); chk
+            if not chk:
+                d["firstVis"] = firstVis-1
+                self.IODesc.Dict = d
         # Do I/O
         ret = UVVis.PGet(self, err)
         if err.isErr:

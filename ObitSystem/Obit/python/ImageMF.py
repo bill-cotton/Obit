@@ -1,4 +1,4 @@
-""" Python Obit ImageMF class
+x1""" Python Obit ImageMF class
 
 This class contains an astronomical image and allows access.
 An ObitImageMF is the front end to a persistent disk resident structure.
@@ -465,7 +465,7 @@ def PHeader (inImage, err):
 
 def PFitSpec (inImage, err, nOrder=1, corAlpha=0.0, maxSNR=False, \
               doPBCor=False, PBmin=None, doTab=False, \
-              refFreq=None, antSize=None, minFlux=0.0, Weights=None):
+              refFreq=None, antSize=0.0, minFlux=0.0, Weights=None):
     """
     Fit spectrum to each pixel of an ImageMF
 
@@ -516,7 +516,7 @@ def PFitSpec (inImage, err, nOrder=1, corAlpha=0.0, maxSNR=False, \
 
 def PFitSpec2 (inImage, outImage, err, nterm=2, \
                refFreq=None, maxChi2=2.0, doError=False, doBrokePow=False, \
-               calFract=None, doPBCor=False, PBmin=None, antSize=None, \
+               calFract=None, doPBCor=False, PBmin=None, antSize=0.0, \
                corAlpha=0.0, minWt=0.5, doTab=False, minFlux=0.0, Weights=None):
     """
     Fit spectrum to each pixel of an ImageMF writing a new cube

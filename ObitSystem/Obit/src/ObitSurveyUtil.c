@@ -996,6 +996,7 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
  * \li Silent    OBIT_double  Half width asec of silent search box. [def 720]
  * \li minFlux   OBIT_float   Minimum peak flux density. Jy [def 0]
  * \li maxFlux   OBIT_float   Maximum peak flux density. Jy [def LARGE]
+ * \li minSNR    OBIT_float   Minimum SNR [def 0]
  * \li minPol    OBIT_float   Minimum percent integrated polarization [def 0]
  * \li minGlat   OBIT_float   Minimum abs galactic latitude [def any]
  * \li maxGlat   OBIT_float   Minimum abs galactic latitude [def any]
@@ -1045,7 +1046,7 @@ gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
   olong equinCode;
   gboolean fitted, doraw;
   odouble ra, dec, search, box[2], silent;
-  ofloat minFlux, maxFlux, minPol, minGlat, maxGlat, farr[2];
+  ofloat minFlux, maxFlux, minSNR, minPol, minGlat, maxGlat, farr[2];
   ObitTableVL *VLTable=NULL;
   ObitTableVLRow *VLRow=NULL;
   ObitInfoType type;
@@ -1109,6 +1110,10 @@ gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
   if (ObitInfoListGetTest(data->info, "maxFlux",   &type, dim, &InfoReal)) {
     if (type==OBIT_float)       maxFlux = InfoReal.flt;
     else if (type==OBIT_double) maxFlux = InfoReal.dbl; }  
+  minSNR = 0.0;
+  if (ObitInfoListGetTest(data->info, "minSNR",   &type, dim, &InfoReal)) {
+     if (type==OBIT_float)      minSNR = InfoReal.flt;
+    else if (type==OBIT_double) minSNR = InfoReal.dbl; }  
   minPol = 0.0;
   if (ObitInfoListGetTest(data->info, "minPol",    &type, dim, &InfoReal)) {
     if (type==OBIT_float)      minPol = InfoReal.flt;
@@ -1357,6 +1362,15 @@ gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     if (minPol > 1.0e-5) {
       snprintf (line ,132,  "Selecting sources more than %5.1f percent polarized", 
 	       minPol);
+      ObitPrinterWrite (printer, line, &quit, err);
+      if (quit) goto Quit;
+      if (err->error) goto cleanup;
+    } 
+
+    /* Minimum SNR. */
+    if (minSNR > 0.0) {
+      snprintf (line ,132,  "Selecting sources with SNR > %5.1f", 
+	       minSNR);
       ObitPrinterWrite (printer, line, &quit, err);
       if (quit) goto Quit;
       if (err->error) goto cleanup;
@@ -1707,7 +1721,7 @@ gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
 	else         snprintf (chbdvl, 5, "    ");
 	
 	/* Check selection criteria */
-	select = (peak  >=  minFlux)  &&  (peak  <=  maxFlux);
+	select = (peak  >=  minFlux)  &&  (peak  <=  maxFlux) && ((peak/irms)> minSNR);
 	select = select && ((pflux != fblank) || (pctpol >= MAX(0.0,minPol)));
 	
 	/* Filter out really bad fits  Peak should be at least 3 times  RMS residual */
@@ -3099,7 +3113,8 @@ static void GenCorErr (ObitSurveyGenCalParms *calParms, odouble *ra, odouble *de
       else if (fcminor>0.5) snprintf (cminor, 7, "<%5.2f", fcminor);
       else  snprintf (cminor, 7, "<%5.3f", fcminor);
       snprintf (eminor, 7, "      ");
-      snprintf (epa, 7, "      ");
+      snprintf (epa, 7, "%6.1f", fepa);
+     /*NO snprintf (epa, 7, "      ");*/
     }
   } else { /* totally unresolved */
     if (fcmajor>10.) snprintf (cmajor, 7, "<%5.0f", fcmajor);

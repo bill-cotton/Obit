@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Average data on multiple baselines               .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2023                                               */
+/*;  Copyright (C) 2023,2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -607,7 +607,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
     "doPol", "PDVer", "keepLin", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
-    "timeAvg", "Shift",
+    "timeAvg", "Posn", "Shift",
      NULL};
   gchar *routine = "getInputData";
 
@@ -718,7 +718,7 @@ void AvgBLHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "FreqID", "BChan", "EChan", "BIF", "EIF", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "keepLin", "flagVer", 
-    "doBand", "BPVer", "Smooth",  "corrType", "timeAvg", "Shift",
+    "doBand", "BPVer", "Smooth",  "corrType", "timeAvg", "Posn", "Shift",
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};
   gchar *routine = "AvgBLHistory";
@@ -771,7 +771,7 @@ void AvgBLHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
-  gboolean doCalSelect, doShift=FALSE;
+  gboolean doCalSelect, doPosn=FALSE, doShift=FALSE;
   olong i, ii, j, indx, jndx;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -780,7 +780,7 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   olong ilocu, ilocv, ilocw;
   ofloat timeAvg, lastTime=-1.0e3, lastSou=-1.0, Shift[]={0.0,0.0}, dShift[]={0.,0.};
   ofloat visRe, visIm, wt, dxyzc[3]={0.,0.,0.}, *accVis=NULL;
-  odouble ra, dec, ra0, dec0, phase, cp, sp, u, v, w;
+  odouble ra, dec, ra0, dec0, phase, cp, sp, u, v, w, posn[2]={0.,0.};
   gchar *rach="RA  ", rast[15], *decch="DEC ", decst[21];
   gchar *routine = "ObitUVBLAvg";
  
@@ -794,8 +794,19 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim, &timeAvg);
   timeAvg /= 1440.;    /* To days */
 
-  /* Position shift - Full 3D */
-  ObitInfoListGetTest(inUV->info, "Shift", &type, dim, Shift);
+  /* Use Posn if given and nonzero */
+  if (ObitInfoListGetTest(inUV->info, "Posn", &type, dim, posn)) {
+    doPosn = (posn[0]!=0.0) &&  (posn[1]!=0.0);
+    ra = posn[0]; dec = posn[1]; doShift = doPosn;
+    /* Shift parameters - only works for SIN projection */
+    ObitSkyGeomShiftSIN (inUV->myDesc->crval[inUV->myDesc->jlocr], 
+			 inUV->myDesc->crval[inUV->myDesc->jlocd],
+			 ObitUVDescRotate(inUV->myDesc), ra, dec, dxyzc);
+  }
+  if (!doPosn) {  /* May need Shift */
+    /* Position shift - Full 3D */
+    ObitInfoListGetTest(inUV->info, "Shift", &type, dim, Shift);
+  }
 
   /* Clone from input */
   ObitUVClone (inUV, outUV, err);
@@ -825,17 +836,21 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   outDesc = outUV->myDesc;
   ilocu = inDesc->ilocu; ilocv = inDesc->ilocv; ilocw = inDesc->ilocw;
    
-  /* Shift */
-  doShift = ((Shift[0]!=0.0) || (Shift[1]!=0.0));
-  if (doShift) {
-    dShift[0] = Shift[0]/3600.; dShift[1] = Shift[1]/3600.; /* In degrees */
-    ObitUVDescShiftPosn (inDesc, dShift[0], dShift[1], dxyzc, err);
-    if (err->error) goto cleanup;
-    /* Shifted position */
-    ra0  = inDesc->crval[inDesc->jlocr];
-    dec0 = inDesc->crval[inDesc->jlocd];
-    ObitSkyGeomXYShift (ra0, dec0, dShift[0], dShift[1], ObitUVDescRotate(inDesc), &ra, &dec);
+  /* Shift? */
+  if (!doPosn) {
+    doShift = ((Shift[0]!=0.0) || (Shift[1]!=0.0));
+    if (doShift) {
+      dShift[0] = Shift[0]/3600.; dShift[1] = Shift[1]/3600.; /* In degrees */
+      ObitUVDescShiftPosn (inDesc, dShift[0], dShift[1], dxyzc, err);
+      if (err->error) goto cleanup;
+      /* Shifted position */
+      ra0  = inDesc->crval[inDesc->jlocr];
+      dec0 = inDesc->crval[inDesc->jlocd];
+      ObitSkyGeomXYShift (ra0, dec0, dShift[0], dShift[1], ObitUVDescRotate(inDesc), &ra, &dec);
+    }
+  } /* end of need Shift if not given Posn */
 
+  if (doShift) {
     /* Set shifted position in output */
     outDesc->crval[outDesc->jlocr] = ra;
     outDesc->crval[outDesc->jlocd] = dec;

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -179,7 +179,7 @@ ObitSystemStartup (gchar *pgmName, olong pgmNumber,
 
   /* Startup message if program name given */
   if ((strlen(out->pgmName)>0) && strncmp (out->pgmName, "NameLess", 8)) {
-    Obit_log_error(out->err, OBIT_InfoErr, "%s Begins, svn ver. %s", 
+    Obit_log_error(out->err, OBIT_InfoErr, "%s Begins, Obit ver. %s", 
 		   out->pgmName, version);
     ObitErrTimeStamp(out->err);  /* Add Timestamp */
   }
@@ -267,7 +267,7 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
 
   /* Shutdown message if program name given */
   if ((strlen(in->pgmName)>0) && strncmp (in->pgmName, "NameLess", 8))
-    Obit_log_error(in->err, OBIT_InfoErr, "%s Ends, svn ver. %s", 
+    Obit_log_error(in->err, OBIT_InfoErr, "%s Ends, Obit ver. %s", 
 		   in->pgmName, version);
   ObitErrTimeStamp(in->err);  /* Add Timestamp */
   if (version) g_free(version);  /* Cleanup */

@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2023                                          */
+/*;  Copyright (C) 2011-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2649,7 +2649,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 /* copy/calibrate to a scratch file.                                      */
 /* Calibration is turned off on inData                                    */
 /*   Input:                                                               */
-/*      inData     ObitUV to copy history from                            */
+/*      outData    ObitUV                                                 */
 /*      skyModel   Skymodel to subtract                                   */
 /*      selFGver   Continuum channel selection FG flag, -1 if none        */
 /*   Output:                                                              */
@@ -2661,7 +2661,7 @@ void subPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   ObitUV *scrUV = NULL;
   ObitTableCC  *CCTable=NULL;
   oint otemp, noParms;
-  olong i, ver, jtemp, nfield, *unpeeled=NULL, *itemp=NULL;
+  olong i, ver, jtemp, nfield, ncomp=0, *unpeeled=NULL, *itemp=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   ofloat maxResid;
@@ -2670,95 +2670,102 @@ void subPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   gboolean doReplace=FALSE; /* For debugging */
   gchar *routine = "subIPolModel";
 
-  /* Message */
-  Obit_log_error(err, OBIT_InfoErr, "Subtracting Pol model from output uv data");
-  ObitErrLog(err); 
+  /* Anything to do? */
+  for (i=0; i<skyModel->mosaic->numberImages; i++) {
+    ncomp += skyModel->endComp[i];
+  }
 
-  /* unset selection flagging */
-  dim[0] = dim[1] = dim[2] = 1;
-  otemp = -1;
-  ObitInfoListAlwaysPut (outData->info, "flagVer", OBIT_oint, dim, &otemp);
- 
-  /* Remove any peeled components from the subtraction */
-  nfield = skyModel->mosaic->numberImages;
-  if (ObitInfoListGetP(skyModel->info, "UnPeeledComps",  &type, dim, (gpointer)&unpeeled)) {
-    if (unpeeled) {
-      for (i=0; i<nfield; i++) {
-	if (unpeeled[i]<=0) continue;  /* Ignore unpeeled sources */
-	ver = skyModel->CCver[i];
-	noParms = 0;
-	CCTable = newObitTableCCValue ("Peeled CC", (ObitData*)skyModel->mosaic->images[i],
-				       &ver, OBIT_IO_ReadWrite, noParms, 
-				       err);
-	ObitTableUtilTruncate ((ObitTable*)CCTable, unpeeled[i], err);
-	CCTable  = ObitTableCCUnref(CCTable);
-	if (err->error) goto cleanup;
+  if (ncomp>0) {
+    /* Message */
+    Obit_log_error(err, OBIT_InfoErr, "Subtracting Pol model from output uv data");
+    ObitErrLog(err); 
+    
+    /* unset selection flagging */
+    dim[0] = dim[1] = dim[2] = 1;
+    otemp = -1;
+    ObitInfoListAlwaysPut (outData->info, "flagVer", OBIT_oint, dim, &otemp);
+    
+    /* Remove any peeled components from the subtraction */
+    nfield = skyModel->mosaic->numberImages;
+    if (ObitInfoListGetP(skyModel->info, "UnPeeledComps",  &type, dim, (gpointer)&unpeeled)) {
+      if (unpeeled) {
+	for (i=0; i<nfield; i++) {
+	  if (unpeeled[i]<=0) continue;  /* Ignore unpeeled sources */
+	  ver = skyModel->CCver[i];
+	  noParms = 0;
+	  CCTable = newObitTableCCValue ("Peeled CC", (ObitData*)skyModel->mosaic->images[i],
+					 &ver, OBIT_IO_ReadWrite, noParms, 
+					 err);
+	  ObitTableUtilTruncate ((ObitTable*)CCTable, unpeeled[i], err);
+	  CCTable  = ObitTableCCUnref(CCTable);
+	  if (err->error) goto cleanup;
+	}
       }
     }
-  }
-
-  /* Reset Sky Model to use all components */
-  itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
-  dim[0] = nfield;
-  for (i=0; i<nfield; i++) itemp[i] = 1;
-  ObitInfoListAlwaysPut(skyModel->info, "BComp", OBIT_long, dim, itemp);
-  for (i=0; i<nfield; i++) itemp[i] = 0;
-  ObitInfoListAlwaysPut(skyModel->info, "EComp", OBIT_long, dim, itemp);
-  itemp = ObitMemFree(itemp);  /* Deallocate */
     
-  /* No translation in Stokes */ 
-  dim[0] = 4;
-  sprintf (IStokes, "    ");
-  ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, IStokes);
-  
-  /* Copy to scratch with calibration */
-  scrUV = newObitUVScratch (outData, err);
-  scrUV = ObitUVCopy (outData, scrUV, err);
-  if (err->error) goto cleanup;
-
-  /* Any selection flagging table gets lost in the shuffle unless we copy it */
-  if (*selFGver>=0) {
-    ObitUVCopyTables (outData, scrUV, NULL, include, err);
-   if (err->error) goto cleanup;
- }
-  
-  /* Set maxResid for peeling (related to Threshold) */
-  maxResid = 0.0;
-  dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut(skyModel->info, "maxResid", OBIT_float, dim, &maxResid);
-
-  /* Replace Data? */
-  if (doReplace) {
+    /* Reset Sky Model to use all components */
+    itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
+    dim[0] = nfield;
+    for (i=0; i<nfield; i++) itemp[i] = 1;
+    ObitInfoListAlwaysPut(skyModel->info, "BComp", OBIT_long, dim, itemp);
+    for (i=0; i<nfield; i++) itemp[i] = 0;
+    ObitInfoListAlwaysPut(skyModel->info, "EComp", OBIT_long, dim, itemp);
+    itemp = ObitMemFree(itemp);  /* Deallocate */
+    
+    /* No translation in Stokes */ 
+    dim[0] = 4;
+    sprintf (IStokes, "    ");
+    ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, IStokes);
+    
+    /* Copy to scratch with calibration */
+    scrUV = newObitUVScratch (outData, err);
+    scrUV = ObitUVCopy (outData, scrUV, err);
+    if (err->error) goto cleanup;
+    
+    /* Any selection flagging table gets lost in the shuffle unless we copy it */
+    if (*selFGver>=0) {
+      ObitUVCopyTables (outData, scrUV, NULL, include, err);
+      if (err->error) goto cleanup;
+    }
+    
+    /* Set maxResid for peeling (related to Threshold) */
+    maxResid = 0.0;
     dim[0] = dim[1] = dim[2] = 1;
-    ObitInfoListAlwaysPut(skyModel->info, "REPLACE", OBIT_bool, dim, &doReplace);
-  }
+    ObitInfoListAlwaysPut(skyModel->info, "maxResid", OBIT_float, dim, &maxResid);
+    
+    /* Replace Data? */
+    if (doReplace) {
+      dim[0] = dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut(skyModel->info, "REPLACE", OBIT_bool, dim, &doReplace);
+    }
+    
+    /* Subtract */
+    ObitSkyModelSubUV (skyModel, scrUV, outData, err);
+    if (err->error) goto cleanup;
+    
+    /* Make sure something copied */
+    if (outData->myDesc->nvis<=0) {
+      Obit_log_error(err, OBIT_Error, "%s: No data left after subtraction of IPol model", 
+		     routine);
+      goto cleanup;
+    }
 
-  /* Subtract */
-  ObitSkyModelSubUV (skyModel, scrUV, outData, err);
-  if (err->error) goto cleanup;
-
-  /* Make sure something copied */
-  if (outData->myDesc->nvis<=0) {
-    Obit_log_error(err, OBIT_Error, "%s: No data left after subtraction of IPol model", 
-                   routine);
-    goto cleanup;
-  }
-
-  /* Copy any selection flagging table back */
-  if (*selFGver>=0) {
-    ObitUVCopyTables (scrUV, outData, NULL, include, err);
-   if (err->error) goto cleanup;
- }
-  
-  /* reset selection flagging */
-  dim[0] = dim[1] = dim[2] = 1;
-  otemp = (oint)(*selFGver);
-  ObitInfoListAlwaysPut (outData->info, "flagVer", OBIT_oint, dim, &otemp);
-
-  /* No more calibration */
-  dim[0] = 1; jtemp = -1;
-  ObitInfoListAlwaysPut (outData->info, "doCalib", OBIT_long, dim, &jtemp);
-  ObitInfoListAlwaysPut (outData->info, "doBand",  OBIT_long, dim, &jtemp);
+    /* Copy any selection flagging table back */
+    if (*selFGver>=0) {
+      ObitUVCopyTables (scrUV, outData, NULL, include, err);
+      if (err->error) goto cleanup;
+    }
+    
+    /* reset selection flagging */
+    dim[0] = dim[1] = dim[2] = 1;
+    otemp = (oint)(*selFGver);
+    ObitInfoListAlwaysPut (outData->info, "flagVer", OBIT_oint, dim, &otemp);
+    
+    /* No more calibration */
+    dim[0] = 1; jtemp = -1;
+    ObitInfoListAlwaysPut (outData->info, "doCalib", OBIT_long, dim, &jtemp);
+    ObitInfoListAlwaysPut (outData->info, "doBand",  OBIT_long, dim, &jtemp);
+  } /* end something to do */
 
   /* Cleanup */
  cleanup:

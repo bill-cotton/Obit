@@ -1,6 +1,6 @@
 /* $Id$            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012,2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -68,18 +68,14 @@ typedef struct {
 }G_STMT_END  
 
 /**
- * divide one complex number by another
- * out = in1 / in2
- * \li [out]out  = output complex
- * \li [in] in1  = input complex 
- * \li [in] in2  = input complex 
+ * Get square of modulus
+ * out = real*real+imag*imag
+ * \li out  = output 
+ * \li in   = complex value in question
  */
-#define COMPLEX_DIV(out, in1, in2) G_STMT_START{ \
-  if ((in2.real*in2.real+in2.imag*in2.imag)!=0.0) { \
-    out.real = (in1.real*in2.real+in1.imag*in2.imag) / (in2.real*in2.real+in2.imag*in2.imag); \
-    out.imag = (in1.imag*in2.real-in1.real*in2.imag) / (in2.real*in2.real+in2.imag*in2.imag); \
-  } else {out.real = 1.0; out.imag = 1.0;} \
-}G_STMT_END
+#define COMPLEX_MOD2(out, arg)  G_STMT_START{ \
+    out = in.real*in.real+in.imag*in.imag;	\
+}G_STMT_END  
 
 /**
  * Add 2 complex values
@@ -267,6 +263,25 @@ typedef struct {
   COMPLEX_MUL2 (cmpxtmp2, cmpxtmp1, in7);                              \
   COMPLEX_MUL2 (out, cmpxtmp2, in8);                                   \
 }                                                                      \
+}G_STMT_END
+
+/**
+ * Divide complex values
+ * out = in1 / in2
+ * Returns 0 if mod(in2)=0
+ * \li [out]out  = output complex
+ * \li [in] in1  = input complex 
+ * \li [in] in2  = input complex 
+ */
+#define COMPLEX_DIV(out, in1, in2)  G_STMT_START{ \
+  odouble den = in2.real*in2.real + in2.imag*in2.imag; \
+  if (den>0.0) { \
+    den = 1.0 / den;					  \
+    out.real = den*(in1.real*in2.real + in1.imag*in2.imag);	\
+    out.imag = den*(in1.imag*in2.real - in1.real*in2.imag);	\
+  } else {							\
+    out.real = 0.0; out.imag = 0.0;				\
+  }								\
 }G_STMT_END
 
 /**

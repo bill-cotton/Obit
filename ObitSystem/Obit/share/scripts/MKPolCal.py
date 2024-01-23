@@ -4,7 +4,7 @@
 #exec(open('MKPolCal.py').read())
 #exec(open('../../PolCal/MKPolCal.py').read())
 MKPolCal = None; del MKPolCal
-def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, doClip=False, ChWid=17):
+def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, doClip=False):
     """
     Polarization calibrate a MeerKAT dataset
 
@@ -13,7 +13,8 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
     Log file from PCal given in file 'PCal_'+uv.Aname.strip()+'.log'
     * uv       = Python Obit UV object, AIPS or FITS
     * cals     = list of calibrator source names, recognizes known calibrators
-                 1934-638, J1939-6342, 0408-65, 3C138, J0521+1638, 3C286, J1130-4049, J2329-4730
+                 1934-638, J1939-6342, 0408-65, 3C138, J0521+1638, 3C286, J1130-4049, 
+                 J2329-4730, J2253+1608 (3C454.3)
                  any other source will be treated as an unknown and be solved for
     * err      = Python Obit Error/message stack
     * refAnt   = the reference antenna used for parallel hand calibration
@@ -23,7 +24,6 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
     * doEVPA   = If True, correct EVPA for ad hoc correction,  If true, use PD table 2, else 1.
                  DON'T USE!!!!
     * doClip   = If True,  clip excessively high values in data.
-    * ChWid    = width of block of channels for PCal
     """
     import math
     # Control parameters
@@ -38,8 +38,13 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
     MKCals['3C138']    = {"doFitPol":False,"PPol":0.05,"dPPol":0.03,"RLPhase":-36.,"RM":-1.3,"Clip":12.}
     MKCals['J0521+1638']= {"doFitPol":False,"PPol":0.05,"dPPol":0.03,"RLPhase":-36.,"RM":-1.3,"Clip":12.}
     MKCals['3C286']    = {"doFitPol":False,"PPol":0.09,"dPPol":0.025,"RLPhase":66.,"RM":0.0,"Clip":20.}
+    MKCals['J1331+3030'] = {"doFitPol":False,"PPol":0.09,"dPPol":0.025,"RLPhase":66.,"RM":0.0,"Clip":20.}
     MKCals['J1130-4049'] = {"doFitPol":False,"PPol":0.025,"dPPol":0.035,"RLPhase":78.,"RM":34.3,"Clip":10.}
     MKCals['J2329-4730'] = {"doFitPol":False,"PPol":0.025,"dPPol":0.03,"RLPhase":-6.,"RM":16.0,"Clip":10.}
+    #MKCals['3C454.3'] = {"doFitPol":False,"PPol":0.06,"dPPol":0.02,"RLPhase":2*28.1,"RM":-58.,"Clip":10.}
+    #MKCals['J2253+1608'] = {"doFitPol":False,"PPol":0.06,"dPPol":0.02,"RLPhase":2*28.1,"RM":-58.,"Clip":10.}
+    MKCals['3C454.3'] = {"doFitPol":True,"PPol":0.06,"dPPol":0.02,"RLPhase":-999.,"RM":-58.,"Clip":10.}
+    MKCals['J2253+1608'] = {"doFitPol":True,"PPol":0.06,"dPPol":0.02,"RLPhase":-999.,"RM":-58.,"Clip":10.}
     MKCals['Other']    = {"doFitPol":True,"PPol":0.0,"dPPol":0.0,"RLPhase":-999.,"RM":0.0,"Clip":20.}
 
     # Clip
@@ -50,12 +55,14 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
         i=0
         for c in cals:
             if c in MKCals:
+                print ("Known calibrator",c)
                 af.Sources[0] = c; af.IClip=[MKCals[c]["Clip"],0.1]; 
                 af.XClip=[max(2.0,5*MKCals[c]["Clip"]*MKCals[c]["PPol"]),0.1]; 
             else:
+                print ("Unknown calibrator",c)
                 af.Sources[0] = c; af.IClip=[MKCals['Other']["Clip"],0.1]; 
                 af.XClip=[max(2.0,5*MKCals['Other']["Clip"]*MKCals['Other']["PPol"]),0.1]; 
-            print ("Clip",c, af.IClip,af.XClip)
+                print ("Clip",c, af.IClip,af.XClip)
             af.g
     
     # end loop
@@ -81,30 +88,30 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
         clcal.g
     
     # end doCalib
-    # Run Polcal in blocks of ChWid channels
+    # Run Polcal in blocks of 17 channels
     pcal=ObitTask('PCal'); setname(uv,pcal)
     pcal.UVRange=[3.0,200.]  # Ignore very short
     pcal.doCalib=2;pcal.gainUse=2;pcal.flagVer=1; pcal.solnType='  '
-    pcal.ChWid=ChWid;pcal.ChInc=ChWid; pcal.CPSoln=1; pcal.BPSoln=1; pcal.PDSoln=1
+    pcal.ChWid=17;pcal.ChInc=17; pcal.CPSoln=1; pcal.BPSoln=1; pcal.PDSoln=1
     pcal.refAnt=-1;pcal.nThreads=nthreads; pcal.prtLv=2
     pcal.doFitRL=True; pcal.doFitGain=False; pcal.doFitOri=True
     pcal.doFitI=[True,True,True,True,True,True]
     pcal.Sources = cals; 
-    if (uv.FileType=="AIPS"):
+    if "Aname" in uv.__dict__:
         pcal.taskLog='PCal_'+uv.Aname.strip()+'.log'
-    elif (uv.FileType=="FITS"):
-        pcal.taskLog='PCal_'+uv.Fname.strip()+'.log'
     else:
-        pcal.taskLog='PCal.log'
+        pcal.taskLog='PCal_'+uv.Fname.strip()+'.log' # Better be FITS
     i=0
     for c in cals:
         if c in MKCals:
+            print ("Known calibrator",c)
             pcal.doFitPol[i] = MKCals[c]["doFitPol"]
             pcal.PPol[i]     = MKCals[c]["PPol"]
             pcal.dPPol[i]    = MKCals[c]["dPPol"]
             pcal.RLPhase[i]  = MKCals[c]["RLPhase"]
             pcal.RM[i]       = MKCals[c]["RM"]; i+=1
         else:
+            print ("Unknown calibrator",c)
             pcal.doFitPol[i] = MKCals['Other']["doFitPol"]
             pcal.PPol[i]     = MKCals['Other']["PPol"]
             pcal.dPPol[i]    = MKCals['Other']["dPPol"]
@@ -157,5 +164,5 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
         
     
     # end doEVPA
-
+    return pcal   # Debug
 # end MKPolCal

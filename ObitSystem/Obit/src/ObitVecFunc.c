@@ -34,7 +34,7 @@
 #include "avx512_mathfun.h"
 /** Natural log of array of 16 floats */
 v16sf avx512_log_ps(v16sf x) {
-  return (v16sf) log512_ps((v16sf) x);
+  return (v16sf) log512_ps( x);
 }
 /** Exponential of array of 16 floats  */
 v16sf avx512_exp_ps(v16sf x) {

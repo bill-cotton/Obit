@@ -157,9 +157,11 @@ static inline gboolean ObitHaveGPU (ObitInfoList *myInput, ObitErr *err) {
   if (!(doGPU || doGPUGrid)) return FALSE;
   /* Turn off and warn*/
   dim[0] = 1; type = OBIT_bool;
+  doGPU = doGPUGrid = FALSE;
   ObitInfoListAlwaysPut (myInput, "doGPU",     type, dim, &doGPU);
   ObitInfoListAlwaysPut (myInput, "doGPUGrid", type, dim, &doGPUGrid);
   Obit_log_error(err, OBIT_InfoWarn, "Turned off doGPU, not compiled in.");
+  return FALSE;
   #endif
 } /* end ObitHaveGPU  */
 

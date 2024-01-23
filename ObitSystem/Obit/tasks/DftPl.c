@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to Plot average uv data v time          .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2018,2023                                          */
+/*;  Copyright (C) 2018,2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -481,7 +481,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   g_assert (ObitInfoListIsA(myInput));
 
   ObitInfoListGetTest(myInput, "Stokes",  &type, dim, Stokes);
-  if (Stokes[0]==' ') Stokes[0] = 'I';
+  if (Stokes[0]==' ') {Stokes[0] = 'I';} dim[0] = strlen(Stokes);
   ObitInfoListAlwaysPut (myInput, "Stokes", type, dim, Stokes);
 
   /* noScrat - no scratch files for AIPS disks */
@@ -514,7 +514,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
     "doPol", "PDVer", "keepLin", "Smooth", "Antennas",  "subA", "Sources", 
-    "souCode", "Qual", "timeAvg", "Shift", "title", "Range", "nplot",
+    "souCode", "Qual", "timeAvg", "Posn", "Shift", "title", "Range", "nplot",
      NULL};
   gchar *routine = "getInputData";
 
@@ -635,10 +635,10 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
   olong lastSourceID, curSourceID;
   olong ilocu, ilocv, ilocw;
   ofloat curTime, startTime, endTime, *inBuffer;
-  odouble ra, dec, ra0, dec0, phase, cp, sp, u, v, w;
-  olong ivis=0, cnt, iplot,maxPlot=*nplot;
-  gboolean done, gotOne, doShift;
-  ofloat timeAvg, shift[2], dshift[]={0.,0.}, sumWt, sumTime, sumRe, sumRe2, dxyzc[3];
+  odouble ra, dec, ra0, dec0, phase, cp, sp, u, v, w, posn[2]={0.,0.};
+  olong ivis=0, cnt=0, iplot=0,maxPlot=*nplot;
+  gboolean done, gotOne, doShift, doPosn=FALSE;
+  ofloat timeAvg, shift[2], dshift[]={0.,0.}, sumWt=0.0, sumTime=0.0, sumRe=0.0, sumRe2=0.0, dxyzc[3];
   gchar *rach="RA  ", rast[15], *decch="DEC ", decst[21];
   gchar *routine = "AvgData";
 
@@ -668,16 +668,27 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
   ObitInfoListGetTest(inData->info, "timeAvg", &type, dim, &timeAvg);
   if (timeAvg<=0.0) timeAvg = 0.25;
   timeAvg /= 60.*24.;  /* to days */
-  shift[0] = shift[1] = 0.0;
-  ObitInfoListGetTest(inData->info, "Shift", &type, dim, shift);
-  dshift[0] = shift[0]/3600.; dshift[1] = shift[1]/3600.; /* In degrees */
-  ObitUVDescShiftPosn (inDesc, dshift[0], dshift[1], dxyzc, err);
-  /* Shifted position */
-  if (err->error) goto done;
-  ra0  = inDesc->crval[inDesc->jlocr];
-  dec0 = inDesc->crval[inDesc->jlocd];
-  ObitSkyGeomXYShift (ra0, dec0, dshift[0], dshift[1], ObitUVDescRotate(inDesc), &ra, &dec);
-  doShift = ((shift[0]!=0.0) || (shift[1]!=0.0));
+
+  /* Use Posn if given and nonzero */
+  if (ObitInfoListGetTest(inData->info, "Posn", &type, dim, posn)) {
+    doPosn = (posn[0]!=0.0) &&  (posn[1]!=0.0);
+    ra = posn[0]; dec = posn[1]; doShift = doPosn;
+    /* Shift parameters - only works for SIN projection */
+    ObitSkyGeomShiftSIN (inDesc->crval[inDesc->jlocr], inDesc->crval[inDesc->jlocd],
+			 ObitUVDescRotate(inDesc), ra, dec, dxyzc);
+  }
+  if (!doPosn) {  /* May need Shift */
+    shift[0] = shift[1] = 0.0;
+    ObitInfoListGetTest(inData->info, "Shift", &type, dim, shift);
+    dshift[0] = shift[0]/3600.; dshift[1] = shift[1]/3600.; /* In degrees */
+    ObitUVDescShiftPosn (inDesc, dshift[0], dshift[1], dxyzc, err);
+    /* Shifted position */
+    if (err->error) goto done;
+    ra0  = inDesc->crval[inDesc->jlocr];
+    dec0 = inDesc->crval[inDesc->jlocd];
+    ObitSkyGeomXYShift (ra0, dec0, dshift[0], dshift[1], ObitUVDescRotate(inDesc), &ra, &dec);
+    doShift = ((shift[0]!=0.0) || (shift[1]!=0.0));
+  } /* end of check for Shift */
 
   /* Tell where the shift is to */
   if (doShift) {
@@ -763,7 +774,8 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
 	  goto done;
 	}
 	if ((cnt>1) && (sumWt>0.0)) {
-	  plotTime[iplot] = 24.0 * sumTime / cnt;  /* hours */
+	  /*plotTime[iplot] = 24.0 * sumTime / cnt;   hours  DAMN*/
+	  plotTime[iplot] = 24.0 * (startTime + 0.5 * (endTime-startTime));  /* hours */
 	  plotS[iplot]    = sumRe/sumWt;
 	  plotSerr[iplot] = sqrtf(MAX(0.0, sumRe2/sumWt -plotS[iplot]*plotS[iplot])) ;
 	  plotSerr[iplot] /= sqrtf((ofloat)(cnt-1));  /* of mean */

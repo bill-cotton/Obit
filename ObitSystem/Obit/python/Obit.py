@@ -851,6 +851,9 @@ def FArrayUtilFitCGauss(_in, FWHM, center, peak, err):
 def FArrayUtilFit1DGauss(_in, FWHM, center, peak, err):
     return _Obit.FArrayUtilFit1DGauss(_in, FWHM, center, peak, err)
 
+def FArrayUtilFit1DGauss2(_in, ngauss, FWHM, center, peak, err):
+    return _Obit.FArrayUtilFit1DGauss2(_in, ngauss, FWHM, center, peak, err)
+
 def FArrayUtilConvolve(in1, in2, err):
     return _Obit.FArrayUtilConvolve(in1, in2, err)
 
@@ -1756,6 +1759,15 @@ def ImageInterpCopy(_in, out, err):
 
 def ImageInterpValue(_in, ra, dec, parAng, plane, err):
     return _Obit.ImageInterpValue(_in, ra, dec, parAng, plane, err)
+
+def ImageInterpXPixel(_in):
+    return _Obit.ImageInterpXPixel(_in)
+
+def ImageInterpYPixel(_in):
+    return _Obit.ImageInterpYPixel(_in)
+
+def ImageInterpPlane(_in):
+    return _Obit.ImageInterpPlane(_in)
 
 def ImageInterpFindPlane(_in, freq):
     return _Obit.ImageInterpFindPlane(_in, freq)
@@ -3658,6 +3670,15 @@ def TableGetName(_in):
 
 def TableUtilSort(_in, colName, desc, err):
     return _Obit.TableUtilSort(_in, colName, desc, err)
+
+def TableJI(inData, tabVer, access, tabName, numPol, numIF, numChan, err):
+    return _Obit.TableJI(inData, tabVer, access, tabName, numPol, numIF, numChan, err)
+
+def TableJIGetHeadKeys(inTab):
+    return _Obit.TableJIGetHeadKeys(inTab)
+
+def TableJISetHeadKeys(inTab, inDict):
+    return _Obit.TableJISetHeadKeys(inTab, inDict)
 class TableList(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr

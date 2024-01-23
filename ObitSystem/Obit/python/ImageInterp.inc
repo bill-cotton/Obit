@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageInterp type                       */
 /*                                                                    */
-/*;  Copyright (C) 2009,2019                                          */
+/*;  Copyright (C) 2009,2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -120,6 +120,19 @@ extern float ImageInterpValue (ObitImageInterp* in, double ra, double dec,
 		            float parAng, long plane, ObitErr *err) {
   return ObitImageInterpValue(in, (odouble)ra, (odouble)dec, (ofloat)parAng, (olong)plane, err);
 } // end ImageInterpValue
+
+extern float ImageInterpXPixel (ObitImageInterp* in) {
+  return in->myInterp->xPixel;
+} // end ImageInterpXPixel
+
+extern float ImageInterpYPixel (ObitImageInterp* in) {
+  return in->myInterp->yPixel;
+} // end ImageInterpYPixel
+
+extern long ImageInterpPlane (ObitImageInterp* in) {
+  long out = (long)in->ImgDesc->plane;
+  return out;
+} // end ImageInterpPlane
 
 extern long ImageInterpFindPlane (ObitImageInterp* in, double freq) {
   return (long)ObitImageInterpFindPlane(in, (odouble)freq);

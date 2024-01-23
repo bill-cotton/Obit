@@ -4,7 +4,7 @@
 ;! Plot average uv data v time
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2018,2023
+;;  Copyright (C) 2018-2024
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -90,8 +90,10 @@ BPVer                              Bandpass table version
 Smooth                             Smoothing function. 
 **PARAM** float 1 **DEF** 0.25
 timeAvg                            Data averaging time (min)
+**PARAM** dbl 2
+Posn                               [RA, Dec] in deg, takes precedence
 **PARAM** float 2
-Shift                              (x,Y) shift in asec
+Shift                              (X,Y) shift in asec
 **PARAM** str 128 **DEF** plot.ps
 plotFile                           Output plot file (only does CWD)
 **PARAM** str 12 **DEF** ps
@@ -196,6 +198,10 @@ Adverbs:
                times Smooth(2) used when input Smooth(3) < net
                Smooth(2).
   timeAvg.....Averaging time in min for plot.
+  Posn........Ra, Dec in deg. Takes precedence over Shift if nonzero
+              cal be set by:
+              Posn=[ImageDesc.PHMS2RA("1:2:3.0"),\
+	            ImageDesc.PDMS2Dec("+1:0:0.0")]
   Shift.......Shift position of dft in x and y in asec.
   plotFile....Name of the output plot file 
               NB: plplot only writes in the current directory

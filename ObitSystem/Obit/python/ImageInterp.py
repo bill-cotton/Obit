@@ -4,7 +4,7 @@ This class interpolates values in an image
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2009,2019,2021
+#  Copyright (C) 2009,2019,2021,2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -95,6 +95,22 @@ class ImageInterp(Obit.ImageInterp):
             raise TypeError("self MUST be a Python Obit ImageInterp")
         return Obit.ImageInterpValue(self.me, ra, dec, rotate, plane, err.me)
     # end Value
+    
+    def Pixel (self):
+        """
+        Returns pixel at which array interpolated (x,y,plane)
+
+        * self     = the ImageInterp object
+        """
+        ################################################################
+        # Checks
+        if not PIsA(self):
+            raise TypeError("self MUST be a Python Obit ImageInterp")
+        plane = Obit.ImageInterpPlane(self.me)
+        x = Obit.ImageInterpXPixel(self.me)
+        y = Obit.ImageInterpYPixel(self.me)
+        return [x,y,plane]
+    # end Pixel
     
     def FindPlane(self, freq):
         """

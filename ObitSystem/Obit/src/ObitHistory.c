@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2023                                          */
+/*;  Copyright (C) 2004-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -785,7 +785,7 @@ ObitIOCode ObitHistoryTimeStamp (ObitHistory *in,
   version = ObitVersion();
 
   /* Compose line to write */
-  g_snprintf (line,70, "   / %4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d %s svn ver. %s",
+  g_snprintf (line,70, "   / %4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d %s Obit ver. %s",
 	   datea[0],datea[1],datea[2],timea[0], timea[1],timea[2],label,version);
 
   /* write row rowno */

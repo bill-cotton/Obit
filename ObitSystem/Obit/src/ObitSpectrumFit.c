@@ -2019,7 +2019,7 @@ static void NLFit (NLFitArg *arg)
   /* Initial fit */
   arg->coef[0] = avg;
   best = 1;  /* best fit number of terms */
-  if (nvalid==1) return;  /* Only one? */
+  if (nvalid==1) {arg->coef[1] = fblank; return;}  /* Only one? */
  
   /* determine chi squared, mean SNR */
   sum = sum2 = sumwt = 0.0;
