@@ -1,4 +1,4 @@
-x1""" Python Obit ImageMF class
+""" Python Obit ImageMF class
 
 This class contains an astronomical image and allows access.
 An ObitImageMF is the front end to a persistent disk resident structure.
