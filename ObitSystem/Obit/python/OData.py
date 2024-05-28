@@ -17,7 +17,7 @@ List   used to pass instructions to processing
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007-2019
+#  Copyright (C) 2007-2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -303,9 +303,12 @@ class OData(Obit.OData):
         elif tabType=="AIPS BP":
             outTable.me = Obit.TableBP(id, tver, access, \
                                   tabType, numPol, numIF, numChan, err.me)
-        elif tabType=="AIPS PD":
-            outTable.me = Obit.TablePD(id, tver, access, \
-                                  tabType, numPol, numIF, numChan, err.me)
+        elif tabType=="AIPS PD": outTable.me = Obit.TablePD(id, tver,
+            access, tabType, numPol, numIF, numChan, err.me)
+        elif tabType=="AIPS JI": outTable.me = Obit.TableJI(id, tver, access, tabType, 
+                                                numIF, numChan, err.me)
+        elif tabType=="AIPS JT": outTable.me = Obit.TableJT(id, tver, access, tabType, 
+                                                numIF, numChan, err.me)
         elif tabType=="AIPS BL":
             outTable.me = Obit.TableBL(id, tver, access, tabType, numPol, numIF, err.me)
         elif tabType=="AIPS PC":

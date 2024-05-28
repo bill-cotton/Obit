@@ -13,7 +13,7 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
     Log file from PCal given in file 'PCal_'+uv.Aname.strip()+'.log'
     * uv       = Python Obit UV object, AIPS or FITS
     * cals     = list of calibrator source names, recognizes known calibrators
-                 1934-638, J1939-6342, 0408-65, 3C138, J0521+1638, 3C286, J1130-4049, 
+                 1934-638, J1939-6342, 0408-65, 3C138, J0521+1638, 3C286, J1130-1449, 
                  J2329-4730, J2253+1608 (3C454.3)
                  any other source will be treated as an unknown and be solved for
     * err      = Python Obit Error/message stack
@@ -26,10 +26,12 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
     * doClip   = If True,  clip excessively high values in data.
     """
     import math
+    import UV, FArray
+    from ObitTask import ObitTask
     # Control parameters
     inTab = 1; outTab = 2      # PD tables for EVPA correction
-    RLCorr = math.radians(7.7) # R-L phase correcton in degrees GP82
-    RLRM = 1.0                 # R-L phase correction RM rad/m**2
+    RLCorr = math.radians(7.7) # R-L phase correcton in degrees GP82 WRONG!
+    RLRM = 1.0                 # R-L phase correction RM rad/m**2  WRONG!
     # Known calibrators
     MKCals = {}
     MKCals['1934-638'] = {"doFitPol":False,"PPol":0.0,"dPPol":0.0,"RLPhase":0.0,"RM":0.0,"Clip":20.}
@@ -39,7 +41,9 @@ def MKPolCal (uv, cals, err, refAnt=59, nthreads=1, doCalib=True, doEVPA=False, 
     MKCals['J0521+1638']= {"doFitPol":False,"PPol":0.05,"dPPol":0.03,"RLPhase":-36.,"RM":-1.3,"Clip":12.}
     MKCals['3C286']    = {"doFitPol":False,"PPol":0.09,"dPPol":0.025,"RLPhase":66.,"RM":0.0,"Clip":20.}
     MKCals['J1331+3030'] = {"doFitPol":False,"PPol":0.09,"dPPol":0.025,"RLPhase":66.,"RM":0.0,"Clip":20.}
-    MKCals['J1130-4049'] = {"doFitPol":False,"PPol":0.025,"dPPol":0.035,"RLPhase":78.,"RM":34.3,"Clip":10.}
+    #BAD POS? MKCals['J1130-4049'] = {"doFitPol":False,"PPol":0.025,"dPPol":0.035,"RLPhase":78.,"RM":34.3,"Clip":10.}
+    #No-Fit Possibly OK at L band MKCals['J1130-1449'] = {"doFitPol":False,"PPol":0.025,"dPPol":0.035,"RLPhase":78.,"RM":34.3,"Clip":10.}
+    MKCals['J1130-1449'] = {"doFitPol":True,"PPol":0.025,"dPPol":0.035,"RLPhase":78.,"RM":34.3,"Clip":10.}
     MKCals['J2329-4730'] = {"doFitPol":False,"PPol":0.025,"dPPol":0.03,"RLPhase":-6.,"RM":16.0,"Clip":10.}
     #MKCals['3C454.3'] = {"doFitPol":False,"PPol":0.06,"dPPol":0.02,"RLPhase":2*28.1,"RM":-58.,"Clip":10.}
     #MKCals['J2253+1608'] = {"doFitPol":False,"PPol":0.06,"dPPol":0.02,"RLPhase":2*28.1,"RM":-58.,"Clip":10.}

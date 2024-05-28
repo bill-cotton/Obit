@@ -367,13 +367,13 @@ def pipeline( aipsSetup, parmFile):
         if parms["doRecal"]:
             # Only calibrators
             clist = []
-            for DCal in DCals:
+            for DCal in parms["DCals"]:
                 if DCal["Source"] not in clist:
                     clist.append(DCal["Source"])
-            for PCal in PCals:
+            for PCal in parms["PCals"]:
                 if PCal["Source"] not in clist:
                     clist.append(DCal["Source"])
-            for ACal in ACals:
+            for ACal in parms["ACals"]:
                 if ACal["Source"] not in clist:
                     clist.append(ACal["Source"])
         else:
@@ -621,7 +621,8 @@ def pipeline( aipsSetup, parmFile):
             slist = parms["targets"]
         EVLAImageTargets (uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
                           doCalib=2, doBand=1,  flagVer=1, doPol=parms["doPol"], PDVer=parms["PDVer"],  \
-                          Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"], Niter=parms["Niter"], \
+                          Stokes=parms["Stokes"],timeRange=parms["timeRange"], \
+                          FOV=parms["FOV"], Robust=parms["Robust"], Niter=parms["Niter"], \
                           CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], UVRange=parms["UVRange"], \
                           maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \
                           solPInt=parms["solPInt"], solPMode=parms["solPMode"], solPType=parms["solPType"], \

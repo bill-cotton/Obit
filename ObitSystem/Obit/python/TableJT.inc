@@ -26,12 +26,58 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/* Define the basic components of the ObitTableJI ClassInfo structure */
-/* This is intended to be included in a classInfo structure definition*/
-#include "ObitTableClassDef.h"  /* Parent class ClassInfo definition file */
-/** Function pointer to convert. */
-ObitTableConvertFP ObitTableJIConvert;
-/** Function pointer to read a row. */
-ObitTableReadRowFP ObitTableJIReadRow;
-/** Function pointer to write a row. */
-ObitTableWriteRowFP ObitTableJIWriteRow;
+%{
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableJT.h"
+%}
+ 
+%inline %{
+ 
+extern ObitTable* TableJT (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numIF, int numChan,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumIF = (oint)numIF;
+   oint lnumChan = (oint)numChan;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableJTValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumIF, lnumChan,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableJTGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableJT *lTab = (ObitTableJT*)inTab;
+  PyDict_SetItemString(outDict, "numIF",  PyInt_FromLong((long)lTab->numIF));
+  PyDict_SetItemString(outDict, "numChan",  PyInt_FromLong((long)lTab->numChan));
+  PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
+  PyDict_SetItemString(outDict, "numAnt",  PyInt_FromLong((long)lTab->numAnt));
+
+  return outDict;
+} 
+
+extern void TableJTSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableJT *lTab = (ObitTableJT*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEJT;
+
+  lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
+  lTab->numAnt = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numAnt"));
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+%}

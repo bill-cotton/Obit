@@ -26,26 +26,26 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-#include "ObitTableJI.h"
+#include "ObitTableJT.h"
 #include "ObitTableList.h"
 #include "ObitData.h"
 
 /*----------------Obit:  Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitTableJI.c
- * ObitTableJI class function definitions.
+ * \file ObitTableJT.c
+ * ObitTableJT class function definitions.
  *
  * This class is derived from the #ObitTable class.
  */
 
 /** name of the class defined in this file */
-static gchar *myClassName = "ObitTableJI";
+static gchar *myClassName = "ObitTableJT";
 
 /**  Function to obtain parent Table ClassInfo - ObitTable */
 static ObitGetClassFP ObitParentGetClass = ObitTableGetClass;
 
 /** name of the Row class defined in this file */
-static gchar *myRowClassName = "ObitTableJIRow";
+static gchar *myRowClassName = "ObitTableJTRow";
 
 /**  Function to obtain parent TableRow ClassInfo */
 static ObitGetClassFP ObitParentGetRowClass = ObitTableRowGetClass;
@@ -56,39 +56,39 @@ static ObitGetClassFP ObitParentGetRowClass = ObitTableRowGetClass;
  * ClassInfo structure ObitTableClassInfo.
  * This structure is used by class objects to access class functions.
  */
-static ObitTableJIRowClassInfo myRowClassInfo = {FALSE};
+static ObitTableJTRowClassInfo myRowClassInfo = {FALSE};
 
 /*------------------  Table  ------------------------*/
 /**
- * ClassInfo structure ObitTableJIClassInfo.
+ * ClassInfo structure ObitTableJTClassInfo.
  * This structure is used by class objects to access class functions.
  */
-static ObitTableJIClassInfo myClassInfo = {FALSE};
+static ObitTableJTClassInfo myClassInfo = {FALSE};
 
 /*---------------Private function prototypes----------------*/
 /** Private: Initialize newly instantiated Row object. */
-void  ObitTableJIRowInit  (gpointer in);
+void  ObitTableJTRowInit  (gpointer in);
 
 /** Private: Deallocate Row members. */
-void  ObitTableJIRowClear (gpointer in);
+void  ObitTableJTRowClear (gpointer in);
 
 /** Private: Initialize newly instantiated object. */
-void  ObitTableJIInit  (gpointer in);
+void  ObitTableJTInit  (gpointer in);
 
 /** Private: Deallocate members. */
-void  ObitTableJIClear (gpointer in);
+void  ObitTableJTClear (gpointer in);
 
 /** Private: update table specific info */
-static void ObitTableJIUpdate (ObitTableJI *in, ObitErr *err);
+static void ObitTableJTUpdate (ObitTableJT *in, ObitErr *err);
 
 /** Private: copy table keywords to descriptor info list */
-static void ObitTableJIDumpKey (ObitTableJI *in, ObitErr *err);
+static void ObitTableJTDumpKey (ObitTableJT *in, ObitErr *err);
 
 /** Private: Set Class function pointers */
-static void ObitTableJIClassInfoDefFn (gpointer inClass);
+static void ObitTableJTClassInfoDefFn (gpointer inClass);
 
 /** Private: Set Row Class function pointers */
-static void ObitTableJIRowClassInfoDefFn (gpointer inClass);
+static void ObitTableJTRowClassInfoDefFn (gpointer inClass);
 /*----------------------Public functions---------------------------*/
 
 /*------------------  Table Row ------------------------*/
@@ -99,26 +99,26 @@ static void ObitTableJIRowClassInfoDefFn (gpointer inClass);
  * \param name An optional name for the object.
  * \return the new object.
  */
-ObitTableJIRow* newObitTableJIRow (ObitTableJI *table)
+ObitTableJTRow* newObitTableJTRow (ObitTableJT *table)
 {
-  ObitTableJIRow* out;
+  ObitTableJTRow* out;
   oint      *iRow;
   ofloat    *fRow;
 
   /* Class initialization if needed */
-  if (!myRowClassInfo.initialized) ObitTableJIRowClassInit();
+  if (!myRowClassInfo.initialized) ObitTableJTRowClassInit();
 
   /* allocate/init structure */
-  out = g_malloc0(sizeof(ObitTableJIRow));
+  out = g_malloc0(sizeof(ObitTableJTRow));
 
   /* initialize values */
-  out->name = g_strdup("TableJI Row");
+  out->name = g_strdup("TableJT Row");
 
   /* set ClassInfo */
   out->ClassInfo = (gpointer)&myRowClassInfo;
 
   /* initialize other stuff */
-  ObitTableJIRowInit((gpointer)out);
+  ObitTableJTRowInit((gpointer)out);
   out->myTable   = (ObitTable*)ObitTableRef((ObitTable*)table);
 
   /* If writing attach to buffer */
@@ -129,24 +129,25 @@ ObitTableJIRow* newObitTableJIRow (ObitTableJI *table)
     fRow  = (ofloat*)table->buffer;
   
     /* Set row pointers to buffer */
-    out->Jones = fRow + table->JonesOff;
+    out->Jones1 = fRow + table->Jones1Off;
+    out->Jones2 = fRow + table->Jones2Off;
     out->Weight = fRow + table->WeightOff;
     out->RefAnt = iRow + table->RefAntOff;
   } /* end attaching row to table buffer */
 
  return out;
-} /* end newObitTableJIRow */
+} /* end newObitTableJTRow */
 
 /**
  * Returns ClassInfo pointer for the Row class.
  * \return pointer to the Row class structure.
  */
-gconstpointer ObitTableJIRowGetClass (void)
+gconstpointer ObitTableJTRowGetClass (void)
 {
   /* Class initialization if needed */
-  if (!myRowClassInfo.initialized) ObitTableJIRowClassInit();
+  if (!myRowClassInfo.initialized) ObitTableJTRowClassInit();
   return (gconstpointer)&myRowClassInfo;
-} /* end ObitTableJIRowGetClass */
+} /* end ObitTableJTRowGetClass */
 
 /*------------------  Table  ------------------------*/
 /**
@@ -155,15 +156,15 @@ gconstpointer ObitTableJIRowGetClass (void)
  * \param name An optional name for the object.
  * \return the new object.
  */
-ObitTableJI* newObitTableJI (gchar* name)
+ObitTableJT* newObitTableJT (gchar* name)
 {
-  ObitTableJI* out;
+  ObitTableJT* out;
 
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitTableJIClassInit();
+  if (!myClassInfo.initialized) ObitTableJTClassInit();
 
   /* allocate/init structure */
-  out = g_malloc0(sizeof(ObitTableJI));
+  out = g_malloc0(sizeof(ObitTableJT));
 
   /* initialize values */
   if (name!=NULL) out->name = g_strdup(name);
@@ -173,22 +174,22 @@ ObitTableJI* newObitTableJI (gchar* name)
   out->ClassInfo = (gpointer)&myClassInfo;
 
   /* initialize other stuff */
-  ObitTableJIInit((gpointer)out);
+  ObitTableJTInit((gpointer)out);
 
  return out;
-} /* end newObitTableJI */
+} /* end newObitTableJT */
 
 /**
  * Returns ClassInfo pointer for the class.
  * \return pointer to the class structure.
  */
-gconstpointer ObitTableJIGetClass (void)
+gconstpointer ObitTableJTGetClass (void)
 {
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitTableJIClassInit();
+  if (!myClassInfo.initialized) ObitTableJTClassInit();
 
   return (gconstpointer)&myClassInfo;
-} /* end ObitJIGetClass */
+} /* end ObitJTGetClass */
 
 /**
  * Constructor from values.
@@ -205,12 +206,12 @@ gconstpointer ObitTableJIGetClass (void)
  * \param err Error stack, returns if not empty.
  * \return the new object, NULL on failure.
  */
-ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
+ObitTableJT* newObitTableJTValue (gchar* name, ObitData *file, olong *ver,
  	                    ObitIOAccess access,
   		     oint numIF, oint numChan,
 		     ObitErr *err)
 {
-  ObitTableJI* out=NULL;
+  ObitTableJT* out=NULL;
   ObitTable *testTab=NULL;
   ObitTableDesc *desc=NULL;
   ObitTableList *list=NULL;
@@ -218,8 +219,8 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
   gboolean exist, optional;
   olong colNo, i, ncol, highVer;
   ObitIOCode retCode;
-  gchar *tabType = "AIPS JI";
-  gchar *routine = "newObitTableJIValue";
+  gchar *tabType = "AIPS JT";
+  gchar *routine = "newObitTableJTValue";
 
  /* error checks */
   g_assert(ObitErrIsA(err));
@@ -227,7 +228,7 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
   g_assert (ObitDataIsA(file));
 
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitTableJIClassInit();
+  if (!myClassInfo.initialized) ObitTableJTClassInit();
 
   /* Check if the table already exists */
   /* Get TableList */
@@ -236,7 +237,7 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
 
   /* Get highest version number if not specified */
   if (*ver==0) { 
-    highVer = ObitTableListGetHigh (list, "AIPS JI");
+    highVer = ObitTableListGetHigh (list, "AIPS JT");
     if (access==OBIT_IO_ReadOnly) *ver = highVer;
     else if (access==OBIT_IO_ReadWrite) *ver = highVer;
     else if (access==OBIT_IO_WriteOnly) *ver = highVer+1;
@@ -250,11 +251,11 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
   
     /* if readonly, it must exist to proceed */
     if ((access==OBIT_IO_ReadOnly) && !exist) return out;
-    if (testTab!=NULL) { /* it exists, use it if is an ObitTableJI */
-      if (ObitTableJIIsA(testTab)) { /* it is an ObitTableJI */
+    if (testTab!=NULL) { /* it exists, use it if is an ObitTableJT */
+      if (ObitTableJTIsA(testTab)) { /* it is an ObitTableJT */
 	out = ObitTableRef(testTab);
       } else { /* needs conversion */
- 	out = ObitTableJIConvert(testTab);
+ 	out = ObitTableJTConvert(testTab);
 	/* Update the TableList */
 	ObitTableListPut(list, tabType, ver, (ObitTable*)out, err);
 	if (err->error) /* add traceback,return */
@@ -267,7 +268,7 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
   
   /* If access is ReadOnly make sure one exists */
   if (access==OBIT_IO_ReadOnly) { 
-    highVer = ObitTableListGetHigh (list, "AIPS JI");
+    highVer = ObitTableListGetHigh (list, "AIPS JT");
     if (highVer<=0) return out;
   }
   
@@ -277,10 +278,10 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
   if (err->error) Obit_traceback_val (err, routine,"", out);
   
   /* likely need to convert */
-  if (ObitTableJIIsA(testTab)) { 
+  if (ObitTableJTIsA(testTab)) { 
     out = ObitTableRef(testTab);
   } else { /* needs conversion */
-    out = ObitTableJIConvert(testTab);
+    out = ObitTableJTConvert(testTab);
   }
   testTab = ObitTableUnref(testTab); /* remove reference */
 
@@ -297,15 +298,13 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
   /* Set values */
   out->numIF = MAX (0, numIF);
   out->numChan = MAX (0, numChan);
-  out->revision = 12;
+  out->revision = 11;
   out->numAnt = 1;
-  out->isApplied = FALSE;
-  strncpy (out->calType, "        ", MAXKEYCHARTABLEJI );
 
   /* initialize descriptor */
   desc = out->myDesc;
   /* How many columns actually in table? */
-  ncol = 9 + out->numIF*0 + out->numChan*0 ;
+  ncol = 10 + out->numIF*0 + out->numChan*0 ;
   desc->FieldName = g_malloc0((ncol+1)*sizeof(gchar*));
   desc->FieldUnit = g_malloc0((ncol+1)*sizeof(gchar*));
   desc->type      = g_malloc0((ncol+1)*sizeof(ObitInfoType));
@@ -351,7 +350,18 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
   colNo++;
   optional = FALSE;
   if ((8 > 0) || (!optional)) {
-    desc->FieldName[colNo] = g_strdup("JONES");
+    desc->FieldName[colNo] = g_strdup("JONES1");
+    desc->FieldUnit[colNo] = g_strdup("");
+    desc->type[colNo] = OBIT_float;
+    for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
+    desc->dim[colNo][0] = 8;
+    desc->dim[colNo][1] = numChan;
+    desc->dim[colNo][2] = numIF;
+    colNo++;
+  }
+  optional = FALSE;
+  if ((8 > 0) || (!optional)) {
+    desc->FieldName[colNo] = g_strdup("JONES2");
     desc->FieldUnit[colNo] = g_strdup("");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
@@ -390,17 +400,17 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
   desc->nfield = colNo + 1;
 
   /* initialize descriptor keywords */
-  ObitTableJIDumpKey (out, err);
+  ObitTableJTDumpKey (out, err);
  
   /* index table descriptor */
   ObitTableDescIndex (desc);
 
   /* Open and Close to fully instantiate */
-  retCode = ObitTableJIOpen(out, OBIT_IO_WriteOnly, err);
+  retCode = ObitTableJTOpen(out, OBIT_IO_WriteOnly, err);
   if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine, out->name, out);    
   
-  retCode = ObitTableJIClose(out, err);
+  retCode = ObitTableJTClose(out, err);
   if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine, out->name, out); 
 
@@ -410,24 +420,24 @@ ObitTableJI* newObitTableJIValue (gchar* name, ObitData *file, olong *ver,
     Obit_traceback_val (err, routine, out->name, out); 
   
  return out;
-} /* end newObitTableJIValue */
+} /* end newObitTableJTValue */
 
 /**
- * Convert an ObitTable to an ObitTableJI.
+ * Convert an ObitTable to an ObitTableJT.
  * New object will have references to members of in.
  * \param in  The object to copy, will still exist afterwards 
  *            and should be Unrefed if not needed.
  * \return pointer to the new object.
  */
-ObitTableJI* ObitTableJIConvert (ObitTable* in)
+ObitTableJT* ObitTableJTConvert (ObitTable* in)
 {
-  ObitTableJI *out;
+  ObitTableJT *out;
 
   /* error check */
   g_assert(ObitTableIsA(in));
 
   /* create basic object */
-  out = newObitTableJI(in->name);
+  out = newObitTableJT(in->name);
 
   /* Delete structures on new */
   out->info   = ObitInfoListUnref(out->info);
@@ -449,7 +459,7 @@ ObitTableJI* ObitTableJIConvert (ObitTable* in)
  out->myHost  = in->myHost;
 
   return out;
-} /* end ObitTableJIConvert */
+} /* end ObitTableJTConvert */
 
 
 /**
@@ -469,12 +479,12 @@ ObitTableJI* ObitTableJIConvert (ObitTable* in)
  * \param err Error stack, returns if not empty.
  * \return pointer to the new object.
  */
-ObitTableJI* ObitTableJICopy (ObitTableJI *in, ObitTableJI *out, ObitErr *err)
+ObitTableJT* ObitTableJTCopy (ObitTableJT *in, ObitTableJT *out, ObitErr *err)
 {
-  gchar *routine = "ObitTableJICopy";
+  gchar *routine = "ObitTableJTCopy";
 
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitTableJIClassInit();
+  if (!myClassInfo.initialized) ObitTableJTClassInit();
 
  /* error checks */
   g_assert(ObitErrIsA(err));
@@ -483,7 +493,7 @@ ObitTableJI* ObitTableJICopy (ObitTableJI *in, ObitTableJI *out, ObitErr *err)
   if (out) g_assert (ObitIsA(out, &myClassInfo));
 
   /* Use parent class to copy */
-  out = (ObitTableJI*)ObitTableCopy ((ObitTable*)in, (ObitTable*)out, err);
+  out = (ObitTableJT*)ObitTableCopy ((ObitTable*)in, (ObitTable*)out, err);
   if (err->error) /* add traceback,return */
     Obit_traceback_val (err, routine,in->name, out);
 
@@ -492,13 +502,11 @@ ObitTableJI* ObitTableJICopy (ObitTableJI *in, ObitTableJI *out, ObitErr *err)
   out->numIF = in->numIF;
   out->numChan = in->numChan;
   out->numAnt = in->numAnt;
-  out->isApplied = in->isApplied;
-  strncpy (out->calType, in->calType, MAXKEYCHARTABLEJI );
   /* Update class specific info */
-  ObitTableJIUpdate (out, err);
+  ObitTableJTUpdate (out, err);
     
   return out;
-} /* end ObitTableJICopy */
+} /* end ObitTableJTCopy */
 
 /**
  * Initialize structures and open file.
@@ -523,16 +531,16 @@ ObitTableJI* ObitTableJICopy (ObitTableJI *in, ObitTableJI *out, ObitErr *err)
  * \param err ObitErr for reporting errors.
  * \return return code, OBIT_IO_OK=> OK
  */
-ObitIOCode ObitTableJIOpen (ObitTableJI *in, ObitIOAccess access, 
+ObitIOCode ObitTableJTOpen (ObitTableJT *in, ObitIOAccess access, 
 			  ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong nRowPIO;
-  gchar *routine = "ObitTableJIOpen";
+  gchar *routine = "ObitTableJTOpen";
 
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitTableJIClassInit();
+  if (!myClassInfo.initialized) ObitTableJTClassInit();
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -551,30 +559,30 @@ ObitIOCode ObitTableJIOpen (ObitTableJI *in, ObitIOAccess access,
      Obit_traceback_val (err, routine, in->name, retCode);
    
    /* Update class specific info */
-   ObitTableJIUpdate (in, err);
+   ObitTableJTUpdate (in, err);
    
    return retCode;
-} /* end ObitTableJIOpen */
+} /* end ObitTableJTOpen */
 
 /**
  * Read a table row and return an easily digested version.
  * Scalar values are copied but for array values, pointers 
  * into the data array are returned.
  * \param in       Table to read
- * \param iJIRow   Row number, -1 -> next
+ * \param iJTRow   Row number, -1 -> next
  * \param row      Table Row structure to receive data
  * \param err ObitErr for reporting errors.
  * \return return code, OBIT_IO_OK=> OK
  */
 ObitIOCode 
-ObitTableJIReadRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
+ObitTableJTReadRow  (ObitTableJT *in, olong iJTRow, ObitTableJTRow *row,
 		     ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   odouble   *dRow;
   oint      *iRow;
   ofloat    *fRow;
-  gchar *routine = "ObitTableJIReadRow";
+  gchar *routine = "ObitTableJTReadRow";
   
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -583,12 +591,12 @@ ObitTableJIReadRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
 
   if (in->myStatus == OBIT_Inactive) {
     Obit_log_error(err, OBIT_Error,
-		   "AIPS JI Table is inactive for  %s ", in->name);
+		   "AIPS JT Table is inactive for  %s ", in->name);
     return retCode;
  }
 
-  /* read row iJIRow */
-  retCode = ObitTableRead ((ObitTable*)in, iJIRow, NULL,  err);
+  /* read row iJTRow */
+  retCode = ObitTableRead ((ObitTable*)in, iJTRow, NULL,  err);
   if (err->error) 
     Obit_traceback_val (err, routine, in->name, retCode);
 
@@ -604,13 +612,14 @@ ObitTableJIReadRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
   row->antNo = iRow[in->antNoOff];
   row->SubA = iRow[in->SubAOff];
   row->FreqID = iRow[in->FreqIDOff];
-  row->Jones = fRow + in->JonesOff;
+  row->Jones1 = fRow + in->Jones1Off;
+  row->Jones2 = fRow + in->Jones2Off;
   row->Weight = fRow + in->WeightOff;
   row->RefAnt = iRow + in->RefAntOff;
   row->status = iRow[in->myDesc->statusOff];
 
   return retCode;
-} /*  end ObitTableJIReadRow */
+} /*  end ObitTableJTReadRow */
 
 /**
  * Attach an ObitTableRow to the buffer of an ObitTable.
@@ -624,7 +633,7 @@ ObitTableJIReadRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
  * \param err ObitErr for reporting errors.
  */
 void 
-ObitTableJISetRow  (ObitTableJI *in, ObitTableJIRow *row,
+ObitTableJTSetRow  (ObitTableJT *in, ObitTableJTRow *row,
 		     ObitErr *err)
 {
   oint      *iRow;
@@ -638,7 +647,7 @@ ObitTableJISetRow  (ObitTableJI *in, ObitTableJIRow *row,
 
   if (in->myStatus == OBIT_Inactive) {
     Obit_log_error(err, OBIT_Error,
-		   "JI Table is inactive for  %s ", in->name);
+		   "JT Table is inactive for  %s ", in->name);
     return;
  }
 
@@ -647,33 +656,34 @@ ObitTableJISetRow  (ObitTableJI *in, ObitTableJIRow *row,
   fRow  = (ofloat*)in->buffer;
   
   /* Set row pointers to buffer */
-  row->Jones  = fRow + in->JonesOff;
+  row->Jones1 = fRow + in->Jones1Off;
+  row->Jones2 = fRow + in->Jones2Off;
   row->Weight = fRow + in->WeightOff;
   row->RefAnt = iRow + in->RefAntOff;
 
-} /*  end ObitTableJISetRow */
+} /*  end ObitTableJTSetRow */
 
 /**
  * Write a table row.
  * Before calling this routine, the row structure needs to be initialized
  * and filled with data. The array members of the row structure are  
  * pointers to independently allocated memory.  These pointers can be set to the 
- * correct table buffer locations using ObitTableJISetRow  
+ * correct table buffer locations using ObitTableJTSetRow  
  * \param in       Table to read
- * \param iJIRow   Row number, -1 -> next
+ * \param iJTRow   Row number, -1 -> next
  * \param row Table Row structure containing data
  * \param err ObitErr for reporting errors.
  * \return return code, OBIT_IO_OK=> OK
  */
 ObitIOCode 
-ObitTableJIWriteRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
+ObitTableJTWriteRow  (ObitTableJT *in, olong iJTRow, ObitTableJTRow *row,
 		      ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   odouble   *dRow;
   oint      *iRow, i;
   ofloat    *fRow;
-  gchar *routine = "ObitTableJIWriteRow";
+  gchar *routine = "ObitTableJTWriteRow";
   
 
   /* error checks */
@@ -683,7 +693,7 @@ ObitTableJIWriteRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
 
   if (in->myStatus == OBIT_Inactive) {
     Obit_log_error(err, OBIT_Error,
-		   "AIPS JI Table is inactive for %s ", in->name);
+		   "AIPS JT Table is inactive for %s ", in->name);
     return retCode;
  }
 
@@ -699,9 +709,13 @@ ObitTableJIWriteRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
   iRow[in->antNoOff] = row->antNo;
   iRow[in->SubAOff] = row->SubA;
   iRow[in->FreqIDOff] = row->FreqID;
-  if (in->JonesCol >= 0) { 
-    for (i=0; i<in->myDesc->repeat[in->JonesCol]; i++) 
-      fRow[in->JonesOff+i] = row->Jones[i];
+  if (in->Jones1Col >= 0) { 
+    for (i=0; i<in->myDesc->repeat[in->Jones1Col]; i++) 
+      fRow[in->Jones1Off+i] = row->Jones1[i];
+  } 
+  if (in->Jones2Col >= 0) { 
+    for (i=0; i<in->myDesc->repeat[in->Jones2Col]; i++) 
+      fRow[in->Jones2Off+i] = row->Jones2[i];
   } 
   if (in->WeightCol >= 0) { 
     for (i=0; i<in->myDesc->repeat[in->WeightCol]; i++) 
@@ -718,13 +732,13 @@ ObitTableJIWriteRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
   /* Write one row */
   in->myDesc->numRowBuff = 1;
  
-  /* Write row iJIRow */
-  retCode = ObitTableWrite ((ObitTable*)in, iJIRow, NULL,  err);
+  /* Write row iJTRow */
+  retCode = ObitTableWrite ((ObitTable*)in, iJTRow, NULL,  err);
   if (err->error) 
     Obit_traceback_val (err, routine,in->name, retCode);
 
   return retCode;
-} /*  end ObitTableJIWriteRow */
+} /*  end ObitTableJTWriteRow */
 
 /**
  * Shutdown I/O.
@@ -732,10 +746,10 @@ ObitTableJIWriteRow  (ObitTableJI *in, olong iJIRow, ObitTableJIRow *row,
  * \param err ObitErr for reporting errors.
  * \return error code, OBIT_IO_OK=> OK
  */
-ObitIOCode ObitTableJIClose (ObitTableJI *in, ObitErr *err)
+ObitIOCode ObitTableJTClose (ObitTableJT *in, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
-  gchar *routine = "ObitTableJIClose";
+  gchar *routine = "ObitTableJTClose";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -746,7 +760,7 @@ ObitIOCode ObitTableJIClose (ObitTableJI *in, ObitErr *err)
 
   /* Update keywords on descriptor if not ReadOnly*/
   if (in->myDesc->access != OBIT_IO_ReadOnly) 
-    ObitTableJIDumpKey (in, err);
+    ObitTableJTDumpKey (in, err);
   if (err->error) 
     Obit_traceback_val (err, routine, in->name, retCode);
 
@@ -756,19 +770,19 @@ ObitIOCode ObitTableJIClose (ObitTableJI *in, ObitErr *err)
     Obit_traceback_val (err, routine, in->name, retCode);
 
   return retCode;
-} /* end ObitTableJIClose */
+} /* end ObitTableJTClose */
 
 /*---------------Private functions--------------------------*/
-/*----------------  TableJI Row  ----------------------*/
+/*----------------  TableJT Row  ----------------------*/
 /**
  * Creates empty member objects, initialize reference count.
  * Parent classes portions are (recursively) initialized first
  * \param inn Pointer to the object to initialize.
  */
-void ObitTableJIRowInit  (gpointer inn)
+void ObitTableJTRowInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  ObitTableJIRow *in = inn;
+  ObitTableJTRow *in = inn;
 
   /* error checks */
   g_assert (in != NULL);
@@ -780,23 +794,24 @@ void ObitTableJIRowInit  (gpointer inn)
 
   /* set members in this class */
   /* Set array members to NULL */
-  in->Jones = NULL;
+  in->Jones1 = NULL;
+  in->Jones2 = NULL;
   in->Weight = NULL;
   in->RefAnt = NULL;
 
-} /* end ObitTableJIRowInit */
+} /* end ObitTableJTRowInit */
 
 /**
  * Deallocates member objects.
  * Does (recursive) deallocation of parent class members.
  * For some reason this wasn't build into the GType class.
  * \param  inn Pointer to the object to deallocate.
- *           Actually it should be an ObitTableJIRow* cast to an Obit*.
+ *           Actually it should be an ObitTableJTRow* cast to an Obit*.
  */
-void ObitTableJIRowClear (gpointer inn)
+void ObitTableJTRowClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  ObitTableJIRow *in = inn;
+  ObitTableJTRow *in = inn;
 
   /* error checks */
   g_assert (ObitIsA(in, &myRowClassInfo));
@@ -810,12 +825,12 @@ void ObitTableJIRowClear (gpointer inn)
   if ((ParentClass!=NULL) && ( ParentClass->ObitClear!=NULL)) 
     ParentClass->ObitClear (inn);
   
-} /* end ObitTableJIRowClear */
+} /* end ObitTableJTRowClear */
 
 /**
  * Initialize global ClassInfo Structure.
  */
-void ObitTableJIRowClassInit (void)
+void ObitTableJTRowClassInit (void)
 {
   if (myRowClassInfo.initialized) return;  /* only once */
   
@@ -824,18 +839,18 @@ void ObitTableJIRowClassInit (void)
   myRowClassInfo.ParentClass = ObitParentGetRowClass();
 
   /* Set function pointers */
-  ObitTableJIRowClassInfoDefFn ((gpointer)&myRowClassInfo);
+  ObitTableJTRowClassInfoDefFn ((gpointer)&myRowClassInfo);
  
   myRowClassInfo.initialized = TRUE; /* Now initialized */
  
-} /* end ObitTableJIRowClassInit */
+} /* end ObitTableJTRowClassInit */
 
 /**
  * Initialize global ClassInfo Function pointers.
  */
-static void ObitTableJIRowClassInfoDefFn (gpointer inClass)
+static void ObitTableJTRowClassInfoDefFn (gpointer inClass)
 {
-  ObitTableJIRowClassInfo *theClass = (ObitTableJIRowClassInfo*)inClass;
+  ObitTableJTRowClassInfo *theClass = (ObitTableJTRowClassInfo*)inClass;
   ObitClassInfo *ParentClass = (ObitClassInfo*)myRowClassInfo.ParentClass;
 
   if (theClass->initialized) return;  /* only once */
@@ -849,29 +864,29 @@ static void ObitTableJIRowClassInfoDefFn (gpointer inClass)
     ParentClass->ObitClassInfoDefFn(theClass);
 
   /* function pointers defined or overloaded this class */
-  theClass->ObitClassInit = (ObitClassInitFP)ObitTableJIRowClassInit;
-  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTableJIRowClassInfoDefFn;
-  theClass->ObitGetClass  = (ObitGetClassFP)ObitTableJIRowGetClass;
+  theClass->ObitClassInit = (ObitClassInitFP)ObitTableJTRowClassInit;
+  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTableJTRowClassInfoDefFn;
+  theClass->ObitGetClass  = (ObitGetClassFP)ObitTableJTRowGetClass;
   theClass->newObit         = NULL;
-  theClass->newObitTableRow = (newObitTableRowFP)newObitTableJIRow;
+  theClass->newObitTableRow = (newObitTableRowFP)newObitTableJTRow;
   theClass->ObitCopy        = NULL;
   theClass->ObitClone       = NULL;
-  theClass->ObitClear       = (ObitClearFP)ObitTableJIRowClear;
-  theClass->ObitInit        = (ObitInitFP)ObitTableJIRowInit;
+  theClass->ObitClear       = (ObitClearFP)ObitTableJTRowClear;
+  theClass->ObitInit        = (ObitInitFP)ObitTableJTRowInit;
 
-} /* end ObitTableJIRowClassDefFn */
+} /* end ObitTableJTRowClassDefFn */
 
-/*------------------  TableJI  ------------------------*/
+/*------------------  TableJT  ------------------------*/
 
 /**
  * Creates empty member objects, initialize reference count.
  * Parent classes portions are (recursively) initialized first
  * \param inn Pointer to the object to initialize.
  */
-void ObitTableJIInit  (gpointer inn)
+void ObitTableJTInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  ObitTableJI *in = inn;
+  ObitTableJT *in = inn;
 
   /* error checks */
   g_assert (in != NULL);
@@ -883,19 +898,19 @@ void ObitTableJIInit  (gpointer inn)
 
   /* set members in this class */
 
-} /* end ObitTableJIInit */
+} /* end ObitTableJTInit */
 
 /**
  * Deallocates member objects.
  * Does (recursive) deallocation of parent class members.
  * For some reason this wasn't build into the GType class.
  * \param  inn Pointer to the object to deallocate.
- *           Actually it should be an ObitTableJI* cast to an Obit*.
+ *           Actually it should be an ObitTableJT* cast to an Obit*.
  */
-void ObitTableJIClear (gpointer inn)
+void ObitTableJTClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  ObitTableJI *in = inn;
+  ObitTableJT *in = inn;
 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -908,12 +923,12 @@ void ObitTableJIClear (gpointer inn)
   if ((ParentClass!=NULL) && ( ParentClass->ObitClear!=NULL)) 
     ParentClass->ObitClear (inn);
   
-} /* end ObitTableJIClear */
+} /* end ObitTableJTClear */
 
 /**
  * Initialize global ClassInfo Structure.
  */
-void ObitTableJIClassInit (void)
+void ObitTableJTClassInit (void)
 {
   if (myClassInfo.initialized) return;  /* only once */
   
@@ -922,18 +937,18 @@ void ObitTableJIClassInit (void)
   myClassInfo.ParentClass = ObitParentGetClass();
 
   /* Set function pointers */
-  ObitTableJIClassInfoDefFn ((gpointer)&myClassInfo);
+  ObitTableJTClassInfoDefFn ((gpointer)&myClassInfo);
  
   myClassInfo.initialized = TRUE; /* Now initialized */
  
-} /* end ObitTableJIClassInit */
+} /* end ObitTableJTClassInit */
 
 /**
  * Initialize global ClassInfo Function pointers.
  */
-static void ObitTableJIClassInfoDefFn (gpointer inClass)
+static void ObitTableJTClassInfoDefFn (gpointer inClass)
 {
-  ObitTableJIClassInfo *theClass = (ObitTableJIClassInfo*)inClass;
+  ObitTableJTClassInfo *theClass = (ObitTableJTClassInfo*)inClass;
   ObitClassInfo *ParentClass = (ObitClassInfo*)myClassInfo.ParentClass;
 
   if (theClass->initialized) return;  /* only once */
@@ -947,34 +962,34 @@ static void ObitTableJIClassInfoDefFn (gpointer inClass)
     ParentClass->ObitClassInfoDefFn(theClass);
 
   /* function pointers defined or overloaded this class */
-  theClass->ObitClassInit = (ObitClassInitFP)ObitTableJIClassInit;
-  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTableJIClassInfoDefFn;
-  theClass->ObitGetClass  = (ObitGetClassFP)ObitTableJIGetClass;
-  theClass->newObit       = (newObitFP)newObitTableJI;
-  theClass->ObitCopy      = (ObitCopyFP)ObitTableJICopy;
+  theClass->ObitClassInit = (ObitClassInitFP)ObitTableJTClassInit;
+  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTableJTClassInfoDefFn;
+  theClass->ObitGetClass  = (ObitGetClassFP)ObitTableJTGetClass;
+  theClass->newObit       = (newObitFP)newObitTableJT;
+  theClass->ObitCopy      = (ObitCopyFP)ObitTableJTCopy;
   theClass->ObitClone     = (ObitCloneFP)ObitTableClone;
-  theClass->ObitClear     = (ObitClearFP)ObitTableJIClear;
-  theClass->ObitInit      = (ObitInitFP)ObitTableJIInit;
-  theClass->ObitTableConvert = (ObitTableConvertFP)ObitTableJIConvert;
-  theClass->ObitTableOpen    = (ObitTableOpenFP)ObitTableJIOpen;
-  theClass->ObitTableClose   = (ObitTableCloseFP)ObitTableJIClose;
+  theClass->ObitClear     = (ObitClearFP)ObitTableJTClear;
+  theClass->ObitInit      = (ObitInitFP)ObitTableJTInit;
+  theClass->ObitTableConvert = (ObitTableConvertFP)ObitTableJTConvert;
+  theClass->ObitTableOpen    = (ObitTableOpenFP)ObitTableJTOpen;
+  theClass->ObitTableClose   = (ObitTableCloseFP)ObitTableJTClose;
   theClass->ObitTableRead    = (ObitTableReadFP)ObitTableRead;
   theClass->ObitTableReadSelect = 
     (ObitTableReadSelectFP)ObitTableReadSelect;
   theClass->ObitTableWrite = (ObitTableWriteFP)ObitTableWrite;
   theClass->ObitTableReadRow = 
-    (ObitTableReadRowFP)ObitTableJIReadRow;
+    (ObitTableReadRowFP)ObitTableJTReadRow;
   theClass->ObitTableWriteRow = 
-    (ObitTableWriteRowFP)ObitTableJIWriteRow;
+    (ObitTableWriteRowFP)ObitTableJTWriteRow;
 
-} /* end ObitTableJIClassDefFn */
+} /* end ObitTableJTClassDefFn */
 
 /**
  * Get table specific information from the infolist or descriptor
  * \param info Table to update
  * \param err  ObitErr for reporting errors.
  */
-static void ObitTableJIUpdate (ObitTableJI *in, ObitErr *err)
+static void ObitTableJTUpdate (ObitTableJT *in, ObitErr *err)
 {
   olong i;
   ObitInfoType type;
@@ -989,7 +1004,7 @@ static void ObitTableJIUpdate (ObitTableJI *in, ObitErr *err)
 
   /* Get Keywords */
    /* revision */
-  in->revision = 12; 
+  in->revision = 11; 
   ObitInfoListGetTest(in->myDesc->info, "REVISION", &type, dim, 
 		       (gpointer)&in->revision);
    /* numIF */
@@ -1002,14 +1017,6 @@ static void ObitTableJIUpdate (ObitTableJI *in, ObitErr *err)
   in->numAnt = 1; 
   ObitInfoListGetTest(in->myDesc->info, "NO_ANT", &type, dim, 
 		       (gpointer)&in->numAnt);
-   /* isApplied */
-  in->isApplied = FALSE; 
-  ObitInfoListGetTest(in->myDesc->info, "APPLIED", &type, dim, 
-		       (gpointer)&in->isApplied);
-   /* calType */
-  strncpy (in->calType, "        ", MAXKEYCHARTABLEJI); 
-  ObitInfoListGetTest(in->myDesc->info, "CALTYPE", &type, dim, 
-		       (gpointer)&in->calType);
 
   /* initialize column numbers/offsets */
   in->TimeOff = -1;
@@ -1024,8 +1031,10 @@ static void ObitTableJIUpdate (ObitTableJI *in, ObitErr *err)
   in->SubACol = -1;
   in->FreqIDOff = -1;
   in->FreqIDCol = -1;
-  in->JonesOff = -1;
-  in->JonesCol = -1;
+  in->Jones1Off = -1;
+  in->Jones1Col = -1;
+  in->Jones2Off = -1;
+  in->Jones2Col = -1;
   in->WeightOff = -1;
   in->WeightCol = -1;
   in->RefAntOff = -1;
@@ -1058,9 +1067,13 @@ static void ObitTableJIUpdate (ObitTableJI *in, ObitErr *err)
 	 in->FreqIDOff = desc->offset[i];
  	 in->FreqIDCol = i;
       }
-      if (!strncmp (desc->FieldName[i], "JONES", 5)) {
-	 in->JonesOff = desc->offset[i];
- 	 in->JonesCol = i;
+      if (!strncmp (desc->FieldName[i], "JONES1", 6)) {
+	 in->Jones1Off = desc->offset[i];
+ 	 in->Jones1Col = i;
+      }
+      if (!strncmp (desc->FieldName[i], "JONES2", 6)) {
+	 in->Jones2Off = desc->offset[i];
+ 	 in->Jones2Col = i;
       }
       if (!strncmp (desc->FieldName[i], "WEIGHT", 6)) {
 	 in->WeightOff = desc->offset[i];
@@ -1075,29 +1088,31 @@ static void ObitTableJIUpdate (ObitTableJI *in, ObitErr *err)
 
   /* Check required columns */
   Obit_return_if_fail((in->TimeOff > -1), err,
-       "ObitTableJIUpdate: Could not find column Time");
+       "ObitTableJTUpdate: Could not find column Time");
   Obit_return_if_fail((in->TimeIOff > -1), err,
-       "ObitTableJIUpdate: Could not find column TimeI");
+       "ObitTableJTUpdate: Could not find column TimeI");
   Obit_return_if_fail((in->SourIDOff > -1), err,
-       "ObitTableJIUpdate: Could not find column SourID");
+       "ObitTableJTUpdate: Could not find column SourID");
   Obit_return_if_fail((in->antNoOff > -1), err,
-       "ObitTableJIUpdate: Could not find column antNo");
+       "ObitTableJTUpdate: Could not find column antNo");
   Obit_return_if_fail((in->SubAOff > -1), err,
-       "ObitTableJIUpdate: Could not find column SubA");
+       "ObitTableJTUpdate: Could not find column SubA");
   Obit_return_if_fail((in->FreqIDOff > -1), err,
-       "ObitTableJIUpdate: Could not find column FreqID");
-  Obit_return_if_fail((in->JonesOff > -1), err,
-       "ObitTableJIUpdate: Could not find column Jones");
+       "ObitTableJTUpdate: Could not find column FreqID");
+  Obit_return_if_fail((in->Jones1Off > -1), err,
+       "ObitTableJTUpdate: Could not find column Jones1");
+  Obit_return_if_fail((in->Jones2Off > -1), err,
+       "ObitTableJTUpdate: Could not find column Jones2");
   Obit_return_if_fail((in->WeightOff > -1), err,
-       "ObitTableJIUpdate: Could not find column Weight");
-} /* end ObitTableJIUpdate */
+       "ObitTableJTUpdate: Could not find column Weight");
+} /* end ObitTableJTUpdate */
 
 /**
  * Copy table specific (keyword) information  to infolist.
  * \param info Table to update
  * \param err  ObitErr for reporting errors.
  */
-static void ObitTableJIDumpKey (ObitTableJI *in, ObitErr *err)
+static void ObitTableJTDumpKey (ObitTableJT *in, ObitErr *err)
 {
   ObitInfoList *info=NULL;
   ObitInfoType type;
@@ -1132,15 +1147,5 @@ static void ObitTableJIDumpKey (ObitTableJI *in, ObitErr *err)
   dim[0] = 1;
   ObitInfoListAlwaysPut(info, "NO_ANT", type, dim, 
 		  (gpointer)&in->numAnt);
-  /* isApplied */
-  type  = OBIT_bool;
-  dim[0] = 1;
-  ObitInfoListAlwaysPut(info, "APPLIED", type, dim, 
-		  (gpointer)&in->isApplied);
-  /* calType */
-  type  = OBIT_string;
-  dim[0] = MAXKEYCHARTABLEJI;
-  ObitInfoListAlwaysPut(info, "CALTYPE", type, dim, 
-		  (gpointer)&in->calType);
    
-} /* end ObitTableJIDumpKey */
+} /* end ObitTableJTDumpKey */

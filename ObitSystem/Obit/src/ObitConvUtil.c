@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2020                                          */
+/*;  Copyright (C) 2006-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -255,8 +255,8 @@ void ObitConvUtilConvGauss (ObitImage *inImage, ofloat Gaumaj, ofloat Gaumin,
 {
   ObitIOCode   iretCode;
   olong      ndim=2, naxis[2], blc[2], trc[2], cen[2];
-  olong tblc[IM_MAXDIM] = {1,1,1,1,1,1,1};
-  olong ttrc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  /*olong tblc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+    olong ttrc[IM_MAXDIM] = {0,0,0,0,0,0,0};*/
   ofloat Beam[3], cells[2], maprot;
   ObitFFT    *FFTfor=NULL, *FFTrev=NULL;
   ObitFArray *xferFn=NULL, *subXferFn=NULL, *zeroArray=NULL;
@@ -272,10 +272,10 @@ void ObitConvUtilConvGauss (ObitImage *inImage, ofloat Gaumaj, ofloat Gaumin,
   Beam[1] = outImage->myDesc->beamMin;
   Beam[2] = outImage->myDesc->beamPA;
 
-  /* Reset any selection on images */
+  /* Reset any selection on images
   ObitImageSetSelect (inImage,  OBIT_IO_byPlane, tblc, ttrc, err);
   ObitImageSetSelect (outImage, OBIT_IO_byPlane, tblc, ttrc, err);
-  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+  if (err->error) Obit_traceback_msg (err, routine, outImage->name); No, allow selection */
 
   /* Input beam not less than zero */
   if ((inImage->myDesc->beamMaj<0.0) || (inImage->myDesc->beamMin<0.0)) {

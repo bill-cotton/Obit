@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2023                                          */
+/*;  Copyright (C) 2008-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1947,6 +1947,7 @@ static gpointer ThreadNLFit (gpointer arg)
 	NLFitBP(larg);
       } else {
 	/* multi term power */
+	//fprintf(stderr,"pixel %d,%d\n",ix,iy); /* DEBUG */
  	NLFit(larg);
       }
 
@@ -2048,11 +2049,10 @@ static void NLFit (NLFitArg *arg)
   }
 
   /* Is this good enough? */
-  isDone = (arg->ChiSq<0.0) || (arg->ChiSq<=arg->maxChiSq) ||
-    (arg->minFlux>avg);
+  isDone = (arg->ChiSq<0.0) || (arg->minFlux>avg);
   //if (meanSNR>(SNRperTerm*3.0)) isDone = FALSE;   /* Always try for high SNR */
   if ((meanSNR>SNRperTerm) && (arg->minFlux<avg)) isDone = FALSE;  /* Try for high SNR */
-  if (isDone) goto done;
+ if (isDone) goto done;
 
   /* Higher order terms do nonlinear least-squares fit */
   nterm = 2;
@@ -2112,7 +2112,7 @@ static void NLFit (NLFitArg *arg)
 
     /* Did it significantly improve over lower order? */
     //if (chi2Test<0.9*arg->ChiSq) { 
-    if (chi2Test<1.5*arg->ChiSq) { /* Not much worse */
+    if (chi2Test<1.5*arg->ChiSq) { /* Not much worse  */
       best = nterm;
       arg->ChiSq = chi2Test;
 
@@ -2146,7 +2146,7 @@ static void NLFit (NLFitArg *arg)
     }  /* End if better than lower order */
 
     /* Is this good enough? */
-    isDone = (arg->ChiSq<0.0) || (arg->ChiSq<=arg->maxChiSq) || (chi2Test>arg->ChiSq);
+    isDone = (arg->ChiSq<0.0) || (chi2Test>arg->ChiSq);
     if ((meanSNR>(SNRperTerm*nterm)) && (nterm<arg->nterm)) 
       isDone = FALSE;  /* Always try for high SNR */
     if (isDone) goto done;

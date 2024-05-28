@@ -26,12 +26,12 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/* Define the basic components of the ObitTableJI ClassInfo structure */
+/* Define the basic components of the ObitTableJT ClassInfo structure */
 /* This is intended to be included in a classInfo structure definition*/
 #include "ObitTableClassDef.h"  /* Parent class ClassInfo definition file */
 /** Function pointer to convert. */
-ObitTableConvertFP ObitTableJIConvert;
+ObitTableConvertFP ObitTableJTConvert;
 /** Function pointer to read a row. */
-ObitTableReadRowFP ObitTableJIReadRow;
+ObitTableReadRowFP ObitTableJTReadRow;
 /** Function pointer to write a row. */
-ObitTableWriteRowFP ObitTableJIWriteRow;
+ObitTableWriteRowFP ObitTableJTWriteRow;

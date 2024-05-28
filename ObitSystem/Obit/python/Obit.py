@@ -3671,14 +3671,23 @@ def TableGetName(_in):
 def TableUtilSort(_in, colName, desc, err):
     return _Obit.TableUtilSort(_in, colName, desc, err)
 
-def TableJI(inData, tabVer, access, tabName, numPol, numIF, numChan, err):
-    return _Obit.TableJI(inData, tabVer, access, tabName, numPol, numIF, numChan, err)
+def TableJI(inData, tabVer, access, tabName, numIF, numChan, err):
+    return _Obit.TableJI(inData, tabVer, access, tabName, numIF, numChan, err)
 
 def TableJIGetHeadKeys(inTab):
     return _Obit.TableJIGetHeadKeys(inTab)
 
 def TableJISetHeadKeys(inTab, inDict):
     return _Obit.TableJISetHeadKeys(inTab, inDict)
+
+def TableJT(inData, tabVer, access, tabName, numIF, numChan, err):
+    return _Obit.TableJT(inData, tabVer, access, tabName, numIF, numChan, err)
+
+def TableJTGetHeadKeys(inTab):
+    return _Obit.TableJTGetHeadKeys(inTab)
+
+def TableJTSetHeadKeys(inTab, inDict):
+    return _Obit.TableJTSetHeadKeys(inTab, inDict)
 class TableList(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr

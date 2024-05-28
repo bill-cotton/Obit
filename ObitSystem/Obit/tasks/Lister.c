@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2023                                          */
+/*;  Copyright (C) 2009-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -590,10 +590,10 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ofloat       blscale=1., wtscale=1., ampscale=1.;
   olong        start, ic, ncor, mcor, maxcor, ant1, ant2, souID, SubA, inc=2;
   olong        bif=1, eif, bchan=1, ichan, doCalib, gainUse, flagVer=-1;
-  gchar        *prtFile=NULL, timeString[25];
+  gchar        *prtFile=NULL, timeString[25], Stokes[5]={"IQUV"}, *FT[2] = {"F","T"};
   ObitInfoType type;
   gchar        *cstokes[8] = {"RR", "LL", "RL", "LR", "XX", "YY", "XY", "YX"};
-  gchar        *stokes[4]  = {"I ", "Q ", "U ", "V "}, *FT[2] = {"F","T"};
+  /*gchar        *stokes[4]  = {"I ", "Q ", "U ", "V "},*/
   gchar        *routine = "doDATA";
 
   /* error checks */
@@ -609,10 +609,11 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitInfoListGetTest(myInput, "flagVer",&type, dim, &flagVer);
   ObitInfoListGetTest(myInput, "doPol", &type, dim, &doPol);
   ObitInfoListGetTest(myInput, "PDVer", &type, dim, &PDVer);
-  ObitInfoListGetTest(myInput, "keepLin", &type, dim, &keepLin);
+  ObitInfoListGetTest(myInput, "keepLin",&type, dim, &keepLin);
   ObitInfoListGetTest(myInput, "doBand",&type, dim, &doBand);
   ObitInfoListGetTest(myInput, "BPVer", &type, dim, &BPVer);
   ObitInfoListGetTest(myInput, "inc",   &type, dim, &inc);
+  ObitInfoListGetTest(myInput, "Stokes",&type, dim, Stokes);
   inc = MAX (1, inc);
   nPrint *= inc;   /* Correct for increment */
   ObitInfoListGetTest(myInput, "BIF",   &type, dim, &bif);
@@ -687,8 +688,8 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       ii = (olong)(fabs(inDesc->crval[inDesc->jlocs]) - 0.9);
       ii = MAX(0, MIN(ii,7));
       if (inDesc->crval[inDesc->jlocs]>0.0)
-	sprintf (&Title1[start], "    %2d/%4d %s    ", 
-		 bif,bchan+ichan,stokes[ic+ii]);
+	sprintf (&Title1[start], "    %2d/%4d %c    ", 
+		 bif,bchan+ichan,Stokes[ic+ii]);
       else
 	sprintf (&Title1[start], "    %2d/%4d %s    ", 
 		 bif,bchan+ichan,cstokes[ic+ii]);

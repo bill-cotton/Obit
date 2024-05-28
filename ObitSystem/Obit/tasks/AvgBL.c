@@ -794,20 +794,6 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim, &timeAvg);
   timeAvg /= 1440.;    /* To days */
 
-  /* Use Posn if given and nonzero */
-  if (ObitInfoListGetTest(inUV->info, "Posn", &type, dim, posn)) {
-    doPosn = (posn[0]!=0.0) &&  (posn[1]!=0.0);
-    ra = posn[0]; dec = posn[1]; doShift = doPosn;
-    /* Shift parameters - only works for SIN projection */
-    ObitSkyGeomShiftSIN (inUV->myDesc->crval[inUV->myDesc->jlocr], 
-			 inUV->myDesc->crval[inUV->myDesc->jlocd],
-			 ObitUVDescRotate(inUV->myDesc), ra, dec, dxyzc);
-  }
-  if (!doPosn) {  /* May need Shift */
-    /* Position shift - Full 3D */
-    ObitInfoListGetTest(inUV->info, "Shift", &type, dim, Shift);
-  }
-
   /* Clone from input */
   ObitUVClone (inUV, outUV, err);
   if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
@@ -836,6 +822,20 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   outDesc = outUV->myDesc;
   ilocu = inDesc->ilocu; ilocv = inDesc->ilocv; ilocw = inDesc->ilocw;
    
+  /* Use Posn if given and nonzero */
+  if (ObitInfoListGetTest(inUV->info, "Posn", &type, dim, posn)) {
+    doPosn = (posn[0]!=0.0) &&  (posn[1]!=0.0);
+    ra = posn[0]; dec = posn[1]; doShift = doPosn;
+    /* Shift parameters - only works for SIN projection */
+    ObitSkyGeomShiftSIN (inUV->myDesc->crval[inUV->myDesc->jlocr], 
+			 inUV->myDesc->crval[inUV->myDesc->jlocd],
+			 ObitUVDescRotate(inUV->myDesc), ra, dec, dxyzc);
+  }
+  if (!doPosn) {  /* May need Shift */
+    /* Position shift - Full 3D */
+    ObitInfoListGetTest(inUV->info, "Shift", &type, dim, Shift);
+  }
+
   /* Shift? */
   if (!doPosn) {
     doShift = ((Shift[0]!=0.0) || (Shift[1]!=0.0));

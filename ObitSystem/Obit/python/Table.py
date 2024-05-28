@@ -14,7 +14,7 @@ to disk when the table is closed.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2019
+#  Copyright (C) 2004-2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -297,6 +297,10 @@ def POpen (inTab, access, err):
         inTab.keys = Obit.TableFQGetHeadKeys(inTab.me)
     elif tabtype=="AIPS FS":
         inTab.keys = Obit.TableFSGetHeadKeys(inTab.me)
+    elif tabtype=="AIPS JI":
+        inTab.keys = Obit.TableJIGetHeadKeys(inTab.me)
+    elif tabtype=="AIPS JT":
+        inTab.keys = Obit.TableJTGetHeadKeys(inTab.me)
     elif tabtype=="AIPS GC":
         inTab.keys = Obit.TableGCGetHeadKeys(inTab.me)
     elif tabtype=="AIPS IM":
@@ -393,6 +397,10 @@ def PClose (inTab, err):
         Obit.TableFQSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS FS" and inTab.keys:
         Obit.TableFSSetHeadKeys(inTab.me, inTab.keys)
+    elif tabtype=="AIPS JI" and inTab.keys:
+        Obit.TableJISetHeadKeys(inTab.me, inTab.keys)
+    elif tabtype=="AIPS JT" and inTab.keys:
+        Obit.TableJTSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS GC" and inTab.keys:
         Obit.TableGCSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS IM" and inTab.keys:

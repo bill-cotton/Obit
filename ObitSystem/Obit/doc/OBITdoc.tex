@@ -21,7 +21,7 @@
 \vskip 1cm
 \centerline{\ttlfont Merx mollis mortibus nuper}
 \vskip 3cm
-\centerline{\secfont Version: 1.3 \today}
+\centerline{\secfont Version: 1.4 \today}
 \vskip 1cm
 \centerline{\secfont W. D. Cotton}
 \clearpage
@@ -1622,7 +1622,7 @@ ObitTableDesc.
 {IAT - UTC (sec).}
 ]
 \tablekey[{"POLTYPE "}{A}{polType}{"        "}{}
-{Polarization parameterazation type, 'APPR', 'RAPPR', 'ORI-ELP'}
+{Polarization parameterization type, 'APPR', 'RAPPR', 'ORI-ELP'}
 ]
 \tablekey[{"P\_REFANT"}{J}{P\_Refant}{0}{}
 {Polarization reference antenna}
@@ -2935,6 +2935,207 @@ ObitTableDesc.
 \begin{history}
 \modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
 \modhistory[{W. D. Cotton}{10/15/2014}{Revision 2: Add STK\_1}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableJI Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\ClassName[{ObitTableJI}]
+{Incremental Jones matrix calibration table for UV data.}
+%\ClassEnum[{obitObjType}
+%{Type of underlying data structures}]
+
+\tabletitle{Jones Incremental calibration table for UV data}
+% table name
+\tablename{JI}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS JI" Jones matrix calibration information derived from a calibration solution 
+and can be used either for "self calibration" or correction to a multisource 
+Total Jones (JT) calibration table.  Jones matrices are 2x2 complex matrices
+stored in a linearized form as floats.
+
+Calibration of the visibility on a baseline 1-2 can use the following:\hfill\break
+J1 = Jones matrix for first antenna,\hfill\break
+J2 = conjugate transpose of the Jones matrix for second antenna,\hfill\break
+vis = 
+\begin{verbatim}
+Circular feeds |RR RL| or for Linear |XX XY|
+               |LR LL|               |YX YY|,
+\end{verbatim}
+then the calibrated visibility is \hfill\break
+cal = ((J2$^{-1}$)*vis)*J1$^{-1}$
+
+An ObitTableJI is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{12}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{()}
+{Number of frequency channels}
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{1}{}
+{The number of antennas in table.}
+]
+\tablekey[{"APPLIED"}{L}{isApplied}{FALSE}{}
+{True if table has been applied to a JT table.}
+]
+\tablekey[{"CALTYPE "}{A}{calType}{"        "}{}
+{Calibration type, 'DELAY', 'BANDPASS', 'GAIN', 'OTHER'}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the solution}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Solution interval.}
+] 
+\tablecol[{"SOURCE ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"ANTENNA NO."}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"SUBARRAY"}{"        "}{J}{(1)}{SubA}
+{Subarray number.}
+] 
+\tablecol[{"FREQ ID"}{"        "}{J}{(1)}{FreqID}
+{Frequency ID}
+] 
+\tablecol[{"JONES"}{"        "}{E}{(8,numChan,numIF)}{Jones}
+{Array of 2x2 complex matices to be multiplied times 2x2 weighted visibilities,}
+] 
+\tablecol[{"WEIGHT"}{"        "}{E}{(numChan,numIF)}{Weight}
+{Weight of soln., channel/IF, channel varing fastest.}
+] 
+\tablecol[{"REFANT"}{"        "}{J}{(numChan,numIF)}{RefAnt}
+{Reference antenna , channel/IF, channel varing fastest. }
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{04/22/2024}{Revision 1: Initial version}]
+\modhistory[{W. D. Cotton}{05022/2024}{Revision 2: Add CALTYPE
+  keyword, 12}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableJT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\ClassName[{ObitTableJT}]
+{Total Jones matrix calibration table for UV data.}
+%\ClassEnum[{obitObjType}
+%{Type of underlying data structures}]
+
+\tabletitle{Jones Total calibration table for UV data}
+% table name
+\tablename{JT}
+\tableintro[
+{This class contains tabular data and allows access.
+This table contains the product of Jones matrices from multiple calibration steps.
+The product is kept with multiplications in both directions as the
+multiplications do not, in general commute. 
+Jones matrices are 2x2 complex matrices stored in a linearized form as
+8 floats.
+
+Calibration of the visibility on a baseline 1-2 can use the following:\hfill\break
+J1 = Jones2 matrix for first antenna,\hfill\break
+J2 = conjugate transpose of the Jones2 matrix for second antenna,\hfill\break
+vis = 
+\begin{verbatim}
+Circular feeds |RR RL| or for Linear |XX XY|
+               |LR LL|               |YX YY|,
+\end{verbatim}
+then the calibrated visibility is \hfill\break
+cal = ((J1$^{-1}$)*vis)*J1$^{-1}^{H}$
+
+An ObitTableJT is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{11}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{()}
+{Number of frequency channels}
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{1}{}
+{The number of antennas in table.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the solution}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Solution interval.}
+] 
+\tablecol[{"SOURCE ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"ANTENNA NO."}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"SUBARRAY"}{"        "}{J}{(1)}{SubA}
+{Subarray number.}
+] 
+\tablecol[{"FREQ ID"}{"        "}{J}{(1)}{FreqID}
+{Frequency ID}
+] 
+\tablecol[{"JONES1"}{"        "}{E}{(8,numChan,numIF)}{Jones1}
+{Array of 2x2 complex matices to be pre multiplied times 2x2 visibilities,}
+] 
+\tablecol[{"JONES2"}{"        "}{E}{(8,numChan,numIF)}{Jones2}
+{Array of 2x2 complex matices to be post multiplied times 2x2 visibilities,}
+] 
+\tablecol[{"WEIGHT"}{"        "}{E}{(numChan,numIF)}{Weight}
+{Weight of soln., channel/IF, channel varing fastest.}
+] 
+\tablecol[{"REFANT"}{"        "}{J}{(numChan,numIF)}{RefAnt}
+{Reference antenna , channel/IF, channel varing fastest. }
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{05/02/2024}{Revision 1: Initial version}]
 \end{history}
 %
 \clearpage

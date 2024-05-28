@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2023                                          */
+/*;  Copyright (C) 2010-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2564,7 +2564,7 @@ gpointer ThreadFitSpec (gpointer args)
 	}
       }
     }
-    
+       
     ObitSpectrumFitAddMinFlux(fitArg,minFlux);  /* Add minimum flux density */
 
     /* Fit spectrum */

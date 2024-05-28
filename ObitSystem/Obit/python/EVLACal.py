@@ -225,6 +225,7 @@ def EVLAInitContParms():
     parms["targets"]     = []           # List of target sources
     parms["outIClass"]   = "IClean"     # Output target final image class
     parms["Stokes"]      = "I"          # Stokes to image
+    parms["timeRange"]   = [0.0,0.0]    # time range (days) to image
     parms["Robust"]      = 0.0          # Weighting robust parameter
     parms["FOV"]         = None         # Field of view radius in deg.
     parms["Niter"]       = 500          # Max number of clean iterations
@@ -4645,7 +4646,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
                      doPol=False, PDVer=-1,  minFlux=0.0, Beam=[0.,0.,0.], \
                      Stokes="I", FOV=0.1/3600.0, Robust=0, Niter=300, CleanRad=None, \
                      maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
-                     solPMode="P", solPType= "  ", UVRange=[0.,0.], \
+                     solPMode="P", solPType= "  ", UVRange=[0.,0.], timeRange=[0.,0.], \
                      maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
                      solAMode="A&P", solAType= "  ", \
                      doOutlier=None,   OutlierDist=None, OutlierFlux=None, \
@@ -4678,6 +4679,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     * PDVer      = PD version for pol cal, -1=>use IF
     * minFlux    = minimum flux density for initial CLEAN
     * Stokes     = Stokes parameters to image
+    * timeRange  = time range (days) to image, [0,0]=>all
     * FOV        = Field of view to image in deg
     * Robust     = Weighting robustness parameter
     * Niter      = max no. iterations
@@ -4792,6 +4794,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     imager.Niter       = Niter
     imager.Beam        = Beam
     imager.UVRange     = UVRange
+    imager.timeRange   = timeRange
     imager.minFlux     = minFlux
     imager.maxPSCLoop  = maxPSCLoop
     imager.minFluxPSC  = minFluxPSC

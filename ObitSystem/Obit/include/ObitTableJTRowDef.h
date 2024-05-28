@@ -26,12 +26,32 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/* Define the basic components of the ObitTableJI ClassInfo structure */
-/* This is intended to be included in a classInfo structure definition*/
-#include "ObitTableClassDef.h"  /* Parent class ClassInfo definition file */
-/** Function pointer to convert. */
-ObitTableConvertFP ObitTableJIConvert;
-/** Function pointer to read a row. */
-ObitTableReadRowFP ObitTableJIReadRow;
-/** Function pointer to write a row. */
-ObitTableWriteRowFP ObitTableJIWriteRow;
+/*  Define the basic components of the ObitTableRow structure       */
+/*  This is intended to be included in a class structure definition   */
+/**
+ * \file ObitTableJTRowDef.h
+ * ObitTableJTRow structure members for derived classes.
+ */
+#include "ObitTableRowDef.h"  /* Parent class definitions */
+/** The center time of the solution */
+odouble  Time;
+/** Solution interval. */
+ofloat  TimeI;
+/** Source Identifier number */
+oint  SourID;
+/** Antenna number */
+oint  antNo;
+/** Subarray number. */
+oint  SubA;
+/** Frequency ID */
+oint  FreqID;
+/** Array of 2x2 complex matices to be pre multiplied times 2x2 visibilities, */
+ofloat*  Jones1;
+/** Array of 2x2 complex matices to be post multiplied times 2x2 visibilities, */
+ofloat*  Jones2;
+/** Weight of soln., channel/IF, channel varing fastest. */
+ofloat*  Weight;
+/** Reference antenna , channel/IF, channel varing fastest. */
+oint*  RefAnt;
+/** status 0=normal, 1=modified, -1=flagged */
+olong  status;

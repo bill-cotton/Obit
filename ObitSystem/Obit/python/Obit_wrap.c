@@ -15248,12 +15248,11 @@ extern long TableUtilSort (ObitTable* in, char *colName, long desc, ObitErr *err
 extern ObitTable* TableJI (ObitData *inData, long *tabVer,
  	                   int access,
  	                   char *tabName,
-                           int numPol, int numIF, int numChan,
+                           int numIF, int numChan,
                            ObitErr *err)
  {
    ObitIOAccess laccess;
    /* Cast structural keywords to correct type */
-   oint lnumPol = (oint)numPol;
    oint lnumIF = (oint)numIF;
    oint lnumChan = (oint)numChan;
    olong ltabVer = (olong)*tabVer;
@@ -15263,7 +15262,7 @@ extern ObitTable* TableJI (ObitData *inData, long *tabVer,
    else if (access==3) laccess = OBIT_IO_ReadWrite;
    outTable = (ObitTable*)newObitTableJIValue ((gchar*)tabName, inData, (olong*)&ltabVer,
    			   laccess, 
-                           lnumPol, lnumIF, lnumChan,
+                           lnumIF, lnumChan,
                            err);
    *tabVer = (long)ltabVer;
    return outTable;
@@ -15272,13 +15271,12 @@ extern ObitTable* TableJI (ObitData *inData, long *tabVer,
 extern PyObject* TableJIGetHeadKeys (ObitTable *inTab) {
   PyObject *outDict=PyDict_New();
   ObitTableJI *lTab = (ObitTableJI*)inTab;
-  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
   PyDict_SetItemString(outDict, "numIF",  PyInt_FromLong((long)lTab->numIF));
   PyDict_SetItemString(outDict, "numChan",  PyInt_FromLong((long)lTab->numChan));
   PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
   PyDict_SetItemString(outDict, "numAnt",  PyInt_FromLong((long)lTab->numAnt));
-  PyDict_SetItemString(outDict, "numNodes",  PyInt_FromLong((long)lTab->numNodes));
  PyDict_SetItemString(outDict, "isApplied",  PyInt_FromLong((long)lTab->isApplied));
+  PyDict_SetItemString(outDict, "calType", PyString_InternFromString(lTab->calType));
 
   return outDict;
 } 
@@ -15290,8 +15288,63 @@ extern void TableJISetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 
   lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
   lTab->numAnt = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numAnt"));
-  lTab->numNodes = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numNodes"));
   lTab->isApplied = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "isApplied"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "calType"));
+  strncpy (lTab->calType, tstr, lstr); lTab->calType[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableJT.h"
+
+
+ 
+extern ObitTable* TableJT (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numIF, int numChan,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumIF = (oint)numIF;
+   oint lnumChan = (oint)numChan;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableJTValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumIF, lnumChan,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableJTGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableJT *lTab = (ObitTableJT*)inTab;
+  PyDict_SetItemString(outDict, "numIF",  PyInt_FromLong((long)lTab->numIF));
+  PyDict_SetItemString(outDict, "numChan",  PyInt_FromLong((long)lTab->numChan));
+  PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
+  PyDict_SetItemString(outDict, "numAnt",  PyInt_FromLong((long)lTab->numAnt));
+
+  return outDict;
+} 
+
+extern void TableJTSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableJT *lTab = (ObitTableJT*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEJT;
+
+  lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
+  lTab->numAnt = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numAnt"));
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -62930,8 +62983,7 @@ SWIGINTERN PyObject *_wrap_TableJI(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
   char *arg4 = (char *) 0 ;
   int arg5 ;
   int arg6 ;
-  int arg7 ;
-  ObitErr *arg8 = (ObitErr *) 0 ;
+  ObitErr *arg7 = (ObitErr *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int val3 ;
@@ -62943,14 +62995,12 @@ SWIGINTERN PyObject *_wrap_TableJI(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
   int ecode5 = 0 ;
   int val6 ;
   int ecode6 = 0 ;
-  int val7 ;
-  int ecode7 = 0 ;
-  void *argp8 = 0 ;
-  int res8 = 0 ;
-  PyObject *swig_obj[8] ;
+  void *argp7 = 0 ;
+  int res7 = 0 ;
+  PyObject *swig_obj[7] ;
   ObitTable *result = 0 ;
   
-  if (!SWIG_Python_UnpackTuple(args, "TableJI", 8, 8, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "TableJI", 7, 7, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitData, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "TableJI" "', argument " "1"" of type '" "ObitData *""'"); 
@@ -62998,17 +63048,12 @@ SWIGINTERN PyObject *_wrap_TableJI(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "TableJI" "', argument " "6"" of type '" "int""'");
   } 
   arg6 = (int)(val6);
-  ecode7 = SWIG_AsVal_int(swig_obj[6], &val7);
-  if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "TableJI" "', argument " "7"" of type '" "int""'");
-  } 
-  arg7 = (int)(val7);
-  res8 = SWIG_ConvertPtr(swig_obj[7], &argp8,SWIGTYPE_p_ObitErr, 0 |  0 );
-  if (!SWIG_IsOK(res8)) {
-    SWIG_exception_fail(SWIG_ArgError(res8), "in method '" "TableJI" "', argument " "8"" of type '" "ObitErr *""'"); 
+  res7 = SWIG_ConvertPtr(swig_obj[6], &argp7,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res7)) {
+    SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "TableJI" "', argument " "7"" of type '" "ObitErr *""'"); 
   }
-  arg8 = (ObitErr *)(argp8);
-  result = (ObitTable *)TableJI(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  arg7 = (ObitErr *)(argp7);
+  result = (ObitTable *)TableJI(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitTable, 0 |  0 );
   {
     free((long *) arg2);
@@ -63063,6 +63108,146 @@ SWIGINTERN PyObject *_wrap_TableJISetHeadKeys(PyObject *SWIGUNUSEDPARM(self), Py
   arg1 = (ObitTable *)(argp1);
   arg2 = swig_obj[1];
   TableJISetHeadKeys(arg1,arg2);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_TableJT(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitData *arg1 = (ObitData *) 0 ;
+  long *arg2 = (long *) 0 ;
+  int arg3 ;
+  char *arg4 = (char *) 0 ;
+  int arg5 ;
+  int arg6 ;
+  ObitErr *arg7 = (ObitErr *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int res4 ;
+  char *buf4 = 0 ;
+  int alloc4 = 0 ;
+  int val5 ;
+  int ecode5 = 0 ;
+  int val6 ;
+  int ecode6 = 0 ;
+  void *argp7 = 0 ;
+  int res7 = 0 ;
+  PyObject *swig_obj[7] ;
+  ObitTable *result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "TableJT", 7, 7, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitData, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "TableJT" "', argument " "1"" of type '" "ObitData *""'"); 
+  }
+  arg1 = (ObitData *)(argp1);
+  {
+    if (PyList_Check(swig_obj[1])) {
+      int size = PyList_Size(swig_obj[1]);
+      int i = 0;
+      arg2 = (long*) malloc((size+1)*sizeof(long));
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[1],i);
+        if (PyLong_Check(o)) {
+          arg2[i] = PyLong_AsLong(o);
+        } else if (PyInt_Check(o)) {
+          arg2[i] = PyInt_AsLong(o);
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain longs or ints");
+          free(arg2);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
+  }
+  ecode3 = SWIG_AsVal_int(swig_obj[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "TableJT" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = (int)(val3);
+  res4 = SWIG_AsCharPtrAndSize(swig_obj[3], &buf4, NULL, &alloc4);
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "TableJT" "', argument " "4"" of type '" "char *""'");
+  }
+  arg4 = (char *)(buf4);
+  ecode5 = SWIG_AsVal_int(swig_obj[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "TableJT" "', argument " "5"" of type '" "int""'");
+  } 
+  arg5 = (int)(val5);
+  ecode6 = SWIG_AsVal_int(swig_obj[5], &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "TableJT" "', argument " "6"" of type '" "int""'");
+  } 
+  arg6 = (int)(val6);
+  res7 = SWIG_ConvertPtr(swig_obj[6], &argp7,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res7)) {
+    SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "TableJT" "', argument " "7"" of type '" "ObitErr *""'"); 
+  }
+  arg7 = (ObitErr *)(argp7);
+  result = (ObitTable *)TableJT(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitTable, 0 |  0 );
+  {
+    free((long *) arg2);
+  }
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return resultobj;
+fail:
+  {
+    free((long *) arg2);
+  }
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_TableJTGetHeadKeys(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitTable *arg1 = (ObitTable *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  PyObject *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitTable, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "TableJTGetHeadKeys" "', argument " "1"" of type '" "ObitTable *""'"); 
+  }
+  arg1 = (ObitTable *)(argp1);
+  result = (PyObject *)TableJTGetHeadKeys(arg1);
+  resultobj = result;
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_TableJTSetHeadKeys(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitTable *arg1 = (ObitTable *) 0 ;
+  PyObject *arg2 = (PyObject *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "TableJTSetHeadKeys", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitTable, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "TableJTSetHeadKeys" "', argument " "1"" of type '" "ObitTable *""'"); 
+  }
+  arg1 = (ObitTable *)(argp1);
+  arg2 = swig_obj[1];
+  TableJTSetHeadKeys(arg1,arg2);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -74207,6 +74392,9 @@ static PyMethodDef SwigMethods[] = {
 	 { "TableJI", _wrap_TableJI, METH_VARARGS, NULL},
 	 { "TableJIGetHeadKeys", _wrap_TableJIGetHeadKeys, METH_O, NULL},
 	 { "TableJISetHeadKeys", _wrap_TableJISetHeadKeys, METH_VARARGS, NULL},
+	 { "TableJT", _wrap_TableJT, METH_VARARGS, NULL},
+	 { "TableJTGetHeadKeys", _wrap_TableJTGetHeadKeys, METH_O, NULL},
+	 { "TableJTSetHeadKeys", _wrap_TableJTSetHeadKeys, METH_VARARGS, NULL},
 	 { "TableList_me_set", _wrap_TableList_me_set, METH_VARARGS, NULL},
 	 { "TableList_me_get", _wrap_TableList_me_get, METH_O, NULL},
 	 { "new_TableList", _wrap_new_TableList, METH_NOARGS, NULL},

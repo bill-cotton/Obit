@@ -26,11 +26,11 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitTableJI  structure          */
+/*  Define the basic components of the ObitTableJT  structure          */
 /*  This is intended to be included in a class structure definition   */
 /**
- * \file ObitTableJIDef.h
- * ObitTableJI structure members for derived classes.
+ * \file ObitTableJTDef.h
+ * ObitTableJT structure members for derived classes.
  */
 #include "ObitTableDef.h"  /* Parent class definitions */
 /** Revision number of the table definition. */
@@ -41,10 +41,6 @@ oint  numIF;
 oint  numChan;
 /** The number of antennas in table. */
 oint  numAnt;
-/** True if table has been applied to a JT table. */
-gboolean  isApplied;
-/** Calibration type, 'DELAY', 'BANDPASS', 'GAIN', 'OTHER' */
-gchar  calType[MAXKEYCHARTABLEJI];
 /** Column offset for The center time of the solution in table record */
 olong  TimeOff;
 /** Physical column number for The center time of the solution in table record */
@@ -69,10 +65,14 @@ olong  SubACol;
 olong  FreqIDOff;
 /** Physical column number for Frequency ID in table record */
 olong  FreqIDCol;
-/** Column offset for Array of 2x2 complex matices to be multiplied times 2x2 weighted visibilities, in table record */
-olong  JonesOff;
-/** Physical column number for Array of 2x2 complex matices to be multiplied times 2x2 weighted visibilities, in table record */
-olong  JonesCol;
+/** Column offset for Array of 2x2 complex matices to be pre multiplied times 2x2 visibilities, in table record */
+olong  Jones1Off;
+/** Physical column number for Array of 2x2 complex matices to be pre multiplied times 2x2 visibilities, in table record */
+olong  Jones1Col;
+/** Column offset for Array of 2x2 complex matices to be post multiplied times 2x2 visibilities, in table record */
+olong  Jones2Off;
+/** Physical column number for Array of 2x2 complex matices to be post multiplied times 2x2 visibilities, in table record */
+olong  Jones2Col;
 /** Column offset for Weight of soln., channel/IF, channel varing fastest. in table record */
 olong  WeightOff;
 /** Physical column number for Weight of soln., channel/IF, channel varing fastest. in table record */

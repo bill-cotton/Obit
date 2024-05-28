@@ -4,7 +4,7 @@
 ;! Shift the phase tracking center of a UV data.
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2023
+;;  Copyright (C) 2023,2024
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -89,6 +89,8 @@ doBand           -1.0       10.0   If >0 apply bandpass cal.
 BPVer                              Bandpass table version
 **PARAM** float 3
 Smooth                             Smoothing function. 
+**PARAM** dbl 2
+Posn                               [RA, Dec] in deg, takes precedence
 **PARAM** float 2
 Shift                              RA,Dec shift in asec
 **PARAM** str 4
@@ -203,6 +205,10 @@ Adverbs:
                function has value - in channels.  Defaults: 1,3,1,4
                times Smooth(2) used when input Smooth(3) < net
                Smooth(2).
+  Posn.......Ra, Dec in deg. Takes precedence over Shift if nonzero
+             can be set by:
+             Posn=[ImageDesc.PHMS2RA("1:2:3.0"),\
+	           ImageDesc.PDMS2Dec("+1:0:0.0")]
   Shift......RA, Dec shift in asec.
   outDType..'FITS' or 'AIPS'  type of output
   outFile....Output UV FITS file name.

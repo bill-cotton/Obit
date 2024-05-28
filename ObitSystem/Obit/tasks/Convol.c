@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convol Obit task convolve an image with another image or a model   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2022                                          */
+/*;  Copyright (C) 2006-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -508,13 +508,17 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
 		   ftemp);
   ObitErrLog(err);
 
+  /* Get region from myInput */
+  ObitInfoListGetTest(myInput, "BLC", &type, dim, blc); /* BLC */
+  ObitInfoListGetTest(myInput, "TRC", &type, dim, trc); /* TRC */
+
   /* Set defaults BLC, TRC */
   for (i=0; i<IM_MAXDIM; i++) {
     if (blc[i]<=0) blc[i] = 1;
     blc[i] = MAX (1,  blc[i]);
     if (trc[i]<=0) trc[i] = inImage->myDesc->inaxes[i];
-    trc[i] = MIN (trc[i], inImage->myDesc->inaxes[i]);
-  }
+    /* NO! double selection trc[i] = MIN (trc[i], inImage->myDesc->inaxes[i]);*/
+  } 
 
   /* Save blc, trc */
   dim[0] = IM_MAXDIM;

@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020-2023                                          */
+/*;  Copyright (C) 2020-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -561,9 +561,17 @@ void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I0
 		   ofloat R10, ofloat I10, ofloat R11, ofloat I11)
 {
   ofloat val[2];
+  /* DEBUG 
+     val[0] = R00; val[1]= I00; ObitMatxSet(matx, val, 0, 0);
+     val[0] = R01; val[1]= I01; ObitMatxSet(matx, val, 0, 1);
+     val[0] = R10; val[1]= I10; ObitMatxSet(matx, val, 1, 0);
+     val[0] = R11; val[1]= I11; ObitMatxSet(matx, val, 1, 1);
+     val[0] = 0.0; val[1] = 0.0;
+     ObitMatxSet(matx, val, 0, 0); ObitMatxSet(matx, val, 1, 0);
+     ObitMatxSet(matx, val, 0, 1); ObitMatxSet(matx, val, 1, 1);*/
   val[0] = R00; val[1]= I00; ObitMatxSet(matx, val, 0, 0);
-  val[0] = R01; val[1]= I01; ObitMatxSet(matx, val, 0, 1);
-  val[0] = R10; val[1]= I10; ObitMatxSet(matx, val, 1, 0);
+  val[0] = R01; val[1]= I01; ObitMatxSet(matx, val, 1, 0);
+  val[0] = R10; val[1]= I10; ObitMatxSet(matx, val, 0, 1);
   val[0] = R11; val[1]= I11; ObitMatxSet(matx, val, 1, 1);
 } /* end ObitMatxSet2C */
 
@@ -583,9 +591,14 @@ void ObitMatxGet2C(ObitMatx *matx, ofloat* R00, ofloat *I00, ofloat *R01, ofloat
 		   ofloat *R10, ofloat *I10, ofloat *R11, ofloat *I11)
 {
   ofloat val[2];
+ /* DEBUG 
+    ObitMatxGet(matx, 0, 0, val); *R00 = val[0]; *I00 = val[1];
+    ObitMatxGet(matx, 0, 1, val); *R01 = val[0]; *I01 = val[1];
+    ObitMatxGet(matx, 1, 0, val); *R10 = val[0]; *I10 = val[1];
+    ObitMatxGet(matx, 1, 1, val); *R11 = val[0]; *I11 = val[1];*/
   ObitMatxGet(matx, 0, 0, val); *R00 = val[0]; *I00 = val[1];
-  ObitMatxGet(matx, 0, 1, val); *R01 = val[0]; *I01 = val[1];
-  ObitMatxGet(matx, 1, 0, val); *R10 = val[0]; *I10 = val[1];
+  ObitMatxGet(matx, 0, 1, val); *R10 = val[0]; *I10 = val[1];
+  ObitMatxGet(matx, 1, 0, val); *R01 = val[0]; *I01 = val[1];
   ObitMatxGet(matx, 1, 1, val); *R11 = val[0]; *I11 = val[1];
 } /* end ObitMatxGet2C */
 
@@ -597,8 +610,7 @@ void ObitMatxGet2C(ObitMatx *matx, ofloat* R00, ofloat *I00, ofloat *R01, ofloat
 /** Invert 2x2 matrix */
 void ObitMatxInv2x2(ObitMatx *in, ObitMatx *out)
 {
-  ofloat fDet;
-  ocomplex oDet, ct1, ct2, cone;
+  ofloat fDet, Det[2], d, *matx;
   odouble dDet;
   /* error checks */
   g_assert (ObitMatxIsCompatible(in, out));
@@ -615,15 +627,21 @@ void ObitMatxInv2x2(ObitMatx *in, ObitMatx *out)
     out->flt[3] = +in->flt[0]*fDet;
     break;
   case OBIT_Complex:
-    COMPLEX_MUL2(ct1, in->cpx[0], in->cpx[3]);
-    COMPLEX_MUL2(ct2, in->cpx[1], in->cpx[2]);
-    COMPLEX_SUB (oDet, ct1, ct2);
-    COMPLEX_SET (cone, 1.0, 0.0);
-    COMPLEX_DIV (ct1, cone, oDet);  /* 1/Determinate, 1 if zero */
-    COMPLEX_MUL2(out->cpx[0], in->cpx[3], ct1);
-    COMPLEX_MUL2(ct2,         in->cpx[1], ct1); COMPLEX_NEGATE (out->cpx[1], ct2);
-    COMPLEX_MUL2(ct2,         in->cpx[2], ct1); COMPLEX_NEGATE (out->cpx[2], ct2);
-    COMPLEX_MUL2(out->cpx[3], in->cpx[0], ct1);
+    /* inverse of determinant */
+    matx = in->array;
+    Det[0] = (matx[0]*matx[6] - matx[1]*matx[7]) - (matx[2]*matx[4] - matx[3]*matx[5]);
+    Det[1] = (matx[0]*matx[7] + matx[1]*matx[6]) - (matx[2]*matx[5] + matx[3]*matx[4]);
+    /* Inverse of determinant */
+    d = Det[0]*Det[0] + Det[1]*Det[1];
+    if (d!=0.0) d = 1.0 / d;
+    else d = 1.0;
+    Det[0] *=  d;
+    Det[1] *= -d;
+    /* Inverse matrix out */
+    COMPLEX_SET (out->cpx[3],   matx[0]*Det[0]-matx[1]*Det[1],    matx[0]*Det[1]+matx[1]*Det[0]);
+    COMPLEX_SET (out->cpx[2], -(matx[4]*Det[0]-matx[5]*Det[1]), -(matx[4]*Det[1]+matx[5]*Det[0]));
+    COMPLEX_SET (out->cpx[1], -(matx[2]*Det[0]-matx[3]*Det[1]), -(matx[2]*Det[1]+matx[3]*Det[0]));
+    COMPLEX_SET (out->cpx[0],   matx[6]*Det[0]-matx[7]*Det[1],    matx[6]*Det[1]+matx[7]*Det[0]);
     break;
   case OBIT_Double:
     dDet = in->dbl[0]*in->dbl[3] - in->dbl[1]*in->dbl[2];
