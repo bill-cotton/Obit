@@ -53,9 +53,12 @@ void ObitCUDASetGPU (int cuda_device)
 {
   int count, device;
   checkCudaErrors(cudaGetDeviceCount(&count));
-  device = MIN (count-1, cuda_device);
-  device = MAX (0, device);
-  if ((device<0) || (device>(count-1))) device = 0; /* Still Bad value? */
+  device = cuda_device;
+  if (device<0) device = 0;  /* <0 defaults to 0 */
+  /* NO, really bad idea - let fail if it doesn't exist 
+   device = MIN (count-1, cuda_device);
+   device = MAX (0, device); */
+
   checkCudaErrors(cudaSetDevice(device));
 } /* end ObitCUDASetGPU */
 

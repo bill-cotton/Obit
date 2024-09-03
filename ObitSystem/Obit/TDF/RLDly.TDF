@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry R-L delay/phase calibration 
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011-2016
+;;  Copyright (C) 2011-2024
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -55,6 +55,8 @@ timeRange                           Time range to process.
 UVR_Full         0.                 Min & max baseline (klambda)
 **PARAM** float 1  **DEF** 0.01
 WtUV              0.0               Weight outside full wtuvrange
+**PARAM** boo 1 **DEF** F
+sameWt                              All valid data given the same wt.
 **PARAM** int 1
 FreqID                              Freq. ID to select.
 **PARAM** int 1 **DEF** 1
@@ -79,6 +81,8 @@ flagVer                             Flag table version
 doPol                               Apply polarization cal?
 **PARAM** int 1 **DEF** 1
 PDVer                               PD table to apply
+**PARAM** boo 1 **DEF** T
+keepLin                             True => Keep poln in linear
 **PARAM** float 1  **DEF** 0.0
 RLPhase        -400.      400.      R-L phase difference
 **PARAM** float 1  **DEF** 0.0
@@ -233,12 +237,19 @@ Adverbs:
   PDVer......AIPS PD table to use for per channel instrumental
              polarization corrections if doPol=True. 0=> highest
              -1 => use IF corrections from AIPS AN table.
+  keepLin....If the input data is in a linear feed basis (XX,YY,XY,YX)
+             and doPol=T, then leave in a linear basis.  
+             Otherwise convert to circular (RR,LL,RL,LR)
+             Unless you know what you're doing, leave this True
   RLPhase....The target value of the R-L phase difference at the data 
              reference frequency. (deg)
   RM.........The rotation measure (rad/m^2) used to convert RLPhase
              to other frequencies.
   refAnt.....Reference antenna number to be used to label SN table
              Not actually used in the calibration.
+  UVR_Full...Min and max baseline (klambda) for full weight
+  WtUV.......Weight outside of UVR_Full
+  sameWt.....If True, all valid data will be given the same weight.
 
       Model
   DataType2.'FITS' or 'AIPS'  type of input, defaults to DataType

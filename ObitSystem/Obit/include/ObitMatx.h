@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020-2023                                          */
+/*;  Copyright (C) 2020-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -185,6 +185,12 @@ typedef void (*ObitMatxOuterMult2CFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *o
 /** 4x4 complex matrix * 4x1 complex vector multiply */
 void ObitMatxVec4Mult(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
 typedef void (*ObitMatxVec4MultFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
+/** Print 2x2 matrix on stderr */
+void ObitMatxPrint (ObitMatx* in, gchar* label);
+/** Print 2x2 matrix on stderr */
+void ObitMatxPrint (ObitMatx* in, gchar* label);
+/** Multiply a scalar times an ObitMatx */
+void ObitMatxSMult (ObitMatx* in, void *scalar, ObitMatx* out);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

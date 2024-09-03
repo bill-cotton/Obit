@@ -1,7 +1,7 @@
 /* $Id$  */
-/* R-L phase bandpass calibration                                     */
+/* R-L (X-Y) phase bandpass calibration                                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -629,7 +629,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan", "BIF", "EIF", 
     "subA", "Antennas", "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", 
-    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", "refAnt",
+    "flagVer", "doPol", "PDVer", "keepLin", "Mode", "ModelType", "Alpha", "refAnt",
      NULL};
   gchar *routine = "getInputData";
 
@@ -1062,7 +1062,7 @@ void RLPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "selBand", "selFreq", "FreqID", 
     "BChan1", "EChan1", "BChan2", "EChan2", "ChWid2", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "PDVer", "Antennas",  "refAnt",  
+    "doPol", "PDVer", "keepLin", "Antennas",  "refAnt",  
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "RLPhase", "RM",

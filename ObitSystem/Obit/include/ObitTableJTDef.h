@@ -65,14 +65,10 @@ olong  SubACol;
 olong  FreqIDOff;
 /** Physical column number for Frequency ID in table record */
 olong  FreqIDCol;
-/** Column offset for Array of 2x2 complex matices to be pre multiplied times 2x2 visibilities, in table record */
-olong  Jones1Off;
-/** Physical column number for Array of 2x2 complex matices to be pre multiplied times 2x2 visibilities, in table record */
-olong  Jones1Col;
-/** Column offset for Array of 2x2 complex matices to be post multiplied times 2x2 visibilities, in table record */
-olong  Jones2Off;
-/** Physical column number for Array of 2x2 complex matices to be post multiplied times 2x2 visibilities, in table record */
-olong  Jones2Col;
+/** Column offset for Array of 2x2 complex matices to be multiplied times 2x2 visibilities, in table record */
+olong  JonesOff;
+/** Physical column number for Array of 2x2 complex matices to be multiplied times 2x2 visibilities, in table record */
+olong  JonesCol;
 /** Column offset for Weight of soln., channel/IF, channel varing fastest. in table record */
 olong  WeightOff;
 /** Physical column number for Weight of soln., channel/IF, channel varing fastest. in table record */

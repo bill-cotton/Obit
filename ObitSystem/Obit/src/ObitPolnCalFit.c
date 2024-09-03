@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2023                                          */
+/*;  Copyright (C) 2012-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -72,7 +72,7 @@ void  ObitPolnCalFitClear (gpointer in);
 /** Private: Set Class function pointers. */
 static void ObitPolnCalFitClassInfoDefFn (gpointer inClass);
 
-/** Private: Write output image */
+/** Private: Write output solutions */
 static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV, 
 			 gboolean isOK, ObitErr *err);
 
@@ -1085,7 +1085,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 
     /* Make sure solutions are not blanked from last fit */
     resetSoln(in);
-
+    ResetAllSoln (in); /* Always start from default */
+ 
     /* zero reference antenna ellipticity for lin. feeds */
     if ((!in->isCircFeed) &&(in->refAnt>0)) {
       refAnt = in->refAnt;
@@ -1408,6 +1409,7 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
 			 gboolean isOK, ObitErr *err)
 {
   oint numPol, numIF, numChan;
+  olong chOff=in->BChan-1, IFOff=in->BIF-1;
   ObitIOCode retCode;
   ObitTableBP *oldBPTab=NULL;
   gboolean sameBP=FALSE, crazy;
@@ -1438,16 +1440,18 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
     else                  numIF = 1;
     numChan = IODesc->inaxes[IODesc->jlocf];
 
-   /* Source table */
+    /* Source table */
     in->CPTable = newObitTableCPValue ("Source", (ObitData*)outUV, &in->CPSoln, 
 				       OBIT_IO_WriteOnly, numIF, numChan, err);
-    InitSourceTab(in, err);
+    if (((in->Chan+chOff-in->ChInc/2)==1) && ((in->IFno+IFOff)==1))  /* First channel and first IF */
+       InitSourceTab(in, err);
 
     /* Instrumental poln table */
     in->PDTable = newObitTablePDValue ("Instrum", (ObitData*)outUV, &in->PDSoln, 
 				       OBIT_IO_WriteOnly, numPol, numIF, numChan, 
 				       err);
-    InitInstrumentalTab(in, err);
+    if (((in->Chan+chOff-in->ChInc/2)==1) && ((in->IFno+IFOff)==1))  /* First channel and first IF */
+      InitInstrumentalTab(in, err);
 
     /* BP table used if fitting R/L X/Y phase difference or X/Y gain*/
     if (in->doFitRL || in->doFitGain) {
@@ -1479,7 +1483,8 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
 	in->BPTable = ObitTableBPCopy (oldBPTab, in->BPTable, err);
 	oldBPTab = ObitTableBPUnref(oldBPTab);
       } else {
-	InitBandpassTab(in, err);
+	if (((in->Chan+chOff-in->ChInc/2)==1) && ((in->IFno+IFOff==1)))  /* First channel and first IF */
+	  InitBandpassTab(in, err);
       }
     } /* end setup BP table */
 

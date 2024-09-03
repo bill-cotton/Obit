@@ -2563,8 +2563,11 @@ def EVLACalAP(uv, target, ACals, err, \
         clist.append(PCal["Source"])
     if type(target)==list:
         # Use souCode='-CAL' to get all non calibrators
-        clcal.souCode = '_CAL'
-        tlist = []   # List of targets not in calibrator list
+        clcal.souCode = '-CAL'
+        if len(clcal.Sources)>=len(target):
+            tlist = target   # List of targets not in calibrator list
+        else:
+            tlist = []  # Everything
     else:
         tlist=[target]
     itarg = 0

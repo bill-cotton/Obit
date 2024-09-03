@@ -3068,7 +3068,7 @@ Circular feeds |RR RL| or for Linear |XX XY|
                |LR LL|               |YX YY|,
 \end{verbatim}
 then the calibrated visibility is \hfill\break
-cal = ((J1$^{-1}$)*vis)*J1$^{-1}^{H}$
+cal = ((J1$^{-1}$)*vis)*J2$^{-1}^{H}$
 
 An ObitTableJT is the front end to a persistent disk resident structure.
 Both FITS and AIPS cataloged data are supported.
@@ -3119,11 +3119,8 @@ ObitTableDesc.
 \tablecol[{"FREQ ID"}{"        "}{J}{(1)}{FreqID}
 {Frequency ID}
 ] 
-\tablecol[{"JONES1"}{"        "}{E}{(8,numChan,numIF)}{Jones1}
-{Array of 2x2 complex matices to be pre multiplied times 2x2 visibilities,}
-] 
-\tablecol[{"JONES2"}{"        "}{E}{(8,numChan,numIF)}{Jones2}
-{Array of 2x2 complex matices to be post multiplied times 2x2 visibilities,}
+\tablecol[{"JONES"}{"        "}{E}{(8,numChan,numIF)}{Jones}
+{Array of 2x2 complex matices to be multiplied times 2x2 visibilities,}
 ] 
 \tablecol[{"WEIGHT"}{"        "}{E}{(numChan,numIF)}{Weight}
 {Weight of soln., channel/IF, channel varing fastest.}
@@ -3136,6 +3133,7 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{05/02/2024}{Revision 1: Initial version}]
+\modhistory[{W. D. Cotton}{06/04/2024}{Revision 2: Drop second set of Jones}]
 \end{history}
 %
 \clearpage

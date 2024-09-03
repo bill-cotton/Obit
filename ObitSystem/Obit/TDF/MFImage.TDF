@@ -4,7 +4,7 @@
 ;! Obit wideband imaging
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2023
+;;  Copyright (C) 2010-2024
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -312,7 +312,7 @@ doGPU            0                 Use GPU for sky model if available
 **PARAM** boo 1 **DEF** F
 doGPUGrid        0                 Use GPU for gridding if available
 **PARAM** int 10 **DEF** -1
-GPU_no           -1                GPU numbers to use, -1 terminates
+GPU_no           -1                0-rel GPU numbers, -1 terminates
 **PARAM** str 128
 taskLog                            Logfile to write task messages to
 **PARAM** int 10
@@ -670,14 +670,14 @@ Adverbs:
               SN table attached to the output uv data which is needed to
               fully calibrate it.
   maxPSCLoop..Maximum number of phase self calibration loops
-  maxPSCLoop..Min. peak flux density required for phase self cal (Jy)
+  maxFluxPSC..Min. peak flux density required for phase self cal (Jy)
   solPInt.....phase SC Solution interval (min)
   solPType....phase SC Solution Type: '  ', 'L1', 
   solPMode....phase SC Solution Mode:'A&P', 'P', 'P!A', 'DELA'
               'DELA' fits for delay and phase and is recommended for 
               wideband data.
-  maxASCLoop..Maximum number of phase self calibration loops
-  maxASCLoop..Min. peak flux density required for phase self cal (Jy)
+  maxASCLoop..Maximum number of A&P self calibration loops
+  maxFluxASC..Min. peak flux density required for A&P self cal (Jy)
   solAInt.....A&P SC Solution interval (min)
   solAType....A&P SC Solution Type: '  ', 'L1', 
   solAMode....A&P SC Solution Mode:'A&P', 'P', 'P!A', 'DELA'
@@ -805,8 +805,9 @@ Adverbs:
               otherwise use the CPU
   doGPUGrid...If software is built for a GPU and one+ is available
               True=use it for gridding visibilities.
-  GPU_no......List of GPU numbers to use in gridding, 0-rel
+  GPU_no......GPU numbers to use in gridding, 0-rel (0,1,2...)
               The list is terminated by a -1.
+              DO NOT INCLUDE DUPLICATE ENTRIES!!!
   taskLog.....Log file to write messages to INSTEAD of the terminal
               This is useful in long runs or batch files.
               Path is absolute or relative to where the task 

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Rotation measure synthesis */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021-2022                                          */
+/*;  Copyright (C) 2021-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -539,7 +539,7 @@ ObitImage* getInputImage (ObitInfoList *myInput, gchar Stok, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
-  olong        i;
+  olong        i, noffset;
   gchar *routine = "getInputImage";
 
   /* error checks */
@@ -570,10 +570,24 @@ ObitImage* getInputImage (ObitInfoList *myInput, gchar Stok, ObitErr *err)
     trc[i] = MIN (trc[i], inImage->myDesc->inaxes[i]);
   }
 
+  /* What 0-rel plane does spectral data start on? */
+  if (!strncmp(inImage->myDesc->ctype[inImage->myDesc->jlocf], "SPECLNMF", 8)) {
+    noffset = 2;  /* What plane does spectral data start on */
+    ObitInfoListGetTest (inImage->myDesc->info, "NTERM", &type, dim, &noffset);
+  } else {   /* Normal spectral cube */
+    noffset = 0;
+  }
+  /* start with first spectral plane or later */
+  blc[2] = MAX(blc[2],noffset+1);
+
+  /* Make sure at least two planes */
+  Obit_retval_if_fail(((trc[2]-blc[2])>=2), err, inImage,
+		      "%s: MUST have at least two planes", routine);
+
   /* Save blc, trc */
   dim[0] = IM_MAXDIM;
   ObitInfoListAlwaysPut (myInput, "BLC", OBIT_long, dim, blc);
-  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  /* Why??? for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;*/
   ObitInfoListAlwaysPut (inImage->info, "BLC", OBIT_long, dim, blc);
   ObitInfoListAlwaysPut (myInput, "TRC", OBIT_long, dim, trc);
   ObitInfoListAlwaysPut (inImage->info, "TRC", OBIT_long, dim, trc);
@@ -657,19 +671,22 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
 	      ObitImage* outAImage,   ObitImage* outPImage,  ObitErr *err)
 {
   olong i, iplane, nOut, iRM, plane[5]={1,1,1,1,1}, noffset=0;
-  olong ngood, naxis[2];
+  unsigned short jplane;
+  olong ngood, lambplane, naxis[2];
   ObitIOSize IOBy;
   ObitInfoType type;
   ObitIOCode retCode;
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong   blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong   trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   ObitFArray **inQFArrays=NULL, **inUFArrays=NULL, *workAmp=NULL;
   ObitCArray *workPol=NULL, *workRot=NULL; 
   ObitImageDesc *outDesc=NULL;
   odouble freq, refFreq;
   olong nlamb2, nx, ny;
   ofloat RM, cmplx[2], *work=NULL, minQ, minU, norm, alpha=0.0, sumWt;
-  gchar *today=NULL, *RMSYN = "RMSYN   ", keyword[9];
+  gchar *today=NULL, *RMSYN = "RMSYN   ", keyword[12];
   gboolean doDecon=FALSE;
   gchar *routine = "doRMSyn";
   /* DEBUG 
@@ -701,6 +718,10 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
   ObitInfoListGetTest(myInput, "delRMSyn", &type, dim, &InfoReal);
   if (type==OBIT_float)       delRMSyn = InfoReal.flt;
   else if (type==OBIT_double) delRMSyn = (ofloat)InfoReal.dbl;
+
+  /* Get region from myInput */
+  ObitInfoListGetTest(myInput, "BLC", &type, dim, blc); /* BLC */
+  ObitInfoListGetTest(myInput, "TRC", &type, dim, trc); /* TRC */
 
   /* Doing deconvolution? no need to write output here */
   ObitInfoListGetTest(myInput, "doDecon", &type, dim, &doDecon);
@@ -737,7 +758,7 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
   dim[0] = dim[1] = dim[2] = 1;;
   ObitInfoListAlwaysPut (myInput, "refLambda2", OBIT_double, dim, &refLamb2);
 
-  /* What plane does spectral data start on */
+  /* What plane does spectral data start on? */
   if (!strncmp(inQImage->myDesc->ctype[inQImage->myDesc->jlocf], "SPECLNMF", 8)) {
     noffset = 2;  /* What plane does spectral data start on */
     ObitInfoListGetTest (inQImage->myDesc->info, "NTERM", &type, dim, &noffset);
@@ -746,7 +767,7 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
   }
 
   /* Determine number of frequency planes and initialize in */
-  nlamb2  = inQImage->myDesc->inaxes[inQImage->myDesc->jlocf]-noffset;
+  nlamb2  = inQImage->myDesc->inaxes[inQImage->myDesc->jlocf];
   nInChan = nlamb2;  /* to global */
   lamb2   = g_malloc0(nlamb2*sizeof(odouble));
   inQFArrays = g_malloc0(nlamb2*sizeof(ObitFArray*));
@@ -855,24 +876,27 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
 
   specCor = g_malloc0(nlamb2*sizeof(ofloat));  /* Channel Weights */
   /* Loop reading planes */
-  for (iplane=0; iplane<nlamb2; iplane++) {
+  for (iplane=blc[2]-1; iplane<=trc[2]-1; iplane++) {
+    lambplane= iplane-blc[2]+1;  /* Plane in lambda^2 cubes */
     /* Lambda^2 Check for MFImage outputs */
     if (!strncmp(inQImage->myDesc->ctype[inQImage->myDesc->jlocf], "SPECLNMF", 8)) {
-	sprintf (keyword, "FREQ%4.4d",iplane+1);
-	freq = inQImage->myDesc->crval[inQImage->myDesc->jlocf] + 
-	  inQImage->myDesc->cdelt[inQImage->myDesc->jlocf] * 
-	  (inQImage->myDesc->plane - inQImage->myDesc->crpix[inQImage->myDesc->jlocf]);
-	ObitInfoListGetTest (inQImage->myDesc->info, keyword, &type, dim, &freq);
-       } else {   /* Normal spectral cube */
-	freq = inQImage->myDesc->crval[inQImage->myDesc->jlocf] + 
-	  inQImage->myDesc->cdelt[inQImage->myDesc->jlocf] * 
-	  (inQImage->myDesc->plane - inQImage->myDesc->crpix[inQImage->myDesc->jlocf]);
-      }
-    lamb2[iplane] = (VELIGHT/freq)*(VELIGHT/freq);
+      jplane = iplane-noffset+1; /* reduce compiler bitching */
+      sprintf (keyword, "FREQ%4.4d",jplane);
+      /* In case keyword missing */
+      freq = inQImage->myDesc->crval[inQImage->myDesc->jlocf] + 
+	inQImage->myDesc->cdelt[inQImage->myDesc->jlocf] * 
+	(inQImage->myDesc->plane - inQImage->myDesc->crpix[inQImage->myDesc->jlocf]);
+      ObitInfoListGetTest (inQImage->myDesc->info, keyword, &type, dim, &freq);
+    } else {   /* Normal spectral cube */
+      freq = inQImage->myDesc->crval[inQImage->myDesc->jlocf] + 
+	inQImage->myDesc->cdelt[inQImage->myDesc->jlocf] * 
+	(inQImage->myDesc->plane - inQImage->myDesc->crpix[inQImage->myDesc->jlocf]);
+    }
+    lamb2[lambplane] = (VELIGHT/freq)*(VELIGHT/freq);
 
-    plane[0] = iplane+noffset+1;  /* Select correct plane */
-    retCode = ObitImageGetPlane (inQImage, inQFArrays[iplane]->array, plane, err);
-    retCode = ObitImageGetPlane (inUImage, inUFArrays[iplane]->array, plane, err);
+    plane[0] = iplane+1;  /* Select correct plane */
+    retCode = ObitImageGetPlane (inQImage, inQFArrays[lambplane]->array, plane, err);
+    retCode = ObitImageGetPlane (inUImage, inUFArrays[lambplane]->array, plane, err);
     /* if it didn't work bail out */
     if ((retCode!=OBIT_IO_OK) || (err->error)) {
       Obit_traceback_msg (err, routine, inQImage->name);
@@ -880,20 +904,20 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
     }
 
     /* Deblank */
-    ObitFArrayDeblank(inQFArrays[iplane], 0.0);
-    ObitFArrayDeblank(inUFArrays[iplane], 0.0);
+    ObitFArrayDeblank(inQFArrays[lambplane], 0.0);
+    ObitFArrayDeblank(inUFArrays[lambplane], 0.0);
 
     /* spectral correction (alpha!=0) */
-    specCor[iplane] = (ofloat)exp(-alpha*log(freq/refFreq));
+    specCor[lambplane] = (ofloat)exp(-alpha*log(freq/refFreq));
     if (alpha!=0.0) {
-      ObitFArraySMul(inQFArrays[iplane], specCor[iplane]);
-      ObitFArraySMul(inUFArrays[iplane], specCor[iplane]);
-      /*fprintf (stderr, "%4d Alpha=%6.2f %7.4f\n",i, alpha, specCor[iplane]);  DEBUG */
+      ObitFArraySMul(inQFArrays[lambplane], specCor[lambplane]);
+      ObitFArraySMul(inUFArrays[lambplane], specCor[lambplane]);
+      /*fprintf (stderr, "%4d Alpha=%6.2f %7.4f\n",i, alpha, specCor[lambplane]);  DEBUG */
     }
 
     /* Plane RMSes */
-    QRMS[iplane] = ObitFArrayRMS(inQFArrays[iplane]);
-    URMS[iplane] = ObitFArrayRMS(inUFArrays[iplane]);
+    QRMS[lambplane] = ObitFArrayRMS(inQFArrays[lambplane]);
+    URMS[lambplane] = ObitFArrayRMS(inUFArrays[lambplane]);
   } /* end loop reading planes */
 
   /* Statistics for filtering only median within 2 sigma */
@@ -944,7 +968,7 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
     /* Normalize */
     norm = 1.0 / sumWt;
     ObitCArraySMul(RMPlanes[iRM-1], norm);
-    /* DEBUG 
+   /* DEBUG 
     cptr = ObitCArrayIndex(RMPlanes[iRM-1],pos);
     cptr[0] /= 0.35; cptr[1] /= 0.35;
     fprintf (stderr,"%5d %6.2f %10.6f %10.6f %10.6f %8.2f %10.6f\n",iRM,RM,cptr[0],cptr[1],
@@ -1175,7 +1199,7 @@ void RMSynHistory (ObitInfoList* myInput, ObitImage* inImage,
 ofloat FitGauss(ObitFArray *Beam)
 {
   ofloat sigma=0.0;
-  ofloat sum, minSum, val, tsigma, newSigma, off;
+  ofloat sum, minSum, val, tsigma, newSigma=0.0, off;
   olong i, j, k, iCen;
   /* gchar *routine = "FitGauss"; */
 

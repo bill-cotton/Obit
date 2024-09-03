@@ -858,6 +858,8 @@ if __name__ == '__main__':
     if len(args) != 2:
         parser.print_help()
         sys.exit()
+    # Execute Setup file
+    exec(open(args[0]).read())
     try:
         pipeline( args[0] , args[1])
     finally:

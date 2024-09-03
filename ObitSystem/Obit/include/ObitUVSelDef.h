@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -150,6 +150,10 @@ gboolean doBPCal;
 olong doBand;
 /** version number of BP table for Bandpass calibration */
 olong BPversion;
+/* Apply Jones calibration after others? */
+gboolean doJones;
+/** Version number of JI table for calibration */
+olong JonesVersion;
 /** Desired correlation type, 0= Cross only, 1=both, 2= Auto only */
 olong corrType;
 /** do amp/phase/delay/rate calibration? */

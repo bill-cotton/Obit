@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVCal.h"
 #include "ObitTableBP.h"
 #include "ObitUVCalBandpass.h"
 #include "ObitUVCalBandpassDef.h"
@@ -91,7 +92,7 @@ static olong cheby (odouble da, odouble db, odouble dx, odouble *dCheby, olong n
  * \param err  ObitError stack.
  */
 void ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc, 
-		    ObitErr *err)
+			    ObitErr *err)
 {
   ObitIOCode retCode;
   ObitUVCalBandpassS *me;
@@ -1564,7 +1565,7 @@ static void BPinterpol (olong numCh, ofloat *spectrum, ofloat *weight,
   /* DEBUG - check */
    for (i=0; i<numCh; i++) {
      if ((spectrum[i*2]==fblank) || ((spectrum[i*2+1]==fblank))) {
-       fprintf (stderr,"GODDAMN\n");
+       fprintf (stderr,"DEBUG check\n");
      }
    }
  

@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -28,12 +28,14 @@
 
 #include "ObitUVSel.h"
 #include "ObitUVCal.h"
+#include "ObitTableJT.h"
 #include "ObitUV.h"
 #include "ObitIOUVFITS.h"
 #include "ObitIOUVAIPS.h"
 #include "ObitAIPSDir.h"
 #include "ObitFITS.h"
 #include "ObitUVDesc.h"
+#include "ObitTableJI.h"
 #include "ObitTableFQ.h"
 #include "ObitTableANUtil.h"
 #include "ObitTableBP.h"
@@ -252,7 +254,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
 			  "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
 			  "Subarray", "dropSubA", "FreqID", "timeRange", "UVRange",
 			  "InputAvgTime", "Sources", "souCode", "Qual", "Antennas",
-			  "corrType", "passAll", "doBand", "Smooth", 
+			  "corrType", "passAll", "doBand", "Smooth", "doJones", "JonesVersion",
 			  "Alpha", "AlphaRefF", "KeepSou",  "SubScanTime",
 			  NULL};
   gchar *routine = "ObiUVFromFileInfo";
@@ -3244,6 +3246,16 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   ObitInfoListGetTest(info, "BPVer", &type, dim, &InfoReal);
   sel->BPversion = InfoReal.itg;
 
+  /* Jones calibration */
+  InfoReal.itg = 0; type = OBIT_oint;
+  ObitInfoListGetTest(info, "doJones", &type, dim, &InfoReal);
+  if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
+  else itemp = InfoReal.itg;
+  sel->doJones = itemp > 0;
+  InfoReal.itg = 0;
+  ObitInfoListGetTest(info, "JVer", &type, dim, &InfoReal);
+  sel->JonesVersion = InfoReal.itg;
+
   /* Spectral smoothing */
   for (i=0; i<3; i++) ftempArr[i] = 0.0; 
   ObitInfoListGetTest(info, "Smooth", &type, dim, &ftempArr);
@@ -3313,11 +3325,11 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   noCal = !strncmp(souCode, "-CAL", 4); /* Non calibrators? */
   if (ObitInfoListGetP(info, "Sources", &type, dim, (gpointer)&sptr)) {
     sel->numberSourcesList = count;
-    /* Count actual entries in source list */
+    /* Count actual entries in source list - ignore after first blank */
     count = 0;  j = 0;
     for (i=0; i<dim[1]; i++) {
-      if ((sptr[j]!=' ') || (sptr[j+1]!=' ')) count++;
-      j += dim[0];
+      if ((sptr[j]==' ') || (sptr[j+1]==' ') || (sptr[j+2]==' ')) break;
+      count++; j += dim[0];
     }
     sel->numberSourcesList = count;
     if ((count>0) || noCal) {  /* Anything actually specified? */
@@ -3460,7 +3472,7 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
 
   /* BP table for Bandpass calibration */
   if (sel->doBPCal) {
-    /* if sel->BLversion ==0 use highest */
+    /* if sel->BPversion ==0 use highest */
     highVer = ObitTableListGetHigh (in->tableList, "AIPS BP");
     if (sel->BPversion==0) {sel->BPversion = useVer = highVer;}
     else useVer = sel->BPversion;
@@ -3571,7 +3583,34 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
     }
   }
 
-  /* Keep linear feed input as linear feed ooutput after poln cal? */
+  /* JI (single source) or JT (multi source) table needed? */
+  if (sel->doJones) {
+    cal->PDVer = -1;
+    ObitInfoListGetTest(in->info, "JVer", &type, dim, &cal->JonesVersion);
+    if (in->myDesc->ilocsu<0) {  /* Source ID random parameter? */
+      if (cal->JonesVersion>=0) {  /* Channel poln cal - check JI tables */
+	highVer = ObitTableListGetHigh (in->tableList,  "AIPS JI");
+	if (highVer>=1)
+	  cal->JTable =
+	    (Obit*) newObitTableJIValue (in->name, (ObitData*)in, &cal->JonesVersion, OBIT_IO_ReadOnly, 
+					 numIF, numChan, err);
+	else cal->JTable = ObitTableJIUnref(cal->JTable);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+      }
+    } else { /* multisource - need JT */
+      if (cal->JonesVersion>=0) {  /* Channel poln cal - check JT tables */
+	highVer = ObitTableListGetHigh (in->tableList,  "AIPS JT");
+	if (highVer>=1)
+	  cal->JTable =
+	    (Obit*) newObitTableJTValue (in->name, (ObitData*)in, &cal->JonesVersion, OBIT_IO_ReadOnly, 
+					 numIF, numChan, err);
+	else cal->JTable = ObitTableJTUnref(cal->JTable);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+      }
+    } /* end JT table */
+  }
+
+  /* Keep linear feed input as linear feed output after poln cal? */
   cal->keepLin = FALSE;
   ObitInfoListGetTest(in->info, "keepLin", &type, dim, &cal->keepLin);
 

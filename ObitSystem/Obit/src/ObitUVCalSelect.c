@@ -587,8 +587,8 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
 
       /* translating stokes? */
       if (sel->transPol) {
-	/* Translate linear to circular in visTmp */
-	if (in->doLin2Cir) {
+	/* Translate linear to circular in visTmp if not already done */
+	if (in->doLin2Cir && (in->keepLin)) {
 	  Lin2Cir (in, desc, RP, &visIn[ioff], visTmp);
 	  visPnt = visTmp;
 	} else visPnt = &visIn[ioff];

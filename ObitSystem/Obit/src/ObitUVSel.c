@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -181,7 +181,9 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
   out->FGversion   = in->FGversion;
   out->passAll     = in->passAll;
   out->alpha       = in->alpha;
-  out->ifsel1     = in->ifsel1;
+  out->ifsel1      = in->ifsel1;
+  out->doJones     = in->doJones;
+  out->JonesVersion= in->JonesVersion;
   for (i=0; i<5; i++) out->Stokes[i] = in->Stokes[i];
   for (i=0; i<3; i++) out->smooth[i] = in->smooth[i];
   /* Selected IFs */
@@ -953,6 +955,8 @@ void ObitUVSelInit  (gpointer inn)
   in->numRow        = -1;
   in->LastRowRead   = 0;
   in->LastRowRead   = 0;
+  in->doJones       = FALSE;
+  in->JonesVersion  = 0;
 } /* end ObitUVSelInit */
 
 /**

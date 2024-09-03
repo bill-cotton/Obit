@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1400,6 +1400,13 @@ ObitIOCode ObitImageGetPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
     if ((retCode!=OBIT_IO_OK) || (err->error))
       Obit_traceback_val (err, routine, in->name, retCode);
   }
+  /* Bounds check on plane[0] */
+  if ((plane[0]<1) || (plane[0]>in->myDesc->inaxes[2])) {
+      Obit_log_error(err, OBIT_Error, 
+		     "%s: Requested plane (%d) out of bounds (1,%d)", 
+		     routine, plane[0], in->myDesc->inaxes[2]);
+    return OBIT_IO_SpecErr;
+}
 
   /* which plane? */
   iPlane = PlaneNumber(plane, in->myDesc->naxis, in->myDesc->inaxes);

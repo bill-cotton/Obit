@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -124,6 +124,8 @@ ObitUVCalCalibrateS *ampPhaseCal;
 ObitUVCalBandpassS *bandpassCal;
 /** Polarization calibration structure */
 ObitUVCalPolarizationS *polnCal;
+/** Jones calibration structure */
+ObitUVCalJonesS *JonesCal;
 /** Number of subarrays (number of entries in ANtables) */
 olong numANTable;
 /** Array of AN tables for polarization calibration, one per subarray (as Obit*)*/
@@ -146,6 +148,10 @@ Obit *SUTable;
 Obit *PDTable;
 /** Requested PD table for channel/IF poln cal. */
 olong PDVer;
+/* Jones cal table, NULL -> none, as Obit* */
+Obit *JTable;
+/** Requested Jones cal table. */
+olong JonesVersion;
 /** Muller matrix for linear to circular conversion */
 ObitMatx *Muller;
 /** Work matrices for linear to circular conversion */

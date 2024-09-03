@@ -320,7 +320,7 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
 
 /**
  *  Matrix inner multiply of a matrix  by the conjugate transpose of another matrix
- *  out = in1 * in2
+ *  out = in1 * in2^H
  * in1, in2 and out are square matrices of the same dimension
  * \param in1  Input object
  * \param in2  Input object, conjugate transposed used
@@ -460,6 +460,38 @@ void ObitMatxSub (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
    };
  } /* end ObitMatxSub */
 
+/**
+ *   Multiply a scalar times an ObitMatx.
+ *  out = in1 * scalar
+ * \param in1  Input object with data
+ * \param scalar to multiply each element with
+ * \param out  Output object
+ */
+void ObitMatxSMult (ObitMatx* in1, void *scalar, ObitMatx* out)
+{
+  olong i;
+
+   /* error checks */
+  g_assert (ObitMatxIsCompatible(in1, out));
+
+  switch (in1->type) {
+  case OBIT_Real:
+    for (i=0; i<in1->arraySize; i++)
+      out->flt[i] = in1->flt[i] * ((ofloat*)scalar)[0];
+    break;
+  case OBIT_Complex:
+    for (i=0; i<in1->arraySize/2; i++)
+      COMPLEX_MUL2(out->cpx[i], in1->cpx[i], ((ocomplex*)scalar)[0]);
+    break;
+  case OBIT_Double:
+    for (i=0; i<in1->arraySize/2; i++)
+      out->dbl[i] = in1->dbl[i] * ((odouble*)scalar)[0];
+    break;
+  default:
+     g_assert_not_reached(); /* unknown, barf */
+   };
+ } /* end ObitMatxSMult */
+
 
 /**
  *  Transpose and conjugate a matrix.
@@ -536,7 +568,7 @@ void ObitMatxUnit (ObitMatx* in)
     for (i=0; i<n; i++) COMPLEX_SET(in->cpx[i*n+i], val[0], val[1]); 
     break;
   case OBIT_Double:
-    for (i=0; i<in->arraySize/2; i++) in->dbl[i] = 0.0;
+    for (i=0; i<in->arraySize; i++) in->dbl[i] = 0.0;
     /* Diagonal terms */
     for (i=0; i<n; i++) in->dbl[i*n+i] = 1.0;
     break;
@@ -546,60 +578,48 @@ void ObitMatxUnit (ObitMatx* in)
 } /* end ObitMatxUnit */
 
 /**
- * Fills values in a 2x2 complex ObitMatx 
+ * Fills values in a 2x2 complex ObitMatx as 1D
  * \param matx  ObitMatx to fill
  * \param R00   Real part of element (0,0)
  * \param I00   Imaginary part of element (0,0)
- * \param R01   Real part of element (0,1)
- * \param I01   Imaginary part of element (0,1)
  * \param R10   Real part of element (1,0)
  * \param I10   Imaginary part of element (1,0)
+ * \param R01   Real part of element (0,1)
+ * \param I01   Imaginary part of element (0,1)
  * \param R11   Real part of element (1,1)
  * \param I11   Imaginary part of element (1,1)
  */
-void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I01, 
-		   ofloat R10, ofloat I10, ofloat R11, ofloat I11)
+void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R10, ofloat I10, 
+		   ofloat R01, ofloat I01, ofloat R11, ofloat I11)
 {
-  ofloat val[2];
-  /* DEBUG 
-     val[0] = R00; val[1]= I00; ObitMatxSet(matx, val, 0, 0);
-     val[0] = R01; val[1]= I01; ObitMatxSet(matx, val, 0, 1);
-     val[0] = R10; val[1]= I10; ObitMatxSet(matx, val, 1, 0);
-     val[0] = R11; val[1]= I11; ObitMatxSet(matx, val, 1, 1);
-     val[0] = 0.0; val[1] = 0.0;
-     ObitMatxSet(matx, val, 0, 0); ObitMatxSet(matx, val, 1, 0);
-     ObitMatxSet(matx, val, 0, 1); ObitMatxSet(matx, val, 1, 1);*/
-  val[0] = R00; val[1]= I00; ObitMatxSet(matx, val, 0, 0);
-  val[0] = R01; val[1]= I01; ObitMatxSet(matx, val, 1, 0);
-  val[0] = R10; val[1]= I10; ObitMatxSet(matx, val, 0, 1);
-  val[0] = R11; val[1]= I11; ObitMatxSet(matx, val, 1, 1);
+  olong indx;
+
+  indx = 0; COMPLEX_SET (matx->cpx[indx], R00, I00);
+  indx = 1; COMPLEX_SET (matx->cpx[indx], R10, I10);
+  indx = 2; COMPLEX_SET (matx->cpx[indx], R01, I01);
+  indx = 3; COMPLEX_SET (matx->cpx[indx], R11, I11);
 } /* end ObitMatxSet2C */
 
 /**
- * Fetch values in a 2x2 complex ObitMatx 
+ * Fetch values in a 2x2 complex ObitMatx as 1D
  * \param matx  ObitMatx to fetch values from
  * \param R00   Real part of element (0,0)
  * \param I00   Imaginary part of element (0,0)
- * \param R01   Real part of element (0,1)
- * \param I01   Imaginary part of element (0,1)
  * \param R10   Real part of element (1,0)
  * \param I10   Imaginary part of element (1,0)
+ * \param R01   Real part of element (0,1)
+ * \param I01   Imaginary part of element (0,1)
  * \param R11   Real part of element (1,1)
  * \param I11   Imaginary part of element (1,1)
  */
-void ObitMatxGet2C(ObitMatx *matx, ofloat* R00, ofloat *I00, ofloat *R01, ofloat *I01, 
-		   ofloat *R10, ofloat *I10, ofloat *R11, ofloat *I11)
+void ObitMatxGet2C(ObitMatx *matx, ofloat* R00, ofloat *I00, ofloat *R10, ofloat *I10, 
+		   ofloat *R01, ofloat *I01, ofloat *R11, ofloat *I11)
 {
-  ofloat val[2];
- /* DEBUG 
-    ObitMatxGet(matx, 0, 0, val); *R00 = val[0]; *I00 = val[1];
-    ObitMatxGet(matx, 0, 1, val); *R01 = val[0]; *I01 = val[1];
-    ObitMatxGet(matx, 1, 0, val); *R10 = val[0]; *I10 = val[1];
-    ObitMatxGet(matx, 1, 1, val); *R11 = val[0]; *I11 = val[1];*/
-  ObitMatxGet(matx, 0, 0, val); *R00 = val[0]; *I00 = val[1];
-  ObitMatxGet(matx, 0, 1, val); *R10 = val[0]; *I10 = val[1];
-  ObitMatxGet(matx, 1, 0, val); *R01 = val[0]; *I01 = val[1];
-  ObitMatxGet(matx, 1, 1, val); *R11 = val[0]; *I11 = val[1];
+  olong indx;
+  indx = 0; *R00 = matx->cpx[indx].real; *I00 = matx->cpx[indx].imag;
+  indx = 1; *R10 = matx->cpx[indx].real; *I10 = matx->cpx[indx].imag;
+  indx = 2; *R01 = matx->cpx[indx].real; *I01 = matx->cpx[indx].imag;
+  indx = 3; *R11 = matx->cpx[indx].real; *I11 = matx->cpx[indx].imag;
 } /* end ObitMatxGet2C */
 
 /**
@@ -658,7 +678,7 @@ void ObitMatxInv2x2(ObitMatx *in, ObitMatx *out)
 
 }  /* end ObitMatxInv2x2 */
 
-/** Inverse perfect linear feed Jones matrix */
+/** Inverse perfect linear feed Jones matrix complex 2x2 */
 void ObitMatxIPerfLinJones(ObitMatx *out)
 //void IJones(ofloat J[8])
 {
@@ -689,7 +709,7 @@ void ObitMatxIPerfLinJones(ObitMatx *out)
   COMPLEX_SET (out->cpx[0],   Jones[6]*Det[0]-Jones[7]*Det[1],    Jones[6]*Det[1]+Jones[7]*Det[0]);
 } /* end ObitMatxIPerfLinJonesJones */
 
-/** Inverse perfect circular feed Jones matrix 
+/** Inverse perfect circular feed Jones matrix  complex 2x2 
     Really just the perfect linear Jones matrix */
 void ObitMatxIPerfCirJones(ObitMatx *out)
 {
@@ -713,7 +733,7 @@ void ObitMatxIPerfCirJones(ObitMatx *out)
 } /* end ObitMatxIPerfCirJones */
 
 /**
- *  Outer 2x2 complex multiply
+ *  Outer 2x2 complex multiply, original
  *  out = in1 (outer product) conjg(in2)
  * \param iin1  1st Input object
  * \param iin2  2nd Input object
@@ -780,6 +800,38 @@ void ObitMatxVec4Mult(ObitMatx *iin1, ObitMatx *iin2, ObitMatx *oout) {
     out[ic*2+1] = sumi;
   }
 } /* end ObitMatxVec4Mult */
+
+/**
+ * Print a 2x2 matrix to stderr
+ * \param in      Input Matrix
+ * \param label   Label
+ */
+void ObitMatxPrint (ObitMatx* in, gchar* label)
+{
+  ofloat R00, I00, R01, I01, R10, I10, R11, I11;
+  odouble D00, D01, D10, D11;
+
+  switch (in->type) {
+  case OBIT_Real:
+    ObitMatxGet(in, 0, 0, &R00); ObitMatxGet(in, 1, 0, &R10); 
+    ObitMatxGet(in, 1, 0, &R01); ObitMatxGet(in, 1, 1, &R11); 
+    fprintf (stderr, " %s \n   %10.6f %10.6f\n   %10.6f %10.6f\n", label, R00, R10, R01, R11);
+   break;
+  case OBIT_Complex:
+    ObitMatxGet2C (in, &R00, &I00, &R10, &I10, &R01, &I01, &R11, &I11);
+    fprintf (stderr, " %s \n   %10.6f %10.6f, %10.6f %10.6f\n   %10.6f %10.6f, %10.6f %10.6f\n", 
+	     label, R00, I00, R10, I10, R01, I01, R11, I11);
+    break;
+  case OBIT_Double:
+    ObitMatxGet(in, 0, 0, &D00); ObitMatxGet(in, 1, 0, &D10); 
+    ObitMatxGet(in, 1, 0, &D01); ObitMatxGet(in, 1, 1, &D11); 
+    fprintf (stderr, " %s \n   %12.8lf %12.8lf\n   %12.8lf %12.8lf\n", label, D00, D10, D01, D11);
+    break;
+  default:
+    g_assert_not_reached(); /* unknown, barf */
+  };
+ 
+} /* end ObitMatxPrint */
 
 /**
  * Initialize global ClassInfo Structure.

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -253,6 +253,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
       retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
+      done = !strncmp (line, "$Key = ", 7); if (done) break; /* Next entry? */
 
       /* terminate line at comment delimiter */
       for (i=0; i<strlen(line); i++) if (line[i]=='#') line[i] = 0;
@@ -290,7 +291,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 
       /* Keep track of reads */
       nvalue--;
-      done = nvalue<=0;  /* read them all? */
+      done = done || nvalue<=0;  /* read them all? */
     } /* end loop reading strings */
     break;
 
@@ -301,6 +302,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
       retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
+      done = !strncmp (line, "$Key = ", 7); if (done) break; /* Next entry? */
 
       /* terminate line at comment delimiter */
       for (i=0; i<strlen(line); i++) if (line[i]=='#') line[i] = 0;
@@ -340,7 +342,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 	if (nvalue<=0) break;
       } /* end loop over line */
 
-      done = nvalue<=0;  /* read them all? */
+      done = done || nvalue<=0;  /* read them all? */
     } /* end loop reading integers */
     break;
 
@@ -351,6 +353,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
       retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
+      done = !strncmp (line, "$Key = ", 7); if (done) break; /* Next entry? */
 
       /* terminate line at comment delimiter */
       for (i=0; i<strlen(line); i++) if (line[i]=='#') line[i] = 0;
@@ -371,7 +374,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
       }
       
      /* Keep track of reads */
-      done = nvalue<=0;  /* read them all? */
+      done = done || nvalue<=0;  /* read them all? */
     } /* end loop reading Booleans */
     break;
 
@@ -382,6 +385,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
       retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
+      done = !strncmp (line, "$Key = ", 7); if (done) break; /* Next entry? */
       
       /* terminate line at comment delimiter */
       for (i=0; i<strlen(line); i++) if (line[i]=='#') line[i] = 0;
@@ -422,7 +426,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 	if (nvalue<=0) break;
       } /* end loop over line */
       
-      done = nvalue<=0;  /* read them all? */
+      done = done || nvalue<=0;  /* read them all? */
     } /* end loop reading floatss */
     break;
    case OBIT_double:
@@ -432,6 +436,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
       retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
+      done = !strncmp (line, "$Key = ", 7); if (done) break; /* Next entry? */
       
       /* terminate line at comment delimiter */
       for (i=0; i<strlen(line); i++) if (line[i]=='#') line[i] = 0;
@@ -472,12 +477,15 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 	if (nvalue<=0) break;
       } /* end loop over line */
       
-      done = nvalue<=0;  /* read them all? */
+      done = done || nvalue<=0;  /* read them all? */
     } /* end loop reading doubles */
     break;
  default:
     break;
   }; /* end switch by type */
+
+  /* Cap dim[1] at iout */
+  dim[1] = MIN(dim[1], iout);
   
   return retCode;
 } /* end ObitParserEntry */

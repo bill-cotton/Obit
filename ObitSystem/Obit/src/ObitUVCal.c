@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,9 +35,11 @@
 #include "ObitUVCalBandpass.h"
 #include "ObitUVCalBaseline.h"
 #include "ObitUVCalPolarization.h"
+#include "ObitUVCalJones.h"
 #include "ObitTableANUtil.h"
 #include "ObitTableSUUtil.h"
 #include "ObitPrecess.h"
+#include "ObitMatx.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -379,6 +381,9 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   
   /* Initialize polarization calibration */
   ObitUVCalPolarizationInit(in, sel, inDesc, err);
+
+  /* Initialize Jones calibration if requested */
+  ObitUVCalJonesInit (in, sel, inDesc, err);
   
   /* Initialize Stokes translation/data selection */
   ObitUVCalSelectInit(in, sel, inDesc, outDesc, err);
@@ -441,9 +446,14 @@ gboolean  ObitUVCalApply (ObitUVCal *in, ofloat *recIn,
   if (in->doFlag) ObitUVCalFlag (in, time, ant1, ant2, recIn, visIn, err);
   if (in->doSmo)  ObitUVCalSmooth (in, time, ant1, ant2, recIn, visIn, err);
   if (in->doBL)   ObitUVCalBaseline(in, time, ant1, ant2, recIn, visIn, err);
-  if (in->doCal)  ObitUVCalCalibrate(in, time, ant1, ant2, recIn, visIn, err);
-  if (in->doBP)   ObitUVCalBandpass(in, time, ant1, ant2, recIn, visIn, err);
-  if (in->doPol)  ObitUVCalPolarization(in, time, ant1, ant2, recIn, visIn, err);
+  if (in->JonesCal) {  /* Jones matrix calibration */
+    if (in->doBP)   ObitUVCalBandpass(in, time, ant1, ant2, recIn, visIn, err);
+    ObitUVCalJones(in, time, ant1, ant2, recIn, visIn, err);
+  } else { /* traditional calibration */
+    if (in->doCal)  ObitUVCalCalibrate(in, time, ant1, ant2, recIn, visIn, err);
+    if (in->doBP)   ObitUVCalBandpass(in, time, ant1, ant2, recIn, visIn, err);
+    if (in->doPol)  ObitUVCalPolarization(in, time, ant1, ant2, recIn, visIn, err);
+  }
   if (in->SpecIndxWork!=NULL) ApplySpecIndex(in, visIn); /* Spectral index? */
   OK = ObitUVCalSelect(in, recIn, visIn, visOut,err);
 
@@ -492,6 +502,7 @@ void ObitUVCalShutdown (ObitUVCal *in, ObitErr *err)
   in->SNTable = ObitTableUnref((ObitTable*)in->SNTable); in->SNTable=NULL;
   in->CQTable = ObitTableUnref((ObitTable*)in->CQTable); in->CQTable=NULL;
   in->PDTable = ObitTableUnref((ObitTable*)in->PDTable); in->PDTable=NULL;
+  in->JTable  = ObitTableUnref((ObitTable*)in->JTable); in->JTable=NULL;
   in->Muller  = ObitMatxUnref((ObitMatx*)in->Muller); in->Muller=NULL;
   in->workMatx1 = ObitMatxUnref((ObitMatx*)in->workMatx1); in->workMatx1=NULL;
   in->workMatx2 = ObitMatxUnref((ObitMatx*)in->workMatx2); in->workMatx2=NULL;
@@ -746,6 +757,7 @@ void ObitUVCalInit  (gpointer inn)
   in->ampPhaseCal = NULL;
   in->bandpassCal = NULL;
   in->polnCal     = NULL;
+  in->JonesCal    = NULL;
   in->ANTables    = NULL;
   in->numANTable  = 0;
   in->BLTable     = NULL;
@@ -756,10 +768,12 @@ void ObitUVCalInit  (gpointer inn)
   in->SNTable     = NULL;
   in->SUTable     = NULL;
   in->PDTable     = NULL;
+  in->JTable      = NULL;
   in->Muller      = NULL;
   in->workMatx1   = NULL;
   in->workMatx2   = NULL;
   in->PDVer       = -1;
+  in->JonesVersion= -1;
   in->lastTime    = -1.0e10;
   in->lastSu      = -1;
   in->doLin2Cir   = FALSE;
@@ -800,6 +814,7 @@ void ObitUVCalClear (gpointer inn)
   in->ampPhaseCal = ObitUVCalCalibrateSUnref(in->ampPhaseCal);
   in->bandpassCal = ObitUVCalBandpassSUnref(in->bandpassCal);
   in->polnCal     = ObitUVCalPolarizationSUnref(in->polnCal);
+  in->JonesCal    = ObitUVCalJonesSUnref(in->JonesCal);
   in->BLTable     = ObitUnref(in->BLTable);
   in->BPTable     = ObitUnref(in->BPTable);
   in->CLTable     = ObitUnref(in->CLTable);
@@ -808,6 +823,7 @@ void ObitUVCalClear (gpointer inn)
   in->CQTable     = ObitUnref(in->CQTable);
   in->SUTable     = ObitUnref(in->SUTable);
   in->PDTable     = ObitUnref(in->PDTable);
+  in->JTable      = ObitUnref(in->JTable);
   in->Muller      = ObitMatxUnref((ObitMatx*)in->Muller);
   in->workMatx1   = ObitMatxUnref((ObitMatx*)in->workMatx1);
   in->workMatx2   = ObitMatxUnref((ObitMatx*)in->workMatx2);

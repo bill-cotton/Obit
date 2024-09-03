@@ -1,7 +1,7 @@
 /* $Id$  */
-/* R-L delay/phase calibration                                        */
+/* R-L (X-Y) delay/phase calibration                                  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2022                                          */
+/*;  Copyright (C) 2011-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -603,11 +603,11 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   olong        nvis, doCalib;
   gboolean     doCalSelect;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
+  gchar        *dataParms[] = {  /* Parameters to calibrate/select/process data */
     "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan",   "BIF", "EIF", 
     "subA", "Antennas", "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", 
-    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", 
-    "UVR_Full", "WtUV", "RLPhase", "RM", "refAnt", "fitType", "SNSoln", "solInt",
+    "flagVer", "doPol", "PDVer", "keepLin", "Mode", "ModelType", "Alpha", 
+    "UVR_Full", "WtUV", "sameWt", "RLPhase", "RM", "refAnt", "fitType", "SNSoln", "solInt",
      NULL};
   gchar *routine = "getInputData";
 
@@ -1040,11 +1040,11 @@ void RLDlyHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Qual", "souCode", "timeRange",  "subA",
     "selBand", "selFreq", "FreqID", "BChan", "EChan", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "PDVer", "Antennas",  
+    "doPol", "PDVer", "keepLin", "Antennas",  
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "RLPhase", "RM",  "refAnt", 
-    "UVR_Full", "WtUV", "fitType", "numIFs",
+    "UVR_Full", "WtUV", "sameWt", "fitType", "numIFs", "SNSoln", "solInt",
     "minSNR",  "prtLv", "nThreads",
     NULL};
   gchar *routine = "RLDlyHistory";
@@ -1085,7 +1085,7 @@ void  RLDelayCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
 {
   ObitTableSN *SNTable=NULL;
   gchar        *dataParms[] = {  /* Parameters to control calibration */
-    "UVR_Full", "WtUV", "RLPhase", "RM", "minSNR", "numIFs",
+    "UVR_Full", "WtUV", "sameWt", "RLPhase", "RM", "minSNR", "numIFs",
      NULL};
   gchar *routine = "RLDelayCal";
 
