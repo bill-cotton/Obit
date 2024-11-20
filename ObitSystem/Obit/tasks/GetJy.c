@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2022                                          */
+/*;  Copyright (C) 2006-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1272,7 +1272,7 @@ void FitSpec (ObitUV* inData, gchar **source,
     Obit_log_error(err, OBIT_InfoErr, "Smoothing by fitting %d term spectrum", nterm);
 
     /* Fit */
-    fitVal = ObitSpectrumFitSingle(count, nterm, freq[0], freq, flux, sigma, FALSE, err);
+    fitVal = ObitSpectrumFitSingle(count, nterm, freq[0], freq, flux, sigma, FALSE, FALSE, NULL, err);
 
     /* Tell results */
     if (nterm==1) {

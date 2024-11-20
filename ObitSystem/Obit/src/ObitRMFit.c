@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2023                                          */
+/*;  Copyright (C) 2013-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2515,20 +2515,22 @@ static float RMFitAmp (NLRMFitArg *arg)
 
   /* First compute model phases */
   for (j=0; j<nlamb2; j++) 
-    arg->wrk1[j] = 2*(EVPA + RM * (arg->lamb2[j]-arg->refLamb2));
+    arg->wrk1[j] = -2*(RM * (arg->lamb2[j]-arg->refLamb2));
   /* then sine/cosine */
   ObitSinCosVec (nlamb2, arg->wrk1, arg->wrk3, arg->wrk2);
   /* Loop over data  */
   for (i=0; i<nlamb2; i++) {
     /* Q model = arg->Pobs[i] * arg->wrk2[i]  */
     if ((arg->Qobs[i]!=fblank) && (arg->Qweight[i]>0.0)) {
-      Qval = arg->Pobs[i] * arg->wrk2[i];
+      /*Qval = arg->Pobs[i] * arg->wrk2[i];*/
+      Qval = arg->Qobs[i]*arg->wrk2[i] - arg->Uobs[i]*arg->wrk3[i];
       sumQWt += arg->Qweight[i];
       sumQW  += Qval * arg->Qweight[i];
     }
     /* U model = arg->Pobs[i] * arg->wrk3[i]  */
     if ((arg->Uobs[i]!=fblank) && (arg->Uweight[i]>0.0)) {
-      Uval = arg->Pobs[i] * arg->wrk3[i];
+      /*Uval = arg->Pobs[i] * arg->wrk3[i];*/
+      Uval = arg->Qobs[i]*arg->wrk3[i] + arg->Uobs[i]*arg->wrk2[i];
       sumUWt += arg->Uweight[i];
       sumUW  += Uval * arg->Uweight[i];
     }

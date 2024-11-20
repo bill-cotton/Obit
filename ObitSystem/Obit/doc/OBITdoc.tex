@@ -2964,7 +2964,7 @@ Circular feeds |RR RL| or for Linear |XX XY|
                |LR LL|               |YX YY|,
 \end{verbatim}
 then the calibrated visibility is \hfill\break
-cal = ((J2$^{-1}$)*vis)*J1$^{-1}$
+cal = ((J1$^{-1}$)*vis)*(J2$^{-1}$)$^{H}$
 
 An ObitTableJI is the front end to a persistent disk resident structure.
 Both FITS and AIPS cataloged data are supported.
@@ -3068,7 +3068,7 @@ Circular feeds |RR RL| or for Linear |XX XY|
                |LR LL|               |YX YY|,
 \end{verbatim}
 then the calibrated visibility is \hfill\break
-cal = ((J1$^{-1}$)*vis)*J2$^{-1}^{H}$
+cal = ((J1$^{-1}$)*vis)*(J2$^{-1}$)$^{H}$
 
 An ObitTableJT is the front end to a persistent disk resident structure.
 Both FITS and AIPS cataloged data are supported.

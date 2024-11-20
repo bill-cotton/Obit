@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical ImageMF class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2010-2023
+#  Copyright (C) 2010-2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -485,8 +485,7 @@ def PFitSpec (inImage, err, nOrder=1, corAlpha=0.0, maxSNR=False, \
                   and only any fitted spectral indices and errors are output.
                   default 0
     * Weights   = OBIT_float (?,1,1 per channel) if given, use these
-                  weights rather than 1/rms^2 NOTE:
-                  1/sqrt(sum(weights)) should give the broadband RMS!
+                  weights rather than 1/rms^2
                   Default None.
     * doPBCor   = If true do primary beam correction. [def False]
     * PBmin     = Minimum beam gain correction
@@ -509,7 +508,6 @@ def PFitSpec (inImage, err, nOrder=1, corAlpha=0.0, maxSNR=False, \
         inImage.List.set("PBmin",    PBmin,    ttype='float')
     if Weights:
         inImage.List.set("Weights",  Weights,  ttype='float')
-
     Obit.ImageMFFitSpec(inImage.me, antSize, err.me)
     OErr.printErr(err)
     # end PFitSpec
@@ -552,8 +550,7 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
                   and only any fitted spectral indices and errors are output.
                   default 0
     * Weights = OBIT_float (?,1,1 per channel) if given, use these
-                  weights rather than 1/rms^2 NOTE:
-                  1/sqrt(sum(weights)) should give the broadband RMS!
+                  weights rather than 1/rms^2 
                   Default None.
    """
     ################################################################

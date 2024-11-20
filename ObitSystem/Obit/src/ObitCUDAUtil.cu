@@ -1,6 +1,6 @@
 /* $Id:  $        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2023                                          */
+/*;  Copyright (C) 2014-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -58,8 +58,25 @@ void ObitCUDASetGPU (int cuda_device)
   /* NO, really bad idea - let fail if it doesn't exist 
    device = MIN (count-1, cuda_device);
    device = MAX (0, device); */
+  if (device>(count-1))  // message before crash 
+    fprintf (stderr,"Bad GPU device %d > %d -1\n",device,count);
 
   checkCudaErrors(cudaSetDevice(device));
+} /* end ObitCUDASetGPU */
+
+/**
+ * Check if a device number is valid
+ * \param cuda_device GPU number (0-rel) to check
+ * \return 1 if OK, else -1
+ */
+extern "C"
+long ObitCUDACheckGPU (int cuda_device)
+{
+  int count;
+  checkCudaErrors(cudaGetDeviceCount(&count));
+  if (cuda_device<0)      return -1;
+  if (cuda_device>=count) return -1;
+  return 1;  /* Must be OK */
 } /* end ObitCUDASetGPU */
 
 /**

@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2023
+;;  Copyright (C) 2005-2024
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ outSeq          -1.0     9999.0     AIPS seq for output FG table
 **PARAM** int 1
 outDisk                             Disk for output FG table
 **PARAM** int 1 **DEF** 1 
-flagTab                             Output Flagging table version 
+flagTab          1.0     9999.0     Output Flagging table version 
 **PARAM** float 2
 IClip                               If > 0.0 IPol clipping level
 **PARAM** float 2
@@ -225,7 +225,7 @@ Adverbs:
 
       Flagging control
   flagTab....Output Flagging table version.  This is the FG table 
-             out outName... to be written.  Default 1.
+             out outName... to be written.  Default 1, must be positive.
   IClip......If [0]> 0.0 then flagging of data when averaged IPol 
              amplitudes exceed IClip.  Default 0.0 = no flagging.
              IClip[1]==0 => use statistical clipping

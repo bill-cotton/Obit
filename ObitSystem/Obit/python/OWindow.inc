@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitDConCleanWindow type               */
 /*                                                                    */
-/*;  Copyright (C) 2005-2019                                          */
+/*;  Copyright (C) 2005-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -158,6 +158,14 @@ extern void OWindowSetList(ObitDConCleanWindow* in, PyObject *inList,
       for (i=0; i<3; i++) 
          window[i] = (olong)PyLong_AsLong(PyList_GetItem(list, i+2));
       break;
+    case OBIT_DConCleanWindow_unrectangle:
+      for (i=0; i<4; i++) 
+         window[i] = (olong)PyLong_AsLong(PyList_GetItem(list, i+2));
+      break;
+    case OBIT_DConCleanWindow_unround:
+      for (i=0; i<3; i++) 
+         window[i] = (olong)PyLong_AsLong(PyList_GetItem(list, i+2));
+      break;
     default:
       g_error ("Undefined Clean window type");
       return;
@@ -192,6 +200,20 @@ extern PyObject* OWindowGetList(ObitDConCleanWindow* in, long field,
           PyList_SetItem(list, i+2, PyLong_FromLong((long)window[i]));
         break;
       case OBIT_DConCleanWindow_round:
+        list = PyList_New(5);
+        PyList_SetItem(list, 0, PyLong_FromLong((long)iD));
+        PyList_SetItem(list, 1, PyLong_FromLong((long)type));
+        for (i=0; i<3; i++) 
+          PyList_SetItem(list, i+2, PyLong_FromLong((long)window[i]));
+        break;
+      case OBIT_DConCleanWindow_unrectangle:
+        list = PyList_New(6);
+        PyList_SetItem(list, 0, PyLong_FromLong((long)iD));
+        PyList_SetItem(list, 1, PyLong_FromLong((long)type));
+        for (i=0; i<4; i++) 
+          PyList_SetItem(list, i+2, PyLong_FromLong((long)window[i]));
+        break;
+      case OBIT_DConCleanWindow_unround:
         list = PyList_New(5);
         PyList_SetItem(list, 0, PyLong_FromLong((long)iD));
         PyList_SetItem(list, 1, PyLong_FromLong((long)type));

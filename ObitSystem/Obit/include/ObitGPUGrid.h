@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021,2023                                          */
+/*;  Copyright (C) 2021-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -135,6 +135,10 @@ typedef void (*ObitGPUGridSetGPUStructFP) (ObitGPUGrid *in, Obit *uvgrid, gboole
 					   olong iGPU, olong nGPU, olong device,
 					   olong nplane,  ObitUV *UVin, Obit *imagee,
 					   gboolean doBeam, ObitErr *err);
+
+/* Public: Setup GPU */
+olong ObitGPUGridCheckGPU (olong gpuno);
+typedef olong (*ObitGPUGridCheckGPUFP) (olong gpuno);
 
 /* Public: Setup GPU */
 ollong ObitGPUGridSetGPU (olong gpuno);

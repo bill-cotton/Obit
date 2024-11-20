@@ -5,7 +5,7 @@ ONLY ONE MAY EXIST
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2019
+#  Copyright (C) 2004-2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -119,7 +119,7 @@ def PImage (disp, image, err, window=None) :
         ret = Obit.ODisplayImageEdit(disp.me, image.me, window.me, err.me)
     else:
         ret = Obit.ODisplayImage(disp.me, image.me, err.me)
-    return ret
+    return ret==1
     # end PImage
 
 
@@ -144,15 +144,16 @@ def PMosaic (disp, mosaic, field, err, window=None) :
         ret = Obit.ODisplayMosaic(disp.me, mosaic.me, field, window.me, err.me)
     else:
         ret = Obit.ODisplayMosaicEdit(disp.me, mosaic.me, field, err.me)
-    return ret
+    return ret==1
     # end PImage
 
 def PMarkPos (disp, pos, err) :
     """
-    Display an image mosaic on the display server
+    Mark a position on the display server
 
+    Uses current mark size and color set in ObitView
     * disp     = display server
-    * pos      = celestial ppositin as ("hh mm ss.s dd mm ss.s")
+    * pos      = celestial position as ("hh mm ss.s dd mm ss.s")
     * err      = Python Obit Error/message stack
 
     returns True if worked
@@ -163,7 +164,7 @@ def PMarkPos (disp, pos, err) :
         print("Actually ",disp.__class__)
         raise TypeError("disp MUST be a Python Obit Display")
     ret = Obit.ODisplayMarkPos(disp.me, pos, err.me)
-    return ret
+    return ret==1
     # end PMarkPos
 
 

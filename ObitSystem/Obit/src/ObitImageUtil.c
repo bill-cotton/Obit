@@ -587,6 +587,10 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
       for (i=0; i<num_GPU; i++) {
 	if ((ldevice[i]<0) || (ldevice[i]>50)) ldevice[i] = i;  /* Sanity check */
 	cuda_device[i] = (int)ldevice[i];
+	if (ObitGPUGridCheckGPU((olong)cuda_device[i])<0) { /* Check device number */
+	  Obit_log_error(err, OBIT_Error, "Invalid GPU device %d %d",cuda_device[i],i);
+	  return;
+	} /* end check device */
 	gpumem[i] =      ObitGPUGridSetGPU (cuda_device[i]); /* initialize */
       }
     } else {  /* default GPU = 0 */
@@ -594,7 +598,11 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
       cuda_device = g_malloc0((num_GPU+10)*sizeof(olong));
       gpumem      = g_malloc0((num_GPU+10)*sizeof(ollong));
       cuda_device[0] = 0;
-      gpumem[0]      = ObitGPUGridSetGPU (cuda_device[0]); /* initialize */
+      if (ObitGPUGridCheckGPU((olong)cuda_device[0])<0) { /* Check device number */
+	Obit_log_error(err, OBIT_Error, "Invalid GPU device %d",cuda_device[0]);
+	return;
+      } /* end check device */
+     gpumem[0]      = ObitGPUGridSetGPU (cuda_device[0]); /* initialize */
     }
     if (err->prtLv>=2)
       Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding with %d GPUs",num_GPU);
@@ -1069,6 +1077,10 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       for (i=0; i<num_GPU; i++) {
 	if ((ldevice[i]<0) || (ldevice[i]>50)) ldevice[i] = i;  /* Sanity check */
 	cuda_device[i] = ldevice[i];
+	if (ObitGPUGridCheckGPU((olong)cuda_device[i])<0) { /* Check device number */
+	  Obit_log_error(err, OBIT_Error, "Invalid GPU device %d %d",cuda_device[i],i);
+	  return;
+	} /* end check device */
 	gpumem[i] =      ObitGPUGridSetGPU (cuda_device[i]); /* initialize */
       }
     } else {  /* default GPU = 0 */
@@ -1076,6 +1088,10 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       cuda_device = g_malloc0((num_GPU+10)*sizeof(olong));
       gpumem      = g_malloc0((num_GPU+10)*sizeof(olong));
       cuda_device[0] = 0;
+      if (ObitGPUGridCheckGPU((olong)cuda_device[0])<0) { /* Check device number */
+	Obit_log_error(err, OBIT_Error, "%s: Invalid GPU device %d",routine,cuda_device[0]);
+	return;
+      } /* end check device */
       gpumem[0]      = ObitGPUGridSetGPU (cuda_device[0]); /* initialize */
     }
     if (err->prtLv>=2)

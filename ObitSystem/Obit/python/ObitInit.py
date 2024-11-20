@@ -8,7 +8,7 @@ OSystem.PSetAIPSuser (user) afterwards to set userid
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007,2019
+#  Copyright (C) 2007,2019,2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ if not OSystem.PIsInit ():
     err=OErr.OErr()
     ObitSys=None
     Adisk = 1
-    Fdisk = 1
+    Fdisk = 0
     ObitSys=OSystem.OSystem ("ObitPython", popsno, userno,
                              AIPSDir.nAIPS, AIPSDir.AIPSdisks, \
                              FITSDir.nFITS, FITSDir.FITSdisks,

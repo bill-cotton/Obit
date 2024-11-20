@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014,2021                                          */
+/*;  Copyright (C) 2014-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -42,6 +42,9 @@
 float CUDAMagicF (void);
 
 #if HAVE_GPU==1  /* GPU? Real versions */
+/* Public: Check device number >0=OK, <0 = invalid*/
+int ObitCUDACheckGPU (int cuda_device);
+
 /* Public: Set device */
 void ObitCUDASetGPU (int cuda_device);
 
@@ -148,6 +151,13 @@ void ObitCUDAUtilPointerType(void *ptr, char *label);
 
 #endif /* IS_CUDA */
 #else  /* No GPU - stubb */
+/* Public: Check device number */
+static int ObitCUDACheckGPU (int cuda_device)
+{
+  /*g_error("GPU/CUDA not implemented");*/
+  return -1;
+} /* end ObitCUDACheckGPU */
+
 /* Public: Set device */
 static void ObitCUDASetGPU (int cuda_device)
 {

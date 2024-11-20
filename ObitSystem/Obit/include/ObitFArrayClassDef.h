@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2018                                          */
+/*;  Copyright (C) 2002-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -151,3 +151,7 @@ ObitFArrayPowFP ObitFArrayPow;
 ObitFArrayRandomFP ObitFArrayRandom;
 /** Function pointer to fill with Gaussian distributed random numbers */
 ObitFArrayRandomFillFP ObitFArrayRandomFill;
+/** Function pointer to Fill a rectangular subregion */
+ObitFArrayRectFillFP ObitFArrayRectFill;
+/** Function pointer to Fill a round subregion */
+ObitFArrayRoundFillFP ObitFArrayRoundFill;

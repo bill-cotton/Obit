@@ -146,6 +146,8 @@ typedef struct {
   gboolean doBrokePow;
   /** Do Primary beam correction? */
   gboolean doPBCorr;
+  /** Weighting explicitly given? */
+  gboolean doWt;
 #ifdef HAVE_GSL
   /** Fitting solver for two terms */
   gsl_multifit_fdfsolver *solver2;
@@ -509,6 +511,8 @@ void ObitSpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
   in->BeamShapes = g_malloc0(in->nfreq*sizeof(ObitBeamShape*));
   for (i=0; i<in->nfreq; i++) in->BeamShapes[i] = NULL;
   in->RMS        = g_malloc0(in->nfreq*sizeof(ofloat));
+  in->weight     = g_malloc0(in->nfreq*sizeof(ofloat));
+  in->doWt       = FALSE;
   in->calFract   = g_malloc0(in->nfreq*sizeof(ofloat));
   in->inFArrays  = g_malloc0(in->nfreq*sizeof(ObitFArray*));
   in->freqs      = g_malloc0(in->nfreq*sizeof(odouble));
@@ -696,6 +700,8 @@ void ObitSpectrumFitImArr (ObitSpectrumFit* in, olong nimage, ObitImage **imArr,
   in->BeamShapes = g_malloc0(in->nfreq*sizeof(ObitBeamShape*));
   for (i=0; i<in->nfreq; i++) in->BeamShapes[i] = NULL;
   in->RMS        = g_malloc0(in->nfreq*sizeof(ofloat));
+  in->weight     = g_malloc0(in->nfreq*sizeof(ofloat));
+  in->doWt       = FALSE;
   in->calFract   = g_malloc0(in->nfreq*sizeof(ofloat));
   in->inFArrays  = g_malloc0(in->nfreq*sizeof(ObitFArray*));
   in->freqs      = g_malloc0(in->nfreq*sizeof(odouble));
@@ -988,7 +994,8 @@ void ObitSpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
  */
 ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq, 
 			       odouble *freq, ofloat *flux, ofloat *sigma, 
-			       gboolean doBrokePow, ObitErr *err)
+			       gboolean doBrokePow, gboolean doWt, ofloat *weight,
+			       ObitErr *err)
 {
   ofloat *out = NULL;
   olong i, j;
@@ -1042,11 +1049,13 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
   arg->coef           = g_malloc0(3*arg->nterm*sizeof(ofloat));
   for (i=0; i<nfreq; i++) {
     if (sigma[i]>0.0) {
-      arg->isigma[i]    = 1.0 / sigma[i];
-      arg->weight[i]    = arg->isigma[i]*arg->isigma[i];
+      /* Weights either explicitly given or 1/sigma^2 */
+      arg->isigma[i] = 1.0 / sigma[i];
+      if (doWt) arg->weight[i] = weight[i];
+      else      arg->weight[i] = arg->isigma[i]*arg->isigma[i];
     } else {
       arg->isigma[i]   = 0.0;
-      arg->weight[i]    = 0.0;
+      arg->weight[i]   = 0.0;
     }
     arg->obs[i]       = flux[i];
     arg->nu[i]        = freq[i];
@@ -1294,6 +1303,20 @@ void ObitSpectrumFitAddMinFlux(gpointer aarg, ofloat minFlux)
 } /* end ObitSpectrumFitAddMinFlux */
 
 /**
+ * Add weighting to fit arg 
+ * \param aarg    Pointer to argument for fitting
+ * \param doWt    True if weights explicitly given
+ * \param weight  Array of data weights, same dim as sigma
+ */
+void ObitSpectrumFitAddWeight(gpointer aarg, gboolean doWt, ofloat *weight)
+{
+    NLFitArg *arg=(NLFitArg*)aarg;
+    olong i;
+    arg->doWt = doWt;
+    for (i=0; i<arg->nfreq; i++) arg->weight[i] = weight[i];
+} /* end ObitSpectrumFitAddWeight */
+
+/**
  * Fit single spectrum to flux measurements using precomputed argument
  * \param aarg      pointer to argument for fitting
  * \param flux      Array of values to be fitted
@@ -1316,7 +1339,7 @@ void ObitSpectrumFitSingleArg (gpointer aarg, ofloat *flux, ofloat *sigma,
      arg->obs[i]    = flux[i];
      if (arg->obs[i]!=fblank) allBad = FALSE;
      arg->isigma[i] = 1.0 / sigma[i];
-     arg->weight[i] = arg->isigma[i]*arg->isigma[i];
+     if (!arg->doWt) arg->weight[i] = arg->isigma[i]*arg->isigma[i];
    }
 
    /* Return fblanks/zeroes for no data */
@@ -1470,6 +1493,7 @@ void ObitSpectrumFitInit  (gpointer inn)
   in->minWt      = 0.5;
   in->minFlux    = 0.0;
   in->RMS        = NULL;
+  in->weight     = NULL;
   in->calFract   = NULL;
   in->outDesc    = NULL;
   in->inFArrays  = NULL;
@@ -1496,6 +1520,7 @@ void ObitSpectrumFitClear (gpointer inn)
 
   /* delete this class members */
   if (in->RMS) g_free(in->RMS);
+  if (in->weight) g_free(in->weight);
   if (in->calFract) g_free(in->calFract);
   in->thread = ObitThreadUnref(in->thread);
   in->info   = ObitInfoListUnref(in->info);
@@ -1831,11 +1856,12 @@ static gpointer ThreadNLFit (gpointer arg)
   if (in->doError) nOut = 1+in->nterm*2;
   else nOut = in->nterm;
 
-  /* Get maximum possible weight */
+  /* Get maximum possible weight- set weight to 1/sigma^2 if not given */
   allWt = 0.0;
   for (i=0; i<in->nfreq; i++) {
-    if (in->RMS[i]>0.0) {
-      allWt +=  1.0 / (in->RMS[i]*in->RMS[i]);
+    if (!in->doWt) in->weight[i] =  1.0 / (in->RMS[i]*in->RMS[i]);
+    if (in->weight[i]) {
+      allWt += in->weight[i];
     }
   }
 
@@ -1869,11 +1895,11 @@ static gpointer ThreadNLFit (gpointer arg)
 	  if (larg->obs[i]!=fblank) {
 	    /* Statistical weight */
 	    if (in->RMS[i]>0.0) {
-	      sumWt += 1.0 / (in->RMS[i]*in->RMS[i]);
+	      sumWt += in->weight[i];
+	      larg->weight[i] = in->weight[i];
 	      larg->isigma[i] = 1.0 / (in->RMS[i]*in->RMS[i] + 
 				       in->calFract[i]*in->calFract[i]*
 				       larg->obs[i]*larg->obs[i]);
-	      larg->weight[i] = larg->isigma[i];
 	      larg->isigma[i] = sqrt(larg->isigma[i]);
 	    } else {
 	      larg->weight[i] = 0.0;
@@ -1947,8 +1973,7 @@ static gpointer ThreadNLFit (gpointer arg)
 	NLFitBP(larg);
       } else {
 	/* multi term power */
-	//fprintf(stderr,"pixel %d,%d\n",ix,iy); /* DEBUG */
- 	NLFit(larg);
+	NLFit(larg);
       }
 
       /* Spectral index correction */
@@ -1985,7 +2010,7 @@ static void NLFit (NLFitArg *arg)
   olong iter=0, i, nterm=arg->nterm, nvalid, best;
   ofloat avg, delta, chi2Test, sigma, fblank = ObitMagicF();
   ofloat meanSNR, SNRperTerm=1.0;
-  odouble sum, sumwt, sum2;
+  odouble sum, sumwt, sum2, sumSig;
   gboolean isDone;
   int status;
 #ifdef HAVE_GSL
@@ -2002,12 +2027,13 @@ static void NLFit (NLFitArg *arg)
     for (i=0; i<arg->nterm; i++) arg->coef[i] = 0.0;
   
   /* determine weighted average, count valid data */
-  sum = sumwt = 0.0;
+  sum = sumwt = sumSig = 0.0;
   nvalid = 0;
   for (i=0; i<arg->nfreq; i++) {
     if ((arg->obs[i]!=fblank) && (arg->weight[i]>0.0)) {
-      sum   += arg->weight[i] * arg->obs[i];
-      sumwt += arg->weight[i];
+      sum    += arg->weight[i] * arg->obs[i];
+      sumwt  += arg->weight[i];
+      sumSig += arg->isigma[i];
       nvalid++;
     }
   }
@@ -2015,7 +2041,7 @@ static void NLFit (NLFitArg *arg)
   avg = sum/sumwt;
 
   /* Estimate of noise */
-  sigma = 1.0 / sqrt(sumwt);
+  sigma = 1.0 / (sumSig);
 
   /* Initial fit */
   arg->coef[0] = avg;
@@ -2027,9 +2053,9 @@ static void NLFit (NLFitArg *arg)
   for (i=0; i<arg->nfreq; i++) {
     if ((arg->obs[i]!=fblank) && (arg->weight[i]>0.0)) {
       delta = (arg->obs[i]-avg);
-      sumwt += arg->weight[i] * delta*delta;
+      sumwt += arg->isigma[i] * arg->isigma[i] * delta*delta;
       sum   += delta*delta;
-      sum2  += fabs(arg->obs[i])*sqrt(arg->weight[i]);
+      sum2  += fabs(arg->obs[i])*arg->isigma[i];
     }
   }
 
@@ -2045,14 +2071,14 @@ static void NLFit (NLFitArg *arg)
   /* Errors wanted? */
   if (arg->doError) {
     arg->coef[2] = sigma;  /* Flux error */
-    arg->coef[2*arg->nterm] = sum/nvalid;
+    arg->coef[2*arg->nterm] = arg->ChiSq;  /* Chi^2 */
   }
 
   /* Is this good enough? */
   isDone = (arg->ChiSq<0.0) || (arg->minFlux>avg);
   //if (meanSNR>(SNRperTerm*3.0)) isDone = FALSE;   /* Always try for high SNR */
   if ((meanSNR>SNRperTerm) && (arg->minFlux<avg)) isDone = FALSE;  /* Try for high SNR */
- if (isDone) goto done;
+  if (isDone) goto done;
 
   /* Higher order terms do nonlinear least-squares fit */
   nterm = 2;

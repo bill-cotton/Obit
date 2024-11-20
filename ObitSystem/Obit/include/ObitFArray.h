@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -399,6 +399,14 @@ typedef ofloat  (*ObitFArrayRandomFP) (ofloat mean, ofloat sigma);
 /** Public: Fill with Gaussian distributed random numbers */
 void ObitFArrayRandomFill (ObitFArray* in, ofloat mean, ofloat sigma);
 typedef void  (*ObitFArrayRandomFillFP) (ObitFArray* in, ofloat mean, ofloat sigma);
+
+/** Public: Fill a rectangular subregion win= blc,trc*/
+void ObitFArrayRectFill (ObitFArray* in, olong win[4], ofloat value);
+typedef void  (*ObitFArrayRectFillFP) (ObitFArray* in, olong win[4], ofloat value);
+
+/** Public: Fill a round subregion win = radius, center*/
+void ObitFArrayRoundFill (ObitFArray* in, olong win[3], ofloat value);
+typedef void  (*ObitFArrayRoundFillFP) (ObitFArray* in, olong win[3], ofloat value);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

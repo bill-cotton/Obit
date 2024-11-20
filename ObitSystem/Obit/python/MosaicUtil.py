@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2021
+#  Copyright (C) 2004-2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
 def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                  iblc=[1,1,1], itrc=[0,0,1], restart=0, hwidth=2, doGPU=False,
                  planeWt=False, OTFRA=None, OTFDec=None, inWtImage=None,
-                 maxRMS=None):
+                 maxRMS=None, antSize=25.0, prtLv=0):
     """
     Sum an image onto Weighting accumulators using PB corrections
     
@@ -162,6 +162,8 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     * inWtImage  = Beam (weight) image to use if not None
                    MUST have the same size as inImage 
     * maxRMS     = if given, the maximum RMS allowed
+    * antSize    = antenna diameter (m)
+    * prtLv      = Diagnostic print level, 0=> none, 2=memory usage
     """
     ################################################################
     # Checks
@@ -187,7 +189,8 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     outDesc     = Image.PGetDesc(SumWtImage)
     outDescDict = ImageDesc.PGetDict(outDesc)
     outNaxis    = outDescDict["inaxes"]
-    print("Accumulation naxis",outNaxis)
+    if prtLv>=2:
+        print("Accumulation naxis",outNaxis)
     #  Get input descriptor to see how many planes
     inDesc     = Image.PGetDesc(inImage)
     inDescDict = ImageDesc.PGetDict(inDesc)
@@ -214,7 +217,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     for i in planes:
         doPlane=[i+1,1,1,1,1];
         Image.PGetPlane (inImage, None, doPlane, err)
-        #print ('plane RMSes',i+1,inImage.FArray.RMS,inImage.FArray.RawRMS)
+        #print ('plane RMSes',i+1,inImage.FArray.RMS,inImage.FArray.RawRMS) #DEBUG
         planeRMS[i+1] = inImage.FArray.RMS
     
     # Set BLC,TRC 
@@ -232,7 +235,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     for iPlane in planes:
         doPlane  = [iPlane+1,1,1,1,1]        # Input plane
         outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
-        if not (iPlane%20):
+        if (prtLv>=2) and (not (iPlane%20)):
             print("At plane", iPlane+1,os.times())
             getMemUse()
         # Make weight image if needed, first pass or planeWt
@@ -269,7 +272,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             else:
                 # Normal or OTF Beam?
                 if (OTFRA==None):
-                    ImageUtil.PPBImage(inImage, WtImage, err, minGain, outPlane=pln)
+                    ImageUtil.PPBImage(inImage, WtImage, err, minGain, outPlane=pln, antSize=antSize)
                     pass
                 else:
                     ImageUtil.POTFBeam (inImage, WtImage, OTFRA, OTFDec, err, minGain, outPlane=pln)
@@ -338,13 +341,14 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             #print ('plane', doPlane[0],'RMS',RMS,"RawRMS",inImage.FArray.RawRMS)
             # This plane acceptable?
             if maxRMS and ((RMS>maxRMS) or (RMS<=0.0)):
-                print ('drop plane',doPlane[0],'RMS',RMS)
+                if prtLv>=1:
+                    print ('drop plane',doPlane[0],'RMS',RMS)
                 continue
             if (factor<0.0):
                 fact = abs(factor)/RMS
             else:
                 fact = factor
-            if not (iPlane%20):
+            if (prtLv>=2) and (not (iPlane%20)):
                 print("Factor",fact, "plane",iPlane,"RMS",RMS)
         else:
             fact = factor
@@ -355,6 +359,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                                     inPlane=doPlane, XPix=XPixelImage, YPix=YPixelImage,
                                     hwidth=hwidth, finterp=finterp)
         OErr.printErrMsg(err, "Error interpolating plane "+str(doPlane))
+        #print ("DEBUG InterpWtImage Sum",InterpWtImage.FArray.Sum)
         #print('after Interpolate'); getMemUse()
         # Interpolated image times beam
         FArray.PMul(InterpWtImage.FArray, InterpWt.FArray, InterpWtImage.FArray)
@@ -409,7 +414,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
 def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                    iblc=[1,1,1], itrc=[0,0,1], restart=0, hwidth=2, doGPU=False,
                    planeWt=False, OTFRA=None, OTFDec=None, inWtImage=None,
-                   maxRMS=None, minAccWt=0.15):
+                   maxRMS=None,antSize=25.0, minAccWt=0.15, prtLv=0):
     """
     Sum an image onto Weighting accumulators using PB corrections
     
@@ -439,7 +444,9 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     * inWtImage  = Beam (weight) image to use if not None
                    MUST have the same size as inImage 
     * maxRMS     = if given, the maximum RMS allowed
+    * antSize    = antenna diameter (m)
     * minAccWt   =  min. acceptable max. weight, otherwise ignore
+    * prtLv      = Diagnostic print level, 0=> none, 2=memory usage
     """
     ################################################################
     # Checks
@@ -468,7 +475,8 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     outDesc     = Image.PGetDesc(SumWtImage)
     outDescDict = ImageDesc.PGetDict(outDesc)
     outNaxis    = outDescDict["inaxes"]
-    print("Accumulation naxis",outNaxis)
+    if prtLv>=2:
+        print("Accumulation naxis",outNaxis)
     #  Get input descriptor to see how many planes
     inDesc     = Image.PGetDesc(inImage)
     inDescDict = ImageDesc.PGetDict(inDesc)
@@ -501,7 +509,7 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     for iPlane in planes:
         doPlane  = [iPlane+1,1,1,1,1]        # Input plane
         outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
-        if not (iPlane%20):
+        if (prtLv>=2) and (not (iPlane%20)):
             print("At plane", iPlane+1,'t=%6.1f sec'%(os.times()[4]-t0))
         # Get image 
         inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
@@ -547,7 +555,7 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         elif planeWt or (iPlane==0):
             # Normal or OTF Beam?
             if (OTFRA==None):
-                ImageUtil.PPBImage(inImage, WtImage, err, minGain, outPlane=pln)
+                ImageUtil.PPBImage(inImage, WtImage, err, minGain, outPlane=pln, antSize=antSize)
                 pass
             else:
                 ImageUtil.POTFBeam (inImage, WtImage, OTFRA, OTFDec, err, minGain, outPlane=pln)
@@ -556,7 +564,8 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         # Check maximum weight for first plane
         if iPlane==0:
             pos = [0,0]
-            maxWt = FArray.PMax(WtImage.FArray,pos)
+            if prtLv>=2:
+                maxWt = FArray.PMax(WtImage.FArray,pos)
             print("Maximum weight",maxWt)
             if maxWt<minAccWt:
                 print("Less than minAccWt",minAccWt,"skipping")
@@ -613,7 +622,7 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                 fact = abs(factor)/RMS
             else:
                 fact = factor
-            if not (iPlane%20):
+            if (prtLv>=2) and (not (iPlane%20)):
                 print("Factor",fact, "plane",iPlane,"RMS",RMS)
         else:
             fact = factor

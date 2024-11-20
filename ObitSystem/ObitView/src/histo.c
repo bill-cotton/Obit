@@ -3,7 +3,7 @@
 /*  Histogram equalization is an attempt to have equal numbers of pixels
     in each of the allowed color index states */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998,1999-2008
+*  Copyright (C) 1998-2024
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -74,7 +74,9 @@ olong get_range (ObitFArray *pixels, olong mapFunc,
   /* get rms, mode */
   lrms  = ObitFArrayRMS(pixels);
   lmode = ObitFArrayMode(pixels);
-  
+  /*fprintf (stderr, "image rms %g, mode %g, max %g min %g\n", lrms, lmode, lmax, lmin);  DEBUG*/
+  /* Sanity check */
+  if ((lmode+5*lrms)>lmax) lmode = 0.0;
   /* set range by mapping type */
   if (mapFunc==0) { /* linear*/
     *min = lmode - lrms;

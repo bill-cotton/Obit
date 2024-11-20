@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1128,8 +1128,8 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
     /* Don't do this forever */
     infcount++;
-    fiddle *= 0.95;
-    if (infcount>20) {
+    fiddle *= 0.85;
+    if (infcount>40) {
       KillFAFuncArgs(nThreads, threadArgs);
       return rawRMS;}  /* bag it */
     
@@ -1265,7 +1265,7 @@ ofloat ObitFArrayRMS (ObitFArray* in)
   } else { /* trouble - histogram bad*/
     out = fblank;
   }
- 
+  /* debug fprintf (stderr,"infcount,%d\n",infcount);*/
   /* cleanup */
   KillFAFuncArgs(nThreads, threadArgs);
 
@@ -2118,12 +2118,13 @@ void ObitFArraySqrt (ObitFArray* in)
  */
 ofloat ObitFArraySum (ObitFArray* in)
 {
-  olong i, ilast;
+  olong i, ilast=0;
   ofloat out = 0.0, fblank = ObitMagicF();
 
 #if HAVE_AVX512==1
   CV16SF vr, vb, vz;
   MASK16 msk;
+  ofloat tmp;
 #endif
    /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -2131,20 +2132,18 @@ ofloat ObitFArraySum (ObitFArray* in)
 
 #if HAVE_AVX512==1  /* Vector length 16 */
   vb.v     = _mm512_set1_ps(fblank);     /* vector of blanks */
-  vz.v     = _mm512_setzero_ps();        /* vector of zeroes */
-  for (i=0; i<in->arraySize-16; i+=16) {
-    vr.v  = _mm512_loadu_ps (&in->array[i]);            /* Load Reals */
+  tmp = 0.0;
+  vz.v  = _mm512_set1_ps(tmp);  /* vector of zeroes */
+  for (ilast=0; ilast<in->arraySize-16; ilast+=16) {
+    vr.v  = _mm512_loadu_ps (&in->array[ilast]);            /* Load Reals */
     msk   = _mm512_cmp_ps_mask(vr.v, vb.v, _CMP_EQ_OQ); /* find blanks */
-    vr.v  = _mm512_sqrt_ps(vr.v);                       /* sqrt */
     vr.v  = _mm512_mask_blend_ps(msk,vr.v,vz.v);        /* replace blanks with zero */
     out += _mm512_reduce_add_ps(vr.v);                  /* Sum */
   } /* end vector loop */
-  ilast = i;  /* How far did I get? */
 #else /* Scalar */
   ilast = 0;  /* Do all */
 #endif
   for (i=ilast; i<in->arraySize; i++) 
-  for (i=0; i<in->arraySize; i++) 
     if (in->array[i]!=fblank) out += in->array[i];
 
   return out;
@@ -2440,7 +2439,7 @@ void ObitFArrayBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
     msk  = _mm512_cmp_ps_mask(v2.v, vb.v, _CMP_EQ_OQ); /* find blanks */
     v.v  = _mm512_mask_blend_ps(msk,v.v, vb.v);     /* blank 1 */
     _mm512_storeu_ps(&out->array[i], v.v);        /* Save */
- }
+  }
   ilast = i;  /* How far did I get? */
 #elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
@@ -2457,11 +2456,9 @@ void ObitFArrayBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   ilast = 0;  /* Do all */
 #endif
   for (i=ilast; i<in1->arraySize; i++) 
-  for (i=0; i<in1->arraySize; i++) {
     if (in2->array[i]!=fblank)
       out->array[i] = in1->array[i];
     else out->array[i] = fblank;
-  }
 } /* end ObitFArrayBlank */
 
 /**
@@ -3935,6 +3932,67 @@ void ObitFArrayRandomFill (ObitFArray* in, ofloat mean, ofloat sigma)
 } /* end  ObitFArrayRandomFill */
 
 /**
+ * Replace each element of a rectangular subarray with value, 2D Only
+ * \param in     Input 2D object 
+ * \param win    blc,trc 0-rel
+ * \param value  new value
+ */
+void ObitFArrayRectFill (ObitFArray* in, olong win[4], ofloat value)
+{
+  olong i, j, k, nx, ny, x_lo, x_hi, y_lo, y_hi, lwin[4];
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+  nx = in->naxis[0]; ny = in->naxis[1];
+  /* get in correct order */
+  for (i=0; i<4; i++) lwin[i] = win[i];
+  if ((win[0]>win[2]) || (win[1]>win[3])) {
+    lwin[0]=win[2]; lwin[1]=win[3]; lwin[2]=win[0]; lwin[3]=win[1]; 
+  }
+  x_lo = MAX(0,lwin[0]); x_hi = MIN(nx,lwin[2]); 
+  y_lo = MAX(0,lwin[1]); y_hi = MIN(ny,lwin[3]); 
+  for (j=y_lo; j<y_hi; j++) {
+    for (i=x_lo; i<x_hi; i++) {
+      k = j*nx + i;
+      in->array[k] = value;
+    } /* end inner loop */
+  } /* end outer loop */
+} /* end  ObitFArrayRectFill */
+
+/**
+ * Replace each element of a round subarray with value, 2D Only
+ * \param in     Input object 
+ * \param win    radius, center 0-rel
+ * \param value  new value
+ */
+void ObitFArrayRoundFill (ObitFArray* in, olong win[3], ofloat value)
+{
+  olong i, j, k, nx, ny, x_lo, x_hi, y_lo, y_hi;
+  ofloat rad2, dist2, dx2, dy2;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+  nx = in->naxis[0]; ny = in->naxis[1];
+  x_lo = MAX(0,(win[1]-win[0])); x_hi = MIN(nx,(win[1]+win[0])); 
+  y_lo = MAX(0,(win[2]-win[0])); y_hi = MIN(ny,(win[2]+win[0])); 
+  /*fprintf(stderr,"RectFill x_lo %d x_hi %d y_lo %d y_hi %d \n", x_lo,x_hi,y_lo,y_hi);*/
+  rad2 = (ofloat)(win[0])*(ofloat)(win[0]); /* max distance^2 */
+  for (j=y_lo; j<y_hi; j++) {
+    dy2 = (ofloat)(j-win[2])*(ofloat)(j-win[2]);
+    for (i=x_lo; i<x_hi; i++) {
+      dx2 = (ofloat)(i-win[1])*(ofloat)(i-win[1]);
+      dist2 = dx2+dy2;  /* How far? */
+      if (dist2<=rad2) {
+	k = j*nx + i;
+	in->array[k] = value;
+      } /* end in circle */
+    } /* end inner loop */
+  } /* end outer loop */
+} /* end  ObitFArrayRoundFill */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitFArrayClassInit (void)
@@ -4052,6 +4110,10 @@ static void ObitFArrayClassInfoDefFn (gpointer inClass)
     (ObitFArrayRandomFP)ObitFArrayRandom;
   theClass->ObitFArrayRandomFill = 
     (ObitFArrayRandomFillFP)ObitFArrayRandomFill;
+  theClass->ObitFArrayRectFill = 
+    (ObitFArrayRectFillFP)ObitFArrayRectFill;
+  theClass->ObitFArrayRoundFill = 
+    (ObitFArrayRoundFillFP)ObitFArrayRoundFill;
 
 } /* end ObitFArrayClassDefFn */
 

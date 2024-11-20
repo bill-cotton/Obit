@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2022                                          */
+/*;  Copyright (C) 2005-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -800,6 +800,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     doCalSelect;
   oint         doCalib;
+  olong        flagTab=1;
   gchar *routine = "digestInputs";
 
   /* error checks */
@@ -818,7 +819,15 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
   doCalSelect = doCalSelect || (doCalib>0);
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
- 
+
+  /* flagTab must be positive */
+  ObitInfoListGetTest(myInput, "flagTab",  &type, dim, &flagTab);
+  if (flagTab<1) {
+    flagTab = 1; dim[0] = 1;
+    ObitInfoListAlwaysPut (myInput, "flagTab", OBIT_long, dim, &flagTab);
+    Obit_log_error(err, OBIT_InfoWarn, "Warning: setting flagTab to 1");  
+  }
+
   /* Initialize Threading */
   ObitThreadInit (myInput);
 

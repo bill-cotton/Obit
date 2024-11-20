@@ -2289,7 +2289,7 @@ static void FitSpectra (ObitPolnCalFit *in, ObitErr *err)
       parms = ObitSpectrumFitSingle (nfreq, nterm, in->inDesc->freq, 
 				     in->inDesc->freqIF, 
 				     in->SouList->SUlist[jsou-1]->IFlux, sigma, 
-				     FALSE, err);
+				     FALSE, FALSE, NULL, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       in->IFlux0[isou] = parms[0];
       in->IFlux1[isou] = parms[1];

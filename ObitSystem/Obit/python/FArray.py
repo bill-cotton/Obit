@@ -23,7 +23,7 @@ Naxis   list of axis dimensions (by storage order)
 ======  ==============================================
 """
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2019
+#  Copyright (C) 2004-2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1124,7 +1124,7 @@ Select elements in an FArray by increment
     for b in trc:
         ltrc.append(int(b))
     for b in inc:
-        ltrc.append(int(b))
+        linc.append(int(b))
     Obit.FArraySelInc (inFA.me, outFA.me, lblc, ltrc, linc, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error selecting FArray")
@@ -1235,9 +1235,33 @@ def PRandomFill (inFA, mean, sigma):
     * sigma of distribution
     """
     ################################################################
-    return Obit.FArrayRandomFill (inFA.me, mean, sigma)
+    Obit.FArrayRandomFill (inFA.me, mean, sigma)
 
 # end PRandomFill
+
+def PRectFill (inFA, win, value):
+    """  
+    Fill a rectangular subarray of a 2D FArray with value
+
+    * inFA   2D FArray to fill
+    * win    blc,trc 0-rel int[4]
+    * value  new value
+    """
+    ################################################################
+    Obit.FArrayRectFill (inFA.me, win, value)
+# end PRectFill
+
+def PRoundFill (inFA, win, value):
+    """  
+    Fill a round subarray of a 2D FArray with value
+
+    * inFA   2D FArray to fill
+    * win    radius, center 0-rel int[3]
+    * value  new value
+    """
+    ################################################################
+    Obit.FArrayRoundFill (inFA.me, win, value)
+# end PRoundFill
 
 def PIsA (inFA):
     """ 

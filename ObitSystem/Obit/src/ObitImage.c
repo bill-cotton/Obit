@@ -1378,9 +1378,13 @@ ObitIOCode ObitImageWrite (ObitImage *in, ofloat *data, ObitErr *err)
 ObitIOCode ObitImageGetPlane (ObitImage *in, ofloat *data, olong plane[5], ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
-  ObitIOAccess access;
-  gboolean doOpen = FALSE;
+  ObitIOAccess oaccess, access;
+  gboolean doOpen = FALSE, resetWindow=FALSE;
   olong iPlane;
+  olong iblc[IM_MAXDIM], itrc[IM_MAXDIM];
+  olong oblc[IM_MAXDIM] = {1,1,1,1,1,1,1}, otrc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
   ofloat *buffer = data;
   gchar *routine = "ObitImageGetPlane";
 
@@ -1392,6 +1396,24 @@ ObitIOCode ObitImageGetPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
   /* This is a NOP if this is a memory only image */
   if (in->mySel->FileType==OBIT_IO_MEM) return OBIT_IO_OK;
 
+  /* reset any BLC, TRC
+     get any previous blc, trc */
+  ObitInfoListGetTest (in->info, "BLC", &type, dim, iblc); 
+  ObitInfoListGetTest (in->info, "TRC", &type, dim, itrc);
+  dim[0] = 7;
+  ObitInfoListAlwaysPut (in->info, "BLC", OBIT_long, dim, oblc); 
+  ObitInfoListAlwaysPut (in->info, "TRC", OBIT_long, dim, otrc);
+  /* If already open, close and open again - for now readonly */
+  oaccess = in->myIO->access;
+  if (in->myStatus==OBIT_Active) {
+    resetWindow = TRUE;
+    retCode = ObitImageClose (in, err);
+    access = OBIT_IO_ReadOnly;
+    retCode = ObitImageOpen (in, access, err);
+    if ((retCode!=OBIT_IO_OK) || (err->error))
+      Obit_traceback_val (err, routine, in->name, retCode);
+  }
+  
   /* check and see if its open - if not attempt */
   if ((in->myStatus!=OBIT_Active) && (in->myStatus!=OBIT_Modified)) {
     access = OBIT_IO_ReadOnly;
@@ -1437,6 +1459,18 @@ ObitIOCode ObitImageGetPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
     if ((retCode!=OBIT_IO_OK) || (err->error))
       Obit_traceback_val (err, routine, in->name, retCode);
   }
+
+  /* Reset BLC,TRC to original */
+  dim[0] = 7;
+  ObitInfoListAlwaysPut (in->info, "BLC", OBIT_long, dim, iblc); 
+  ObitInfoListAlwaysPut (in->info, "TRC", OBIT_long, dim, itrc);
+  if (resetWindow) { /* may need to open close and open */
+    retCode = ObitImageClose (in, err);
+    access  = OBIT_IO_ReadOnly;
+    retCode = ObitImageOpen (in, oaccess, err);
+    if ((retCode!=OBIT_IO_OK) || (err->error))
+      Obit_traceback_val (err, routine, in->name, retCode);
+ }
 
   return retCode;
 } /* end ObitImageGetPlane */

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2022                                          */
+/*;  Copyright (C) 2008-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -150,10 +150,12 @@ typedef void (*ObitSpectrumWriteOutputFP) (ObitSpectrumFit* in, ObitImage *outIm
 /** Public: Fit single spectrum */
 ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq, odouble *freq, 
 			       ofloat *flux, ofloat *sigma, gboolean doBrokePow, 
+			       gboolean doWt, ofloat *weight,
 			       ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef ofloat*(*ObitSpectrumFitSingleFP) (olong nfreq, olong nterm, odouble refFreq, 
 					   odouble *freq, ofloat *flux, ofloat *sigma, 
+					   gboolean doWt, ofloat *weight,
 					   gboolean doBrokePow, ObitErr *err);
 
 /** Public: Make fitting arg structure */
@@ -164,6 +166,9 @@ gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm,
 
 /** Public: Add minFlux to fit arg */
 void ObitSpectrumFitAddMinFlux(gpointer arg, ofloat minFlux); 
+
+/** Public: Add weighting to fit arg */
+void ObitSpectrumFitAddWeight(gpointer arg, gboolean doWt, ofloat *weight); 
 
 /** Public: Fit single spectrum using arg */
 void ObitSpectrumFitSingleArg (gpointer arg, ofloat *flux, ofloat  *sigma,

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021,2023                                          */
+/*;  Copyright (C) 2021-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -31,7 +31,9 @@
 ObitGPUGridCreateFP ObitGPUGridCreate;
 /** Function pointer to copy gridding data to GPU (CUDA) structures. */
 ObitGPUGridSetGPUStructFP ObitGPUGridSetGPUStruct;
-/** Function pointer to setuo gridding structures for GPU*/
+/** Function pointer to Check device */
+ObitGPUGridCheckGPUFP ObitGPUGridCheckGPU;
+/** Function pointer to setup gridding structures for GPU*/
 ObitGPUGridSetGPUFP ObitGPUGridSetGPU;
 /** Function pointer to initialize GPU*/
 ObitGPUGridInitGPUFP ObitGPUGridInitGPU;

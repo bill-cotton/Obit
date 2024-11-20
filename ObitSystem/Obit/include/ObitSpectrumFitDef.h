@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2022                                          */
+/*;  Copyright (C) 2008-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -70,3 +70,7 @@ odouble refFreq;
 odouble *freqs;
 /** Array of pixel arrays for output data (2*nterm) */
 ObitFArray **outFArrays;
+/** Array of weights per inFArrays (nfreq) */
+ofloat *weight;
+/** Were weights given? */
+gboolean doWt;

@@ -80,13 +80,15 @@ typedef struct {
   ofloat corAlpha;
   /* Array of sigma for each channel */
   ofloat *sigma;
+  /* Array of weight for each channel */
+  ofloat *weight;
   /** BeamShape object */
   ObitBeamShape *BeamShape;
   /* Array  (nSpec) of rows of pixel values in image in each of nSpec planes */
   ofloat **inData;
   /* Work array of flux for each channel */
   ofloat *workFlux;
-  /* Work array of sigmarfor each channel */
+  /* Work array of sigma for each channel */
   ofloat *workSigma;
   /* 0-rel row number */
   olong iy;
@@ -94,6 +96,8 @@ typedef struct {
   ObitImageDesc *desc;
   /* Correct for primary Beam? */
   gboolean doPBCorr;
+  /* Were weights given? */
+  gboolean doWt;
   /* Antenna diameter */
   ofloat antSize;
   /* Minimum flux density for fit */
@@ -1471,28 +1475,32 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
   if (nwt>0) {
     /* convert to sigmas (1/sqrt(wt)) */
     for (i=0; i<in->nSpec; i++) {
-      if (weights[i]>0.0) sigma = 1.0 / sqrtf(weights[i]);
-      else                sigma = 1.0e10;
       /* Save on thread arguments */
-      for (ithread=0; ithread<nThreads; ithread++) targs[ithread]->sigma[i] = sigma;
+      for (ithread=0; ithread<nThreads; ithread++) {
+	targs[ithread]->doWt = TRUE;
+	targs[ithread]->weight[i] = weights[i];
+      }
     } /* end converting weights to sigmas */
-  } else {
-    /* Read through all input channels getting sigmas - save on thread arguments */
-    for (i=0; i<in->nSpec; i++) {
-      plane[0] = 2+in->maxOrder+i;
-      ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
-      sigma = ObitFArrayRMS(in->image);
-      /* if maxSNR, modify sigma by exp(alpha*ln(nu/nu_0)) */
-      if (maxSNR) {
-	wtfact  = (ofloat)exp(corAlpha*log(in->specFreq[i]/in->refFreq));
-	sigma *= wtfact;
-      }  /* end modify SNR */
-      if (err->error) goto cleanup;
-      /* Save on thread arguments */
-      for (ithread=0; ithread<nThreads; ithread++)
-	targs[ithread]->sigma[i] = sigma;
-    } /* end loop getting sigmas */
-  } /* end calculate weghts from image RMS */
+  } /* end if weights */
+  /* Read through all input channels getting sigmas - save on thread arguments */
+  for (i=0; i<in->nSpec; i++) {
+    plane[0] = 2+in->maxOrder+i;
+    ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
+    sigma = ObitFArrayRMS(in->image);
+    /* if maxSNR, modify sigma by exp(alpha*ln(nu/nu_0)) */
+    if (maxSNR) {
+      wtfact  = (ofloat)exp(corAlpha*log(in->specFreq[i]/in->refFreq));
+      sigma *= wtfact;
+    }  /* end modify SNR */
+    if (err->error) goto cleanup;
+    /* Save on thread arguments */
+    for (ithread=0; ithread<nThreads; ithread++) {
+      targs[ithread]->sigma[i] = sigma;
+      /* If weights not given use 1/sigma*sigma */
+      if (!targs[ithread]->doWt) 
+	targs[ithread]->weight[i] = 1.0/ (sigma*sigma);
+    }
+  } /* end loop getting sigmas */
   in->image = ObitFArrayUnref(in->image);  /* Free image buffer */
 
   /* Save minFlux on thread arguments */
@@ -1621,12 +1629,13 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
 {
   ObitSpectrumFit* fitter=NULL;
   ObitHistory *inHist=NULL, *outHist=NULL;
-  ofloat antsize, pbmin, wtfact, sigma, minWt=0.5, corAlpha=0.0, *weights=NULL;
+  ofloat antsize, pbmin, wtfact, minWt=0.5, corAlpha=0.0, *weights=NULL;
   olong i, plane[5] = {1,1,1,1,1};
   olong nOut, nwt=0, iplane, naxis[2], nterm=2; 
   odouble refFreq=-1.0;
   ofloat maxChi2=2.0, minFlux=0.0, *PBmin=NULL, *antSize=NULL, *calFract=NULL; 
   gboolean doGain, maxSNR=FALSE, doError=FALSE, doBrokePow=FALSE, doPBCor=FALSE, isMeerKAT=FALSE;
+  gboolean doWt=FALSE;
   union ObitInfoListEquiv InfoReal; 
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1}, PBdim[MAXINFOELEMDIM], ASdim[MAXINFOELEMDIM];
@@ -1698,6 +1707,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   /* Specified Weights? */
   ObitInfoListGetP (in->info, "Weights",   &type, dim, (gpointer)&weights);
   if (weights) {
+    doWt = TRUE;
     nwt = dim[0]; /* How many weights? */
     Obit_return_if_fail((nwt==in->nSpec), err, 
   		      "%s: Number of Weights incompatible with data %d %d", 
@@ -1716,6 +1726,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   fitter->doPBCorr   = doPBCor;
   fitter->minWt      = minWt;
   fitter->minFlux    = minFlux;
+  fitter->doWt       = doWt;
 
   /* Get fitting parameters, copy to fitter */
   ObitInfoListCopyList (in->info, fitter->info, fitParms);
@@ -1725,6 +1736,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   fitter->BeamShapes = g_malloc0(fitter->nfreq*sizeof(ObitBeamShape*));
   for (i=0; i<fitter->nfreq; i++) fitter->BeamShapes[i] = NULL;
   fitter->RMS        = g_malloc0(fitter->nfreq*sizeof(ofloat));
+  fitter->weight     = g_malloc0(fitter->nfreq*sizeof(ofloat));
   fitter->calFract   = g_malloc0(fitter->nfreq*sizeof(ofloat));
   fitter->inFArrays  = g_malloc0(fitter->nfreq*sizeof(ObitFArray*));
   fitter->freqs      = g_malloc0(fitter->nfreq*sizeof(odouble));
@@ -1775,14 +1787,10 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   ObitImageMFFullInstantiate (out, FALSE, err);
   if (err->error) goto cleanup;
 
-   /* Were weights provided? */
+  /* Were weights provided? */
   if (nwt>0) {
-    /* convert to sigmas (1/sqrt(wt)) */
-    for (i=0; i<in->nSpec; i++) {
-      if (weights[i]>0.0) sigma = 1.0 / sqrtf(weights[i]);
-      else                sigma = -1.0;
-      fitter->RMS[i] = sigma;
-    } /* end converting weights to sigmas */
+    /* Save weights */
+    for (i=0; i<in->nSpec; i++) fitter->weight[i] = weights[i];
   } 
 
   /* Loop reading planes */
@@ -1801,15 +1809,13 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
     doGain = pbmin<0.999;
     fitter->BeamShapes[iplane] = ObitBeamShapeCreate ("BS", (ObitImage*)in, pbmin, antsize, doGain);
   
-    /* Plane RMS if Weights not given */
-    if (nwt<=0) {
-      fitter->RMS[iplane] = ObitFArrayRMS(fitter->inFArrays[iplane]);
-      /* if maxSNR, modify RMS by exp(-alpha*ln(nu/nu_0)) */
-      if (maxSNR) {
-	wtfact  = (ofloat)exp(-fitter->corAlpha*log(fitter->freqs[iplane]/refFreq));
-	fitter->RMS[iplane] *= wtfact;
-      }  /* end modify SNR */
-    } /* end get plane RMSes */  
+    /* Plane RMS */
+    fitter->RMS[iplane] = ObitFArrayRMS(fitter->inFArrays[iplane]);
+    /* if maxSNR, modify RMS by exp(-alpha*ln(nu/nu_0)) */
+    if (maxSNR) {
+      wtfact  = (ofloat)exp(-fitter->corAlpha*log(fitter->freqs[iplane]/refFreq));
+      fitter->RMS[iplane] *= wtfact;
+    }  /* end modify SNR */
     /* Frequency */
     fitter->freqs[iplane] = in->specFreq[iplane];
     ObitBeamShapeSetFreq (fitter->BeamShapes[iplane], fitter->freqs[iplane]);
@@ -2190,23 +2196,29 @@ olong ObitImageMFGetBeamOrder (ObitImage *inn)
  */
 odouble ObitImageMFGetPlaneFreq (ObitImage *image) 
 {
-  odouble Freq=0.0;
+  odouble fInc=0.0, fRPix=1, Freq=0.0;
   olong nterm =0,plane = image->myDesc->plane;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   gchar keyword[20];
 
+  /*Default frequency */
+  if (image->myDesc->jlocf>=0) {
+    Freq  = image->myDesc->crval[image->myDesc->jlocf];
+    fInc  = image->myDesc->cdelt[image->myDesc->jlocf];
+    fRPix = image->myDesc->crpix[image->myDesc->jlocf];
+  }
+
   /* Have ImageMF keywords? */
   if (!ObitInfoListGetTest(image->myDesc->info, "NTERM", &type, dim, &nterm)) {
-    if (image->myDesc->jlocf>=0) 
-      Freq = image->myDesc->crval[image->myDesc->jlocf];
-    return Freq;
+    /* No NTERM - assume regular cube */
+    return Freq + (plane-fRPix)*fInc;
   }
   /* Get from header List or header if missing, term planes will get main header freq. */
-  sprintf(keyword,"FREQ%4.4d", plane-nterm+1);
+  sprintf(keyword,"FREQ%4.4d", plane-nterm);
   if (!ObitInfoListGetTest(image->myDesc->info, keyword, &type, dim, &Freq)) {
-    if (image->myDesc->jlocf>=0) 
-      Freq = image->myDesc->crval[image->myDesc->jlocf];
+    /* Keyword not found */
+    Freq += (plane-fRPix)*fInc;
   }
   return Freq;
 } /* end ObitImageMFGetPlaneFreq */
@@ -2392,6 +2404,7 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
     (*args)[i]->antSize   = antSize;
     (*args)[i]->minFlux   = 0.0;
     (*args)[i]->doPBCorr  = doPBCor;
+    (*args)[i]->doWt      = FALSE;  /* were weights given? */
     (*args)[i]->BeamShape = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, antSize, doPBCor);
     (*args)[i]->nSpec     = image->nSpec;
     (*args)[i]->nOrder    = nOrder;
@@ -2399,6 +2412,7 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
     (*args)[i]->corAlpha  = corAlpha;
     (*args)[i]->refFreq   = image->refFreq;
     (*args)[i]->sigma     = g_malloc0(image->nSpec*sizeof(ofloat));
+    (*args)[i]->weight    = g_malloc0(image->nSpec*sizeof(ofloat));
     (*args)[i]->workFlux  = g_malloc0(image->nSpec*sizeof(ofloat));
     (*args)[i]->workSigma = g_malloc0(image->nSpec*sizeof(ofloat));
     (*args)[i]->Freq      = g_malloc0(image->nSpec*sizeof(odouble));
@@ -2436,6 +2450,7 @@ static void KillFitSpecArgs (olong nargs, FitSpecFuncArg **args)
       args[i]->desc      = ObitImageDescUnref(args[i]->desc);
       args[i]->BeamShape = ObitBeamShapeUnref(args[i]->BeamShape);
       if (args[i]->sigma)     g_free(args[i]->sigma);
+      if (args[i]->weight)    g_free(args[i]->weight);
       if (args[i]->workFlux)  g_free(args[i]->workFlux);
       if (args[i]->workSigma) g_free(args[i]->workSigma);
       if (args[i]->Freq)      g_free(args[i]->Freq);
@@ -2465,7 +2480,7 @@ static void KillFitSpecArgs (olong nargs, FitSpecFuncArg **args)
  * \li alpha    Spectral index correction previously applied to data.
  * \li nSpec    Number of spectral channels
  * \li Freq     Array (nSpec) ofchannel frequencies (Hz).
- * \li sigma    Array of sigma for each channel
+ * \li sigma    Array of sigma/weight for each channel
  * \li BeamShape BeamShape object
  * \li inData    Array  (nSpec) of rows of pixel values in image in each of nSpec planes
  * \li workFlux  Work array of flux for each channel
@@ -2473,6 +2488,7 @@ static void KillFitSpecArgs (olong nargs, FitSpecFuncArg **args)
  * \li iy        0-rel row number
  * \li desc      Input image descriptor
  * \li doPBCorr  Correct for primary Beam?
+ * \li doWt      sigma has weight rather than sigma
  * \li antSize   Antenna diameter (m)
  * \li nOrder    Max. number of orders to fit 
  * \li outData   (nOrder+1) Arrays of fitted values 
@@ -2492,6 +2508,8 @@ gpointer ThreadFitSpec (gpointer args)
   odouble *Freq            = largs->Freq;
   odouble refFreq          = largs->refFreq;
   ofloat *sigma            = largs->sigma;
+  ofloat *weight           = largs->weight;
+  gboolean doWt            = largs->doWt;
   ObitBeamShape *BeamShape = largs->BeamShape;
   ofloat **inData          = largs->inData;
   ofloat *workFlux         = largs->workFlux;
@@ -2566,6 +2584,7 @@ gpointer ThreadFitSpec (gpointer args)
     }
        
     ObitSpectrumFitAddMinFlux(fitArg,minFlux);  /* Add minimum flux density */
+    ObitSpectrumFitAddWeight(fitArg,doWt,weight);  /* Add weighting */
 
     /* Fit spectrum */
     ObitSpectrumFitSingleArg (fitArg, workFlux, workSigma, fitResult);
