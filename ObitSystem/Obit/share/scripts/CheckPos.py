@@ -28,6 +28,7 @@ def CheckPos(p, g, cat, galactic, prtLv, err, maxd=0.60):
         (xp,yp) = ImageDesc.PGetPixel(g.Desc, [lon,lat], err)
     except Exception as exception:
         print (exception)
+        print ("Bombed in CheckPos")
         err.Clear()
         return False
     if OErr.PIsErr(err):
@@ -35,25 +36,26 @@ def CheckPos(p, g, cat, galactic, prtLv, err, maxd=0.60):
         err.Clear()
         return False
     if (xp>0.0) and (xp<=nx) and (yp>0.0) and (yp<=ny):
+        if prtLv>=2:
+            print ('Check:',p, "inside accumulators")
         return True
     overlapx = (xp>0.0) and (xp<=nx)
     overlapy = (yp>0.0) and (yp<=ny)
-    overlapy = True  # No need to check
     (gglong,gglat) = g.Desc.Dict['crval'][0:2]   # mosaic position
     (dx,dy)        = g.Desc.Dict['cdelt'][0:2]   # cell spacing
     # check distance from top 
-    #if abs(((yp-ny)*dy))<maxd:
-    #    overlapy = True
+    if abs(((yp-ny)*dy))<maxd:
+        overlapy = True
     # bottom
-    #if abs(((-yp)*dy))<maxd:
-    #    overlapy = True
+    if abs(((-yp)*dy))<maxd:
+        overlapy = True
     # left
     if abs(((-xp)*dx))<maxd:
         overlapx = True
     # right
     if abs(((xp-nx)*dx))<maxd:
         overlapx = True
-        if prtLv>=2:
-            print ('Check',p,overlapx,overlapy, xp,yp, dx,dy,maxd)
+    if prtLv>=2:
+        print ('Check overlap',p,'X',overlapx,'Y',overlapy, xp,yp, dx,dy,maxd)
     return overlapx and overlapy
 # end CheckMKGP

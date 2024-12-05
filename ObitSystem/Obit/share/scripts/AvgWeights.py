@@ -105,7 +105,7 @@ print ("\nEffective Frequency = %9.2f"%EffFreq,"MHz")
 # weights, one per subband, RMSes:[mosaic_name,RMS], Freqs:[center freq, MHz],
 # dir:data directory, post: ending of FITS file name
 stuff = {"weights":wt, "RMSes":ff, "Freqs":freqs, "EffFreq":EffFreq, \
-         "dir":dir, "post":post}
+         "dir":dir, "post":post, "doLin":doLin}
 SaveObject(stuff, "AvgWeights.pickle", True)
 print ("Wrote AvgWeights.pickle" )
 

@@ -9,10 +9,14 @@ PBmin     = 0.05   # Min PB gain for correction
 doBlank   = False  # Blank total intensity and SI where highest plane blanked?
                    # After any PB Correction
 nthreads  = 16     # Number of threads to use
+dir       = None   # If given the data directory
+                   # Else the value from AvgWeights.pickle
 post      = None   # If given, the ending of file names,
                    # Else the value from AvgWeights.pickle
 fitsfiles = None   # If given, list of (name root, broadband RMS)
                    # Else the value from AvgWeights.pickle
+# Set non defaults here
+
 import Image, OErr, OSystem, FArray
 OSystem.PAllowThreads(nthreads)  # with threads
 from PipeUtil import SaveObject, FetchObject
@@ -22,7 +26,8 @@ import math, pickle
 stuff = FetchObject("AvgWeights.pickle")
 refFreq   = stuff['EffFreq'] # Effective frequency in MHz
 wwts      = stuff['weights'] # Subband weights in %
-dir       = stuff['dir']     # Data directory
+if dir==None:
+    dir       = stuff['dir']     # Data directory
 if fitsfiles==None:
     fitsfiles = stuff['RMSes']   # List of (file_name root, RMS)
 if post==None:

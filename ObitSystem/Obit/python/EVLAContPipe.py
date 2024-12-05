@@ -709,10 +709,16 @@ def pipeline( aipsSetup, parmFile):
     if parms["doKntrPlots"]:
         mess = "INFO --> Contour plots (doKntrPlots)"
         printMess(mess, logFile)
-        EVLAKntrPlots( err, imName=parms["targets"], project=project,
-            session=session, band=band, disk=disk, debug=debug )
-        # Save list of output files
-        EVLASaveOutFiles()
+        # Trap failure - seems redundant
+        try:
+            EVLAKntrPlots( err, imName=parms["targets"], project=project,
+                           session=session, band=band, disk=disk, debug=debug )
+            # Save list of output files
+            EVLASaveOutFiles()
+        except Exception as exception:
+            print(exception)
+            mess = "Contour (KNTR) plotting Failed.")
+            printMess(mess, logfile)
     elif debug:
         mess = "Not creating contour plots ( doKntrPlots = "+str(parms["doKntrPlots"])+ " )"
         printMess(mess, logFile)

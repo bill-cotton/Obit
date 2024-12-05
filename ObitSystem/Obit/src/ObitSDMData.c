@@ -22,7 +22,7 @@ X    Feed.xml
 X    Field.xml
 X    Flag.xml
      PointingModel.xml
-X    Pointing.xml
+X    Pointing.xml, bin
 X    Polarization.xml
 X    Processor.xml
 X    Receiver.xml
@@ -39,7 +39,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -7706,12 +7706,12 @@ static ASDMPointingTable* ParseASDMPointingTableXML(ObitSDMData *me,
     prior = "<timeInterval>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
-      /* If start and end time convert end time to duration */
-      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
-	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+      /* If start and end time convert to center and duration */
+      if ((out->rows[irow]->timeInterval[1]>out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0)) {
 	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
-      else /* Center time and duration, convert to start and duration */
-	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
+	out->rows[irow]->timeInterval[0] -= 0.5*out->rows[irow]->timeInterval[1];
+      }
       continue;
     }
     prior = "<numSample>";

@@ -5000,18 +5000,6 @@ extern void FArrayRandomFill (ObitFArray* in1, float mean, float sigma) {
    ObitFArrayRandomFill (in1, (ofloat)mean, (ofloat)sigma);
 }
 
-extern void FArrayRectFill (ObitFArray* in1, long* win, float value) {
-   olong lwin[4], i;
-   for (i=0; i<4; i++) lwin[i] = (olong)win[i];
-   ObitFArrayRectFill (in1, lwin, (ofloat)value);
-}
-
-extern void FArrayRoundFill (ObitFArray* in1, long* win, float value) {
-   olong lwin[3], i;
-   for (i=0; i<3; i++) lwin[i] = (olong)win[i];
-   ObitFArrayRoundFill (in1, lwin, (ofloat)value);
-}
-
 extern ObitInfoList* FArrayGetList (ObitFArray* in) {
   return ObitInfoListRef(in->info);
 }
@@ -8221,7 +8209,7 @@ static PyObject* Info2List(ObitInfoType type, gint32 dim[5], void *data)
   PyObject *outList=NULL, *outList2=NULL, *outList3=NULL, *o=NULL;
   gint32 i, j, k, ii, count[5], ndim;
   float  *fdata;
-  long   *ldata;
+  //long   *ldata;
   int    *idata;
   oint   *odata;
   double *ddata;
@@ -8291,21 +8279,21 @@ static PyObject* Info2List(ObitInfoType type, gint32 dim[5], void *data)
       break;
     case   OBIT_long:  
       outList = PyList_New(count[0]);  // Output list
-      ldata = (long*)data;
+      idata = (int*)data;  // Really int
       for (i=0; i<count[0]; i++) {
   	if (ndim==1) {  // single dimension
-          o = PyLong_FromLong((long)ldata[ii++]);
+          o = PyLong_FromLong((long)idata[ii++]);
           PyList_SetItem(outList, i, o);
         } else { // 2 or more dimensions
           outList2 = PyList_New(count[1]);
           for (j=0; j<count[1]; j++) {  // loop over second dimension
             if (ndim==2) {  // two dimensions
-              o = PyLong_FromLong((long)ldata[ii++]);
+              o = PyLong_FromLong((long)idata[ii++]);
               PyList_SetItem(outList2, j, o);
             } else { // 3 (or more) dimensions
               outList3 = PyList_New(count[2]);
               for (k=0; k<count[2]; k++) {  // loop over third dimension
-                o = PyLong_FromLong((long)ldata[ii++]);
+                o = PyLong_FromLong((long)idata[ii++]);
                 PyList_SetItem(outList3, k, o);
               } // end loop over third dimension
               PyList_SetItem(outList2, j, outList3);
@@ -8399,19 +8387,19 @@ static PyObject* Info2List(ObitInfoType type, gint32 dim[5], void *data)
       // First dimension is the length of strings
       tstring	= g_malloc0(count[0]+1);
       if (ndim==1) {  // single dimension - one string
-        for (i=0; i<count[0]; i++) tstring[i]=cdata[ii++]; tstring[i]=0;
+        for (i=0; i<count[0]; i++) {tstring[i]=cdata[ii++];} tstring[i]=0;
         o = PyString_InternFromString(tstring);
         PyList_SetItem(outList, 0, o);
       } else { // 2 or more dimensions
         for (j=0; j<count[1]; j++) {  // loop over second dimension
           if (ndim==2) {  // two dimensions
-            for (i=0; i<count[0]; i++) tstring[i]=cdata[ii++]; tstring[i]=0;
+            for (i=0; i<count[0]; i++) {tstring[i]=cdata[ii++];} tstring[i]=0;
             o = PyString_InternFromString(tstring);
             PyList_SetItem(outList, j, o);
           } else { // 3 (or more) dimensions
             outList2 = PyList_New(count[2]);
             for (k=0; k<count[2]; k++) {  // loop over third dimension
-              for (i=0; i<count[0]; i++) tstring[i]=cdata[ii++]; tstring[i]=0;
+              for (i=0; i<count[0]; i++) {tstring[i]=cdata[ii++];} tstring[i]=0;
               o = PyString_InternFromString(tstring);
               PyList_SetItem(outList2, k, o);
             } // end loop over third dimension
@@ -27180,122 +27168,6 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_FArrayRectFill(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  ObitFArray *arg1 = (ObitFArray *) 0 ;
-  long *arg2 = (long *) 0 ;
-  float arg3 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  float val3 ;
-  int ecode3 = 0 ;
-  PyObject *swig_obj[3] ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "FArrayRectFill", 3, 3, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitFArray, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FArrayRectFill" "', argument " "1"" of type '" "ObitFArray *""'"); 
-  }
-  arg1 = (ObitFArray *)(argp1);
-  {
-    if (PyList_Check(swig_obj[1])) {
-      int size = PyList_Size(swig_obj[1]);
-      int i = 0;
-      arg2 = (long*) malloc((size+1)*sizeof(long));
-      for (i = 0; i < size; i++) {
-        PyObject *o = PyList_GetItem(swig_obj[1],i);
-        if (PyLong_Check(o)) {
-          arg2[i] = PyLong_AsLong(o);
-        } else if (PyInt_Check(o)) {
-          arg2[i] = PyInt_AsLong(o);
-        } else {
-          PyErr_SetString(PyExc_TypeError,"list must contain longs or ints");
-          free(arg2);
-          return NULL;
-        }
-      }
-    } else {
-      PyErr_SetString(PyExc_TypeError,"not a list");
-      return NULL;
-    }
-  }
-  ecode3 = SWIG_AsVal_float(swig_obj[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "FArrayRectFill" "', argument " "3"" of type '" "float""'");
-  } 
-  arg3 = (float)(val3);
-  FArrayRectFill(arg1,arg2,arg3);
-  resultobj = SWIG_Py_Void();
-  {
-    free((long *) arg2);
-  }
-  return resultobj;
-fail:
-  {
-    free((long *) arg2);
-  }
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_FArrayRoundFill(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  ObitFArray *arg1 = (ObitFArray *) 0 ;
-  long *arg2 = (long *) 0 ;
-  float arg3 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  float val3 ;
-  int ecode3 = 0 ;
-  PyObject *swig_obj[3] ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "FArrayRoundFill", 3, 3, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitFArray, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FArrayRoundFill" "', argument " "1"" of type '" "ObitFArray *""'"); 
-  }
-  arg1 = (ObitFArray *)(argp1);
-  {
-    if (PyList_Check(swig_obj[1])) {
-      int size = PyList_Size(swig_obj[1]);
-      int i = 0;
-      arg2 = (long*) malloc((size+1)*sizeof(long));
-      for (i = 0; i < size; i++) {
-        PyObject *o = PyList_GetItem(swig_obj[1],i);
-        if (PyLong_Check(o)) {
-          arg2[i] = PyLong_AsLong(o);
-        } else if (PyInt_Check(o)) {
-          arg2[i] = PyInt_AsLong(o);
-        } else {
-          PyErr_SetString(PyExc_TypeError,"list must contain longs or ints");
-          free(arg2);
-          return NULL;
-        }
-      }
-    } else {
-      PyErr_SetString(PyExc_TypeError,"not a list");
-      return NULL;
-    }
-  }
-  ecode3 = SWIG_AsVal_float(swig_obj[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "FArrayRoundFill" "', argument " "3"" of type '" "float""'");
-  } 
-  arg3 = (float)(val3);
-  FArrayRoundFill(arg1,arg2,arg3);
-  resultobj = SWIG_Py_Void();
-  {
-    free((long *) arg2);
-  }
-  return resultobj;
-fail:
-  {
-    free((long *) arg2);
-  }
-  return NULL;
-}
-
-
 SWIGINTERN PyObject *_wrap_FArrayGetList(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   ObitFArray *arg1 = (ObitFArray *) 0 ;
@@ -40424,8 +40296,12 @@ SWIGINTERN PyObject *_wrap_InfoListBlob_name_set(PyObject *SWIGUNUSEDPARM(self),
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40435,8 +40311,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40465,8 +40345,12 @@ SWIGINTERN PyObject *_wrap_InfoListBlob_name_get(PyObject *SWIGUNUSEDPARM(self),
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40475,8 +40359,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40510,8 +40398,12 @@ SWIGINTERN PyObject *_wrap_InfoListBlob_type_set(PyObject *SWIGUNUSEDPARM(self),
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40520,8 +40412,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40549,8 +40445,12 @@ SWIGINTERN PyObject *_wrap_InfoListBlob_type_get(PyObject *SWIGUNUSEDPARM(self),
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40559,8 +40459,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40601,8 +40505,12 @@ SWIGINTERN PyObject *_wrap_InfoListBlob_dim_set(PyObject *SWIGUNUSEDPARM(self), 
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40611,8 +40519,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40640,8 +40552,12 @@ SWIGINTERN PyObject *_wrap_InfoListBlob_dim_get(PyObject *SWIGUNUSEDPARM(self), 
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40650,8 +40566,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40683,8 +40603,12 @@ SWIGINTERN PyObject *_wrap_InfoListBlob_data_set(PyObject *SWIGUNUSEDPARM(self),
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40693,8 +40617,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40722,8 +40650,12 @@ SWIGINTERN PyObject *_wrap_InfoListBlob_data_get(PyObject *SWIGUNUSEDPARM(self),
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40732,8 +40664,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40773,8 +40709,12 @@ SWIGINTERN PyObject *_wrap_delete_InfoListBlob(PyObject *SWIGUNUSEDPARM(self), P
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40783,8 +40723,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40835,8 +40779,12 @@ SWIGINTERN PyObject *_wrap_freeInfoListBlob(PyObject *SWIGUNUSEDPARM(self), PyOb
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -40845,8 +40793,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg1;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -42721,8 +42673,12 @@ SWIGINTERN PyObject *_wrap_InfoListGetHelper(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     InfoListBlob *me = (InfoListBlob *)arg6;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -42732,8 +42688,12 @@ fail:
   {
     InfoListBlob *me = (InfoListBlob *)arg6;
     if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {
+        free(me->name);
+      } me->name = NULL;
+      if (me->data) {
+        free(me->data);
+      } me->data = NULL;
       free(me);
     }
   }
@@ -73521,8 +73481,6 @@ static PyMethodDef SwigMethods[] = {
 	 { "FArrayPow", _wrap_FArrayPow, METH_VARARGS, NULL},
 	 { "FArrayRandom", _wrap_FArrayRandom, METH_VARARGS, NULL},
 	 { "FArrayRandomFill", _wrap_FArrayRandomFill, METH_VARARGS, NULL},
-	 { "FArrayRectFill", _wrap_FArrayRectFill, METH_VARARGS, NULL},
-	 { "FArrayRoundFill", _wrap_FArrayRoundFill, METH_VARARGS, NULL},
 	 { "FArrayGetList", _wrap_FArrayGetList, METH_O, NULL},
 	 { "FArrayGetName", _wrap_FArrayGetName, METH_O, NULL},
 	 { "FArrayGetNdim", _wrap_FArrayGetNdim, METH_O, NULL},

@@ -5,7 +5,7 @@ from OTObit import imlod, setname
 exec(open("CheckPos.py").read())
 
 def StitchF (nameList, stktrans, SumWtImage, SumWt2, err, beam=None, 
-             galactic=False, disk=1, restart=0,):
+             galactic=False, disk=1, restart=0, maxd=0.6):
     """ Accumulate Mosaic looping over planes of a list of cubes 
 
         nameList  = list of pointing names
@@ -17,6 +17,7 @@ def StitchF (nameList, stktrans, SumWtImage, SumWt2, err, beam=None,
         galactic  = Convert the output to Galactic coordinates?
         disk      = AIPS disk for working files
         restart   = restart channel no. 0-rel
+        maxd      = Maximum distance (deg) from pointing center to consider overlap.
     """
     # How many channels? */
     nchan = SumWtImage.Desc.Dict["inaxes"][SumWtImage.Desc.Dict["jlocf"]]
@@ -45,12 +46,12 @@ def StitchF (nameList, stktrans, SumWtImage, SumWt2, err, beam=None,
                 print (f,"does not exist")
                 continue
         # Does this overlap the mosaic?
-        if CheckPos(name, SumWtImage, cat, galactic, prtLv, err):
+        if CheckPos(name, SumWtImage, cat, galactic, prtLv, err, maxd=maxd):
             acct  = Image.newPFImage("accum", f, 0, True, err)
             try:
                 # Get overlap
                 if galactic:
-                    blc=[1,1,1]; trc = acct.Desc.Dict['inaxes']               # Galactic
+                    blc=[1,1,1,1,1,1,1]; trc = acct.Desc.Dict['inaxes']               # Galactic
                 else:
                     (blc,trc) = MosaicUtil.PGetOverlap(acct, SumWtImage, err) # Equatorial 
                 if (trc[0]>blc[0]) and ((trc[1]>blc[1])):
@@ -81,6 +82,9 @@ def StitchF (nameList, stktrans, SumWtImage, SumWt2, err, beam=None,
                     RMS = acc.FArray.RMS;    # combined plane RMS
                     maxRMS = 20*RMS          # maximum acceptable plane RMS
                     factor *= cat[name][2]   # any additional factors
+                    # DEBUG
+                    # DEBUGacc.List.set("BLC",[1,1,1,1,1,1,1]); acc.List.set("BLC",[0,0,0,1,1,1,1]); 
+                    #print("StitchF: acc.List before",acc.List.Dict)
                     if prtLv>=1:
                         print ("Accumulate",name,"factor",factor, "maxRMS",maxRMS)
                         print ("overlap", blc, trc)
@@ -89,10 +93,12 @@ def StitchF (nameList, stktrans, SumWtImage, SumWt2, err, beam=None,
                                             iblc=blc, itrc=trc, restart=restart, planeWt=True,
                                             hwidth=2, doGPU=False, inWtImage=None,
                                             maxRMS=maxRMS, antSize=antSize, prtLv=prtLv)
-            except exception:
+            except Exception as exception:
                 OErr.printErr(err)
                 print (exception)
                 print ("Failed")
+                print ("StitchF: blc",blc,"trc",trc)
+                print("acc.List",acc.List.Dict)
                 err.Clear()
             if acc:
                 acc.Zap(err); del acc; acc = None
@@ -171,7 +177,7 @@ for target in targets:
     OErr.printErr(err)
     OErr.PLog(err,OErr.Info, "Start interpolation"); OErr.printErr(err)
     StitchF (pointings, stktrans, SumWtImage, SumWt2, err, beam=beam, disk=accumdisk,
-             galactic=galactic, restart=ch0)
+             galactic=galactic, restart=ch0,maxd=maxd)
     OErr.PLog(err,OErr.Info, "Finish interpolation"); OErr.printErr(err)
     
     # Normalize to FITS

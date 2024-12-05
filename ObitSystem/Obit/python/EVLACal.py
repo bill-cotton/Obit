@@ -7731,17 +7731,17 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         # Contour level unit = 2 * RMS noise
         stats = imstat(image, err)
         kntr.clev = 2 * stats['RMSHist']
-        # Set the size of the contour plot: use the inner quarter
-        d = image.Desc.Dict
-        nx = d['inaxes'][0]
-        ny = d['inaxes'][1]
-        kntr.trc[1]=3*nx/4.0; kntr.trc[2]=3*ny/4.0; 
-        kntr.blc[1]=nx/4.0;   kntr.blc[2]=ny/4.0;
-        name = image.Aname.rstrip() # Image name w/o whitespace
-        outfile = project+'_'+session+'_'+band+'_'+name+'.cntr.ps'
-        outfile = re.sub('\s','_',outfile) # Deblank filename
         # Trap failure - KNTR too stupid to live
         try:
+            # Set the size of the contour plot: use the inner quarter
+            d = image.Desc.Dict
+            nx = d['inaxes'][0]
+            ny = d['inaxes'][1]
+            kntr.trc[1]=3*nx/4.0; kntr.trc[2]=3*ny/4.0; 
+            kntr.blc[1]=nx/4.0;   kntr.blc[2]=ny/4.0;
+            name = image.Aname.rstrip() # Image name w/o whitespace
+            outfile = project+'_'+session+'_'+band+'_'+name+'.cntr.ps'
+            outfile = re.sub('\s','_',outfile) # Deblank filename
             if not check:
                 kntr.g
         except Exception as exception:

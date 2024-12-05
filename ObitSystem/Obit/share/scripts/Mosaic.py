@@ -22,9 +22,10 @@ datadisk  = 0        # disk for data (FITS) 0=CWD
 fitsdir   = "./"     # FITS data directory
 accumdisk = 1        # AIPS disk for accumulators  1=>RAM disk if setup
 accumseq  = 10       # AIPS seq for accumulators
+maxd      = 0.6      # How far from pointing center (deg) for overlap
 
-nThreads = 24           # How many threads
-prtLv   = 1             # Diagnostic print level, 0, 1, 2
+nThreads = 24        # How many threads
+prtLv    = 1         # Diagnostic print level, 0, 1, 2
 
 OSystem.PAllowThreads(nThreads) # enable threading
 print ("Target=",targets[0][0],"restart=",restart,"ch0=",ch0,"minWt=",minWt)

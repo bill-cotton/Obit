@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitInfoList type                      */
 /*                                                                    */
-/*   Copyright (C) 2004-2019                                          */
+/*   Copyright (C) 2004-2024                                          */
 /*   Associated Universities, Inc. Washington DC, USA.                */
 /*                                                                    */
 /*   This program is free software; you can redistribute it and/or    */
@@ -48,8 +48,8 @@ typedef struct {
 %typemap(freearg) InfoListBlob * {
    InfoListBlob *me = (InfoListBlob *)$source;
    if (me!=NULL) {
-      if (me->name) free(me->name); me->name = NULL;
-      if (me->data) free(me->data); me->data = NULL;
+      if (me->name) {free(me->name);} me->name = NULL;
+      if (me->data) {free(me->data);} me->data = NULL;
       free(me);
    }
 }
@@ -502,7 +502,7 @@ static PyObject* Info2List(ObitInfoType type, gint32 dim[5], void *data)
   PyObject *outList=NULL, *outList2=NULL, *outList3=NULL, *o=NULL;
   gint32 i, j, k, ii, count[5], ndim;
   float  *fdata;
-  long   *ldata;
+  //long   *ldata;
   int    *idata;
   oint   *odata;
   double *ddata;
@@ -572,21 +572,21 @@ static PyObject* Info2List(ObitInfoType type, gint32 dim[5], void *data)
       break;
     case   OBIT_long:  
       outList = PyList_New(count[0]);  // Output list
-      ldata = (long*)data;
+      idata = (int*)data;  // Really int
       for (i=0; i<count[0]; i++) {
   	if (ndim==1) {  // single dimension
-          o = PyLong_FromLong((long)ldata[ii++]);
+          o = PyLong_FromLong((long)idata[ii++]);
           PyList_SetItem(outList, i, o);
         } else { // 2 or more dimensions
           outList2 = PyList_New(count[1]);
           for (j=0; j<count[1]; j++) {  // loop over second dimension
             if (ndim==2) {  // two dimensions
-              o = PyLong_FromLong((long)ldata[ii++]);
+              o = PyLong_FromLong((long)idata[ii++]);
               PyList_SetItem(outList2, j, o);
             } else { // 3 (or more) dimensions
               outList3 = PyList_New(count[2]);
               for (k=0; k<count[2]; k++) {  // loop over third dimension
-                o = PyLong_FromLong((long)ldata[ii++]);
+                o = PyLong_FromLong((long)idata[ii++]);
                 PyList_SetItem(outList3, k, o);
               } // end loop over third dimension
               PyList_SetItem(outList2, j, outList3);
@@ -680,19 +680,19 @@ static PyObject* Info2List(ObitInfoType type, gint32 dim[5], void *data)
       // First dimension is the length of strings
       tstring	= g_malloc0(count[0]+1);
       if (ndim==1) {  // single dimension - one string
-        for (i=0; i<count[0]; i++) tstring[i]=cdata[ii++]; tstring[i]=0;
+        for (i=0; i<count[0]; i++) {tstring[i]=cdata[ii++];} tstring[i]=0;
         o = PyString_InternFromString(tstring);
         PyList_SetItem(outList, 0, o);
       } else { // 2 or more dimensions
         for (j=0; j<count[1]; j++) {  // loop over second dimension
           if (ndim==2) {  // two dimensions
-            for (i=0; i<count[0]; i++) tstring[i]=cdata[ii++]; tstring[i]=0;
+            for (i=0; i<count[0]; i++) {tstring[i]=cdata[ii++];} tstring[i]=0;
             o = PyString_InternFromString(tstring);
             PyList_SetItem(outList, j, o);
           } else { // 3 (or more) dimensions
             outList2 = PyList_New(count[2]);
             for (k=0; k<count[2]; k++) {  // loop over third dimension
-              for (i=0; i<count[0]; i++) tstring[i]=cdata[ii++]; tstring[i]=0;
+              for (i=0; i<count[0]; i++) {tstring[i]=cdata[ii++];} tstring[i]=0;
               o = PyString_InternFromString(tstring);
               PyList_SetItem(outList2, k, o);
             } // end loop over third dimension

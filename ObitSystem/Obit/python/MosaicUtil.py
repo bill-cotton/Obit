@@ -241,6 +241,9 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         # Make weight image if needed, first pass or planeWt
         #if WtImage == None:
         if planeWt or haveWtImage:
+            # reset BLC,TRC 
+            inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
+            inImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
             # Get image 
             Image.PGetPlane (inImage, None, doPlane, err)
             OErr.printErrMsg(err, "Error reading image "+str(iPlane)+" for "+Image.PGetName(inImage))
@@ -292,7 +295,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                 Image.PClone2(inImage, SumWtImage, XPixelImage, err)
                 Image.PClone2(inImage, SumWtImage, YPixelImage, err)
                 ImageUtil.PGetXYPixels(WtImage, InterpWtImage, XPixelImage, YPixelImage, err)
-           
+            
             # Interpolated weight image
             #print('if not InterWt'); getMemUse()
             if  not InterpWt:
