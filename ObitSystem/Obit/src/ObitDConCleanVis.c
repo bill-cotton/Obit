@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2023                                          */
+/*;  Copyright (C) 2005-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3315,7 +3315,7 @@ static void  MakeResiduals (ObitDConCleanVis *in, olong *fields,
     /* Get statistics  for image */
     inClass->ObitDConCleanImageStats ((ObitDConClean*)in, field, FALSE, err);
     /* Need Beam statistics? */
-    if (doBeam || in->beamPeakRMS[field]<=0.0)
+    if (doBeam || in->beamPeakRMS[field-1]<=0.0)
       inClass->ObitDConCleanImageStats ((ObitDConClean*)in, field, TRUE, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 

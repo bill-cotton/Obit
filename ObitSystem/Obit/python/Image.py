@@ -316,15 +316,15 @@ class Image(Obit.Image, OData.OData):
         #
         self.Open(READONLY,err)
         if err.isErr:
-            OErr.printErrMsg(err, "Error opening image")
+            OErr.printErrMsg(err, "Error opening image "+self.GetName())
         plane = pixel[2:]
         self.GetPlane(None, plane, err)
         if err.isErr:
-            OErr.printErrMsg(err, "Error reading image")
+            OErr.printErrMsg(err, "Error reading image "+self.GetName())
         out = self.FArray.get(pixel[0]-1, pixel[1]-1)
         self.Close(err)
         if err.isErr:
-            OErr.printErrMsg(err, "Error closing image")
+            OErr.printErrMsg(err, "Error closing image "+self.GetName())
         return out
     # end GetPixel
 
@@ -597,7 +597,7 @@ def newObit(name, filename, disk, exists, err):
     if exists:
         Obit.ImagefullInstantiate (out.me, 1, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error creating Image object")
+        OErr.printErrMsg(err, "Error creating Image object "+name)
     # show any errors 
     #OErr.printErrMsg(err, "newObit: Error verifying file")
     out.FileType = 'FITS'
@@ -653,7 +653,7 @@ def newPFImage(name, filename, disk, exists, err, verbose=True):
     # show any errors if wanted
     if  verbose and err.isErr:
         out.isOK = False
-        OErr.printErrMsg(err, "Error creating FITS image object")
+        OErr.printErrMsg(err, "Error creating FITS image object "+name)
     elif err.isErr:
         out.isOK = False
         OErr.PClear(err)  # Clear unwanted messages
@@ -661,7 +661,7 @@ def newPFImage(name, filename, disk, exists, err, verbose=True):
     outd = out.Desc.Dict
     if outd["inaxes"][0]==777777701:
         out.isOK = False
-        raise TypeError("Error: Object probably uvtab (UV) data")
+        raise TypeError("Error: Object probably uvtab (UV) data "+name)
 
     # It work?
     if not out.isOK:
@@ -745,7 +745,7 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
     # show any errors if wanted
     if verbose and err.isErr:
         out.isOK = False
-        OErr.printErrMsg(err, "Error creating AIPS Image object")
+        OErr.printErrMsg(err, "Error creating AIPS Image object "+name)
     elif err.isErr:
         out.isOK = False
         OErr.PClear(err)  # Clear unwanted messages
@@ -755,7 +755,7 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
     if not out.isOK:
         OErr.PLog(err, OErr.Info, \
                       "Image not found: "+Aname+", "+Aclass+" "+str(disk)+" "+str(seq))
-        OErr.printErrMsg(err, "Error creating AIPS Image object")
+        OErr.printErrMsg(err, "Error creating AIPS Image object "+name)
         return out
     
     # Add File info
@@ -860,7 +860,7 @@ def PReadPlane (inImage, err, blc=None, trc=None):
     # Read image
     inImage.Open(READONLY, err, blc, trc)
     inImage.Read(err)
-    #OErr.printErrMsg(err, "Error reading image")
+    #OErr.printErrMsg(err, "Error reading image "+inImage.GetName())
     imageData = inImage.FArray         # Image FArray (data)
     inImage.Close(err)
     return imageData
@@ -991,7 +991,7 @@ def PCopy (inImage, outImage, err):
     #
     Obit.ImageCopy (inImage.me, outImage.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error copying Image")
+        OErr.printErrMsg(err, "Error copying Image "+inImage.GetName())
     # end PCopy
 
 def PClone (inImage, outImage, err):
@@ -1017,7 +1017,7 @@ def PClone (inImage, outImage, err):
     #
     Obit.ImageClone (inImage.me, outImage.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error cloning Image")
+        OErr.printErrMsg(err, "Error cloning Image "+inImage.GetName())
     # end PClone
 
 def PClone2 (inImage1, inImage2, outImage, err):
@@ -1045,7 +1045,7 @@ def PClone2 (inImage1, inImage2, outImage, err):
     #
     Obit.ImageClone2 (inImage1.me, inImage2.me, outImage.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error cloning Image")
+        OErr.printErrMsg(err, "Error cloning Image "+inImage1.GetName())
     # end PClone2
 
 def PCloneMem (inImage, outImage, err):
@@ -1071,7 +1071,7 @@ def PCloneMem (inImage, outImage, err):
     #
     Obit.ImageCloneMem (inImage.me, outImage.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error cloning Image")
+        OErr.printErrMsg(err, "Error cloning Image "+inImage.GetName())
     # end PCloneMem
 
 def PCopyQuantizeFITS (inImage, outImage, err, fract=0.25, quant=None, \
@@ -1325,7 +1325,8 @@ def POpen (inImage, access, err, blc=None, trc=None):
             InfoList.PAlwaysPutInt   (inInfo, "TRC", dim, trc)
     Obit.ImageOpen(inCast.me, access, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error opening Image")
+        OErr.printErrMsg(err, "Error opening Image "+inImage.GetName())
+        print ("Open:",inImage.List.Dict)
     # end POpen
 
 def PClose (inImage, err):
@@ -1348,7 +1349,7 @@ def PClose (inImage, err):
     #
     Obit.ImageClose (inCast.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error closing Image")
+        OErr.printErrMsg(err, "Error closing Image "+inImage.GetName())
     # end PClose
 
 def PDirty (inImage):
@@ -1388,7 +1389,7 @@ def PRead (inImage, err):
     #
     Obit.ImageRead (inCast.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error reading Image")
+        OErr.printErrMsg(err, "Error reading Image "+inImage.GetName())
     # end PRead
 
 def PWrite (inImage, err):
@@ -1414,7 +1415,7 @@ def PWrite (inImage, err):
     #
     Obit.ImageWrite (inCast.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error writing Image")
+        OErr.printErrMsg(err, "Error writing Image "+inImage.GetName())
     # end PWrite
     
 def PReadFA (inImage, array, err):
@@ -1442,7 +1443,7 @@ def PReadFA (inImage, array, err):
     #
     Obit.ImageReadFA (inCast.me, array.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error reading Image")
+        OErr.printErrMsg(err, "Error reading Image "+inImage.GetName())
     # end PReadFA
 
 def PWriteFA (inImage, array, err):
@@ -1470,7 +1471,7 @@ def PWriteFA (inImage, array, err):
     #
     Obit.ImageWriteFA (inCast.me, array.me, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error writing Image")
+        OErr.printErrMsg(err, "Error writing Image "+inImage.GetName())
     # end PWriteFA
 
 def PGetPlane (inImage, array, plane, err):
@@ -1498,6 +1499,10 @@ def PGetPlane (inImage, array, plane, err):
         raise TypeError("plane must have 5 integer elements")
     if not err.IsA():
         raise TypeError("err MUST be an OErr")
+    # DEBUG
+    # DEBUGinImage.List.set("BLC",[1,1,1,1,1,1,1],ttype='long'); inImage.List.set("BLC",[0,0,0,1,1,1,1],ttype='long'); 
+    # DEBUGprint ("DEBUG GetPlane List before",plane,inImage.List.Dict)
+    # DEBUGprint ("DEBUG GetPlane List before",plane,inImage.__dict__)
     # Make sure plane is long
     lplane=[]
     for p in plane:
@@ -1510,7 +1515,10 @@ def PGetPlane (inImage, array, plane, err):
         larray = array.me
     Obit.ImageGetPlane (inCast.me, larray, lplane, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error reading Image plane")
+        # DEBUG
+        print ("DEBUG GetPlane",inImage.__dict__,inImage.Desc.Dict,plane)
+        print ("DEBUG GetPlane List",inImage.List.Dict)
+        OErr.printErrMsg(err, "Error reading Image plane "+inImage.GetName())
     # end PGetPlane
 
 def PPutPlane (inImage, array, plane, err):
@@ -1550,7 +1558,7 @@ def PPutPlane (inImage, array, plane, err):
         larray = array.me
     Obit.ImagePutPlane (inCast.me, larray, lplane, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error writing Image plane")
+        OErr.printErrMsg(err, "Error writing Image plane "+inImage.GetName())
     # end PPutPlane
 
 def PZapTable (inImage, tabType, tabVer, err):
@@ -1701,7 +1709,7 @@ def PFullInstantiate (inImage, access, err):
     #
     ret = Obit.ImagefullInstantiate (inCast.me, access, err.me)
     if err.isErr:
-        OErr.printErrMsg(err, "Error verifying Images")
+        OErr.printErrMsg(err, "Error verifying Image "+inImage.GetName())
     return ret
     # end PFullInstantiate
 

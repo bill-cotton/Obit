@@ -5093,8 +5093,8 @@ void GetPointingInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     /* Save info to PT table row */
     nsamp    = SDMData->PointingTab->rows[iRow]->numSample;
     outRow->TimeI = inTab->rows[iRow]->timeInterval[1]/nsamp;
-    /* convert center time to start time */
-    stime = inTab->rows[iRow]->timeInterval[0] - 0.5*nsamp*outRow->TimeI;
+    /* center time */
+    stime = inTab->rows[iRow]->timeInterval[0];
     /* Convert antennaID to antenna number */
     if ((inTab->rows[iRow]->antennaId>=0) && 
 	(inTab->rows[iRow]->antennaId<AntArray->nants)) 

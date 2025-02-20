@@ -1,9 +1,9 @@
-; RMSyn
+; Farad
 ;---------------------------------------------------------------
-;! Rotation measure synthesis
+;! Rotation Measure Analysis
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2021-2025
+;;  Copyright (C) 2025
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-RMSyn    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-RMSyn:    Rotation measure synthesis
+Farad    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Farad:    Rotation Measure Analysis
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type of input
 **PARAM** str 128
@@ -69,19 +69,6 @@ outSeq         -1.0      9999.0    Output image seq. #.
                                      0 => highest unique
 **PARAM** int 1
 outDisk                            Output disk #
-**PARAM** boo 1 **DEF** F
-doPhase                            Write phase image?
-**PARAM** str 128
-out2File                           output phase if FITS image
-**PARAM** str 12
-out2Name                           Output phase iname.
-**PARAM** str 6
-out2Class                          Output phase class.
-**PARAM** int 1
-out2Seq         -1.0      9999.0   Output phase seq. #.
-                                   0 => highest unique
-**PARAM** int 1
-out2Disk                           Output phase disk #
 **PARAM** float 1
 minRMSyn                           min RM to evaluate (rad/m^2) 
 **PARAM** float 1
@@ -89,39 +76,40 @@ maxRMSyn                           max RM to evaluate (rad/m^2)
 **PARAM** float 1
 delRMSyn                           RM incr. to evaluate (rad/m^2)
 **PARAM** boo 1 **DEF** F
-doDecon                            Deconvolve?
+doRMSyn                            Only direct search?
 **PARAM** boo 1 **DEF** T
-doRestor                           Restore?
-**PARAM** boo 1 **DEF** F
-doBeam                             Write Beam in pixel [1,1]?
-**PARAM** float 1
-minFlux                            Minimum level in CLEAN
-**PARAM** int 1
-niter                              max. number of CLEAN cycles
-**PARAM** float 1  **DEF** 0.1
-gain                               Loop gain
-**PARAM** float 1  **DEF** 0.0
-Alpha           -20.       20.     Spectral Index to correct
-**PARAM** float 1
-BeamSig                            Restoring Gaussian sigma (rad/m^2)
+doError                            Give Least squares errors?
+**PARAM** float 1 **DEF** 0.5
+minFrac                            Min. fraction of planes included 
+**PARAM** float 1 **DEF** 0.1
+minQUSNR                           Min. SNR for Q and U pixels
 **PARAM** int 1 **DEF** 1
 nThreads            0              Number of threads to use
 **PARAM** str 128
 taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
-RMSyn
+Farad
 Type: Task
-Use:  Create cube of RM Synthesis values
+Use: Do Rotation measure analysis, find peak of Faraday Spectrum
 
-   Evaluates the Faraday depth function between minRMSyn and
-maxRMSyn in increments of delRMSyn and writes to planes in the 
-output cube.
-   If doDecon is True, the function in each pixel is 
-devonvolved using a Hogbom complex CLEAN and then optionally 
-restored with a Gaussian approximation to the central lobe.  	  
-   If doPhase = True, an output image containing the RM phases 
-(radians) is written to out2Name... in addition to the amplitude 
-in outName...
+   Determines the peak amplitude of the Faraday depth spectrum, 
+either by a direct search or from a least squares fit using input 
+Q and U image cubes.  A direct search only is specified by 
+parameter doRMSyn.  The least squares fit is done starting from 
+the result of a direct search which may use a coarser search,
+i.e. larger delRMSyn.
+   The contents of the output file depends on doRMSyn:
+doRMSyn = True
+  plane 1 is the peak rotation measure (RM) (rad m^-2)
+  plane 2 is the EVPA at lambda=0 (rad)
+  plane 3 is the unwrapped polarized intensity
+doRMSyn = False
+  plane 1 is the peak rotation measure (rad m^-2)
+  plane 2 is the EVPA at lambda=0 (rad)
+  plane 3 is the unwrapped polarized intensity
+  plane 4 is the least squares error of RM
+  plane 5 is the least squares error of EVPA
+  plane 6 is the reduced Chi^2 of the fit.
 
 Parameters:
   DataType...."FITS" or "AIPS"
@@ -130,10 +118,11 @@ Parameters:
   inQClass....Q Image class. 
   inQSeq......Q Image seq. #. 0 => highest.
   inQDisk.....Q AIPS Disk drive # of image.
-  inQName.....U Image AIPS name
-  inQClass....U Image class. 
-  inQSeq......U Image seq. #. 0 => highest.
-  inQDisk.....U AIPS Disk drive # of image.
+  inUFile.....U file name if a FITS file
+  inUName.....U Image AIPS name
+  inUClass....U Image class. 
+  inUSeq......U Image seq. #. 0 => highest.
+  inUDisk.....U AIPS Disk drive # of image.
   BLC.........The Bottom Left-hand pixel of the subarray of the 
               image to be plotted. The value (0,0) means (1,1).
   TRC.........The Top Right-hand pixel of the subarray of the 
@@ -141,32 +130,18 @@ Parameters:
               top right hand corner of the entire image.
   outFile.....Output File name if a FITS file
   outName.....Output image name. default = inName
-  outClass....Output image class. 
+  outClass....Output image class.  
   outSeq......Output image seq. #.  0 => highest unique
   outDisk.....Disk drive # of output.  
-  doPhase.....Write phase of output in out2Name...
-  out2File....Output File name if a FITS file
-  out2Name....Output image name. default = inName
-  out2Class...Output image class. 
-  out2Seq.....Output image seq. #.  0 => highest unique
-  out2Disk....Disk drive # of output. 
   minRMSyn....Minimum RM to evaluate (rad/m^2) 
   maxRMSyn....Maximum RM to evaluate (rad/m^2)
   delRMSyn....RM increment for evaluate (rad/m^2)
-  doDecon.....Do CLEAN deconvolution in each pixel?
-  doRestor....Restore CLEANed pixels?
-  doBeam......If True & doDecon, write the restoring beam in 
-              pixel [1,1] of Amp  and phase output.
-	      dirty beam in pixel [1,1] of A&P outputs.
-  minFlux.....Minimum CLEAN level (Jy/bm)
-  niter.......Maximum number of CLEAN cycles (max. 1000)
-  gain........Loop gain for CLEAN.
-  Alpha.......If != 0.0 then correct Q,U data by spectral index 
-              Alpha before computing the Faraday function.
-              -0.7 is typical for synchrotron.
-  BeamSig.....If >0 then the Gaussian sigma (rad/m^2) to use
-              as the restoring beam for the deconvolution.
-	      Otherwise, fit to inner real lobe of beam.
+  doRMSyn.....Only do direct search
+  doError.....Give least squares errors if doRMSyn=False
+  minFrac.....Only include pixels with minFrac fraction of 
+              Q/U planes included.
+  minQUSNR....Only include pixels for which the Q and U 
+              signal-to-noise ratio exceeds minQUSNR. 
   nThreads....If The Obit libraries are compiled with multiple
               thread operation enabled, this parameter sets the 
               number of threads that can be used for parallel 

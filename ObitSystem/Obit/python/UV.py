@@ -116,7 +116,7 @@ Data selection, calibration and editing parameters on List member:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2024
+#  Copyright (C) 2004-2025
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -276,7 +276,7 @@ class UV(Obit.UV, OData.OData):
         return ret
         # end Read
         
-    def Write (self, err, firstVis=None):
+    def Write (self, err, firstVis=None, numVis=None):
         """ 
         Write a UV  persistent (disk) form. Writes buffer attached to UV data, use 
         VisBuf for access.
@@ -285,6 +285,7 @@ class UV(Obit.UV, OData.OData):
         * self     = Python UV object
         * err      = Python Obit Error/message stack
         * firstVis = If given the first 1-rel visibility in data set
+        * numVis   = if given, the number of visibilities to write
         """
         inUV = self
         # Checks
@@ -295,9 +296,11 @@ class UV(Obit.UV, OData.OData):
         #
         # Set first vis?
         if firstVis:
-            d = self.IODesc.Dict
+            d = self.Desc.Dict
             d["firstVis"] = firstVis-1
-            self.IODesc.Dict = d
+            if numVis:
+                d["numVisBuff"] = numVis
+            self.Desc.Dict = d
         # Do I/O
         ret = Obit.UVWrite (inUV.me, err.me)
         if err.isErr:

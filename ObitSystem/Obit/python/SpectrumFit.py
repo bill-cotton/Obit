@@ -13,7 +13,7 @@ with the flux densities at the desired frequencies.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2008-2020
+#  Copyright (C) 2008-2024
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -138,8 +138,8 @@ class SpectrumFit(Obit.SpectrumFit):
         
         Fitted spectral polynomials returned in outImage
         Can run with multiple threads if enabled:
-        OSystem.PAllowThreads(2)  # 2 threads
-        NB: there is a maximum of 20 images in imArr
+        OSystem.PAllowThreads(6)  # 6 threads
+        NB: there is a maximum of 40 images in imArr
         self     = SpectrumFit object, parameters on List:
             refFreq   double scalar Reference frequency for fit [def average of inputs]
             maxChi2   float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]

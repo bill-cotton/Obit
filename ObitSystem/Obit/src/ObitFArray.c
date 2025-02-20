@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2024                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -110,6 +110,8 @@ typedef struct {
   ObitFArray *in2;
   /* Output ObitFArray */
   ObitFArray *out;
+  /* Additional ObitFArrays */
+  ObitFArray *FA_3, *FA_4, *FA_5, *FA_6;
   /* First element (1-rel) number */
   olong        first;
   /* Highest element (1-rel) number */
@@ -182,9 +184,17 @@ static gpointer ThreadFAExtArr (gpointer arg);
 /** Private: Threaded ShiftAdd */
 static gpointer ThreadFAShAdd (gpointer arg);
 
+/** Private: Threaded CplxSMulAccum */
+static gpointer ThreadFACplxSMulAccum (gpointer arg);
+
+/** Private: Threaded CplxMulAccum */
+static gpointer ThreadFACplxMulAccum (gpointer arg);
+
 /** Private: Make Threaded args */
 static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
 			     ObitFArray *in2, ObitFArray *out,
+			     ObitFArray *FA_3, ObitFArray *FA_4,
+			     ObitFArray *FA_5, ObitFArray *FA_6,
 			     olong larg1, olong larg2, olong larg3, 
 			     olong larg4, olong larg5, 
 			     olong larg6, olong larg7, 
@@ -756,7 +766,7 @@ ofloat ObitFArrayMax (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -826,7 +836,7 @@ ofloat ObitFArrayMaxAbs (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
    /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -896,7 +906,7 @@ ofloat ObitFArrayMin (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -1024,7 +1034,7 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
   /* Initialize Threading for initial values */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 
 		    sizeof(ollong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
@@ -1093,8 +1103,8 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
   /* Initialize Threading for histogram */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
-		    sizeof(ollong),  sizeof(ollong), numCell*sizeof(ofloat),sizeof(ofloat), sizeof(ofloat), 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 
+		    sizeof(ollong), sizeof(ollong), numCell*sizeof(ofloat),sizeof(ofloat), sizeof(ofloat), 
 		    sizeof(ollong), sizeof(ollong),
 		    &threadArgs);
   
@@ -1294,7 +1304,7 @@ ofloat ObitFArrayRawRMS (ObitFArray* in)
 
   /* Initialize Threading */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 
 		    sizeof(ollong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
@@ -1374,7 +1384,7 @@ ofloat ObitFArrayRMS0 (ObitFArray* in)
 
   /* Initialize Threading */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 
 		    sizeof(ollong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
@@ -2481,7 +2491,7 @@ void ObitFArrayMaxArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -2536,7 +2546,7 @@ void ObitFArrayMinArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -2590,7 +2600,7 @@ void ObitFArrayExtArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -2644,7 +2654,7 @@ void ObitFArraySumArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -2699,7 +2709,7 @@ void ObitFArrayAvgArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -2754,7 +2764,7 @@ void ObitFArrayAdd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -2837,7 +2847,7 @@ void ObitFArraySub (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -2918,7 +2928,7 @@ void ObitFArrayMul (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -2973,7 +2983,7 @@ void ObitFArrayDiv (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -3442,7 +3452,7 @@ void ObitFArrayShiftAdd (ObitFArray* in1, olong *pos1,
   hiy = MIN (hiy, ny1-1);
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -3554,7 +3564,7 @@ void  ObitFArrayConvGaus (ObitFArray* in, ObitFArray* list, olong ncomp,
 
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, 
+  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 
 			     0, sizeof(olong), 3*sizeof(ofloat), 0, 0, 0, 0,
 			     &threadArgs);
   
@@ -3746,7 +3756,7 @@ ObitFArray*  ObitFArrayHisto (ObitFArray* in, olong n, ofloat min, ofloat max)
 
   /* Initialize Threading */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, NULL, NULL, NULL, NULL, 
 		    sizeof(ollong), sizeof(olong), n*sizeof(ofloat), sizeof(ofloat), sizeof(ofloat), 
 		    sizeof(ollong), sizeof(ollong),
 		    &threadArgs);
@@ -3993,6 +4003,436 @@ void ObitFArrayRoundFill (ObitFArray* in, olong win[3], ofloat value)
 } /* end  ObitFArrayRoundFill */
 
 /**
+ * If elements in in are >= those in out1 then out1 is set to the value in in 
+ * and the corresponding element in out2 is set to value.
+ * Blanking NOT supported
+ * \param in     Input object 
+ * \param out1   First output
+ * \param value  new value for out2
+ * \param out2   Second output whose elements are set to value when
+ *               an element in out1 is updated.
+ */
+void ObitFArrayMaxSetValue (ObitFArray* in, ObitFArray* out1, ofloat value, 
+			    ObitFArray* out2)
+{
+  olong i, ilast;
+#if HAVE_AVX512==1
+  CV16SF v1, v2, v3, vs;
+  MASK16 msk;
+#elif HAVE_AVX==1
+  CV8SF v1, v2, v3, vs, vm;
+#endif
+
+  /* error checks */
+  g_assert (ObitFArrayIsCompatable(in, out1));
+  g_assert (ObitFArrayIsCompatable(out1, out2));
+
+#if HAVE_AVX512==1  /* AVX512 Vector */
+  vs.v   = _mm512_set1_ps(value);  /* vector of value */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v1.v = _mm512_loadu_ps(&in->array[i]);       /* Load from in */
+    v2.v = _mm512_loadu_ps(&out1->array[i]);     /* Load from out1 */
+    msk  = _mm512_cmp_ps_mask(v1.v, v2.v, _CMP_GE_OQ); /* find new max */
+    v2.v = _mm512_mask_blend_ps(msk,v2.v,v1.v);  /* Select out1 */
+    _mm512_storeu_ps(&out1->array[i], v2.v);      /* Save out1 */
+    v3.v = _mm512_loadu_ps(&out2->array[i]);     /* Load from out2 */
+    v3.v = _mm512_mask_blend_ps(msk,v3.v,vs.v);  /* Select out2 */
+    _mm512_storeu_ps(&out2->array[i], v3.v);      /* Save out2 */
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* AVX Vector */
+  vs.v   = _mm256_broadcast_ss(&value);  /* vector of value */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v1.v = _mm256_loadu_ps(&in->array[i]);
+    v2.v = _mm256_loadu_ps(&out1->array[i]);
+    vm.v = _mm256_cmp_ps(v1.v, v2.v, _CMP_GE_OQ); /* find new max */
+    v2.v = _mm256_blendv_ps(v2.v,v1.v, vm.v);  /* Select out1 */
+    _mm256_storeu_ps(&out1->array[i], v2.v);    /* Save out1 */
+    v3.v = _mm256_loadu_ps(&out2->array[i]);
+    v3.v = _mm256_blendv_ps(v3.v,vs.v, vm.v);  /* replace blanks 2 */
+    _mm256_storeu_ps(&out2->array[i], v3.v);    /* Save out2 */
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) {
+    if (in->array[i]>out1->array[i]) {
+      out1->array[i] = in->array[i];
+      out2->array[i] = value;
+    }
+  } /* end loop over array */
+} /* end ObitFArrayMaxSetValue */
+
+/*---------Complex functions using pairs of FArrays -----------------*/
+/**
+ * Amplitude squares from a pair of reals 
+ * out = Fin_r**2 + Fin_i**2
+ * Blanking NOT supported
+ * \param Fin_r  Real part of input
+ * \param Fin_i  Imaginary part of input
+ * \param out    Output object
+ */
+void ObitFArrayCplxAmp2 (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+			 ObitFArray* out)
+{
+  olong i, ilast=0;
+  ofloat *iArr_r = Fin_r->array, *iArr_i = Fin_i->array;
+  ofloat *oArr = out->array;
+#if HAVE_AVX512==1
+  CV16SF v1r, v1i, tv1;
+#elif HAVE_AVX==1
+  CV8SF  v1r, v1i, tv1;
+#endif
+
+   /* error checks */
+  g_assert (ObitFArrayIsCompatable(Fin_r, out));
+  g_assert (ObitFArrayIsCompatable(Fin_i, out));
+
+#if HAVE_AVX512==1  /* AVX512 Vector */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<Fin_r->arraySize-16; i+=16) {
+    v1r.v = _mm512_loadu_ps(&iArr_r[i]);   /* input real */
+    v1r.v = _mm512_mul_ps(v1r.v, v1r.v);   /* square real*/
+    v1i.v = _mm512_loadu_ps(&iArr_i[i]);   /* input imaginary */
+    v1i.v = _mm512_mul_ps(v1i.v, v1i.v);   /* square imaginary*/
+    tv1.v = _mm512_add_ps(v1r.v, v1i.v);   /* Sum */
+    _mm512_storeu_ps(&oArr[i], tv1.v);     /* Save out */
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* AVX Vector */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<Fin_r->arraySize-8; i+=8) {
+    v1r.v = _mm256_loadu_ps(&iArr_r[i]);   /* input real */
+    v1r.v = _mm256_mul_ps(v1r.v, v1r.v);   /* square real*/
+    v1i.v = _mm256_loadu_ps(&iArr_i[i]);   /* input imaginary */
+    v1i.v = _mm256_mul_ps(v1i.v, v1i.v);   /* square imaginary*/
+    tv1.v = _mm256_add_ps(v1i.v, v1r.v);   /* Sum */
+    _mm256_storeu_ps(&oArr[i], tv1.v);     /* Save out */
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  /* Whatever is left */
+  for (i=ilast; i<Fin_r->arraySize; i++) 
+      oArr[i] = iArr_r[i]*iArr_r[i]+iArr_i[i]*iArr_i[i];
+} /* end  ObitFArrayCplxAmp2 */
+
+/**
+ * Amplitude from a pair of reals 
+ * out = sqrt(Fin_r**2 + Fin_i**2)
+ * Blanking NOT supported
+ * \param Fin_r  Real part of input
+ * \param Fin_i  Imaginary part of input
+ * \param out    Output object
+ */
+void ObitFArrayCplxAmp (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+			 ObitFArray* out)
+{
+  olong i, ilast=0;
+  ofloat *iArr_r = Fin_r->array, *iArr_i = Fin_i->array;
+  ofloat *oArr = out->array;
+#if HAVE_AVX512==1
+  CV16SF v1r, v1i, tv1;
+#elif HAVE_AVX==1
+  CV8SF  v1r, v1i, tv1;
+#endif
+
+   /* error checks */
+  g_assert (ObitFArrayIsCompatable(Fin_r, out));
+  g_assert (ObitFArrayIsCompatable(Fin_i, out));
+
+#if HAVE_AVX512==1  /* AVX512 Vector */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<Fin_r->arraySize-16; i+=16) {
+    v1r.v = _mm512_loadu_ps(&iArr_r[i]);   /* input real */
+    v1r.v = _mm512_mul_ps(v1r.v, v1r.v);   /* square real*/
+    v1i.v = _mm512_loadu_ps(&iArr_i[i]);   /* input imaginary */
+    v1i.v = _mm512_mul_ps(v1i.v, v1i.v);   /* square imaginary*/
+    tv1.v = _mm512_add_ps(v1r.v, v1i.v);   /* Sum */
+    tv1.v = _mm512_sqrt_ps(tv1.v);         /* Sqrt */
+    _mm512_storeu_ps(&oArr[i], tv1.v);   /* Save out2 */
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* AVX Vector */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<Fin_r->arraySize-8; i+=8) {
+    v1r.v = _mm256_loadu_ps(&iArr_r[i]);   /* input real */
+    v1r.v = _mm256_mul_ps(v1r.v, v1r.v);   /* square real*/
+    v1i.v = _mm256_loadu_ps(&iArr_i[i]);   /* input imaginary */
+    v1i.v = _mm256_mul_ps(v1i.v, v1i.v);   /* square imaginary*/
+    tv1.v = _mm256_add_ps(v1i.v, v1r.v);   /* Sum */
+    tv1.v = _mm256_sqrt_ps(tv1.v);         /* Sqrt */
+    _mm256_storeu_ps(&oArr[i], tv1.v);     /* Save out2 */
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  /* Whatever is left */
+  for (i=ilast; i<Fin_r->arraySize; i++) 
+    oArr[i] = sqrt(iArr_r[i]*iArr_r[i]+iArr_i[i]*iArr_i[i]);
+} /* end  ObitFArrayCplxAmp */
+
+/**
+ * Phase from a pair of reals 
+ * out = atan2(Fin_i, Fin_r)
+ * Blanking NOT supported
+ * \param Fin_r  Real part of input
+ * \param Fin_i  Imaginary part of input
+ * \param out    Output object
+ */
+void ObitFArrayCplxPhase (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+			  ObitFArray* out)
+{
+  olong i, ilast=0;
+  ofloat *iArr_r = Fin_r->array, *iArr_i = Fin_i->array;
+  ofloat *oArr = out->array;
+#if HAVE_AVX512X==1
+  CV16SF v1r, v1i, tv1;
+#elif HAVE_AVXX==1
+  CV8SF  v1r, v1i, tv1;
+#endif
+
+   /* error checks */
+  g_assert (ObitFArrayIsCompatable(Fin_r, out));
+  g_assert (ObitFArrayIsCompatable(Fin_i, out));
+
+  /****************************************************************
+   atan2 is implemented in the Short Vector Math Library (SVML)
+   which doesn't seem to be supported by gcc
+   AVX disabled
+  ****************************************************************/
+
+#if HAVE_AVX512X==1  /* AVX512 Vector */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<Fin_r->arraySize-16; i+=16) {
+    v1r.v = _mm512_loadu_ps(&iArr_r[i]);   /* input real */
+    v1i.v = _mm512_loadu_ps(&iArr_i[i]);   /* input imaginary */
+    tv1.v = _mm512_atan2_ps(v1i.v, v1r.v); /* atan2 */
+   _mm512_storeu_ps(&oArr[i], tv1.v.v);    /* Save out */
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVXX==1  /* AVX Vector */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<Fin_r->arraySize-8; i+=8) {
+    v1r.v = _mm256_loadu_ps(&iArr_r[i]);    /* input real */
+    v1i.v = _mm256_loadu_ps(&iArr_i[i]);    /* input imaginary */
+    tv1.v = _mm256_atan2_ps(v1i.v, v1r.v);  /* atan2 */
+    _mm256_storeu_ps(&oArr[i], tv1.v);      /* Save out */
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  /* Whatever is left */
+  for (i=ilast; i<Fin_r->arraySize; i++) 
+    oArr[i] = atan2(iArr_i[i], iArr_r[i]);
+} /* end  ObitFArrayCplxPhase */
+
+/**
+ *  Form complex from two FArrays, multiply by complex scalar and 
+ *  complex accumulate
+ * MAY BE BUGGY
+ * Accum += Fin1 * cscalar
+ *  Blanking NOT supported, replace with 0
+ * \param Fin_r   Input FArray for real part, replace blanks w/ 0
+ * \param Fin_i   Input FArray for imaginary part
+ * \param cscalar Complex Scalar value [r,i]
+ * \param Accum_r Real Accumulator
+ * \param Accum_i Imaginary Accumulator
+ */
+void ObitFArrayCplxSMulAccum (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+			      ofloat cscalar[2], 
+			      ObitFArray* Accum_r, ObitFArray* Accum_i) {
+  olong nThreads;
+  FAFuncArg **threadArgs;
+ 
+  /* error checks */
+  g_assert (ObitFArrayIsCompatable(Fin_r, Fin_i));
+  g_assert (ObitFArrayIsCompatable(Accum_r, Fin_i));
+  
+  /* Initialize Threading */
+  nThreads = MakeFAFuncArgs (Fin_r->thread, Fin_r, Fin_i, NULL, Accum_r, Accum_i, 
+			     NULL, NULL, 2*sizeof(ofloat), 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+
+  /* Call routine to do the work */
+  ObitFArrayCplxSMulAccumTh (Fin_r, Fin_i, cscalar, Accum_r, Accum_i, nThreads, (gpointer)threadArgs);
+
+  /* Free local objects */
+  KillFAFuncArgs(nThreads, threadArgs);
+} /* end  ObitFArrayCplxSMulAccum */
+
+/**
+ *  Form complex from two FArrays, multiply by complex scalar and 
+ *  complex accumulate - threading initialized elsewhere.
+ * MAY BE BUGGY
+ * Accum += Fin1 * cscalar
+ *  Blanking NOT supported, replace with 0
+ *  ObitFArrayMakeFAFuncArgs to initialize threading with (elem)
+ * \param Fin_r   Input FArray for real part,      (in)
+ * \param Fin_i   Input FArray for imaginary part  (in2)
+ * \param cscalar Complex Scalar value [r,i]
+ * \param Accum_r Real Accumulator                 (FA_3)
+ * \param Accum_i Imaginary Accumulator            (FA_4)
+ * \param nThreads   Number of thread args allocated
+ * \param threadArgs Thread arguments
+ */
+void ObitFArrayCplxSMulAccumTh (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+				ofloat cscalar[2], 
+				ObitFArray* Accum_r, ObitFArray* Accum_i,
+				olong nThreads, gpointer inArgs) {
+  olong i;
+  olong nTh, nElem, loElem, hiElem, nElemPerThread;
+  ofloat *farr;
+  FAFuncArg **threadArgs = (FAFuncArg**)inArgs;
+
+  /* Divide up work */
+  nElem = Fin_r->arraySize;
+  /* At least 50,000 per thread */
+  nTh = MAX (1, MIN((olong)(0.5+nElem/50000.),nThreads));
+  nElemPerThread = nElem/nTh;
+  if (nElem<100000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    farr = threadArgs[i]->arg1; farr[0] = cscalar[0]; farr[1] = cscalar[1];
+    /* Reset pointers */
+    if (threadArgs[i]->in)   ObitFArrayUnref(threadArgs[i]->in);
+    threadArgs[i]->in  = ObitFArrayRef(Fin_r);
+    if (threadArgs[i]->in2)  ObitFArrayUnref(threadArgs[i]->in2);
+    threadArgs[i]->in2 = ObitFArrayRef(Fin_i);
+    if (threadArgs[i]->FA_3) ObitFArrayUnref(threadArgs[i]->FA_3);
+    threadArgs[i]->FA_3 = ObitFArrayRef(Accum_r);
+    if (threadArgs[i]->FA_4) ObitFArrayUnref(threadArgs[i]->FA_4);
+    threadArgs[i]->FA_4 = ObitFArrayRef(Accum_i);
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
+  }
+
+  /* Do operation */
+  ObitThreadIterator (threadArgs[0]->thread, nTh, 
+		      (ObitThreadFunc)ThreadFACplxSMulAccum,
+		      (gpointer**)threadArgs);
+
+} /* end  ObitFArrayCplxSMulAccumTh */
+
+/**
+ *  Multiply two pairs of FArrays and complex accumulate
+ * MAY BE BUGGY
+ * Accum += Fin1 * Fin2
+ * Blanking NOT supported, replace with 0
+ * \param Fin1_r   First FArray real part
+ * \param Fin1_i   First FArray imaginary part
+ * \param Fin2_r   Second FArray real part
+ * \param Fin2_i   Second FArray imaginary part
+ * \param Accum_r  Real Accumulator
+ * \param Accum_r  Imaginary Accumulator
+ */
+void ObitFArrayCplxMulAccum (ObitFArray* Fin1_r, ObitFArray* Fin1_i, 
+			     ObitFArray* Fin2_r, ObitFArray* Fin2_i, 
+			     ObitFArray* Accum_r, ObitFArray* Accum_i) {
+  olong nThreads;
+  FAFuncArg **threadArgs;
+
+  /* error checks */
+  g_assert (ObitFArrayIsCompatable(Fin1_r, Fin2_r));
+  g_assert (ObitFArrayIsCompatable(Accum_r, Fin1_r));
+  
+  /* Initialize Threading */
+  nThreads = MakeFAFuncArgs (Fin1_r->thread, Fin1_r, Fin1_i, NULL, Fin2_r, Fin2_i, Accum_r, Accum_i, 
+			     0, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+
+  /* Call routine to do the work */
+  ObitFArrayCplxMulAccumTh (Fin1_r, Fin1_i, Fin2_r, Fin2_i, Accum_r,  Accum_i, 
+			    nThreads, (gpointer)threadArgs);
+
+  /* Free local objects */
+  KillFAFuncArgs(nThreads, threadArgs);
+} /* end  ObitFArrayCplxMulAccum */
+
+/**
+ *  Form complex from two FArrays, multiply by complex scalar and 
+ *  complex accumulate - threading managed elsewhere.
+ * MAY BE BUGGY
+ * Accum += Fin1 * Fin2
+ *  ObitFArrayMakeFAFuncArgs to initialize threading with (elem)
+ * \param Fin1_r   First FArray real part         (in)
+ * \param Fin1_i   First FArray imaginary part    (in2)
+ * \param Fin2_r   Second FArray real part        (FA_3)
+ * \param Fin2_i   Second FArray imaginary part   (FA_4)
+ * \param Accum_r  Real Accumulator               (FA_5)
+ * \param Accum_r  Imaginary Accumulator          (FA_6)
+ * \param nThreads   Number of thread args allocated
+ * \param threadArgs Thread arguments
+ */
+void ObitFArrayCplxMulAccumTh (ObitFArray* Fin1_r, ObitFArray* Fin1_i, 
+			       ObitFArray* Fin2_r, ObitFArray* Fin2_i, 
+			       ObitFArray* Accum_r,ObitFArray* Accum_i,
+			       olong nThreads, gpointer inArgs) {
+  olong i;
+  olong nTh, nElem, loElem, hiElem, nElemPerThread;
+  FAFuncArg **threadArgs = (FAFuncArg**)inArgs;
+
+  /* Divide up work */
+  nElem = Fin1_r->arraySize;
+  /* At least 50,000 per thread */
+  nTh = MAX (1, MIN((olong)(0.5+nElem/50000.),nThreads));
+  nElemPerThread = nElem/nTh;
+  if (nElem<100000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    /* Reset pointers */
+    if (threadArgs[i]->in)   ObitFArrayUnref(threadArgs[i]->in);
+    threadArgs[i]->in  = ObitFArrayRef(Fin1_r);
+    if (threadArgs[i]->in2)  ObitFArrayUnref(threadArgs[i]->in2);
+    threadArgs[i]->in2 = ObitFArrayRef(Fin1_i);
+    if (threadArgs[i]->FA_3) ObitFArrayUnref(threadArgs[i]->FA_3);
+    threadArgs[i]->FA_3 = ObitFArrayRef(Fin2_r);
+    if (threadArgs[i]->FA_4) ObitFArrayUnref(threadArgs[i]->FA_4);
+    threadArgs[i]->FA_4 = ObitFArrayRef(Fin2_i);
+    if (threadArgs[i]->FA_5) ObitFArrayUnref(threadArgs[i]->FA_5);
+    threadArgs[i]->FA_5 = ObitFArrayRef(Accum_r);
+    if (threadArgs[i]->FA_6) ObitFArrayUnref(threadArgs[i]->FA_6);
+    threadArgs[i]->FA_6 = ObitFArrayRef(Accum_i);
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
+  }
+
+  /* Do operation */
+  ObitThreadIterator (threadArgs[0]->thread, nTh, 
+		      (ObitThreadFunc)ThreadFACplxMulAccum,
+		      (gpointer**)threadArgs);
+
+} /* end  ObitFArrayCplxMulAccumTh */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitFArrayClassInit (void)
@@ -4114,6 +4554,8 @@ static void ObitFArrayClassInfoDefFn (gpointer inClass)
     (ObitFArrayRectFillFP)ObitFArrayRectFill;
   theClass->ObitFArrayRoundFill = 
     (ObitFArrayRoundFillFP)ObitFArrayRoundFill;
+  theClass->ObitFArrayMaxSetValue = 
+    (ObitFArrayMaxSetValueFP)ObitFArrayMaxSetValue;
 
 } /* end ObitFArrayClassDefFn */
 
@@ -4176,6 +4618,65 @@ void ObitFArrayClear (gpointer inn)
     ParentClass->ObitClear (inn);
   
 } /* end ObitFArrayClear */
+
+/**
+ * Make arguments for a Threaded ThreadFAFunc?
+ * For use outside the ObitFArray class
+ * Use NULL or 0 for values not used
+ * \param thread     ObitThread object to be used
+ * \param in         FA to be operated on
+ * \param in2        2nd FA to be operated on
+ * \param out        output FA
+ * \param FA_3       Additional FArray
+ * \param FA_4       Additional FArray
+ * \param FA_5       Additional FArray
+ * \param FA_6       Additional FArray
+ * \param larg1      Length of function dependent arg1 in floats
+ * \param larg2      Length of function dependent arg2 in floats
+ * \param larg3      Length of function dependent arg3 in floats
+ * \param larg4      Length of function dependent arg4 in floats
+ * \param larg5      Length of function dependent arg5 in floats
+ * \param larg6      Length of function dependent arg6 in floats
+ * \param larg7      Length of function dependent arg7 in floats
+ * \param ThreadArgs[out] Created array of CAFuncArg, 
+ *                   delete with ObitFArrayKillCAFuncArgs
+ * \return number of elements in args (number of allowed threads).
+ */
+olong ObitFArrayMakeFAFuncArgs (ObitThread *thread, 
+				ObitFArray *in,	ObitFArray *in2, 
+				ObitFArray *out,
+				ObitFArray *FA_3, ObitFArray *FA_4,
+				ObitFArray *FA_5, ObitFArray *FA_6,
+				olong larg1, olong larg2, olong larg3, 
+				olong larg4, olong larg5,
+				olong larg6, olong larg7, 
+				gpointer *outArgs)
+{
+  olong nThreads;
+  FAFuncArg **ThreadArgs=NULL;
+  /* Use class internal version */
+  nThreads = MakeFAFuncArgs(thread, in, in2, out, FA_3, FA_4, FA_5, FA_6, 
+			    larg1,larg2,larg3,larg4,larg5,larg6,larg7,
+			    &ThreadArgs);
+  
+  *outArgs = (gpointer)ThreadArgs;
+  return nThreads;
+} /*  end ObitFArrayMakeFAFuncArgs */
+
+/**
+ * Delete arguments for ThreadfAFunc, stop thread pool
+ * \param nargs      number of elements in ThreadArgs.
+ * \param inArgs     pointer to array of FAFuncArg
+ */
+void ObitFArrayKillFAFuncArgs (olong nargs, gpointer inArgs)
+{
+  FAFuncArg **ThreadArgs = (FAFuncArg**)inArgs;
+
+  if (ThreadArgs==NULL) return;
+
+  /* Use class function */
+  KillFAFuncArgs (nargs, ThreadArgs);
+} /*  end ObitFArrayKillFAFuncArgs */
 
 /**
  * Find maximum value and position in a subset of an FArray, 
@@ -5390,11 +5891,215 @@ static gpointer ThreadFAConvGaus (gpointer arg)
 } /*  end ThreadFAConvGaus */
 
 /**
+ * Multiply complex from two FArrays by complex scalar and 
+ * complex accumulate. Magic value blanking not supported.
+ * Callable as thread
+ * \param arg Pointer to FAFuncArg argument with elements:
+ * \li in       Real part of input
+ * \li in2      Imaginary part of input
+ * \li arg1     Real/Imaginary parts of scalar
+ * \li FA_3     Output real accumulator
+ * \li FA_4     Output imaginary accumulator
+ * \li first    First element (1-rel) number
+ * \li last     Highest element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadFACplxSMulAccum (gpointer arg)
+{
+  /* Get arguments from structure */
+  FAFuncArg *largs = (FAFuncArg*)arg;
+  ObitFArray *Fin_r     = largs->in;
+  ObitFArray *Fin_i     = largs->in2;
+  ofloat     *cscalar   = largs->arg1;
+  ObitFArray *Accum_r   = largs->FA_3;
+  ObitFArray *Accum_i   = largs->FA_4;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last;
+
+  ofloat tr1, ti1, tr2, ti2;
+  olong i, ilast;
+  ofloat *iArr_r = Fin_r->array,   *iArr_i = Fin_i->array;
+  ofloat *oArr_r = Accum_r->array, *oArr_i = Accum_i->array;
+#if HAVE_AVX512==1
+  CV16SF v1r, v1i, sr, si, tv1, tv2, tv3;
+#elif HAVE_AVXX==1
+  CV8SF  v1r, v1i, sr, si, tv1, tv2, tv3;
+#endif
+  
+  if (hiElem<loElem) goto finish;
+  tr2 = cscalar[0]; ti2 = cscalar[1];
+  
+#if HAVE_AVX512==1  /* AVX 512 Vector (16 float) */
+  sr.v = _mm512_set1_ps(tr2); /* Scalar real */
+  si.v = _mm512_set1_ps(ti2); /* Scalar imaginary */
+  for (i=loElem; i<hiElem-16; i+=16) { 
+    v1r.v = _mm512_loadu_ps(&iArr_r[i]);  /* Input reals */
+    tv1.v = _mm512_mul_ps (v1r.v, sr.v);  /* tr1*tr2 */
+    v1i.v = _mm512_loadu_ps(&iArr_i[i]);  /* Input imaginaries */
+    tv2.v = _mm512_mul_ps (v1i.v, si.v);  /* ti1*ti2 */
+    tv1.v = _mm512_sub_ps (tv1.v, tv2.v); /* now Real part */
+    tv3.v = _mm512_loadu_ps(&oArr_r[i]);  /* Output reals */
+    tv3.v = _mm512_add_ps (tv3.v, tv1.v); /* Update reals */
+    _mm512_storeu_ps(&oArr_r[i], tv3.v);  /* store reals */
+    tv3.v = _mm512_mul_ps (v1i.v, sr.v);  /* ti1*tr2 */
+    tv1.v = _mm512_mul_ps (v1r.v, si.v);  /* tr1*ti2 */
+    tv2.v = _mm512_add_ps (tv3.v, tv1.v); /* now Imaginary part */
+    tv3.v = _mm512_loadu_ps(&oArr_i[i]);  /* Output reals */
+    tv3.v = _mm512_add_ps (tv3.v, tv2.v); /* Update imag */
+    _mm512_storeu_ps(&oArr_i[i], tv3.v);  /* store reals */
+  } /* end outer loop */
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVXXX==1  /* AVX Vector (8 float) */ 
+  sr.v = _mm256_broadcast_ss(&tr2); /* Scalar real */
+  si.v = _mm256_broadcast_ss(&ti2); /* Scalar imaginary */
+  for (i=loElem; i<hiElem-8; i+=8) {
+    v1r.v = _mm256_loadu_ps(&iArr_r[i]);  /* Input reals */
+    tv1.v = _mm256_mul_ps (v1r.v, sr.v);  /* tr1*tr2 */
+    v1i.v = _mm256_loadu_ps(&iArr_i[i]);  /* Input imaginaries */
+    tv2.v = _mm256_mul_ps (v1i.v, si.v);  /* ti1*ti2 */
+    tv1.v = _mm256_sub_ps (tv1.v, tv2.v); /* now Real part */
+    tv3.v = _mm256_loadu_ps(&oArr_r[i]);  /* Output real */
+    tv3.v = _mm256_add_ps (tv3.v, tv1.v); /* Update reals */
+    _mm256_storeu_ps(&oArr_r[i], tv3.v);  /* Save real */
+    tv3.v = _mm256_mul_ps (v1i.v, sr.v);  /* ti1*tr2 */
+    tv1.v = _mm256_mul_ps (v1r.v, si.v);  /* tr1*ti2 */
+    tv2.v = _mm256_add_ps (tv3.v, tv1.v); /* now Imaginary part */
+    tv3.v = _mm256_loadu_ps(&oArr_i[i]);  /* Output imaginary */
+    tv3.v = _mm256_add_ps (tv3.v, tv2.v); /* Update imag */
+    _mm256_storeu_ps(&oArr_i[i], tv3.v);  /* Save imag */
+  } /* end outer loop */
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  /* Loop over whatever is left over */
+  for (i=ilast; i<hiElem; i++) {
+    tr1 = iArr_r[i];
+    ti1 = iArr_i[i];
+    oArr_r[i] += tr1*tr2 - ti1*ti2;
+    oArr_i[i] += ti1*tr2 + tr1*ti2;
+  } /* end loop over array */
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadFACplxSMulAccum */
+
+/**
+ * Complex multiply from pairs of floats, accumulate
+ * complex accumulate. Magic value blanking not supported.
+ * Callable as thread
+ * \param arg Pointer to FAFuncArg argument with elements:
+ * \li in       Real part of 1st input
+ * \li in2      Imaginary part of 1st input
+ * \li FA_3     Real part of 2nd input
+ * \li FA_4     Imaginary part of 2nd input
+ * \li FA_5     Output real accumulator
+ * \li FA_6     Output imaginary accumulator
+ * \li first    First element (1-rel) number
+ * \li last     Highest element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadFACplxMulAccum (gpointer arg)
+{
+  /* Get arguments from structure */
+  FAFuncArg *largs = (FAFuncArg*)arg;
+  ObitFArray *Fin1_r    = largs->in;
+  ObitFArray *Fin1_i    = largs->in2;
+  ObitFArray *Fin2_r    = largs->FA_3;
+  ObitFArray *Fin2_i    = largs->FA_4;
+  ObitFArray *Accum_r   = largs->FA_5;
+  ObitFArray *Accum_i   = largs->FA_6;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last;
+
+  ofloat tr1, ti1, tr2, ti2;
+  olong i, ilast;
+  ofloat *iArr1_r = Fin1_r->array,  *iArr1_i = Fin1_i->array;
+  ofloat *iArr2_r = Fin2_r->array,  *iArr2_i = Fin2_i->array;
+  ofloat *oArr_r  = Accum_r->array, *oArr_i = Accum_i->array;
+#if HAVE_AVX512==1
+  CV16SF v1r, v1i, v2r, v2i, tv1, tv2, tv3;
+#elif HAVE_AVX==1
+  CV8SF  v1r, v1i, v2r, v2i, tv1, tv2, tv3;
+#endif
+  
+  if (hiElem<loElem) goto finish;
+  
+#if HAVE_AVX512==1  /* AVX 512 Vector (16 float) */
+  for (i=loElem; i<hiElem-16; i+=16) {
+    v1r.v = _mm512_loadu_ps(&iArr1_r[i]);  /* Input 1st  reals */
+    v2r.v = _mm512_loadu_ps(&iArr2_r[i]);  /* Input 2nd reals */
+    tv1.v = _mm512_mul_ps (v1r.v, v2r.v);  /* tr1*tr2 */
+    v1i.v = _mm512_loadu_ps(&iArr1_i[i]);  /* Input 1st imaginaries */
+    v2i.v = _mm512_loadu_ps(&iArr2_i[i]);  /* Input 2nd imaginaries */
+    tv2.v = _mm512_mul_ps (v1i.v, v2i.v);  /* ti1*ti2 */
+    tv1.v = _mm512_sub_ps (tv1.v, tv2.v);  /* now Real part */
+    tv3.v = _mm512_loadu_ps(&oArr_r[i]);   /* Output reals */
+    tv3.v = _mm512_add_ps (tv3.v, tv1.v);  /* Update reals */
+    _mm512_storeu_ps(&oArr_r[i], tv3.v);   /* store reals */
+    tv3.v = _mm512_mul_ps (v1i.v, v2r.v);  /* ti1*tr2 */
+    tv1.v = _mm512_mul_ps (v1r.v, v2i.v);  /* tr1*ti2 */
+    tv2.v = _mm512_add_ps (tv3.v, tv1.v);  /* now Imaginary part */
+    tv3.v = _mm512_loadu_ps(&oArr_i[i]);   /* Output reals */
+    tv3.v = _mm512_add_ps (tv3.v, tv2.v);  /* Update imag */
+    _mm512_storeu_ps(&oArr_i[i], tv3.v);   /* store imag */
+  } /* end outer loop */
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* AVX Vector (8 float) */ 
+  for (i=loElem; i<hiElem-8; i+=8) {
+    v1r.v = _mm256_loadu_ps(&iArr1_r[i]);  /* Input 1st reals */
+    v2r.v = _mm256_loadu_ps(&iArr2_r[i]);  /* Input 2nd reals */
+    tv1.v = _mm256_mul_ps (v1r.v ,v2r.v);  /* tr1*tr2 */
+    v1i.v = _mm256_loadu_ps(&iArr1_i[i]);  /* Input 1st imaginaries */
+    v2i.v = _mm256_loadu_ps(&iArr2_i[i]);  /* Input 2nd imaginaries */
+    tv2.v = _mm256_mul_ps (v1i.v, v2i.v);  /* ti1*ti2 */
+    tv1.v = _mm256_sub_ps (tv1.v, tv2.v);  /* now Real part */
+    tv3.v = _mm256_loadu_ps(&oArr_r[i]);   /* Output reals */
+    tv3.v = _mm256_add_ps (tv3.v, tv1.v);  /* Update reals */
+    _mm256_storeu_ps(&oArr_r[i], tv3.v);   /* Save real */
+    tv3.v = _mm256_mul_ps (v1i.v, v2r.v);  /* ti1*tr2 */
+    tv1.v = _mm256_mul_ps (v1r.v, v2i.v);  /* tr1*ti2 */
+    tv2.v = _mm256_add_ps (tv3.v, tv1.v);  /* now Imaginary part */
+    tv3.v = _mm256_loadu_ps(&oArr_i[i]);   /* Output imags */
+    tv3.v = _mm256_add_ps (tv3.v, tv2.v);  /* Update imag */
+    _mm256_storeu_ps(&oArr_i[i], tv3.v);   /* Save imag */
+  } /* end outer loop */
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  /* Loop over whatever is left over */
+  for (i=ilast; i<hiElem; i++) {
+    tr1 = iArr1_r[i]; ti1 = iArr1_i[i];
+    tr2 = iArr2_r[i]; ti2 = iArr2_i[i];
+    oArr_r[i] += tr1*tr2 - ti1*ti2;
+    oArr_i[i] += ti1*tr2 + tr1*ti2;
+  } /* end loop over array */
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadCplxMulAccum */
+
+/**
  * Make arguments for a Threaded ThreadFAFunc?
  * \param thread     ObitThread object to be used
  * \param in         FA to be operated on
  * \param in2        2nd FA to be operated on
  * \param out        output FA
+ * \param FA_3       Additional FA
+ * \param FA_4       Additional FA
+ * \param FA_5       Additional FA
+ * \param FA_6       Additional FA
  * \param larg1      Length of function dependent arg1 in bytes
  * \param larg2      Length of function dependent arg2 in bytes
  * \param larg3      Length of function dependent arg3 in bytes
@@ -5408,6 +6113,8 @@ static gpointer ThreadFAConvGaus (gpointer arg)
  */
 static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
 			     ObitFArray *in2, ObitFArray *out,
+			     ObitFArray *FA_3, ObitFArray *FA_4,
+			     ObitFArray *FA_5, ObitFArray *FA_6,
 			     olong larg1, olong larg2, olong larg3, 
 			     olong larg4, olong larg5,
 			     olong larg6, olong larg7, 
@@ -5429,8 +6136,16 @@ static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
     (*ThreadArgs)[i]->in    = ObitFArrayRef(in);
     if (in2) (*ThreadArgs)[i]->in2   = ObitFArrayRef(in2);
     else (*ThreadArgs)[i]->in2   = NULL;
-    if (out) (*ThreadArgs)[i]->out   = ObitFArrayRef(out);
+    if (out)  (*ThreadArgs)[i]->out   = ObitFArrayRef(out);
     else (*ThreadArgs)[i]->out = NULL;
+    if (FA_3) (*ThreadArgs)[i]->FA_3  = ObitFArrayRef(FA_3);
+    else (*ThreadArgs)[i]->FA_3 = NULL;
+    if (FA_4) (*ThreadArgs)[i]->FA_4  = ObitFArrayRef(FA_4);
+    else (*ThreadArgs)[i]->FA_4 = NULL;
+    if (FA_5) (*ThreadArgs)[i]->FA_5  = ObitFArrayRef(FA_5);
+    else (*ThreadArgs)[i]->FA_5 = NULL;
+    if (FA_6) (*ThreadArgs)[i]->FA_6  = ObitFArrayRef(FA_6);
+    else (*ThreadArgs)[i]->FA_6 = NULL;
     (*ThreadArgs)[i]->first = 1;
     (*ThreadArgs)[i]->last  = in->arraySize;
     (*ThreadArgs)[i]->value = 0.0;
@@ -5472,6 +6187,10 @@ static void KillFAFuncArgs (olong nargs, FAFuncArg **ThreadArgs)
       if (ThreadArgs[i]->in)   ObitFArrayUnref(ThreadArgs[i]->in);
       if (ThreadArgs[i]->in2)  ObitFArrayUnref(ThreadArgs[i]->in2);
       if (ThreadArgs[i]->out)  ObitFArrayUnref(ThreadArgs[i]->out);
+      if (ThreadArgs[i]->FA_3) ObitFArrayUnref(ThreadArgs[i]->FA_3);
+      if (ThreadArgs[i]->FA_4) ObitFArrayUnref(ThreadArgs[i]->FA_4);
+      if (ThreadArgs[i]->FA_5) ObitFArrayUnref(ThreadArgs[i]->FA_5);
+      if (ThreadArgs[i]->FA_6) ObitFArrayUnref(ThreadArgs[i]->FA_6);
       if (ThreadArgs[i]->arg1) g_free(ThreadArgs[i]->arg1);
       if (ThreadArgs[i]->arg2) g_free(ThreadArgs[i]->arg2);
       if (ThreadArgs[i]->arg3) g_free(ThreadArgs[i]->arg3);

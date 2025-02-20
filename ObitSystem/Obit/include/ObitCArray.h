@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -154,7 +154,7 @@ typedef void (*ObitCArraySMulFP) (ObitCArray* in, ofloat scalar);
 void ObitCArrayCSAdd (ObitCArray* in, ofloat scalar[2]);
 typedef void (*ObitCArrayCSAddFP) (ObitCArray* in, ofloat scalar[2]);
 
-/** Public: Multiply elements of a CArray by a complex scalar*/
+/** Public: Multiply elements of a CArray by a complex scalar */
 void ObitCArrayCSMul (ObitCArray* in, ofloat scalar[2]);
 typedef void (*ObitCArrayCSMulFP) (ObitCArray* in, ofloat scalar[2]);
 
@@ -227,11 +227,15 @@ typedef void (*ObitCArrayImagFP) (ObitCArray* in, ObitCArray* out);
 
 /** Public: Return the amplitudes of a CArray in an FArray */
 void ObitCArrayAmp (ObitCArray* in, ObitFArray* out);
-typedef void (*ObitCArrayAmpFP) (ObitCArray* in, ObitCArray* out);
+typedef void (*ObitCArrayAmpFP) (ObitCArray* in, ObitFArray* out);
 
-/** Public: Return the phasess of a CArray in an FArray */
+/** Public: Return the amplitudes^2 of a CArray in an FArray */
+void ObitCArrayAmp2 (ObitCArray* in, ObitFArray* out);
+typedef void (*ObitCArrayAmp2FP) (ObitCArray* in, ObitFArray* out);
+
+/** Public: Return the phases of a CArray in an FArray */
 void ObitCArrayPhase (ObitCArray* in, ObitFArray* out);
-typedef void (*ObitCArrayPhaseFP) (ObitCArray* in, ObitCArray* out);
+typedef void (*ObitCArrayPhaseFP) (ObitCArray* in, ObitFArray* out);
 
 /** Public: Convert a half plane 2D "center at edges" array to proper order */
 void ObitCArray2DCenter (ObitCArray* in);
@@ -247,11 +251,59 @@ ObitCArray* ObitCArrayAddConjg (ObitCArray* in, olong numConjCol);
 typedef ObitCArray* (*ObitCArrayAddConjgFP) (ObitCArray* in, 
 					     olong numConjCol);
 
+/** Public: Form complex from two FArrays, multiply by complex scalar and 
+    complex accumulate */
+void ObitCArraySMulAccum (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+			  ofloat cscalar[2], ObitCArray* Accum);
+typedef void (*ObitCArraySMulAccumFP) (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+				       ofloat cscalar[2], ObitCArray* Accum);
+
+/** Public: Form complex from two FArrays, multiply by complex scalar and 
+    complex accumulate - Threading already set up */
+void ObitCArraySMulAccumTh (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+			    ofloat cscalar[2], ObitCArray* Accum,
+			    olong nThread, gpointer threadArgs);
+typedef void (*ObitCArraySMulAccumThFP) (ObitFArray* Fin_r, ObitFArray* Fin_i, 
+					 ofloat cscalar[2], ObitCArray* Accum,
+					 olong nThread, gpointer threadArgs);
+
+/** Public: Multiply 2 complex FArrays pairs and accumulate */
+void ObitCArrayMulAccum 
+  (ObitFArray* Fin1_r, ObitFArray* Fin1_i, 
+   ObitFArray* Fin2_r, ObitFArray* Fin2_i, 
+   ObitCArray* Accum);
+
+/** Public: Multiply 2 complex FArrays pairs and accumulate
+    - Threading managed externally */
+void ObitCArrayMulAccumTh 
+  (ObitFArray* Fin1_r, ObitFArray* Fin1_i, 
+   ObitFArray* Fin2_r, ObitFArray* Fin2_i, 
+   ObitCArray* Accum,
+   olong nThread, gpointer threadArgs);
+
+/** Public: Find Maximum of elements of two arrays, set values when found */
+void ObitCArrayMaxSetValues (ObitFArray* in, ObitFArray* out1, ofloat value, 
+			     ObitFArray* out2, ObitCArray* in2, ObitCArray* out3);
 /*---------------Vector/matrix functions---------------------------*/
 /** Public: Matrix inner multiply */
 void ObitCArrayMatrixMult (ObitCArray* in1, ObitCArray* in2, ObitCArray* out);
 typedef void (*ObitCArrayMatrixMultFP) (ObitCArray* in1, ObitCArray* in2, 
 					ObitCArray* out);
+
+/*-------------- Threading routines ----------------------------------*/
+/** Public: Make Threaded args */
+olong ObitCArrayMakeCAFuncArgs (ObitThread *thread, ObitCArray *in,
+				ObitCArray *in2, ObitCArray *out, 
+				ObitFArray *FA_1, ObitFArray *FA_2,
+				ObitFArray *FA_3, ObitFArray *FA_4,
+				olong larg1, olong larg2, olong larg3, 
+				olong larg4, olong larg5, 
+				olong larg6, olong larg7, 
+				gpointer *ThreadArgs);
+
+/** Public: Delete Threaded args */
+void ObitCArrayKillCAFuncArgs (olong nargs, gpointer ThreadArgs);
+
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

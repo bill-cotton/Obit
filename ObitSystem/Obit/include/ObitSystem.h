@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -141,6 +141,9 @@ void ObitSystemSetMaxRuntime  (ofloat maxRealTime);
 
 /** Public: Get current run time */
 ofloat ObitSystemGetCurrRuntime (void);
+
+/** Public: Write Runtime/CPU usage to message */
+void ObitSystemUsage (ObitSystem *in, ObitErr *err);
 
 /*-------------------Class Info--------------------------*/
 /**

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2024                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -400,13 +400,72 @@ typedef ofloat  (*ObitFArrayRandomFP) (ofloat mean, ofloat sigma);
 void ObitFArrayRandomFill (ObitFArray* in, ofloat mean, ofloat sigma);
 typedef void  (*ObitFArrayRandomFillFP) (ObitFArray* in, ofloat mean, ofloat sigma);
 
-/** Public: Fill a rectangular subregion win= blc,trc*/
+/** Public: Fill a rectangular subregion win= blc,trc */
 void ObitFArrayRectFill (ObitFArray* in, olong win[4], ofloat value);
 typedef void  (*ObitFArrayRectFillFP) (ObitFArray* in, olong win[4], ofloat value);
 
-/** Public: Fill a round subregion win = radius, center*/
+/** Public: Fill a round subregion win = radius, center */
 void ObitFArrayRoundFill (ObitFArray* in, olong win[3], ofloat value);
 typedef void  (*ObitFArrayRoundFillFP) (ObitFArray* in, olong win[3], ofloat value);
+
+/** Public: Find Maximum of elements of two arrays, set values when found */
+void ObitFArrayMaxSetValue (ObitFArray* in, ObitFArray* out1, ofloat value, 
+			    ObitFArray* out2);
+typedef void (*ObitFArrayMaxSetValueFP) (ObitFArray* in, ObitFArray* out1, 
+					 ofloat value, ObitFArray* out2);
+
+/*---------Complex functions using pairs of FArrays -----------------*/
+/** Public: Amplitude squares from a pair of reals */
+void ObitFArrayCplxAmp2 (ObitFArray* Fin_r, ObitFArray* Fin_i, ObitFArray* out);
+
+/** Public: Amplitude  from a pair of reals */
+void ObitFArrayCplxAmp (ObitFArray* Fin_r, ObitFArray* Fin_i, ObitFArray* out);
+
+/** Public: Phase from a pair of reals */
+void ObitFArrayCplxPhase (ObitFArray* Fin_r, ObitFArray* Fin_i, ObitFArray* out);
+
+/** Public: Form complex from two FArrays, multiply by complex scalar and 
+    complex accumulate */
+void ObitFArrayCplxSMulAccum 
+  (ObitFArray* Fin_r, ObitFArray* Fin_i, ofloat cscalar[2], 
+   ObitFArray* Accum_r, ObitFArray* Accum_i);
+
+/** Public: Form complex from two FArrays, multiply by complex scalar and 
+    accumulate - Threading managed externally */
+void ObitFArrayCplxSMulAccumTh 
+  (ObitFArray* Fin_r, ObitFArray* Fin_i, ofloat cscalar[2], 
+   ObitFArray* Accum_r, ObitFArray* Accum_i,
+   olong nThread, gpointer threadArgs);
+
+/** Public: Multiply 2 complex FArrays pairs and accumulate */
+void ObitFArrayCplxMulAccum 
+  (ObitFArray* Fin1_r, ObitFArray* Fin1_i, 
+   ObitFArray* Fin2_r, ObitFArray* Fin2_i, 
+   ObitFArray* Accum_r, ObitFArray* Accum_i);
+
+/** Public: Multiply 2 complex FArrays pairs and accumulate
+    - Threading managed externally */
+void ObitFArrayCplxMulAccumTh 
+  (ObitFArray* Fin1_r, ObitFArray* Fin1_i, 
+   ObitFArray* Fin2_r, ObitFArray* Fin2_i, 
+   ObitFArray* Accum_r, ObitFArray* Accum_i,
+   olong nThread, gpointer threadArgs);
+
+/*-------------- Threading routines ----------------------------------*/
+/** Public: Make Threaded args */
+olong ObitFArrayMakeFAFuncArgs (ObitThread *thread, 
+				ObitFArray *in,   ObitFArray *in2,
+				ObitFArray *out,
+				ObitFArray *FA_3, ObitFArray *FA_4,
+				ObitFArray *FA_5, ObitFArray *FA_6,
+				olong larg1, olong larg2, olong larg3, 
+				olong larg4, olong larg5, 
+				olong larg6, olong larg7, 
+				gpointer *ThreadArgs);
+
+/** Public: Delete Threaded args */
+void ObitFArrayKillFAFuncArgs (olong nargs, gpointer ThreadArgs);
+
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

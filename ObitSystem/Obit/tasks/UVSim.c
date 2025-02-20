@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Simulate UV data                                                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2022                                          */
+/*;  Copyright (C) 2009-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -489,12 +489,12 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
 
     /* outName given? */
-    ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&strTemp);
-    /* if not use inName */
-    if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
-      ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
     for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
-    for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
+    ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&strTemp);
+    /* if not use "No Name" */
+    if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12))) {
+      strncpy (Aname, "No Name     ", 13);
+    } else {for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];}
     /* Save any defaulting on myInput */
     dim[0] = 12;
     ObitInfoListAlwaysPut (myInput, "outName", OBIT_string, dim, Aname);
@@ -980,13 +980,6 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
     strncpy (desc->ptype[ncol], "SOURCE  ", UVLEN_KEYWORD);
     ncol++;
     
-    /* FreqID */
-    strncpy (desc->ptype[ncol], "FREQSEL ", UVLEN_KEYWORD);
-    ncol++;
-    
-    /* Integration time */
-    strncpy (desc->ptype[ncol], "INTTIM  ", UVLEN_KEYWORD);
-    ncol++;
     desc->nrparm = ncol;  /* Number of random parameters */
     
     /* Data Matrix */
@@ -1124,6 +1117,7 @@ void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
   /* Square of UV Range */
   ObitInfoListGetTest(myInput, "UVRange", &type, dim, UVRange);
+  if (UVRange[1]<=0.0) UVRange[1] = 1.0e10;  /* Sky's the limit */
   UVRange[0]  *= 1000.0;     UVRange[1]  *= 1000.0;  /* to wavelengths */
   UVRange[0]  *= UVRange[0]; UVRange[1]  *= UVRange[1];
  
@@ -1195,8 +1189,6 @@ void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
 	ObitUVDescSetAnts(desc, Buffer, ant1, ant2, suba);
 	Buffer[desc->iloct] = time;
 	Buffer[desc->ilocsu] = SourceID;
-	Buffer[desc->ilocfq] = 1;
-	Buffer[desc->ilocit] = delTime;
 	for (i=0; i<desc->ncorr; i++) { /* Visibilities */
 	  Buffer[desc->nrparm+i*3]   = 0.0;
 	  Buffer[desc->nrparm+i*3+1] = 0.0;

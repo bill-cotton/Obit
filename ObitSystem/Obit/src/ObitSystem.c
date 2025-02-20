@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2024                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -218,10 +218,6 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
    Obit *tst;
    GSList *tmp;
    gchar *version=NULL;
-   /*struct tms buf;*/
-   struct rusage ru;
-   time_t endTime;
-   ofloat cputim, realtim;
 
    /* ignore if I haven't been started */
    if (!mySystemInfo) return NULL;
@@ -274,20 +270,7 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
 
 
   /* CPU Usage */
-  /*times (&buf);
-    cputim = (buf.tms_utime + buf.tms_stime) / (ofloat) CLK_TCK;*/
-  getrusage(RUSAGE_SELF, &ru);
-  cputim = ru.ru_utime.tv_sec + (ofloat) ru.ru_utime.tv_usec / 1000000;
-  cputim += ru.ru_stime.tv_sec + (ofloat) ru.ru_stime.tv_usec / 1000000;
-
-  /* Real time */
-  time(&endTime);
-  realtim = (ofloat)(endTime - in->startTime);
-  Obit_log_error(in->err, OBIT_InfoErr, 
-		 "%s Runtime = %8.0f sec. CPU usage = %8.3f sec.", 
-		 in->pgmName, realtim, cputim);
-
-  ObitErrLog(in->err);
+  ObitSystemUsage (in, in->err);
 
   /* delete object */
   mySystemInfo = ObitUnref(mySystemInfo );
@@ -612,6 +595,32 @@ void ObitSystemSetMaxRuntime  (ofloat  maxRealTime)
   mySystemInfo->maxRealTime = maxRealTime;  
 }  /* end ObitSystemGetMaxRuntime */
 
+/**
+ * Set maximum run time 
+ * \param maxRealTime)  Maximum allowed wall clock time
+ */
+void ObitSystemUsage  (ObitSystem *in, ObitErr *err)
+{
+   /*struct tms buf;*/
+   struct rusage ru;
+   time_t endTime;
+   ofloat cputim, realtim;
+
+  /*times (&buf);
+    cputim = (buf.tms_utime + buf.tms_stime) / (ofloat) CLK_TCK;*/
+  getrusage(RUSAGE_SELF, &ru);
+  cputim = ru.ru_utime.tv_sec + (ofloat) ru.ru_utime.tv_usec / 1000000;
+  cputim += ru.ru_stime.tv_sec + (ofloat) ru.ru_stime.tv_usec / 1000000;
+
+  /* Real time */
+  time(&endTime);
+  realtim = (ofloat)(endTime - in->startTime);
+  Obit_log_error(in->err, OBIT_InfoErr, 
+		 "%s Runtime = %8.0f sec. CPU usage = %8.3f sec.", 
+		 in->pgmName, realtim, cputim);
+
+  ObitErrLog(in->err);
+} /* end ObitSystemUsage */
 /**
  * Initialize global ClassInfo Structure.
  */

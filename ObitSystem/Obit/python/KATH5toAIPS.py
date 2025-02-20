@@ -4,7 +4,7 @@ This module requires katdal and katpoint and their dependencies
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2014
+#  Copyright (C) 2014,2025
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -45,7 +45,6 @@ import time,math,os
 import UV, UVVis, OErr, UVDesc, Table, History
 from OTObit import day2dhms
 import numpy
-from numpy import numarray
 
 def KAT2AIPS (katdata, outUV, disk, fitsdisk, err, \
               calInt=1.0, **kwargs):
@@ -549,8 +548,8 @@ def ConvertKATData(outUV, katdata, meta, err):
     visno = 0
     # Get IO buffers as numpy arrays
     shape = len(outUV.VisBuf) // 4
-    buffer =  numarray.array(sequence=outUV.VisBuf,
-                             type=numarray.Float32, shape=shape)
+    buffer =  numpy.array(sequence=outUV.VisBuf,
+                             type=numpy.float32, shape=shape)
 
     # Template vis
     vis = outUV.ReadVis(err, firstVis=1)

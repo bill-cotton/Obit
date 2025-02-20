@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -740,6 +740,9 @@ ObitIOCode ObitIOUVAIPSReadSelect (ObitIOUVAIPS *in, ofloat *data,
 
   /* Read */
   retCode = ObitFileRead (in->myFile, wantPos, size, (gchar*)IOBuff, err);
+  /* Check for EOF */
+  if (retCode==OBIT_IO_EOF) 
+    Obit_log_error(err, OBIT_Error, "%s: Hit end of file",routine);
   if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback on error */
     Obit_traceback_val (err, routine, in->name, retCode);
   in->filePos = in->myFile->filePos; /* remember current file position */

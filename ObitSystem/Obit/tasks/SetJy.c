@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2024                                          */
+/*;  Copyright (C) 2007-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1294,7 +1294,7 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     "Cygnus A",                                                 /* 17 */
     "3C444",      "3c444",                                      /* 18 */
     "Cassiopeia A",                                             /* 19 */ 
-    " 0408-65",   "0408-658", "J0407-658",                      /* 20 */ 
+    "0408-65",   "0408-658", "J0407-658",                      /* 20 */ 
     NULL
   };
   

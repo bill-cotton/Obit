@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2012                                          */
+/*;  Copyright (C) 2002-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -85,6 +85,8 @@ ObitCArrayRealFP ObitCArrayReal;
 ObitCArrayImagFP ObitCArrayImag;
 /** Public: Return the amplitudes of a CArray in an FArray */
 ObitCArrayAmpFP ObitCArrayAmp;
+/** Public: Return the amplitudes^2 of a CArray in an FArray */
+ObitCArrayAmp2FP ObitCArrayAmp2;
 /** Public: Return the phases of a CArray in an FArray */
 ObitCArrayPhaseFP ObitCArrayPhase;
 /** Function pointer to  Convert a half plane 2D "center at edges" array to proper order  */

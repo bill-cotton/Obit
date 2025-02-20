@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2024                                          */
+/*;  Copyright (C) 2002-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -155,3 +155,5 @@ ObitFArrayRandomFillFP ObitFArrayRandomFill;
 ObitFArrayRectFillFP ObitFArrayRectFill;
 /** Function pointer to Fill a round subregion */
 ObitFArrayRoundFillFP ObitFArrayRoundFill;
+/** Function pointer to Find Maximum of elements of two arrays, set value when found */
+ObitFArrayMaxSetValueFP ObitFArrayMaxSetValue;
