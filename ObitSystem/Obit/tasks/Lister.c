@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2024                                          */
+/*;  Copyright (C) 2009-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -849,13 +849,12 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitTableNX  *NXTable=NULL;
   ObitTableNXRow *NXRow=NULL;
   ObitSourceList *SouList=NULL;
-  ObitTableSU  *SUTable=NULL;
   ObitTableFQ  *FQTable=NULL;
   ObitTableFQRow *FQRow=NULL;
   ObitIOCode   iretCode;
   ObitUVDesc   *inDesc;
   FILE         *outStream = NULL;
-  oint         numIF;
+  oint         numIF=1;
   gboolean     isInteractive = FALSE, quit = FALSE;
   gchar        line[1024], Title1[1024], Title2[1024];
   olong        pLimit=1000000;  /* Page limit */
@@ -903,18 +902,12 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   count = 0;
   inDesc = inData->myDesc;  
 
-  /* Convert SU table into Source List */
-  ver = 1;
-  if (inDesc->jlocif>=0) numIF = inDesc->inaxes[inDesc->jlocif];
-  else numIF = 1;
-  SUTable = newObitTableSUValue (inData->name, (ObitData*)inData, &ver, numIF, 
-				 OBIT_IO_ReadOnly, err);
-  if (SUTable) SouList = ObitTableSUGetList (SUTable, err);
+  /* Convert SU table/header into Source List */
+  SouList = ObitUVGetSourceList(inData, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
-  SUTable = ObitTableSUUnref(SUTable);
 
   /* Init vis counting */
-  maxSUID = 1;
+  maxSUID = 100;
   for (i=0; i<SouList->number; i++) {
     if (SouList->SUlist[i]!=NULL)
     maxSUID = MAX (maxSUID, SouList->SUlist[i]->SourID);
@@ -991,6 +984,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
     /* Source */
     souID = MIN ((olong)NXRow->SourID, maxSUID);
+    souID = MAX(1,  souID);
     /* Look up source */
     if (souID!=lastSouID) {
       lastSouID = souID;
@@ -1227,7 +1221,6 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitPrinter     *myPrint  = NULL;
   ObitSourceList  *SouList  = NULL;
   ObitSource      *mySource = NULL, *curSource;
-  ObitTableSU     *SUTable  = NULL;
   ObitAntennaList *AntList  = NULL;
   ObitTableAN     *ANTable  = NULL;
   ObitTableCL     *CLTable  = NULL;
@@ -1324,25 +1317,9 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   if (inIODesc->jlocif>=0) numIF = inIODesc->inaxes[inIODesc->jlocif];
   else numIF = 1;
 
-  /* Convert SU table into Source List if there is an SourceID parameter */
-  if (inIODesc->ilocsu>=0) {
-    ver = 1;
-    BIF = MIN (BIF, numIF);
-    SUTable = newObitTableSUValue (inData->name, (ObitData*)inData, &ver, numIF, 
-				   OBIT_IO_ReadOnly, err);
-    if (SUTable) SouList = ObitTableSUGetList (SUTable, err);
-    if (err->error) Obit_traceback_msg (err, routine, inData->name);
-    SUTable = ObitTableSUUnref(SUTable);
-  } else {  /* Create a source object */
-    mySource = newObitSource("Single");
-    strncpy (mySource->SourceName, inDesc->object, MIN(20,UVLEN_VALUE));
-    mySource->equinox = inDesc->equinox;
-    mySource->RAMean  = inDesc->crval[inDesc->jlocr];
-    mySource->DecMean = inDesc->crval[inDesc->jlocd];
-    /* Compute apparent position */
-    ObitPrecessUVJPrecessApp (inDesc, mySource);
-  }
-
+  /* Convert SU table/header into Source List */
+  SouList = ObitUVGetSourceList(inData, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
   /* Convert AN table into AntennaList */
   ver = 1;
   numPCal  = 0;

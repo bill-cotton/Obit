@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2024                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -247,7 +247,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   gchar        Aname[13], Aclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gpointer     listPnt;
-  gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
+  gchar        *keyword=NULL, *DataTypeKey="DataType", *DTypeKey="DType", *DataType=NULL;
   gchar        *parm[] = {"DoCalSelect", "Stokes", 
 			  "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "IFDrop",
 			  "doPol", "PDVer", "keepLin", 
@@ -281,7 +281,13 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   g_free(keyword);
 
   /* File type - could be either AIPS or FITS */
-  if (prefix) keyword =  g_strconcat (prefix, DataTypeKey, NULL);
+  if (prefix) {
+    /* For output or input 2, usually a shorter name */
+    if ((!strncmp (prefix, "out", 3)) || (!strncmp (prefix, "in2", 3)))
+      keyword =  g_strconcat (prefix, DTypeKey, NULL);
+    else
+      keyword =  g_strconcat (prefix, DataTypeKey, NULL);
+  }
   else keyword =  g_strconcat (DataTypeKey, NULL);
   if (!ObitInfoListGetP (inList, keyword, &type, dim, (gpointer)&DataType)) {
     /* Try "DataType" */
@@ -2329,7 +2335,7 @@ ObitSource*  ObitUVGetSource (ObitSource* src, ObitUV *uvdata, ofloat suID,
     found = FALSE;
     for (i=0; i<sList->number; i++) {
       source = ObitSourceRef(sList->SUlist[i]);
-      if (source->SourID == SourID) found = TRUE;
+      if (source->SourID == SourID) {found = TRUE; break;}
     }
     sList = ObitSourceListUnref(sList);  /* Done with list */
 
@@ -2351,6 +2357,44 @@ ObitSource*  ObitUVGetSource (ObitSource* src, ObitUV *uvdata, ofloat suID,
   }
   return source;
 } /* end ObitUVGetSource */
+
+/**
+ *  Get Source List, works with or without a SU table
+ * \param   inUV       ObitUV with SU Table
+ * \param   err        Obit Error stack
+ * \return SourceList, should be Unrefed when done
+ */
+ObitSourceList* ObitUVGetSourceList (ObitUV* inUV, ObitErr* err)
+{
+  olong iver = 1;
+  ObitTableSU *SUTable=NULL;
+  ObitSourceList  *SList=NULL;
+  gchar *routine = "ObitUVGetSourceList";
+
+  if (err->error) return SList;
+
+  SUTable = newObitTableSUValue ("SUTable", (ObitData*)inUV, &iver, 
+			       OBIT_IO_ReadOnly, 0, err);
+  /* Open and close to initialize  */
+  if (SUTable) {
+    ObitTableSUOpen (SUTable, OBIT_IO_ReadOnly, err);
+    ObitTableSUClose (SUTable, err);
+    if (err->error) Obit_traceback_val (err, routine, SUTable->name, SList);
+  }
+  if (SUTable && (SUTable->myDesc) && (SUTable->myDesc->nrow>=1) ) {
+    SList = ObitTableSUGetList (SUTable, err);
+    if (err->error) Obit_traceback_val (err, routine, SUTable->name, SList);
+    SUTable = ObitTableSUUnref(SUTable);   /* Done with table */
+  } else {  /* Use position from header */
+    SList = ObitSourceListCreate ("SList", 1);
+    SList->SUlist[0]->equinox = inUV->myDesc->equinox;
+    SList->SUlist[0]->RAMean  = inUV->myDesc->crval[inUV->myDesc->jlocr];
+    SList->SUlist[0]->DecMean = inUV->myDesc->crval[inUV->myDesc->jlocd];
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (inUV->myDesc, SList->SUlist[0]);
+  }
+  return SList;
+} /* end ObitUVGetSourceList */
 
 /**
  * Get source information, position, velocity, update uv descriptor
@@ -3192,7 +3236,9 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
   else itemp = InfoReal.itg;
   sel->doPolCal = itemp > 0;
-
+  /* keepLin */
+  ObitInfoListGetTest(info, "keepLin", &type, dim, &sel->keepLin);
+  
   /* amp/phase/delay/rate Calibration */
   InfoReal.itg = 0; type = OBIT_oint;
   ObitInfoListGetTest(info, "doCalib", &type, dim, &InfoReal);
@@ -3452,6 +3498,10 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
     cal->SUTable =
       (Obit*) newObitTableSUValue (in->name, (ObitData*)in, &useVer, OBIT_IO_ReadOnly, 0, err);
   else cal->SUTable = ObitTableSUUnref(cal->SUTable);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  
+  /* Get source information - is there a source table, or get from header? */
+  cal->sourceList = ObitUVGetSourceList (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   
   /* BL table for Baseline dependent calibration */

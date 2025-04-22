@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2024                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -220,7 +220,7 @@ ObitUVCal* ObitUVCalClone  (ObitUVCal *in, ObitUVCal *out)
 void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc, 
 		     ObitUVDesc *outDesc, ObitErr *err)
 {
-  olong i, ichan, ifreq, iif, istok, nfreq, nif, nstok, sid;
+  olong i, ichan, ifreq, iif, istok, nfreq, nif, nstok;
   olong incs, incf, incif;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
@@ -283,25 +283,6 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   in->dropSubA  = sel->dropSubA;
   in->alpha     = sel->alpha;
   in->alphaRefF = sel->alphaRefF;
-
-  /* Get source information - is there a source table, or get from header? */
-  if (in->SUTable) { /* Read table */
-    in->sourceList = ObitTableSUGetList ((ObitTableSU*)in->SUTable, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-    /* If only one source, copy name to output descriptor */
-    if ((sel->numberSourcesList==1) && (sel->sources!=NULL)) {
-      sid = sel->sources[0];
-      if ((sid>0) && (sid<=in->sourceList->number))
-	strncpy (outDesc->object, in->sourceList->SUlist[sid-1]->SourceName, 17);
-    }
-  } else { /* Get needed info from UVdescriptor */
-    in->sourceList = ObitSourceListCreate ("Single Source", 1);
-    in->sourceList->SUlist[0]->SourID = -1;
-    in->sourceList->SUlist[0]->RAMean  = inDesc->crval[inDesc->jlocr];
-    in->sourceList->SUlist[0]->DecMean = inDesc->crval[inDesc->jlocd];
-    /* Precess position */
-    ObitPrecessUVJPrecessApp (inDesc, in->sourceList->SUlist[0]);
-  }
 
   /* If only one source selected make sure no "SOURCE" 
      random parameter is written.  

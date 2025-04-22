@@ -1049,7 +1049,7 @@ void  ObitDConCleanVisGetParms (ObitDCon *inn, ObitErr *err)
   in->doRecenter = TRUE;
   ObitInfoListGetTest(in->info, "doRecenter", &type, dim, &in->doRecenter);
 
- /* Flux level to reuse in CCs */
+  /* Flux level to reuse in CCs */
   ObitInfoListGetTest(in->info, "reuseFlux", &type, dim, &in->reuseFlux);
 
   /* auto center minimum flux density */
@@ -1313,15 +1313,13 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
   } /* end single field */
   
   /* Check if there are autoCenter windows, if so get level */
-  if (in->autoCen<100000.0) {
-    for (i=0; i<in->mosaic->numberImages; i++) {
-      if (in->mosaic->isAuto[i]>0) {
-	ObitInfoListGetTest(in->mosaic->images[i]->info, "autoCenFlux", &type, 
-			    dim, &autoCenFlux);
-	break;
-      }
+  for (i=0; i<in->mosaic->numberImages; i++) {
+    if (in->mosaic->isAuto[i]>0) {
+      ObitInfoListGetTest(in->mosaic->images[i]->info, "autoCenFlux", &type, 
+			  dim, &autoCenFlux);
+      break;
     }
-  } /* end autoCen test */
+  } /* end autoCen loop */
  
   fldList = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
   fldList2 = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
@@ -3561,9 +3559,9 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
 
     /* Ignore shift fields if can still use autoCentered fields */
     isShift = in->mosaic->isShift[i];
-    if ((isShift>0) && (in->cleanable[isShift-1]>(0.1*autoCenFlux))) continue;
-    if ((in->mosaic->isShift[i]>0) && 
-	(in->maxAbsRes[in->mosaic->isShift[i]-1]>0.1*autoCenFlux)) continue;
+    if ((isShift>0) && (autoCenFlux>0.0) &&
+	(in->cleanable[isShift-1]>(0.1*autoCenFlux))) continue;
+    /* Redundant if ((isShift>0) && (in->maxAbsRes[isShift-1]>(0.1*autoCenFlux))) continue;*/
 
     /* Ignore autoCenter fields below threshold */
     if ((in->mosaic->isAuto[i]>0) && 
@@ -3653,7 +3651,7 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
   if (autoCenFlux>0.0) {
     for (i=0; i<in->nfield; i++) {
       myAuto = in->mosaic->isShift[i]-1;
-      if ((myAuto>0) && (in->cleanable[myAuto]<in->cleanable[i]))
+      if ((myAuto>=0) && (in->cleanable[myAuto]<in->cleanable[i]))
 	{
 	  in->cleanable[i] = in->cleanable[myAuto];
 	  in->quality[i]   = in->quality[myAuto];

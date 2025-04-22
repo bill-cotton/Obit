@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to correct off-axis instrumental polarization in UV data      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2023                                          */
+/*;  Copyright (C) 2009-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -895,7 +895,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gboolean      doCalSelect;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",  "BIF", "EIF", "subA",
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer",
+    "doPol", "PDVer", "keepLin",
     "Smooth", "Antennas",  "Sources",  "souCode", "Qual", "Alpha", 
      NULL};
   gchar *routine = "getInputData";
@@ -963,7 +964,7 @@ ObitSkyModelVMBeamMF* getInputSkyModel (ObitInfoList *myInput, ObitUV *inData,
   oint         noParms, CCVer;
   olong        Aseq, disk, cno, i, nparm, nmaps, channel, numAntType;
   gchar        *Type, *strTemp, inFile[129], inRoot[129];
-  gchar        Aname[13], Aclass[7], Aroot[7], *Atype = "MA";
+  gchar        Aname[13], Aclass[8], Aroot[8], *Atype = "MA";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
@@ -1259,8 +1260,8 @@ void UVPoCoHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "DataType", 
     "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "channel", "BIF", "EIF",   "Sources",  "Qual", 
-    "doCalSelect", "doCalib", "gainUse", "doPol", "flagVer", 
-    "doBand", "BPVer", "Smooth", 
+    "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "keepLin", 
+    "flagVer", "doBand", "BPVer", "Smooth", 
     "in2File",  "in2Disk", "in2Name", "in2Class", "in2Seq", "doCmplx", 
     "in3Diam", "in3DType", "in3File",  "in3Disk", "in3Name", "in3Class", "in3Seq",
     "in4File",  "in4Disk", "in4Name", "in4Class", "in4Seq",

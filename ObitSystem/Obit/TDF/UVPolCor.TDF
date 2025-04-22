@@ -4,7 +4,7 @@
 ;! Correct off-axis instrumental polarization in UV data
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009-2023
+;;  Copyright (C) 2009-2025
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -60,8 +60,13 @@ doCalib          -1.0        2.0   If >0 calibrate data
 **PARAM** int 1
 gainUse                            CL (or SN) table to apply
 **PARAM** boo 1 **DEF** F
-doPol            -1.0       10.0   If >0 correct polarization.
-**PARAM** int 1
+doPol                              If True correct polarization.
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
+**PARAM** boo 1 **DEF** F
+keepLin                            True => Keep poln in linear
+**PARAM** int 1 **DEF** 1
 flagVer                            Flag table version
 **PARAM** int 1
 doBand           -1.0       10.0   If >0 apply bandpass cal.
@@ -232,13 +237,16 @@ Adverbs:
   gainUse....Version number of the CL table to apply to multi-source
              files or the SN table for single-source files.
              0 => highest.
-  doPol......If > 0 then correct data for instrumental polarization as
-             represented in the AN table.  This correction is only
-             useful if PCAL has been run or feed polarization parameters
-             have been otherwise obtained. 
+  doPol......If True apply polarization calibration
              NB: This calibration must have been applied to correct the 
              on-axis instrumental polarization before UVPolCor can 
              correct the off-axis instrumental polarization.
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table (Defunct).
+  keepLin....If the input data is in a linear feed basis (XX,YY,XY,YX)
+             and doPol=T, then leave in a linear basis.  
+             Otherwise convert to circular (RR,LL,RL,LR)
   flagVer....Specifies the version of the flagging table to be applied.
              0 => highest numbered table. <0 => no flagging to be
              applied.

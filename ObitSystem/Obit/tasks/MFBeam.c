@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2024                                          */
+/*;  Copyright (C) 2011-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1492,7 +1492,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "UVRange", "timeRange", "UVTape",
     "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
-    "doPol", "PDVer", "Mode",
+    "doPol", "PDVer", "keepLin", "Mode",
     NULL
   };
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
@@ -2804,7 +2804,7 @@ void MFBeamHistory (gchar *Source, ObitInfoList* myInput,
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  
     "MFTaper", "RobustIF", "TaperIF","UVITaper", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "PDVer", "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI",
+    "doPol", "PDVer", "keepLin", "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI",
     "OutlierSize",  "CLEANBox",  "CLEANFile", "Gain",  "minFlux",  "Niter",  "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
     "maxAWLoop", "minFluxIQU", "NiterIQU",  "minFluxQU", "NiterQU", "minFluxV", "NiterV",

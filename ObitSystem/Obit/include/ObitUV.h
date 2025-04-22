@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,6 +31,7 @@
 #include "ObitData.h"
 #include "ObitUVDesc.h"
 #include "ObitUVSel.h"
+#include "ObitSourceList.h"
 #include "ObitTableList.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
@@ -399,6 +400,9 @@ ObitSource* ObitUVGetSource (ObitSource* src, ObitUV *uvdata, ofloat suID,  Obit
 
 /** Public: Get single source info */
 void ObitUVGetSouInfo (ObitUV *uvdata, ObitErr *err);
+
+/** Public: Get Source list, with or without SU table */
+ObitSourceList* ObitUVGetSourceList (ObitUV *uvdata, ObitErr *err);
 
 /** Public: Write header keyword */
 void ObitUVWriteKeyword (ObitUV *in, 

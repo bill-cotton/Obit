@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2022                                          */
+/*;  Copyright (C) 2004-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -515,6 +515,7 @@ olong ObitDConCleanWindowSearch (ObitDConCleanWindow *in,
 
 /**
  * Add a window to the list for a given field
+ * with 5 pixel guardband
  * Window types are:
  * \li OBIT_DConCleanWindow_rectangle
  *     a rectangular box defined by the blc (1-rel) 
@@ -547,7 +548,7 @@ olong ObitDConCleanWindowAdd (ObitDConCleanWindow *in,
 			     olong *window, ObitErr *err)
 {
   WindowListElem *elem = NULL;
-  olong out = -1;
+  olong maxX, maxY, guard=5, oldRad=0, out = -1;
   gboolean trim;
   gchar *routine = "ObitDConCleanWindowAdd";
 
@@ -561,55 +562,66 @@ olong ObitDConCleanWindowAdd (ObitDConCleanWindow *in,
   }
 
   /* Trim to fit if necessary */
+  maxX = in->naxis[field-1][0]-guard; maxY = in->naxis[field-1][1]-guard;
   trim = FALSE;
   switch (type) {
   case OBIT_DConCleanWindow_rectangle:
   case OBIT_DConCleanWindow_unrectangle:
-    if ((window[0]<1) || (window[0]>in->naxis[field-1][0])) {
+    if ((window[0]<guard) || (window[0]>maxX)) {
       trim = TRUE;
-      window[0] = MAX (1, MIN (window[0], in->naxis[field-1][0]));
+      window[0] = MAX (guard, MIN (window[0], maxX));
 		       }
-    if ((window[1]<1) || (window[1]>in->naxis[field-1][1])) {
+      if ((window[1]<guard) || (window[1]>maxY)) {
       trim = TRUE;
-      window[1] = MAX (1, MIN (window[1], in->naxis[field-1][1]));
+      window[1] = MAX (guard, MIN (window[1], maxY));
     }
-    if ((window[2]<1) || (window[2]>in->naxis[field-1][0])) {
+    if ((window[2]<guard) || (window[2]>maxX)) {
       trim = TRUE;
-      window[2] = MAX (1, MIN (window[2], in->naxis[field-1][0]));
+      window[2] = MAX (guard, MIN (window[2], maxX));
     }
-    if ((window[3]<1) || (window[3]>in->naxis[field-1][1])) {
+    if ((window[3]<guard) || (window[3]>maxY)) {
       trim = TRUE;
-      window[3] = MAX (1, MIN (window[3], in->naxis[field-1][1]));
+      window[3] = MAX (guard, MIN (window[3], maxY));
     }
+    /* Warn if trim */
+    if (trim) 
+      Obit_log_error(err, OBIT_InfoWarn, "%s Trimmed CLEAN window to fit", 
+		     routine);
     break;
   case OBIT_DConCleanWindow_round:
   case OBIT_DConCleanWindow_unround:
-    if ((window[1] - window[0])<0) {
-      window[0] = window[1];
-      trim = TRUE;
-   }
-    if ((window[1] + window[0])>in->naxis[field-1][0]) {
-      window[0] = MAX (0, in->naxis[field-1][0] - window[1]);
-      trim = TRUE;
-    }
-    if ((window[2] - window[0])<0) {
-      window[0] = window[2];
+    oldRad =  window[0]; /* Original radius*/
+    if (oldRad<1) break;  /* Nonsense */
+    if ((window[1] - window[0])<(guard-1)) {
+      window[0] = window[1] - guard; /* Back off from -X  edge */
+      window[0] = MAX (1, window[0]); /* at least 1 */
       trim = TRUE;
     }
-    if ((window[2] + window[0])>in->naxis[field-1][1]) {
-      window[0] =  MAX (0, in->naxis[field-1][1] - window[2]);
+    if ((window[1] + window[0])>maxX) {
+      window[0] = maxX - window[1]; /* Back off from +X  edge */
+      window[0] = MAX (1, window[0]); /* at least 1 */
+      trim = TRUE;
+    }
+      if ((window[2] - window[0])<(guard-1)) {
+      window[0] = window[2] - guard; /* Back off from -Y edge */
+      window[0] = MAX (1, window[0]); /* at least 1 */
+      trim = TRUE;
+    }
+    if ((window[2] + window[0])>maxY) {
+      window[0] = maxY - window[2]; /* Back off from +Y edge */
+      window[0] = MAX (1, window[0]); /* at least 1 */
       trim = TRUE;
    }
+    /* Warn if trim */
+    if (trim) 
+      Obit_log_error(err, OBIT_InfoWarn, "%s Trimmed CLEAN radius to fit %d=>%d", 
+		     routine, oldRad, window[0]);
     break;
   default:
     g_error ("Undefined Clean window type");
     return out;
    }; /* end switch by window type */
 
-  /* Warn if trim */
-  if (trim) 
-    Obit_log_error(err, OBIT_InfoWarn, "%s Trimmed CLEAN window to fit", 
-		   routine);
 
   /* Add it to end of list */
   in->maxId[field-1]++;
@@ -785,6 +797,7 @@ void ObitDConCleanWindowOuter (ObitDConCleanWindow *in, olong field,
 			       ObitDConCleanWindowType type,
 			       olong *window, ObitErr *err)
 {
+  olong maxX, maxY, guard=2;
   gboolean trim;
   gchar *routine = "ObitDConCleanWindowOuter";
 
@@ -798,43 +811,44 @@ void ObitDConCleanWindowOuter (ObitDConCleanWindow *in, olong field,
   }
 
   /* Trim to fit if necessary */
+  maxX = in->naxis[field-1][0]-guard; maxY = in->naxis[field-1][1]-guard;
   trim = FALSE;
   switch (type) {
   case OBIT_DConCleanWindow_rectangle:
   case OBIT_DConCleanWindow_unrectangle:
-    if ((window[0]<1) || (window[0]>in->naxis[field-1][0])) {
+    if ((window[0]<guard) || (window[0]>maxX)) {
       trim = TRUE;
-      window[0] = MAX (1, MIN (window[0], in->naxis[field-1][0]));
-		       }
-    if ((window[1]<1) || (window[1]>in->naxis[field-1][1])) {
-      trim = TRUE;
-      window[1] = MAX (1, MIN (window[1], in->naxis[field-1][1]));
+      window[0] = MAX (guard, MIN (window[0], maxX));
     }
-    if ((window[2]<1) || (window[2]>in->naxis[field-1][0])) {
+    if ((window[1]<guard) || (window[1]>maxY)) {
       trim = TRUE;
-      window[2] = MAX (1, MIN (window[2], in->naxis[field-1][0]));
+      window[1] = MAX (guard, MIN (window[1], maxY));
     }
-    if ((window[3]<1) || (window[3]>in->naxis[field-1][1])) {
+    if ((window[2]<guard) || (window[2]>maxX)) {
       trim = TRUE;
-      window[3] = MAX (1, MIN (window[3], in->naxis[field-1][1]));
+      window[2] = MAX (guard, MIN (window[2], maxX));
+    }
+    if ((window[3]<guard) || (window[3]>maxY)) {
+      trim = TRUE;
+      window[3] = MAX (guard, MIN (window[3], maxY));
     }
     break;
   case OBIT_DConCleanWindow_round:
   case OBIT_DConCleanWindow_unround:
-    if ((window[1] - window[0])<2) {
-      window[0] = window[1]+2;
+    if ((window[1] - window[0])<guard) {
+      window[0] = window[1]+guard;
       trim = TRUE;
    }
-    if ((window[1] + window[0])>(in->naxis[field-1][0]-2)) {
-      window[0] = MAX (0, in->naxis[field-1][0] - window[1]-2);
+    if ((window[1] + window[0])>maxX) {
+      window[0] = MAX (0, maxX - window[1]);
       trim = TRUE;
     }
-    if ((window[2] - window[0])<2) {
-      window[0] = window[2]+2;
+    if ((window[2] - window[0])<guard) {
+      window[0] = window[2]+guard;
       trim = TRUE;
     }
-    if ((window[2] + window[0])>in->naxis[field-1][1]-2) {
-      window[0] =  MAX (0, in->naxis[field-1][1] - window[2]-2);
+    if ((window[2] + window[0])>maxY) {
+      window[0] =  MAX (0, maxY - window[2]);
       trim = TRUE;
    }
     break;

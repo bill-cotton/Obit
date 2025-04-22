@@ -39,6 +39,7 @@ def EVLAInitContParms():
     parms["calInt"]        = None       # Calibration table interval (min)
     parms["seq"]           = 1          # Sequence number for AIPS files
     parms["doLoadArchive"] = True       # Sequence number for AIPS filesLoad AIPS data from archive?
+    parms["noScrat"]       = [0]        # AIPS Disks to avoid for scratch
 
     # Hanning
     parms["doHann"]       = None        # Hanning needed for RFI?

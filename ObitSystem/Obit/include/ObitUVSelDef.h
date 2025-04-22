@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -190,3 +190,5 @@ ofloat SubScanSuggest;
 ofloat InputAvgTime;
 /** Keep all data whether flagged or not */
 gboolean passAll;
+/** Keep in linear feed basis if polcal and input linear */
+gboolean keepLin;

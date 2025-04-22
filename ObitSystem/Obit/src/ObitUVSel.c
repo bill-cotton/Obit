@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2024                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -180,6 +180,7 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
   out->doFlag      = in->doFlag;
   out->FGversion   = in->FGversion;
   out->passAll     = in->passAll;
+  out->passAll     = in->keepLin;
   out->alpha       = in->alpha;
   out->ifsel1      = in->ifsel1;
   out->doJones     = in->doJones;
@@ -447,7 +448,7 @@ void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
 
   /* If poln calibrating data from linear feeds then the output will be
      as though the feeds were circular */
-  if (sel->doPolCal && (out->crval[out->jlocs]==-5.0)) 
+  if (sel->doPolCal && (out->crval[out->jlocs]==-5.0) && (!sel->keepLin)) 
     out->crval[in->jlocs] = -1.0;
 
   /* If only one source selected make sure no "SOURCE" 
@@ -950,6 +951,7 @@ void ObitUVSelInit  (gpointer inn)
   in->bothCorr      = FALSE;
   in->doIndex       = FALSE;
   in->passAll       = FALSE;
+  in->keepLin       = FALSE;
   in->NXTable       = NULL;
   in->NXTableRow    = NULL;
   in->numRow        = -1;

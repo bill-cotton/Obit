@@ -65,7 +65,8 @@ def pipeline( aipsSetup, parmFile):
     uv            = None
     uvc           = None
     avgClass      = ("UVAv"+band)[0:6]  # Averaged data AIPS class
-    outIClass     =  parms["outIClass"] # image AIPS class
+    outIClass     = parms["outIClass"]  # image AIPS class
+    noScrat       = parms["noScrat"]    # Shouldn't need this but do.
 
     # Load the outputs pickle jar
     EVLAFetchOutFiles()
@@ -717,7 +718,7 @@ def pipeline( aipsSetup, parmFile):
             EVLASaveOutFiles()
         except Exception as exception:
             print(exception)
-            mess = "Contour (KNTR) plotting Failed.")
+            mess = "Contour (KNTR) plotting Failed."
             printMess(mess, logfile)
     elif debug:
         mess = "Not creating contour plots ( doKntrPlots = "+str(parms["doKntrPlots"])+ " )"

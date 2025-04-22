@@ -4,7 +4,7 @@
 ;! Imaging software correcting for tabulated beamshape, wideband
 ;# Task Obit self calibration Imaging
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011-2023
+;;  Copyright (C) 2011-2025
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -82,6 +82,8 @@ doPol                               Apply polarization cal?
 **PARAM** int 1 **DEF** -1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
+**PARAM** boo 1 **DEF** F
+keepLin                            True => Keep poln in linear
 **PARAM** int 1 **DEF** 1
 norder                              Maximum order of spectral terms 
 **PARAM** float 1  **DEF** 0.0
@@ -544,6 +546,9 @@ Adverbs:
   PDVer......AIPS PD table to use for per channel instrumental
              polarization corrections if doPol=True. 0=> highest
              -1 => use IF corrections from AIPS AN table.
+  keepLin....If the input data is in a linear feed basis (XX,YY,XY,YX)
+             and doPol=T, then leave in a linear basis.  
+             Otherwise convert to circular (RR,LL,RL,LR)
   norder.....Maximum spectral order to include, 
                 1 = spectral index
                 2 = spectral index + curvature

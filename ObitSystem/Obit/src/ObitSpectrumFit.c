@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2024                                          */
+/*;  Copyright (C) 2008-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2157,7 +2157,7 @@ static void NLFit (NLFitArg *arg)
 	gsl_multifit_covar (J, 0.0, covar);
 	/* Cleanup */
 #if HAVE_GSL2==1
-	if (J) gsl_matrix_free (J);
+	if (J) gsl_matrix_free (J); J = NULL;
 #endif /* HAVE_GSL2 */ 
 	for (i=0; i<nterm; i++) {
 	  arg->coef[arg->nterm+i] = sqrt(gsl_matrix_get(covar, i, i));
@@ -2307,7 +2307,7 @@ static void NLFitBP (NLFitArg *arg)
 #endif /* HAVE_GSL2 */ 
     gsl_multifit_covar (J, 0.0, covar);
 #if HAVE_GSL2==1
-	if (J) gsl_matrix_free (J);
+    if (J) gsl_matrix_free (J); J = NULL;
 #endif /* HAVE_GSL2 */ 
     for (i=0; i<nterm; i++) {
       arg->coef[arg->nterm+i] = sqrt(gsl_matrix_get(covar, i, i));

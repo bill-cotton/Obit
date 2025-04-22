@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2024                                          */
+/*;  Copyright (C) 2012-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -758,6 +758,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   ObitInfoListGetTest(in->info, "doBlank",  &type, dim, &in->doBlank);
   ObitInfoListGetTest(in->info, "doFitGain",&type, dim, &in->doFitGain);
   ObitInfoListGetTest(in->info, "doFitOri", &type, dim, &in->doFitOri);
+  ObitInfoListGetTest(in->info, "doFitEli", &type, dim, &in->doFitEli);
   ObitInfoListGetTest(in->info, "ChWid",    &type, dim, &in->ChWid);
   ObitInfoListGetTest(in->info, "ChInc",    &type, dim, &in->ChInc);
   ObitInfoListGetTest(in->info, "CPSoln",   &type, dim, &in->CPSoln);
@@ -938,6 +939,11 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
       in->antFit[i][0] = FALSE;
       in->antFit[i][2] = FALSE;
     }
+    /* doFitEli=False-> fix ellipticity */
+    if (!in->doFitEli) {
+      in->antFit[i][1] = FALSE;
+      in->antFit[i][3] = FALSE;
+    }
  } /* end filling antenna fitting flags */
 
   /* Order of source parameters:
@@ -1097,7 +1103,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     isOK = doFitFast (in, err);
     /* refit with no reference antenna for lin. feeds 
      This doesn't actually do much except better elip. for ref ant */
-    if ((!in->isCircFeed) &&(in->refAnt>0)) {
+    if ((!in->isCircFeed) && (in->refAnt>0)) {
       refAnt = in->refAnt-1;
       in->antFit[refAnt][1] = TRUE;
       isOK = doFitFast (in, err);
@@ -1286,6 +1292,7 @@ ObitPolnCalFit *in = inn;
   in->doBlank    = TRUE;
   in->doFitGain  = TRUE;
   in->doFitOri   = TRUE;
+  in->doFitEli   = TRUE;
   in->BIF        = 1;
   in->BChan      = 1;
   in->ChWid      = 1;
@@ -1769,6 +1776,8 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 	  /* Assume X, Y */
 	  in->antParm[i*4+0] = 0.0;
 	  in->antParm[i*4+2] = +G_PI/2.0;
+	  //DEBUG in->antParm[i*4+0] = +G_PI/2.0;
+	  //DEBUG in->antParm[i*4+2] = 0.0;
 	} else {  /* Use what's in the AN table as initial convert to radians */
 	  in->antParm[i*4+0] = in->AntLists[0]->ANlist[i]->FeedAPA*DG2RAD;
 	  in->antParm[i*4+2] = in->AntLists[0]->ANlist[i]->FeedBPA*DG2RAD;
@@ -2905,7 +2914,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     Obit_log_error(err, OBIT_InfoErr, 
 		   "%d iter relaxation Chi2=%g Par RMS %g X RMS %g ", 
 		   iter+1, endChi2, ParRMS, XRMS);
-    /* Don't give fit is using GSL */
+    /* Don't give fit if using GSL */
     
     if (strncmp(in->solnType, "LM ", 3) || (err->prtLv>=5)) {
       Obit_log_error(err, OBIT_InfoErr, "Phase difference %8.2f",  in->PD*57.296);
@@ -2988,6 +2997,9 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
   if (err->error) return Chi2;  /* Error exists? */
   if (dChi2!=NULL)  *dChi2  = 0.0;
   if (d2Chi2!=NULL) *d2Chi2 = 1.0;
+
+  /* Any data? */
+  if (in->nvis<10) return Chi2;
 
   /* Feed polarization type? */
   if (in->isCircFeed) {
@@ -5371,6 +5383,7 @@ static void ResetAllSoln(ObitPolnCalFit *in)
       /* Linear feeds, if the antenna angles on sky are given in the AntennaList[0] use then, 
 	 otherwise assume Feeds are X, Y
 	 ori_x, elip_x, ori_y, elip_y,  */
+      in->antParm[i*4+0] = in->antParm[i*4+1] =in->antParm[i*4+2] = in->antParm[i*4+3] = 0.0;
       if (fabs (in->AntLists[0]->ANlist[i]->FeedAPA-in->AntLists[0]->ANlist[i]->FeedBPA)<1.0) {
 	/* Assume X, Y */
 	in->antParm[i*4+0] = 0.0;
