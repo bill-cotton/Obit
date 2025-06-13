@@ -32,7 +32,7 @@ Hann      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 Hann      Task to  Hanning smooth uv data
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inFile                              FITS input uvdata if Type=='FITS'
 **PARAM** str 12
 inName                             Input AIPS UV file 
@@ -81,7 +81,7 @@ doBand           -1.0       10.0   If >0 apply bandpass cal.
 BPVer                              Bandpass table version
 **PARAM** str 4
 outDType                           "FITS" or "AIPS" type of output
-**PARAM** str 48
+**PARAM** str 128
 outFile                            Output FITS UV file ending
 **PARAM** str 12
 outName                            Output UV AIPS file name

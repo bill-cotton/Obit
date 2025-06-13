@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2024
+#  Copyright (C) 2024,2025
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #-----------------------------------------------------------------------
  
 # Python class for image slices
-import Obit, OErr, Image, FArray, FInterpolate, OPlot, OWindow, ODisplay, ImageDesc
+import Obit, OErr, Image, FArray, FArrayUtil, FInterpolate, OPlot, OWindow, ODisplay, ImageDesc
 
 class Slice(Obit.Source):
     """ Python Obit Image slice class
@@ -76,6 +76,39 @@ class Slice(Obit.Source):
             #print (i,pixel,val)
             self.Slice.append(val)
     # end fill
+    
+    def fill_FA (self, err, plane=1, scale=1.0):
+        """
+        Calculate slice values interpolating image between Pos1 and Pos2
+        And return as an FArray
+        plane = plane in image
+        scale = scaling factor
+        """
+        # Fill slice
+        self.fill(err,plane,scale)
+        npos = [len(self.Slice)]
+        # create FArray
+        fa = FArray.FArray("Slice", npos)
+        for i in range(0,npos[0]):
+            fa.set(self.Slice[i],i)
+        return fa
+    # end fill_FA
+    
+    def fit_Gauss (self, fa, err, FWHM=[0.], center=[0.], peak=[0.]):
+        """
+        Fits a Gaussian to a slice in an FArray
+        fa     = FArray with pixel data
+        returns  list:
+        [0]= Full width Half Max (pixels) of fitted Gaussian
+        [1]= peak value in fitted Gaussian
+        [2]= x pixel (0-rel) coordinates of peak in pixels
+        [3]= 0th order baseline term
+        [4]= 1st order baseline term
+        [5]= RMS residual        """
+        # Fit
+        res = FArrayUtil.PFit1DGauss2(fa,len(FWHM),err,FWHM,center,peak)
+        return res
+    # end fit_Gauss
     
     def clip (self, ref_slice, prange, val, err):
         """

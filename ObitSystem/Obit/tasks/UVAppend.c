@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to append/concatenate uv data           .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2021                                          */
+/*;  Copyright (C) 2012-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -615,7 +615,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     "FreqID", "corrType", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
     "timeAvg",
-    "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", 
+    "doPol", "PDVer", "keepLin", "Smooth", "Antennas",  "subA", "Sources", "souCode", 
     "Qual",
      NULL};
   gchar *routine = "getInputData";
@@ -897,7 +897,7 @@ void UVAppendHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "FreqID", "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "IFDrop",
     "Stokes", "Sources",  "Qual", "souCode", "subA", "Antennas", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
-    "doBand", "BPVer", "Smooth",  "corrType", "reweight", "timeAvg",
+    "doBand", "BPVer", "keepLin", "Smooth",  "corrType", "reweight", "timeAvg",
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};
   gchar *routine = "UVAppendHistory";

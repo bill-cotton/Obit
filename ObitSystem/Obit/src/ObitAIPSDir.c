@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -175,7 +175,7 @@ olong ObitAIPSDirFindCNO(olong disk, olong user,
 {
   ObitAIPSDir         *myDir = NULL;
   olong cno=-1, ndisk, i;
-  ObitAIPSDirCatEntry entry;
+  //ObitAIPSDirCatEntry entry;
   gchar lAname[13], lAclass[7], lAtype[3];
   gchar *routine = "ObitAIPSDirFindCNO";
 
@@ -218,22 +218,23 @@ olong ObitAIPSDirFindCNO(olong disk, olong user,
     return -1;
   }
 
+  // Let's not do this for read access
   /* Update last access */
-  ObitAIPSDirRead(myDir, cno, &entry, err);
-  if (err->error) { /* attempt close on error */
-    ObitAIPSDirClose (myDir, err); 
-    return -1;
-  }
+  // ObitAIPSDirRead(myDir, cno, &entry, err);
+  // if (err->error) { /* attempt close on error */
+  //   ObitAIPSDirClose (myDir, err); 
+  //   return -1;
+  // }
 
   /* change time */
-  ObitAIPSDirUpdateEntry(&entry);
+  // ObitAIPSDirUpdateEntry(&entry);
 
   /* write it back */
-  ObitAIPSDirWrite(myDir, cno, &entry, err);
-  if (err->error) { /* attempt close on error */
-    ObitAIPSDirClose (myDir, err); 
-    return -1;
-  }
+  // ObitAIPSDirWrite(myDir, cno, &entry, err);
+  // if (err->error) { /* attempt close on error */
+  //   ObitAIPSDirClose (myDir, err); 
+  //   return -1;
+  // }
   
   /* close file */
   ObitAIPSDirClose (myDir, err);
@@ -242,7 +243,7 @@ olong ObitAIPSDirFindCNO(olong disk, olong user,
 } /* end ObitAIPSDirFindCNO */
 
 /**
- * If the given entry already exist in the catalog is is
+ * If the given entry already exist in the catalog it is
  * returned and the exist value is set TRUE.
  * If it doesn't exist find the first free slot and allocate
  * it to the new entry.
@@ -332,14 +333,16 @@ olong ObitAIPSDirAlloc(olong disk, olong user,
     g_memmove(entry.type,  lAtype, 2);
   }
 
-  /* access time time */
-  ObitAIPSDirUpdateEntry(&entry);
-
-  /* write it back */
-  ObitAIPSDirWrite(myDir, cno, &entry, err);
-  if (err->error) { /* attempt close on error */
-    ObitAIPSDirClose (myDir, err); 
-    return -1;
+  /* access time time if it's a new file */
+  if ((cno>0) && (!*exist)) {
+    ObitAIPSDirUpdateEntry(&entry);
+    
+    /* write it back */
+    ObitAIPSDirWrite(myDir, cno, &entry, err);
+    if (err->error) { /* attempt close on error */
+      ObitAIPSDirClose (myDir, err); 
+      return -1;
+    }
   }
   
   /* close file */
@@ -826,8 +829,9 @@ ObitAIPSDirStatus(olong disk, olong user, olong cno,
     }; /* end switch */
   } /* end of do operation */
 
-  /* access time time */
-  ObitAIPSDirUpdateEntry(&entry);
+  /* access time for write  */
+  if (code==OBIT_AIPS_Dir_AddWrite) 
+    ObitAIPSDirUpdateEntry(&entry);
 
   /* write it back */
   ObitAIPSDirWrite(myDir, cno, &entry, err);

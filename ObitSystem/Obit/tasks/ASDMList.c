@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Summarize contents of ASDM                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2023                                          */
+/*;  Copyright (C) 2010-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -497,7 +497,7 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
 	strncpy (bcode, SpectralWindowTab->rows[jSW]->bandcode,9);
       else
 	strcpy (bcode, "Unknown");
-      sprintf(line,"     SpWin= %2d Freq= %7.3lf GHz, %4d chan of BW=%9.3lf kHz, tot BW=%8.3lf MHz, nStoke=%d, %s Band=%s", 
+      sprintf(line,"     SpWin= %2d Freq= %7.3lf GHz, %4d chan of BW=%9.3lf kHz, tot BW=%8.3lf MHz, nStoke=%d, %s Band=%s BB=%s", 
 	      SpectralWindowTab->rows[jSW]->spectralWindowId, 
 	      SpectralWindowTab->rows[jSW]->refFreq*1.0e-9,
 	      SpectralWindowTab->rows[jSW]->numChan,
@@ -505,7 +505,8 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
 	      SpectralWindowTab->rows[jSW]->totBandwidth*1.0e-6,
 	      SpectralWindowTab->rows[jSW]->numPoln,
 	      SpectralWindowTab->rows[jSW]->netSideband,
-	      bcode);
+	      bcode,
+	      SpectralWindowTab->rows[jSW]->basebandName);
       ObitPrinterWrite (myPrint, line, &quit, err);
       if (quit) goto Quit;
       if (err->error) Obit_traceback_msg (err, routine, myPrint->name);

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2024                                          */
+/*;  Copyright (C) 2006-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -86,8 +86,9 @@ static ofloat StraightAvg (ollong n, ofloat *value);
 
 /* Determine sigma for Median */
 static ofloat MedianSigma (ollong n, ofloat *value, ofloat mean, ofloat alpha);
-
-
+/* Weighted linear regression */
+static void LinRegWt (olong n, odouble *nu, ofloat *S, ofloat *sigma,
+		      ofloat *S_0, ofloat* alpha);
  
 /* Program globals */
 gchar *pgmName = "GetJy";       /* Program name */
@@ -837,7 +838,7 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
 		       newFlux[offset+iif]);
       } else { /* No solution */
 	Obit_log_error(err, OBIT_InfoWarn,
-		       "%s IF %d No Flux density measured, Smoothed %8.3f Jy", 
+		       "%s IF %d No Flux density measured,      Smoothed %8.3f Jy", 
 		       tempName, iif+1, newFlux[offset+iif]);
       }
     } /* end IF loop */
@@ -1229,7 +1230,7 @@ void FitSpec (ObitUV* inData, gchar **source,
 	      ObitErr* err)
 {
   olong isou, iif, iterm, offset2, count;
-  ofloat *flux=NULL, *sigma=NULL, *fitVal=NULL;
+  ofloat *flux=NULL, *sigma=NULL, fitVal[5]={0.,0.,0.,0.,0.};
   odouble *freq=NULL, lnu, lll, arg;
 
   /* error checks */
@@ -1261,6 +1262,9 @@ void FitSpec (ObitUV* inData, gchar **source,
 	freq[count]  = inData->myDesc->freqIF[iif];
 	flux[count]  = souFlux[offset2+iif];
 	sigma[count] = souErr[offset2+iif];
+	/* Weight by 1/std dev. rather than 1/variance 
+	sigma[count] = 0.1*sqrtf(souErr[offset2+iif]);*/
+	//DEBUGif (count==0) sigma[count] *=0.01;
 	count++;
       }
     }
@@ -1271,10 +1275,10 @@ void FitSpec (ObitUV* inData, gchar **source,
     nterm = MIN (nterm, count);
     Obit_log_error(err, OBIT_InfoErr, "Smoothing by fitting %d term spectrum", nterm);
 
-    /* Fit */
-    fitVal = ObitSpectrumFitSingle(count, nterm, freq[0], freq, flux, sigma, FALSE, FALSE, NULL, err);
+    /* Fit 
+    fitVal = ObitSpectrumFitSingle(count, nterm, freq[0], freq, flux, sigma, FALSE, FALSE, NULL, err);*/
 
-    /* Tell results */
+    /* Tell results 
     if (nterm==1) {
       Obit_log_error(err, OBIT_InfoErr,
 		     "Source %s Flux density=%8.3f(%8.3f) Jy Chi^2= %8.3f", 
@@ -1286,8 +1290,14 @@ void FitSpec (ObitUV* inData, gchar **source,
 		     "Source %s Flux density=%8.3f(%5.3f) Jy, SI=%5.3f(%5.3f) Jy Chi^2=%5.1f", 
 		     source[isou], fitVal[0], fitVal[nterm], fitVal[1], 
 		     fitVal[nterm+1], fitVal[nterm*2]);
-    }
+    }*/
 
+    /* Try linear regression */
+    LinRegWt (count, freq, flux, sigma, &fitVal[0], &fitVal[1]);
+    Obit_log_error(err, OBIT_InfoErr,
+		   "Source %s Fitted Flux density=%8.3f Jy, SI=%5.3f", 
+		   source[isou], fitVal[0], fitVal[1]);
+    
     /* Calculate new */
     for (iif=0; iif<maxIF; iif++) {
       offset2 = isou*maxIF;
@@ -1299,7 +1309,7 @@ void FitSpec (ObitUV* inData, gchar **source,
       }
       newFlux[offset2+iif] =  exp(arg) * fitVal[0];
     } /* end IF loop */
-   if (fitVal) g_free(fitVal);
+    /*if (fitVal) g_free(fitVal);*/
   } /* end of source loop */
   /* Cleanup */
   if (flux)  g_free(flux);
@@ -1508,3 +1518,35 @@ static ofloat MedianSigma (ollong n, ofloat *value, ofloat mean, ofloat alpha)
   return out;
 } /* end MedianSigma */
 
+/**
+ * Determine Weighted linear regression of a spectrum
+ * Fitting in log(s)/log(nu) space
+ * Negative and/or blanked values ignored
+ * \param n       Number of spectral points
+ * \param nu      Array of frequencies (Hz)
+ * \param S       Array of flux densities, possibly blanked
+ * \param sigma   Array of uncertainties for S
+ * \param S_0     [out] flux density @ nu[0]
+ * \param alpha   [out] spectral index
+ */
+static void LinRegWt (olong n, odouble *nu, ofloat *S, ofloat *sigma,
+		      ofloat *S_0, ofloat* alpha) {
+  ofloat fblank = ObitMagicF();
+  odouble a, b, nu_0, s_w, s_x, s_y, s_xx, s_yy, s_xy, lnu, ls, w;
+  olong i;
+  s_w=0.; s_x=0.; s_y=0.; s_xx=0.; s_yy=0.; s_xy=0.; 
+  nu_0 = nu[0]; 
+  for (i=0; i<n; i++) {
+    if ((S[i]>0.0) && (S[i]!=fblank)) {
+      lnu = log(nu[i]/nu_0);
+      ls  = log(S[i]);
+      w   = 1/sigma[i];
+      s_x += w*lnu; s_y += w*ls; s_xy += w*lnu*ls;
+      s_xx += w*lnu*lnu; s_yy += w*ls*ls; s_w+=w;
+    }
+  }
+  a   = (s_w*s_xy-s_x*s_y)/(s_w*s_xx-s_x*s_x);
+  b = (s_y-a*s_x)/s_w;
+  *S_0   = exp(b);
+  *alpha = a;
+} /* end linRegWt */

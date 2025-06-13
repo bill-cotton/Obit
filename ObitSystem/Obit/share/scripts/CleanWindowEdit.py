@@ -1,8 +1,11 @@
 # Use Obit image "CLEAN" window to edit source lists
 # exec(open('CleanWindowEdit.py').read())
-import Image, ImageDesc, Table, OWindow, ODisplay, OTObit
+import Image, ImageDesc, Table, OWindow, ODisplay, OTObit, OErr
+import pickle
 GetWindowList=None; IsInWindow=None; SaveWindowList=None; FetchWindowList=None;
 WindowList2Mask=None; reEditWindowList=None
+err  = OErr.OErr()
+disp = ODisplay.ODisplay("ObitView", "ObitView", err)
 
 del GetWindowList
 def GetWindowList(inIm, err, disp=disp):
@@ -25,7 +28,7 @@ def GetWindowList(inIm, err, disp=disp):
 del IsInWindow
 def IsInWindow(x, y, inIm, winList,err):
     """
-    Determine is a position is in the window list
+    Determine if a position is in the window list
 
     Returns True or False
     * x       = RA or long (deg)

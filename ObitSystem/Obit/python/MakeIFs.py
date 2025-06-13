@@ -30,8 +30,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import UV, Table, OErr
-import numpy      
-from numpy import numarray
 from six.moves import range
 
 def UVAddIF (inUV, outUV, nIF, err):
@@ -113,23 +111,27 @@ def UVMakeIF (outUV, nIF, err):
 
     # Patch UV Descriptor
     DescMakeIF (outUV, nIF, err)
+    # Update
+    outUV.UpdateDesc(err)
     # Convert FQ Table
     UpdateFQ2 (outUV, nIF, err)
+    outUV.UpdateDesc(err) # Update
     # Convert AN Table
     UpdateAN2 (outUV, nIF, err)
     # Convert SU Table
     UpdateSU2 (outUV, nIF, err)
+    outUV.UpdateDesc(err) # Update
     # Regenerate CL table 1 - delete any old
     outUV.ZapTable("AIPS CL",-1,err)
     print('(Re) generate CL table')
-    UV.PTableCLGetDummy (outUV, outUV, 1, err, solInt=10.)
+    z=UV.PTableCLGetDummy (outUV, outUV, 1, err, solInt=10.)
     # dummy FG 1
     print('Dummy entry in Flag table 1')
     UV.PFlag(outUV, err, timeRange=[-10.,-9.], Ants=[200,200], Stokes='0000',Reason='Dummy')
     # Update
     outUV.UpdateDesc(err)
     OErr.printErrMsg(err,"Error updating output")
-     # end UVAddIF 
+    # end MakeIF 
     
 def UpdateSU (inUV, outUV, nIF, err):
     """ 
@@ -200,6 +202,8 @@ def CopyData (inUV, outUV, err):
     * err         = Obit error/message stack
     """
     ################################################################
+    import numpy      
+    from numpy import numarray
     # Checks, sizes should be the same
     id = inUV.Desc.Dict
     od = outUV.Desc.Dict
@@ -457,7 +461,7 @@ def UpdateFQ2 (outUV, nIF, err):
     oFQTab = outUV.NewTable(Table.WRITEONLY, "AIPS FQ",2,err,numIF=nIF)
     # Input info
     d = outUV.Desc.Dict
-    jlocf = d["jlocf"]
+    jlocf = d["jlocf"]; 
     reffreq = d["crval"][jlocf]
     delfreq = d["cdelt"][jlocf]
     freqpix = d["crpix"][jlocf]
@@ -478,8 +482,10 @@ def UpdateFQ2 (outUV, nIF, err):
     sbarr = []
     rxc = row['RXCODE'][0]
     rxcarr = ""
-    for iIF in range(1,nIF+1):
-        freqarr.append((iIF-freqpix)*delfreq*nchan )
+    IFSize = (delfreq*nchan)  # Nchan already reduced
+    IFZero = row['IF FREQ'][0]
+    for iIF in range(0,nIF):
+        freqarr.append(IFZero+iIF*IFSize)
         chwarr.append(chw)
         tbwarr.append(tbw)
         sbarr.append(sideband)

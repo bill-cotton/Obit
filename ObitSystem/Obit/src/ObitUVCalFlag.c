@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -728,11 +728,13 @@ static gpointer ThreadCalFlag (gpointer arg)
 	  index = stadd + (jif-1) * incif + (limc1-1) * incf;
 
 	  if (limc1 == limc2) {/* single channel */	    
-	    visIn[index+2] = - fabs (visIn[index+2]);
+	    visIn[index+0] = 0.0; visIn[index+1] = 0.0;
+	    visIn[index+2] = -fabs (visIn[index+2]);
 
 	  } else { /* loop over channel */
 	    for (jchan= limc1; jchan<=limc2; jchan++) { /* loop 200 */
-	      visIn[index+2] = - fabs (visIn[index+2]);
+	      visIn[index+0] = 0.0; visIn[index+1] = 0.0;
+	      visIn[index+2] = -fabs (visIn[index+2]);
 	      index += incf;
 	    } /* end loop over channels L200: */;
 	  } 

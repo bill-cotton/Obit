@@ -4,7 +4,7 @@
 ;! Obit wideband imaging
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2024
+;;  Copyright (C) 2010-2025
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -925,7 +925,7 @@ addParam(mf,"minFluxQU", paramVal=minFluxQU, \
 
 e.g. to add NiterV=50; minFluxV=0.00001 to task object mf
 addParam(mf,"NiterV", paramVal=NiterV, shortHelp="Niter for V", \
-	longHelp="  NiterQU.....Niter for V\n")
+	longHelp="  NiterV......Niter for V\n")
 addParam(mf,"minFluxV", paramVal=minFluxV, \
         shortHelp="minFlux for V", \
 	longHelp="  minFluxV...minFlux for V\n")

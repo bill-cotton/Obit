@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008,2022                                          */
+/*;  Copyright (C) 2008,2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1000,6 +1000,7 @@ static gboolean MultiProcExec (ObitThread* thread, olong nstreams,
   gboolean *done;
   gchar *routine = "MultiProcExec";
 
+ #ifdef OBIT_THREADS_ENABLED
   /* error checks */
   g_assert (thread != NULL);
 
@@ -1137,6 +1138,7 @@ static gboolean MultiProcExec (ObitThread* thread, olong nstreams,
   /* Stop asynchronous message queue */
   ObitThreadQueueFree (thread);
 
+#endif  /* OBIT_THREADS_ENABLED */
   return out;
 } /* end MultiProcExec */
 
