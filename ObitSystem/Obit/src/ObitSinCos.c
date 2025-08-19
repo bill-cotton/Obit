@@ -430,3 +430,13 @@ void ObitSinVec(olong n, ofloat *angle, ofloat *sin)
 #endif
 } /* end ObitSinVec */
 
+/** workaround for sincos screwup - the compiler should fold these into sincos */
+void Xsincos2(double x, double* p_sin, double* p_cos) {
+  *p_sin = sin(x);
+  *p_cos = cos(x);
+}
+void Xsincos2f(float x, float* p_sinf, float* p_cosf) {
+  *p_sinf = sinf(x);
+  *p_cosf = cosf(x);
+} /* end sincos2 */
+

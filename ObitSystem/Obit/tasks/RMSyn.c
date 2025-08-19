@@ -43,7 +43,6 @@
 #include "ObitFArray.h"
 #include "ObitUtil.h"
 #include "ObitPlot.h"
-#include "sincos.h"
 #if HAVE_GSL==1  /* GSL stuff */
 #include "gsl/gsl_blas.h"
 #include "gsl/gsl_vector.h"

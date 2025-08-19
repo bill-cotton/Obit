@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2018                                          */
+/*;  Copyright (C) 2009,2018,2025                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -51,5 +51,15 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos);
 void ObitSinVec(olong n, ofloat *angle, ofloat *sin);
 /** Calculate cosine of vector of angles */
 void ObitCosVec(olong n, ofloat *angle, ofloat *cos);
-#include "sincos.h"
+/** workaround for sincos screwup */
+static inline void sincos2(double x, double* p_sin, double* p_cos) {
+  *p_sin = sin(x);
+  *p_cos = cos(x);
+}
+static inline void sincos2f(float x, float* p_sinf, float* p_cosf) {
+  *p_sinf = sinf(x);
+  *p_cosf = cosf(x);
+} /* end sincos2 */
+//void sincos2(double x, double* p_sin, double* p_cos);
+//void sincos2f(float x, float* p_sinf, float* p_cosf);
 #endif /* OBITSINCOS_H */ 

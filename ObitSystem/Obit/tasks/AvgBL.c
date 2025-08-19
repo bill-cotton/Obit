@@ -40,7 +40,7 @@
 #include "ObitAIPSDir.h"
 #include "ObitPosLabelUtil.h"
 #include <math.h>
-#include "sincos.h"
+#include "ObitSinCos.h"
 
 /* internal prototypes */
 /* Get inputs */
