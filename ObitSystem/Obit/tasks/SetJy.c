@@ -891,7 +891,7 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   olong ictype, isrc, i;
   odouble temp2=0.0, dt, ferror, freqm;
   /* number of recognized source names */
-  olong xnsou = 45;
+  olong xnsou = 53;
 
   /* Source lists, Baars et al. */
   ofloat coeff[9][4] = { 
@@ -984,7 +984,7 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     "3C295",   "1409+524", "1411+522", "J1411+5212", "3c295", "3C 295", 
     "3C123",   "0433+295", "0437+296", "J0437+2940", "3c123", "3C 123", 
     "3C196",   "0809+483", "0813+482", "J0813+4822", "3c196", "3C 196",
-    "0408-65" , "0408-65", "0408-65",  "0407-658" ,  "J0407-658",
+    "0408-65" , "0408-65", "J0408-6545",  "0407-658" ,  "J0407-658",
   };
   /* Number of characters to check */
   olong lenchk[] = {

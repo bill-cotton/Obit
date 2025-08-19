@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to Plot average uv data v time          .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2018,2024                                          */
+/*;  Copyright (C) 2018,2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -36,7 +36,7 @@
 #include "ObitAIPSDir.h"
 #include "ObitPosLabelUtil.h"
 #include <math.h>
-void sincos(double x, double *sin, double *cos); /* Fooey */
+#include "sincos.h"
 
 /* internal prototypes */
 /* Get inputs */

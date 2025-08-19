@@ -43,7 +43,7 @@
 #include "ObitFArray.h"
 #include "ObitUtil.h"
 #include "ObitPlot.h"
-void sincosf(float x, float *sin, float *cos); /* grumble */
+#include "sincos.h"
 #if HAVE_GSL==1  /* GSL stuff */
 #include "gsl/gsl_blas.h"
 #include "gsl/gsl_vector.h"
@@ -1264,7 +1264,7 @@ void MakeBeam(ObitInfoList* myInput, ObitImage* inImage, ObitErr* err)
     for (i=0; i<nInChan; i++) {
       /* Want this one ? */
       if ((plnWt[i]<=0.0) || (QRMS[i]>maxQ) || (URMS[i]>maxU)) continue;
-      sincosf((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &SinCos.imag, &SinCos.real); /* sin/cos factors */
+      sincos2f((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &SinCos.imag, &SinCos.real); /* sin/cos factors */
       /* Set real 1* specCor */
       COMPLEX_SET(dval, specCor[i], 0.);
       COMPLEX_MUL2(chVal, dval, SinCos);

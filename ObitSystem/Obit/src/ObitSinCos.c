@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2023                                          */
+/*;  Copyright (C) 2009-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,7 +29,6 @@
 #include "ObitSinCos.h"
 #include "ObitVecFunc.h"
 #include <math.h>
-void sincosf(float x, float *sin, float *cos);
 
 #define OBITSINCOSNTAB  1024  /* tabulated points per turn */
 #define OBITSINCOSNTAB4 256   /* 1/4 size of table */
@@ -119,7 +118,7 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
   if (n<=0) return;
   /* Trap if only one */
   if (n==1) {
-    sincosf(angle[0], sin, cos);
+    sincos2f(angle[0], sin, cos);
     return;
   }
  /** AVX512 implementation crashes */

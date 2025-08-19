@@ -42,7 +42,7 @@
 #include "ObitFArray.h"
 #include "ObitUtil.h"
 #include "ObitPlot.h"
-void sincosf(float x, float *sin, float *cos); /* grumble */
+/*void sincosf(float x, float *sin, float *cos);*/ /* grumble */
 
 /* internal prototypes */
 /* Get inputs */

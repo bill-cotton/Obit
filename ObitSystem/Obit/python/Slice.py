@@ -141,7 +141,7 @@ class Slice(Obit.Source):
         x = []; y = []
         # Scaling
         peak = max(max(self.Slice),abs(min(self.Slice)))
-        scale = 1.0
+        scale = 1.0; pre = ""
         if peak<1.0e-1:
             scale = 1.0e3; pre = "m"
         if peak<1.0e-4:

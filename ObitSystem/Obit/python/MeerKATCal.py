@@ -11,7 +11,7 @@ from AIPSData import AIPSImage
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
-from OTObit import Acat, AMcat, getname, zap, imhead, tabdest, tput, clearstat
+from OTObit import Acat, AMcat, getname, zap, imhead, tabdest, tput, clearstat, addParam
 from Obit import Version
 import ObitTalkUtil
 # The following imports are not used in this script, but are somehow passed onto another part of the script
@@ -72,9 +72,9 @@ def MKInitContParms():
     parms["DataFile"]     = "Some_MeerKAT_Data.uvtab"  # Main data file
     parms["DlyCalFile"]   = "DelayCal.uvtab"           # DelayCal file if doPolCal=True
     
-    # Hanning
-    parms["doHann"]       = True       # Hanning needed for RFI?
+    # Hanning    parms["doLoad"]       = True       # Load Data to AIPS with Hann or Splat
     parms["doDescm"]      = True       # Descimate in Hanning?
+    parms["noHann"]       = False      # use Splat rather than Hann to import
     
     # Parallactic angle correction
     parms["doPACor"]      = False       # Make parallactic angle correction
@@ -278,8 +278,10 @@ def MKInitContParms():
     parms["Reuse"]       = 0.           # How many CC's to reuse after each self-cal loop??
     parms["minPatch"]    = 0            # Minumum beam patch to subtract in pixels
     parms["OutlierSize"] = 0            # Size of outlier fields
+    parms["doOutlier"]   = True         # Add outlier fields
     parms["autoCen"]     = False        # Do autoCen?
-    parms["outlierArea"] = 1.5          # Multiple of FOV around phase center to find outlying CC's
+    parms["OutlierArea"] = 1.5          # Multiple of FOV around phase center to find outlying CC's
+    parms["imgnoScrat"]  = [0]          # AIPS Disks to avoid for imaging  
 
     # Final
     parms["doReport"]  =     True       # Generate source report?
@@ -465,12 +467,41 @@ def MKGetObsParms(obsdata, katdata, parms, logFile):
     #???editList = MKEditList(parms["selChan"])
     parms=MKInitContFQParms(katdata, parms)
     return parms
+# end MKGetObsParms
+
+def MKGetIF_Freq(inUV, err):
+    """
+    Get Array of lambda^2 in dataIF reference frequencies
+    
+    Return list of IF frequencies at ref pix
+    * inUV     = Obit UV data with tables
+    * err      = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not UV.PIsA(inUV):
+        print("Actually ",inUV.__class__)
+        raise TypeError("inUV MUST be a Python Obit UV")
+    d = inUV.Desc.Dict # UV data descriptor dictionary
+    refFreq = d["crval"][ d["jlocf"]]    # reference frequency
+    nif     = d["inaxes"][ d["jlocif"]]  # Number of IFs
+    fqtab = inUV.NewTable(Table.READONLY,"AIPS FQ",1,err)
+    fqtab.Open(Table.READONLY,err)
+    fqrow = fqtab.ReadRow(1, err)   # Only bother with first
+    OErr.printErrMsg(err)           # catch table errors
+    IFfreq   = fqrow['IF FREQ']     # IF offset
+    IF_Freq = []
+    for iif in range(0,nif):
+        frq =  refFreq + IFfreq[iif]
+        IF_Freq.append(frq)
+    # End loop
+    return IF_Freq
+    # end MKGetIF_Freq
 
 def MKStaticFlag(uv, FGver, err):
     """
     Flag static RFI channels, writes flag table FGver on uv
 
-    Only handles data with 1 IF
     * uv       = Python Obit UV object, AIPS or FITS
     * FGVer    = AIPS FG table to write
     * err      = Python Obit Error/message stack
@@ -481,19 +512,28 @@ def MKStaticFlag(uv, FGver, err):
            (1145861371., 1300927801.), \
            (1519316505., 1608343862.), \
        ]
+    # Open and close uv for force header update
+    uv.Open(UV.READWRITE,err)
     # Header info
     d = uv.Desc.Dict; jlocf = d['jlocf']; jlocif = d['jlocif'];
     nchan = d["inaxes"][jlocf]; nif = d["inaxes"][jlocif];
-    if nif>1:
-        raise RuntimeError("Can only handle 1 IF")
-    nu0 = d['crval'][jlocf]; dnu = d['cdelt'][jlocf]; nu_off=d['crpix'][jlocf];
+    dnu = d['cdelt'][jlocf]; nu_off=d['crpix'][jlocf];
+    # IF frequencies
+    IF_Freq = MKGetIF_Freq(uv, err)
+    OErr.printErrMsg(err) # catch table errors
     for r in RFI:
-        bchan = int(0.5+nu_off+(r[0]-nu0)/dnu)  # 1 rel
-        echan = int(0.5+nu_off+(r[1]-nu0)/dnu)
-        if (bchan>=1) and (echan<=nchan):
-            UV.PFlag(uv, err, Chans=[bchan,echan],Reason='Static Flag')
-
+        for iif in range(0,nif):
+            nu0 = nu_off+IF_Freq[iif]
+            bchan = max (1,int(0.5+((r[0]-nu0)/dnu)))  # 1 rel
+            echan = min (nchan,int(0.5+((r[1]-nu0)/dnu)))
+            if (bchan>=1) and (bchan<=nchan) and (echan<=nchan) and (echan>=1):
+                UV.PFlag(uv, err, IFs=[iif+1,iif+1],Chans=[bchan,echan],\
+                         Ants=[0,0], Reason='Static Flag')
+            
+    uv.Close(err)
+    OErr.printErrMsg(err) # catch errors
 # end MKStaticFlag
+
 def MKEditList(numchannels):
 
     # Flag the middle channel
@@ -518,7 +558,7 @@ def MKInitContFQParms(meta,parms):
     nchan     = meta["numchan"]
     bandwidth = meta["bandwid"]
     antSize   = 13.5
-    doHann    = parms["doHann"]
+    doLoad    = parms["doLoad"]
 
     # Delay channels
     if parms["delayBChan"] == None:
@@ -732,7 +772,7 @@ def MKCopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
 
 def MKHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
            flagVer=-1, BChan=1, EChan=0, logfile='', zapin=False, \
-           check=False, debug=False):
+           noHann=False, check=False, debug=False):
     #Input DataFile , DCalFIle, BChan, EChan, flag table
     """ Hanning smooth a file to AIPS
 
@@ -747,6 +787,8 @@ def MKHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
     flagVer    = Flagging table to apply
     BChan      = lowest 1-rel channel
     EChan      = highest channel
+    noHann     = if True, use Splat rather than Hann to copy
+                 (UVCopy loses iNdeX, CL Tables)
     zapin      = Delete input when done
     check      = Only check script, don't execute tasks
     debug      = Run tasks debug, show input
@@ -754,37 +796,42 @@ def MKHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
     returns AIPS UV data object, None on failure
     """
     ################################################################
-    mess =  "Hanning smooth data"
-    printMess(mess, logfile)
-    #
-    hann=ObitTask.ObitTask("Hann")
+     #
+    if noHann:
+        copyTask = ObitTask.ObitTask("Splat")
+        mess =  "Importing data with Splat"
+    else:
+        copyTask=ObitTask.ObitTask("Hann")
+        mess =  "Hanning smooth data"
     try:
-        hann.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        copyTask.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
     except Exception as exception:
         pass
-    setname(inUV,hann)
+    printMess(mess, logfile)
+    setname(inUV,copyTask)
     if check:
         return inUV
-    hann.outDType = "AIPS"
-    hann.outName  = Aname[0:12]
-    hann.outClass = Aclass[0:6]
-    hann.outSeq   = Aseq
-    hann.outDisk  = Adisk
-    hann.flagVer  = flagVer
-    hann.BChan    = BChan
-    hann.EChan    = EChan
-    hann.doDescm  = doDescm
-    hann.taskLog  = logfile
-    hann.debug    = debug
+    copyTask.outDType = "AIPS"
+    copyTask.outName  = Aname[0:12]
+    copyTask.outClass = Aclass[0:6]
+    copyTask.outSeq   = Aseq
+    copyTask.outDisk  = Adisk
+    copyTask.flagVer  = flagVer
+    copyTask.BChan    = BChan
+    copyTask.EChan    = EChan
+    if not noHann:
+        copyTask.doDescm  = doDescm
+    copyTask.taskLog  = logfile
+    copyTask.debug    = debug
     if debug:
-        hann.i
+        copyTask.i
     # Trap failure
     try:
         if not check:
-            hann.g
+            copyTask.g
     except Exception as exception:
         print(exception)
-        mess = "Median flagging Failed retCode="+str(hann.retCode)
+        mess = "Hanning/Splat Failed, retCode="+str(copyTask.retCode)
         printMess(mess, logfile)
         return None
     else:
@@ -792,9 +839,11 @@ def MKHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
     # Get output
     outUV = UV.newPAUV("AIPS UV DATA", Aname, Aclass, Adisk, Aseq, True, err)
     if err.isErr:
-        mess =  "Error Getting Hanning smoothed data"
+        mess =  "Error Getting Smoothed/copied data"
         printMess(mess, logfile)
         return None
+        # Make sure an output FG table
+    UV.PFlag(outUV, err,flagVer=1,  timeRange=[-10.,-9.], Ants=[200,200], Stokes='0000',Reason='Dummy')
     if zapin:
         #Zap input
         inUV.Zap(err)
@@ -1770,18 +1819,19 @@ def MKDelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, BChan=1, EChan=0, \
     # Loop over calibrators
     for DlyCal in DlyCals:
         calib.Sources[0]= DlyCal["Source"]
-        calib.DataType2 = DlyCal["CalDataType"]
-        calib.in2File   = DlyCal["CalFile"]
-        calib.in2Name   = DlyCal["CalName"]
-        calib.in2Class  = DlyCal["CalClass"]
-        calib.in2Seq    = DlyCal["CalSeq"]
-        calib.in2Disk   = DlyCal["CalDisk"]
-        calib.nfield    = DlyCal["CalNfield"]
-        calib.CCVer     = DlyCal["CalCCVer"]
-        calib.BComp     = DlyCal["CalBComp"]
-        calib.EComp     = DlyCal["CalEComp"]
+        if DlyCal["CalDataType"]!="None":
+            calib.DataType2 = DlyCal["CalDataType"]
+            calib.in2File   = DlyCal["CalFile"]
+            calib.in2Name   = DlyCal["CalName"]
+            calib.in2Class  = DlyCal["CalClass"]
+            calib.in2Seq    = DlyCal["CalSeq"]
+            calib.in2Disk   = DlyCal["CalDisk"]
+            calib.nfield    = DlyCal["CalNfield"]
+            calib.CCVer     = DlyCal["CalCCVer"]
+            calib.BComp     = DlyCal["CalBComp"]
+            calib.EComp     = DlyCal["CalEComp"]
+            calib.Cmodel    = DlyCal["CalCmodel"]
         calib.Cmethod   = DlyCal["CalCmethod"]
-        calib.Cmodel    = DlyCal["CalCmodel"]
         calib.Flux      = DlyCal["CalFlux"]
         calib.Alpha     = 0.0
         calib.modelFlux = DlyCal["CalModelFlux"]
@@ -2100,10 +2150,10 @@ def MKCalAP(uv, target, ACals, GCalList, err, \
         SJDone.append(ACal["Source"])
         if FQid:
             setjy.FreqID=FQid
-        if ACal["Source"] in GCalList:
-            setjy.OPType="REJY"
-        else:
-            setjy.OPType="CALC"
+        #if ACal["Source"] in GCalList:
+        #   setjy.OPType="REJY"
+        #else:
+        setjy.OPType="CALC"
         setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
         if debug:
             setjy.i
@@ -2222,18 +2272,19 @@ def MKCalAP(uv, target, ACals, GCalList, err, \
     # Loop over calibrators
     for ACal in ACals:
         calib.Sources[0]= ACal["Source"]
-        calib.DataType2 = ACal["CalDataType"]
-        calib.in2File   = ACal["CalFile"]
-        calib.in2Name   = ACal["CalName"]
-        calib.in2Class  = ACal["CalClass"]
-        calib.in2Seq    = ACal["CalSeq"]
-        calib.in2Disk   = ACal["CalDisk"]
-        calib.nfield    = ACal["CalNfield"]
-        calib.CCVer     = ACal["CalCCVer"]
-        calib.BComp     = ACal["CalBComp"]
-        calib.EComp     = ACal["CalEComp"]
+        if ACal["CalDataType"]!="None":
+            calib.DataType2 = ACal["CalDataType"]
+            calib.in2File   = ACal["CalFile"]
+            calib.in2Name   = ACal["CalName"]
+            calib.in2Class  = ACal["CalClass"]
+            calib.in2Seq    = ACal["CalSeq"]
+            calib.in2Disk   = ACal["CalDisk"]
+            calib.nfield    = ACal["CalNfield"]
+            calib.CCVer     = ACal["CalCCVer"]
+            calib.BComp     = ACal["CalBComp"]
+            calib.EComp     = ACal["CalEComp"]
+            calib.Cmodel    = ACal["CalCmodel"]
         calib.Cmethod   = ACal["CalCmethod"]
-        calib.Cmodel    = ACal["CalCmodel"]
         calib.modelPos  = ACal["CalModelPos"]
         calib.modelParm = ACal["CalModelParm"]
         if debug:
@@ -2307,18 +2358,19 @@ def MKCalAP(uv, target, ACals, GCalList, err, \
                 printMess(mess, logfile)
                 continue
             calib.Sources[0]= PCal["Source"]
-            calib.DataType2 = PCal["CalDataType"]
-            calib.in2File   = PCal["CalFile"]
-            calib.in2Name   = PCal["CalName"]
-            calib.in2Class  = PCal["CalClass"]
-            calib.in2Seq    = PCal["CalSeq"]
-            calib.in2Disk   = PCal["CalDisk"]
-            calib.nfield    = PCal["CalNfield"]
-            calib.CCVer     = PCal["CalCCVer"]
-            calib.BComp     = PCal["CalBComp"]
-            calib.EComp     = PCal["CalEComp"]
+            if PCal["CalDataType"]!="None":
+                calib.DataType2 = PCal["CalDataType"]
+                calib.in2File   = PCal["CalFile"]
+                calib.in2Name   = PCal["CalName"]
+                calib.in2Class  = PCal["CalClass"]
+                calib.in2Seq    = PCal["CalSeq"]
+                calib.in2Disk   = PCal["CalDisk"]
+                calib.nfield    = PCal["CalNfield"]
+                calib.CCVer     = PCal["CalCCVer"]
+                calib.BComp     = PCal["CalBComp"]
+                calib.EComp     = PCal["CalEComp"]
+                calib.Cmodel    = PCal["CalCmodel"]
             calib.Cmethod   = PCal["CalCmethod"]
-            calib.Cmodel    = PCal["CalCmodel"]
             #calib.Flux      = PCal["CalFlux"]
             calib.Alpha     = PCal["CalModelSI"]
             #calib.modelFlux = PCal["CalModelFlux"]
@@ -2761,18 +2813,19 @@ def MKBPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
         bpass.Sources[0] = BPCal["Source"]
         bpass.BPSoln    = outBPVer
         bpass.Alpha     = BPCal["CalModelSI"]
-        bpass.DataType2 = BPCal["CalDataType"]
-        bpass.in2File   = BPCal["CalFile"]
-        bpass.in2Name   = BPCal["CalName"]
-        bpass.in2Class  = BPCal["CalClass"]
-        bpass.in2Seq    = BPCal["CalSeq"]
-        bpass.in2Disk   = BPCal["CalDisk"]
-        bpass.nfield    = BPCal["CalNfield"]
-        bpass.CCVer     = BPCal["CalCCVer"]
-        bpass.BComp     = BPCal["CalBComp"]
-        bpass.EComp     = BPCal["CalEComp"]
+        if BPCal["CalDataType"]!="None":
+            bpass.DataType2 = BPCal["CalDataType"]
+            bpass.in2File   = BPCal["CalFile"]
+            bpass.in2Name   = BPCal["CalName"]
+            bpass.in2Class  = BPCal["CalClass"]
+            bpass.in2Seq    = BPCal["CalSeq"]
+            bpass.in2Disk   = BPCal["CalDisk"]
+            bpass.nfield    = BPCal["CalNfield"]
+            bpass.CCVer     = BPCal["CalCCVer"]
+            bpass.BComp     = BPCal["CalBComp"]
+            bpass.EComp     = BPCal["CalEComp"]
+            bpass.Cmodel    = BPCal["CalCmodel"]
         bpass.Cmethod   = BPCal["CalCmethod"]
-        bpass.Cmodel    = BPCal["CalCmodel"]
         bpass.Flux      = BPCal["CalFlux"]
         bpass.modelFlux = BPCal["CalModelFlux"]
         bpass.modelPos  = BPCal["CalModelPos"]
@@ -3365,7 +3418,7 @@ def MKSetImager (uv, target, outIclass="", nThreads=1, noScrat=[], logfile = "",
     return img
 # end MKSetImager
 
-def MKPolCal(uv, unPolCal, GainCal, err, RM=0.0, \
+def MKPolCal(uv, unPolCal, GainCal, PolCals, err, RM=0.0, \
                doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=-1, \
                solInt=0.0, solnType="  ", refAnt=0, ChInc=1, ChWid=1, \
                check=False, debug = False, \
@@ -3379,6 +3432,7 @@ def MKPolCal(uv, unPolCal, GainCal, err, RM=0.0, \
     * uv       = UV data object to calibrate
     * unPolCal = list of unpolarized sources
     * GainCal  = List of unknown sources observed multiple times
+    * PolCals  - list of known polarized surces NOT to use
     * err      = Obit error/message stack
     * doCalib  = Apply prior calibration table, positive=>calibrate
     * gainUse  = CL/SN table to apply
@@ -3426,8 +3480,9 @@ def MKPolCal(uv, unPolCal, GainCal, err, RM=0.0, \
                 pcal.RLPhase[i]  = 0.0
                 pcal.RM[i]       = 0.0; i+=1
         # Then gain cals whose polarizations are to be solved
+        # Not if also Polarized calibrator
         for c in GainCal:
-            if c not in pcal.Sources:
+            if (c not in pcal.Sources) and (c not in PolCals ):
                 pcal.Sources[i] = c
                 pcal.doFitPol[i]=True; pcal.doFitI[i]=True
                 pcal.RLPhase[1]=-999.; 
@@ -3901,9 +3956,9 @@ def MKGetTimes(uv, Source, err,
     # end MKGetTimes
 
 def MKImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band="", \
-                     doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  OutlierArea=5.0, \
+                     doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  OutlierArea=1.5, \
                      doPol=False, PDVer=-1,  minFlux=0.0, nx=[0], ny=[0], \
-                     xCells=0, yCells=0, Reuse=0.0, minPatch=0, OutlierSize=0, noNeg=False, \
+                     xCells=0, yCells=0, Reuse=0.0, minPatch=0, OutlierSize=530, noNeg=False, \
                      Stokes="I", FOV=0.1/3600.0, Robust=-1.5, Niter=300, CleanRad=None, \
                      maxPSCLoop=0, minFluxPSC=0.05, solPInt=0.5, \
                      solPMode="P", solPType= "  ", CCVer=-1, CGain=0.1, \
@@ -3914,7 +3969,7 @@ def MKImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", ban
                      doMB=True, norder=2, maxFBW=0.05, doComRes=False, \
                      PBCor=False, antSize=12.0, nTaper=0, Tapers=[20.0], \
                      doGPU=False, doGPUGrid=False, sefd=500.0, \
-                     nThreads=1, noScrat=[], logfile='', check=False, debug=False):
+                     nThreads=1, noScrat=[0], logfile='', check=False, debug=False):
     """
     Image a list of sources with optional selfcal
 
@@ -4077,12 +4132,15 @@ def MKImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", ban
     imager.doGPUGrid   = doGPUGrid
     imager.Catalog = 'AllSkyVZ.FIT' # Outliers from NVSS/SUMMS 
     if doOutlier or (doOutlier==None):
-        imager.OutlierSize = 530
+        if OutlierSize>0:
+            imager.OutlierSize = OutlierSize
+        else:
+            imager.OutlierSize = 200
         imager.OutlierDist = FOV*OutlierArea   # Outliers from NVSS/SUMMS
         if refFreq>1.0e9:
-            imager.OutlierFlux = 0.01
+            imager.OutlierFlux = 0.005
         else:
-            imager.OutlierFlux = 0.02
+            imager.OutlierFlux = 0.01
     # Auto window or centered box
     if CleanRad:
         imager.CLEANBox=[-1,CleanRad,0,0]
@@ -4098,6 +4156,31 @@ def MKImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", ban
         imager.i
         imager.debug = debug
     OK = False   # Some must work
+    # Additions to input
+    NiterQU = Niter//2
+    addParam(imager,"NiterQU", paramVal=NiterQU, shortHelp="Niter for Q,U", \
+             longHelp="  NiterQU.....Niter for Q,U\n")
+    minFluxQU = 20.0e-6
+    addParam(imager,"minFluxQU", paramVal=minFluxQU, \
+             shortHelp="minFlux for Q,U", \
+             longHelp="  minFluxQU...minFlux for Q,U\n")
+
+    NiterV=1000; minFluxV=0.00005 # Don't need much V CLEANing
+    addParam(imager,"NiterV", paramVal=NiterV, shortHelp="Niter for V", \
+             longHelp="  NiterV.....Niter for V\n")
+    addParam(imager,"minFluxV", paramVal=minFluxV, \
+             shortHelp="minFlux for V", \
+             longHelp="  minFluxV...minFlux for V\n")
+    maxAWLoop = 1 # Seems needed for MeerKAT
+    addParam(imager,"maxAWLoop", paramVal=maxAWLoop, shortHelp="Max. middle CLEAN loop", \
+             longHelp="  maxAWLoop....Max. middle CLEAN Loop count\n"+ \
+             "              Override the default behavior for the autoWin middle loop\n"+
+             "              if > 0.\n")
+    minFList = [0.0001,0.00005]  # 0.0001 Jy after 1st, 0.00005 after 2nd
+    addParam(imager,"minFList", paramVal=minFList, \
+             shortHelp="minFlux list after SC", \
+             longHelp="  minFList....minFluxes to use in IPol after selfcals\n")
+
     # Loop over slist
     for sou in slist:
         sou=sou.replace(' ','_')         # Just in case a stray space in a source name has made it to here
@@ -4518,8 +4601,11 @@ def MKSpecPlot(uv, Source, timerange, maxgap, refAnt, err, Stokes=["RR","LL"], \
     scr.Info(err)     # Get file information
     #Reindex the file
     UV.PUtilIndex(scr, err, maxGap=float(maxgap))
-    info = uv.List
+    # Make sure source name is in "object"
+    d = scr.Desc.Dict; d['object']=Source[0]; scr.Desc.Dict=d
+    scr.UpdateDesc(err)
 
+    info = uv.List
     # Reset selection
     info.set("doCalSelect",True)
     info.set("doCalib",-1)
@@ -5142,17 +5228,17 @@ def MKStdModel(Cals, freq):
     # Perley-Butler 2017
     # 3C48
     model = {"Source":["3C48", "J0137+3309", "0137+331", "3c48", "3C 48"],
-             "freqRange":[300.,50000.0],
+             "freqRange":[300.,50000.0], "DataType":"None", "file":"", "nfield":1, "disk":1,
              "dtoff":-3., "spec":[1.3253,  -0.7553,  -0.1914,  0.0498,  0.0   , 0.0]}
     stdModel.append(model)
     # 3C138
     model = {"Source":["3C138", "J0521+1638", "0521+166","3c138", "3C 138"],
-             "freqRange":[300.,50000.0],
+             "freqRange":[300.,50000.0], "DataType":"None", "file":"", "nfield":1, "disk":1,
              "dtoff":-3., "spec":[1.0088,  -0.4981,  -0.1552, -0.0102,  0.0223, 0.0]}
     stdModel.append(model)
     # 3C286
     model = {"Source":["3C286","J1331+3030","1331+305=3C286","1331+305", "3c286", "3C 286"],
-             "freqRange":[300.,50000.0],
+             "freqRange":[300.,50000.0], "DataType":"None", "file":"", "nfield":1, "disk":1,
              "dtoff":-3., "spec":[1.2482,  -0.4507,  -0.1798,  0.0357,  0.0   , 0.0]}
     stdModel.append(model)
     # 1934-638 Reynolds  UHF
@@ -5307,18 +5393,19 @@ def MKGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
     # Loop over calibrators
     for Cal in Cals:
         calib.Sources[0]= Cal["Source"]
-        calib.DataType2 = Cal["CalDataType"]
-        calib.in2File   = Cal["CalFile"]
-        calib.in2Name   = Cal["CalName"]
-        calib.in2Class  = Cal["CalClass"]
-        calib.in2Seq    = Cal["CalSeq"]
-        calib.in2Disk   = Cal["CalDisk"]
-        calib.nfield    = Cal["CalNfield"]
-        calib.CCVer     = Cal["CalCCVer"]
-        calib.BComp     = Cal["CalBComp"]
-        calib.EComp     = Cal["CalEComp"]
+        if Cal["CalDataType"]!="None":
+            calib.DataType2 = Cal["CalDataType"]
+            calib.in2File   = Cal["CalFile"]
+            calib.in2Name   = Cal["CalName"]
+            calib.in2Class  = Cal["CalClass"]
+            calib.in2Seq    = Cal["CalSeq"]
+            calib.in2Disk   = Cal["CalDisk"]
+            calib.nfield    = Cal["CalNfield"]
+            calib.CCVer     = Cal["CalCCVer"]
+            calib.BComp     = Cal["CalBComp"]
+            calib.EComp     = Cal["CalEComp"]
+            calib.Cmodel    = Cal["CalCmodel"]
         calib.Cmethod   = Cal["CalCmethod"]
-        calib.Cmodel    = Cal["CalCmodel"]
         calib.Flux      = Cal["CalFlux"]
         #calib.Alpha     = Cal["CalModelSI"]
         calib.modelFlux = Cal["CalModelFlux"]
@@ -5746,6 +5833,7 @@ def MKGetParms( projectDict):
               ('@BAND@',       projectDict['Band']),
               ('@DATAFILE@',   str(projectDict['DataFile'])),
               ('@DCALFILE@',   str(projectDict['DCalFile'])),
+              ('@NOHANN@',     str(projectDict['noHann'])),
               ('@BPCAL@',      str(projectDict['BPCal'])),
               ('@GAINCAL@',    str(projectDict['GainCal'])),
               ('@AMPCAL@',     str(projectDict['AmpCal'])),
@@ -5861,7 +5949,7 @@ def MKLookupRefAnt(MKRefAnt, meta):
 
 def MKPrepare(inUV, err, \
               project=None, session=None, template=None, parmFile=None,
-              Targets=None, DataFile= '', DCalFile='', doPol=False,
+              Targets=None, DataFile= '', DCalFile='', noHann=False, doPol=False, 
               BPCal = None, DlyCal = None, GainCal = None,
               AmpCal = None, PolCal = None, UnPolCal = None, MKrefAnt = None,
               outputDest='./'):
@@ -5878,6 +5966,7 @@ def MKPrepare(inUV, err, \
     * Targets  = List of names of targets
     * DataFile = Main raw data archive uvtab file
     * DCalFile = DelayCal raw data archive uvtab file if doPol
+    * noHann   = True if use Splat rather than Hann to import data
     * doPol    = True if polarization calibration and imaging wanted
     * BPCal    = List of names of bandpass calibrator(s)
     * DlyCal   = List of names of group delay calibrator(s)
@@ -5966,6 +6055,7 @@ def MKPrepare(inUV, err, \
     projectDict['UnPolCal']  = UnPolCal
     projectDict['refAnt']    = MKLookupRefAnt(MKrefAnt, meta)
     projectDict['DestDir']   = outputDest
+    projectDict['noHann']    = noHann
     # First scan on first BP cal for plot
     plotsrc = BPCal[0]
     projectDict['PlotSrc']   = plotsrc

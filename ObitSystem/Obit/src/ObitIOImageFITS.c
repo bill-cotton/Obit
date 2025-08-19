@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2285,8 +2285,10 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
 	  svalue[last-first+1] = 0; /* null terminate */
 	  /* add to InfoList */
 	  dim[0] = strlen(svalue);
-	  ObitInfoListAlwaysPut(desc->info, (char*)keywrd, OBIT_string, dim, 
-				(gconstpointer)svalue);
+	  if (dim[0]>0) { /* Trap NULL string */
+	    ObitInfoListAlwaysPut(desc->info, (char*)keywrd, OBIT_string, dim, 
+				  (gconstpointer)svalue);
+	  }
 	  
 	  break;
 	case 'L':  /* logical 'T', 'F' */

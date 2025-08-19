@@ -2,7 +2,7 @@
 /* $Id$  */
 /*  Shift the phase tracking center of a UV data.    .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2023,2024                                          */
+/*;  Copyright (C) 2023-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -41,7 +41,7 @@
 #include "ObitAIPSDir.h"
 #include "ObitPosLabelUtil.h"
 #include <math.h>
-void sincos(double x, double *sin, double *cos); /* Fooey */
+#include "sincos.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -880,7 +880,7 @@ ObitUV* ObitUVShift (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  if (doShift) {
 	    ii = j/inDesc->inaxes[inDesc->jlocs];
 	    phase =  -(+dxyzc[0]*u + dxyzc[1]*v + dxyzc[2]*w)*inDesc->fscale[ii];  /* Scale to freq */
-	    sincos(phase, &sp, &cp);
+	    sincos2(phase, &sp, &cp);
 	    visRe = (ofloat)(inUV->buffer[jndx]*cp - inUV->buffer[jndx+1]*sp);
 	    visIm = (ofloat)(inUV->buffer[jndx]*sp + inUV->buffer[jndx+1]*cp);
 	  } else {

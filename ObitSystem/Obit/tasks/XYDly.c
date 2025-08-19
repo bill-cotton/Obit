@@ -40,6 +40,7 @@
 #include "ObitTableSN.h"
 #include "ObitTableCL.h"
 #include "ObitSinCos.h"
+#include "sincos.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -80,7 +81,6 @@ void SetupEVPA (olong numIF, olong numFreq, ObitUV *inUV,
 /* Calculate sign flips */
 void GetFlip (olong numIF, olong numFreq, ObitUV *inUV, ofloat *EVPAFS, ofloat *EVPAFC, 
 	      ofloat chisin, ofloat chicos, ofloat *flip);
-void sincosf(float x, float *sin, float *cos);
 /* Human readable time string */
 void day2dhms(ofloat time, gchar *timeString);
 
@@ -1015,8 +1015,8 @@ ObitTableSN* ObitUVXYDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       cntTime++; sumTime+=time[0];  /* For average time */
       /* linear feeds - flip phase if linP (eff. Stokes u) fn positive */
       chi  = ObitAntennaListParAng(ANList, 1,  time[0], Source);  /* Parallactic angle */
-      sincosf(chi*2.0, &chisin, &chicos);  /* Need sine/cosine of 2*chi */
-      /*sincosf(chi, &chisin, &chicos);  DEBUG Need sine/cosine of 2*chi */
+      sincos2f(chi*2.0, &chisin, &chicos);  /* Need sine/cosine of 2*chi */
+      /*sincos2f(chi, &chisin, &chicos);  DEBUG Need sine/cosine of 2*chi */
       lastTime = time[0];
       /* Calculate phase flips */
       GetFlip(numIF, numFreq, inUV, EVPAFS, EVPAFC, chisin, chicos, flip);

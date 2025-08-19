@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2018                                          */
+/*;  Copyright (C) 2025                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -25,31 +25,33 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/** 
- * Utility routine for fast sine/cosine calculation 
- * This routine uses a table lookup followed by a 1 term Taylor's 
- * series expansion.
- * This produces moderate accuracy but fast calculation of sine/cosine pairs.
- * Speed is ~3 times faster than standard sin/cos routines
- * Comparison accuracy in 10^8 trials over range of angles gives:
- * Avg difference 3.42813e-08, rms 1.51385e-06, max. difference 4.83e-6.
- * The rms difference corresponds to an angle error of 8.7e-5 deg.
- * This utility is useful for calculating instrumental responses to models 
- * or other applications in which errors do not seriously accumulate.
- */
-#include "Obit.h"
+/**
+ * Work around the sincos* glibc extension on other platforms.
+ *
+ * It might be sufficient to replace sincos with sequential calls
+ * to sin and cos, since both gcc and clang with -O2 optimization
+ * replace them with a single call to sincos anyway.
+ *
+ * See:
+ * - https://stackoverflow.com/a/61451065
+ * - https://discuss.python.org/t/sincos-x-from-math-h-missing/22614/4
+ * Hope the compilers can get this right 
+*/
 
-#ifndef OBITSINCOS_H 
-#define OBITSINCOS_H 
-/** Init sine/cosine  */
-void ObitSinCosInit();
-/** Calculate sine/cosine of angle */
-void ObitSinCosCalc(ofloat angle, ofloat *sin, ofloat *cos);
-/** Calculate sine/cosine of vector of angles */
-void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos);
-/** Calculate sine of vector of angles */
-void ObitSinVec(olong n, ofloat *angle, ofloat *sin);
-/** Calculate cosine of vector of angles */
-void ObitCosVec(olong n, ofloat *angle, ofloat *cos);
-#include "sincos.h"
-#endif /* OBITSINCOS_H */ 
+#ifndef SINCOS_H
+#define SINCOS_H
+
+#include <math.h>
+
+//DAMNinline void sincos2(double x, double* p_sin, double* p_cos) {
+void sincos2(double x, double* p_sin, double* p_cos) {
+  *p_sin = sin(x);
+  *p_cos = cos(x);
+}
+//DAMNinline void sincos2f(float x, float* p_sinf, float* p_cosf) {
+void sincos2f(float x, float* p_sinf, float* p_cosf) {
+  *p_sinf = sinf(x);
+  *p_cosf = cosf(x);
+}
+
+#endif /* SINCOS_H */

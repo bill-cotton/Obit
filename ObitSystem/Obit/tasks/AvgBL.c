@@ -1,7 +1,7 @@
-/* $Id$  */
+/* $Id$  */ 
 /* Average data on multiple baselines               .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2023,2024                                          */
+/*;  Copyright (C) 2023,2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -40,7 +40,7 @@
 #include "ObitAIPSDir.h"
 #include "ObitPosLabelUtil.h"
 #include <math.h>
-void sincos(double x, double *sin, double *cos); /* Fooey */
+#include "sincos.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -771,7 +771,7 @@ void AvgBLHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
-  gboolean doCalSelect, doPosn=FALSE, doShift=FALSE;
+  gboolean doCalSelect, doPosn=FALSE, doShift=FALSE, keepLin=FALSE;
   olong i, ii, j, indx, jndx;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -794,6 +794,9 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim, &timeAvg);
   timeAvg /= 1440.;    /* To days */
 
+  /* Keep in linear feed basis? */
+  ObitInfoListGetTest(inUV->info, "keepLin", &type, dim, &keepLin);
+
   /* Clone from input */
   ObitUVClone (inUV, outUV, err);
   if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
@@ -812,6 +815,9 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Open Files  */
   iretCode = ObitUVOpen (inUV, access, err);
   ObitUVSelSetDesc(inUV->myDesc, inUV->mySel, outUV->myDesc,err);
+  /* Keep in linear feed basis? */
+  if (keepLin && (inUV->myDesc->crval[inUV->myDesc->jlocs]<=-5.))
+    outUV->myDesc->crval[outUV->myDesc->jlocs] = inUV->myDesc->crval[inUV->myDesc->jlocs];
   oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine,inUV->name, outUV);
@@ -924,7 +930,7 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  if (doShift) {
 	    ii = j/inDesc->inaxes[inDesc->jlocs];
 	    phase = -(+dxyzc[0]*u + dxyzc[1]*v + dxyzc[2]*w)*inDesc->fscale[ii];  /* Scale to freq */
-	    sincos (phase, &sp, &cp);
+	    sincos2 (phase, &sp, &cp);
 	    visRe = (ofloat)(inUV->buffer[indx]*cp - inUV->buffer[indx+1]*sp);
 	    visIm = (ofloat)(inUV->buffer[indx]*sp + inUV->buffer[indx+1]*cp);
 	  } else {

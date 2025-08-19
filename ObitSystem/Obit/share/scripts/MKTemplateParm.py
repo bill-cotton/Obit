@@ -7,6 +7,7 @@
 # BAND        Band code
 # DATAFILE    Full or relative path to Raw data uvtab file
 # DCALFILE    Full or relative path to DelayCal Raw data uvtab file
+# NOHANN      True if data to be loaded with Splat rather than Hann
 # DOPOL       True if polarization cal. and imaging wanted (else False)
 # BPCAL       Bandpass calibrator list
 # GAINCAL     Phase calibrator list
@@ -30,9 +31,9 @@ dataClass     = band+"Band"           # AIPS class of raw uv data
 logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
 
 # Archive data parameters
-parms["doLoadArchive"] = True       # Load from archive uvtab?
-parms["DataFile"]      = '@DATAFILE@' # Name of Raw Data uvtab file
-parms["DCalFile"]      = '@DCALFILE@' # Name of DelayCal Raw Data uvtab file
+parms["noHann"]   = @NOHANN@     # Load using Splat rather than Hann?
+parms["DataFile"] = '@DATAFILE@' # Name of Raw Data uvtab file
+parms["DCalFile"] = '@DCALFILE@' # Name of DelayCal Raw Data uvtab file
 # Get metadata from data
 inUV = UV.newPFUV('Raw',parms["DataFile"], 0, True, err)
 meta = MKGetMeta(inUV, {}, "", err)
@@ -146,11 +147,13 @@ parms["RMSTimeAvg"]  = 1.0          # AutoFlag time averaging in min.
 
 # Special editing list
 doEditList  = False        # Edit using editList?
-editFG      = 2            # Table to apply edit list to
+parms["editFG"]      = 2            # Table to apply edit list to
 # Channel numbers after Hanning if any
+# Note: all entries needed
 editList = [
     #{"timer":("0/00:00:0.0","5/00:00:0.0"),"Ant":[ 1,0],"IFs":[1,0],"Chans":[1,0],  "Stokes":'1111',"Reason":"No Rcvr"},
     ]
+parms['editList'] = editList
 
 ################## The following flags control the script executation #######################
 # Control, mark items as F to disable
@@ -159,7 +162,7 @@ F   = False
 parms["nThreads"]      = 16       # number of threads to allow, overridden AIPSSetup
 check                  = F        # Only check script, don't execute tasks
 debug                  = F        # run tasks debug
-parms["doHann"]        = parms["doHann"] # Load data/Hanning smooth?
+parms["doLoad"]        = parms["doLoad"] # Load data w/ Hann or Splat?
 parms["doClearTab"]    = T        # Clear cal/edit tables
 parms["doEditList"]    = T        # Special editing
 parms["doCopyFG"]      = T        # Copy FG 1 to FG 2

@@ -27,7 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitFaraSyn.h"
-
+#include "ObitSinCos.h"
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitFaraSyn.c
@@ -797,7 +797,7 @@ void ObitFaraSynRMSyn (ObitFaraSyn *in, ObitErr *err)
       /* Want this one ? */
       if ((plnWt[i]<=0.0) || !inQFArrays[i] || !inUFArrays[i] || 
 	  (QRMS[i]>maxQ) || (URMS[i]>maxU)) continue;
-      sincosf((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &cmplx[1], &cmplx[0]); /* sin/cos factors */
+      sincos2f((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &cmplx[1], &cmplx[0]); /* sin/cos factors */
       /* Rotate, accumulate this plane */
       ObitCArraySMulAccumTh (inQFArrays[i], inUFArrays[i], cmplx, RMPlanes[iRM-1],
 			     nThreads, threadArgs);
@@ -996,7 +996,7 @@ static void DirectAnaSearch(ObitFaraSyn *in, ObitCArray *Accum, ObitFArray *work
       /* Want this one ? */
       if ((plnWt[i]<=0.0) || !inQFArrays[i] || !inUFArrays[i] || 
 	  (QRMS[i]>maxQ) || (URMS[i]>maxU)) continue;
-      sincosf((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &cmplx[1], &cmplx[0]); /* sin/cos factors */
+      sincos2f((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &cmplx[1], &cmplx[0]); /* sin/cos factors */
       /* Rotate, accumulate this plane */
       ObitCArraySMulAccumTh (inQFArrays[i], inUFArrays[i], cmplx, Accum,
 			     nThreads, threadArgs);

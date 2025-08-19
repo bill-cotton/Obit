@@ -5,7 +5,7 @@ proxy object.
 
 """
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
-# Copyright (C) 2006,2007,2011 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2006,2007,2011,2025 Associated Universities, Inc. Washington DC, USA.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -488,8 +488,11 @@ class AIPSTask(Task):
                    self.__read_message(ms_file, self._msgno[tid])
             # Filter
             if popsno == self._popsno[tid]:
-                messages.append((priority, '%-5s%d: %s\n' % (six.ensure_text(task), popsno, six.ensure_text(msg))))
-                pass
+                try:
+                    messages.append((priority, '%-5s%d: %s\n' % (six.ensure_text(task), popsno, six.ensure_text(msg))))
+                    pass
+                except:
+                    print ("AIPS message failed",task,popsno,msg)
             self._msgno[tid] += 1
             continue
         ms_file.close()

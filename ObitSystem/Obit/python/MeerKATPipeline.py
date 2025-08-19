@@ -55,15 +55,18 @@ delay_class = parms["delay_class"]
 data_seq  = 1 
 delay_seq = 1 
 
-####################### Import data into AIPS from uvtab file via Hann  ##########################
-# Is Hanned data there already?
+####################### Import data into AIPS from uvtab file via Hann or Splat  ##########################
+# Is Hanned/copied data there already?
 exists = UV.AExist(MKAIPSName(project), data_class, disk, data_seq, err)
-# Loading is done via Hann
+# Loading is done via Hann or Splat
 if exists:
     uv = UV.newPAUV("AIPS UV DATA", MKAIPSName(project), data_class, disk, data_seq, True, err)
-# Extract metadata from archive uvtab version
-uf   = UV.newPFUV("Raw", parms["DataFile"], 0, True, err)
-meta = MKGetMeta(uf, parms, logFile, err)
+    # Extract metadata from data
+    meta = MKGetMeta(uv, parms, logFile, err)
+else:
+    uf   = UV.newPFUV("Raw", parms["DataFile"], 0, True, err)
+    # Extract metadata from archive uvtab version
+    meta = MKGetMeta(uf, parms, logFile, err)
 
 ###################### Frequency dependent parameters #############################################
 parms = MKInitContFQParms(meta,parms)
@@ -89,6 +92,7 @@ printMess("Parameter settings", logFile)
 for p in parms:
     mess = "  "+p+": "+str(parms[p])
     printMess(mess, logFile)
+
 clist = []
 for DCal in parms["DCals"]:
     if DCal["Source"] not in clist:
@@ -128,33 +132,39 @@ if parms["doPol"]:
             raise  RuntimeError("Bandpass calibrator "+c["Source"]+" not known to be unpolarized")
 # end of doPol checks
 
-# Hanning to load data if it doesn't already exist
+# Hanning or Splat (if noHann) to load data if it doesn't already exist
 doNDCal = len(parms["DCalFile"])>0  # Name given
-if parms["doHann"]:
+if parms["doLoad"] and not exists:
     uf = UV.newPFUV("Raw", parms["DataFile"], 0, True, err)
     # Create FG 1 for static flagging 
     MKStaticFlag(uf, 1, err)
-    # Use Hann to trim outer channels leaving a multiple of 8
+    # if 1 IF, Use Hann/Splat to trim outer channels leaving a multiple of 8
     # Tom's algorithm with update for effects of Hanning
     nchan = uf.Desc.Dict['inaxes'][uf.Desc.Dict['jlocf']]
-    first_chan = int(nchan*parms["begChanFrac"])
-    last_chan=nchan-int(nchan*parms["endChanFrac"])
-    chan_after_ifs=(last_chan-first_chan +1)%16
-    first_chan=first_chan+(chan_after_ifs//2)
-    last_chan=last_chan-(chan_after_ifs-(chan_after_ifs//2))
-    BChan = first_chan-1;  EChan = last_chan+1
+    nif   = uf.Desc.Dict['inaxes'][uf.Desc.Dict['jlocif']]
+    if nif==1:
+        first_chan = int(nchan*parms["begChanFrac"])
+        last_chan=nchan-int(nchan*parms["endChanFrac"])
+        chan_after_ifs=(last_chan-first_chan +1)%16
+        first_chan=first_chan+(chan_after_ifs//2)
+        last_chan=last_chan-(chan_after_ifs-(chan_after_ifs//2))
+        BChan = first_chan-1;  EChan = last_chan+1
+    else:
+        BChan = 1;  EChan = 0
     uv = MKHann(uf, MKAIPSName(project), data_class, disk, data_seq, err, \
-                doDescm=parms["doDescm"], flagVer=1, BChan=BChan, EChan=EChan,\
+                doDescm=parms["doDescm"], flagVer=1, BChan=BChan, EChan=EChan, \
+                noHann=parms["noHann"], \
                 logfile=logFile, zapin=False, check=check, debug=debug)
-    # Break into 8 IFs for calibration
-    mess = "Divide into 8 IFs"; printMess(mess, logFile)
-    import MakeIFs
-    MakeIFs.UVMakeIF(uv,8,err)
-    # Now Hanning the DelayCal data - do we have it
+    # Break into 8 IFs for calibration if not yet done
+    if nif==1:
+        mess = "Divide into 8 IFs"; printMess(mess, logFile)
+        import MakeIFs
+        MakeIFs.UVMakeIF(uv,8,err)
+    # Now import the DelayCal data - do we have it
     doNDCal = len(parms["DCalFile"])>0  # Name given
     # Only if doPol and it doesn't already exist
     if parms["doPol"] and doNDCal:
-        mess = "Hanning delay calibration scan"
+        mess = "Importing delay calibration scan"
         delay_uf = UV.newPFUV("Raw", parms["DCalFile"], 0, True, err)
         # Create FG 1 for static flagging 
         MKStaticFlag(delay_uf, 1, err)
@@ -162,12 +172,13 @@ if parms["doHann"]:
         delay_uv = MKHann(delay_uf, MKAIPSName(project), delay_class, disk, \
                           delay_seq, err, doDescm=parms["doDescm"], flagVer=1, 
                           BChan=BChan, EChan=EChan, logfile=logFile, zapin=False, 
-                          check=check, debug=debug)
+                          noHann=parms["noHann"], check=check, debug=debug)
         parms["delay_uv"] = delay_uv
+    if nif==1:
         MakeIFs.UVMakeIF(delay_uv,8,err)  # Break into 8 IFs
         
     if uv==None and not check:
-        raise RuntimeError("Cannot Hann data ")
+        raise RuntimeError("Cannot Import data ")
 
 # Print the uv data header to screen.
 uv = UV.newPAUV("AIPS UV DATA", MKAIPSName(project),data_class,disk,data_seq,True,err)
@@ -182,20 +193,26 @@ if parms["doClearTab"]:
                doBP=parms["doClearBP"], check=check)
     OErr.printErrMsg(err, "Error resetting calibration")
 
-# Copy FG 1 to FG 2
+# Copy FG 1 to FG 2, tolerate failure
 if parms["doCopyFG"]:
     mess =  "Copy FG 1 to FG 2"
     printMess(mess, logFile)
-    retCode = MKCopyFG(uv, err, logfile=logFile, check=check, debug=debug)
-    if retCode!=0:
-        raise RuntimeError("Error Copying FG table")
+    try:
+        retCode = MKCopyFG(uv, err, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            OErr.printErrMsg(err, "Error Copying FG table")
+    except Exception as exception:
+        mess =  "Error Copying FG table "
+        printMess(mess, logFile)
 
 # Special editing
 if parms["doEditList"] and not check:
     mess =  "Special editing"
     printMess(mess, logFile)
     for edt in parms["editList"]:
-        print ("Debug",edt)
+        mess = "Flag:"+str(edt)
+        printMess(mess, logFile)
+        #print ("Debug",edt)
         UV.PFlag(uv,err,timeRange=[dhms2day(edt["timer"][0]),dhms2day(edt["timer"][1])], \
                      flagVer=parms["editFG"], Ants=edt["Ant"], Chans=edt["Chans"], IFs=edt["IFs"], \
                      Stokes=edt["Stokes"], Reason=edt["Reason"])
@@ -278,7 +295,6 @@ if not parms["refAnt"]:
     #FAILS SaveObject(parms, ParmsPicklefile, True)
     refAntPicklefile = fileRoot+".refAnt.pickle"   # Where results saved
     SaveObject(parms["refAnt"], refAntPicklefile, True)
-
 
 # Plot Raw, edited data?
 if parms["doRawSpecPlot"] and parms["plotSource"]:
@@ -613,13 +629,12 @@ if parms["doPhsCal"] and uvc:
     if retCode!=0:
         raise  RuntimeError("Error in MKPhsCal")
 
-
 #  Polarization calibration        
 if parms["doPolCal"] and uvc:
     mess =  "Instrumental polarization calibration:"
     printMess(mess, logFile)
     # Use unpolarized and gain cals
-    MKPolCal(uvc, parms['UnPolCal'], parms['GCalList'], err, \
+    MKPolCal(uvc, parms['UnPolCal'], parms['GCalList'], parms['XYDCal'], err, \
              doCalib=1, gainUse=gainUse, doBand=-1, BPVer=0, flagVer=1, \
              solInt=parms["PCSolInt"], solnType=parms["PCSolType"], \
              refAnt=parms["PCRefAnt"], \
@@ -712,8 +727,10 @@ if parms["doImage"] and uvc:
                     avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR = 5.0, refAnt=parms["refAnt"], \
                     do3D=False, BLFact=parms["BLFact"], BLchAvg=parms["BLchAvg"], \
                     doMB = True, norder=1, maxFBW=parms["MBmaxFBW"], \
+                    doOutlier=parms["doOutlier"], OutlierArea=parms["OutlierArea"], \
+                    OutlierSize=parms["OutlierSize"],  \
                     nThreads=nThreads, doGPU=parms["doGPU"], doGPUGrid=parms["doGPUGrid"], \
-                    noScrat=noScrat, logfile=logFile, check=check, debug=debug)                       
+                    noScrat=parms["imgnoScrat"], logfile=logFile, check=check, debug=debug)                       
     if err.isErr:
         OErr.printErrMsg(err, "Error imaging targets")
     # End image
