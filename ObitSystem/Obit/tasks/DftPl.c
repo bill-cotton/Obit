@@ -36,7 +36,7 @@
 #include "ObitAIPSDir.h"
 #include "ObitPosLabelUtil.h"
 #include <math.h>
-#include "sincos.h"
+#include "ObitSinCos.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -755,7 +755,7 @@ void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr,
 	    if (doShift) {
 	      ii = i/inDesc->inaxes[inDesc->jlocs];
 	      phase = -(+dxyzc[0]*u + dxyzc[1]*v + dxyzc[2]*w)*inDesc->fscale[ii];  /* Scale to freq */
-	      sincos (phase, &sp, &cp);
+	      sincos2 (phase, &sp, &cp);
 	      inBuffer[indx] = inBuffer[indx]*cp - inBuffer[indx+1]*sp;
 	    }
 	    sumRe   += inBuffer[indx]*inBuffer[indx+2];

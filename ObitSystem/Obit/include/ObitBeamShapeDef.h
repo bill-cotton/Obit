@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2019                                          */
+/*;  Copyright (C) 2008-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -39,16 +39,22 @@ gboolean doGain;
 gboolean doJinc;
 /** Use Tabulated beam */
 gboolean doTab;
+/** Use VLA beam (Jinc)*/
+gboolean doVLA;
 /** Use VLITE beam */
 gboolean doVLITE;
 /** Use MeerKAT beam */
 gboolean doMeerKAT;
+/** Use KAT7 beam */
+gboolean doKAT;
 /** Minimum desired gain */
 ofloat pbmin;
 /** Antenna diameter (m) */
 ofloat antSize;
 /** Beam angle (deg) */
 ofloat beamAng;
+/** Fudge factor for cos sq beam */
+ofloat fudge;
 /** Antenna pointing position (rad)*/
 odouble raPnt, decPnt;
 /** Reference Frequency */

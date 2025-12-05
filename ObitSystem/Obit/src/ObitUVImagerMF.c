@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2023                                          */
+/*;  Copyright (C) 2010-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -63,6 +63,9 @@ static ObitUVImagerMFClassInfo myClassInfo = {FALSE};
 
 
 /*---------------Private function prototypes----------------*/
+/** Private: Determine effective frequencies */
+void  ObitUVImagerMFEffFreq  (ObitUVImagerMF *in,  ObitErr *err);
+
 /** Private: Initialize newly instantiated object. */
 void  ObitUVImagerMFInit  (gpointer in);
 
@@ -429,6 +432,7 @@ void ObitUVImagerMFAddPol2 (ObitUVImagerMF *in, ObitUV *uvdata2, ObitErr *err)
 
 /**
  * Apply weighting to uvdata and write to uvwork member
+ * Calculate and save specFreqEff in Images and on UVImager info object.
  * \param in  The input object
  *   The following uvdata info items control behavior:
  *   \li "HalfStoke"   OBIT_boo (1,1,1)   If true, half Stokes are passed in uvwork [def F]
@@ -441,7 +445,7 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
   ObitUVImagerMF *in  = (ObitUVImagerMF*)inn;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  gboolean HalfStoke=FALSE, FullStoke=FALSE, Tr=TRUE;
+  gboolean HalfStoke=FALSE, FullStoke=FALSE, Tr=TRUE, doEffFreq=TRUE;
   gchar *HStokes="HALF", *FStokes="FULL", IStokes[5];
   /* List of control parameters on uvwork */
   gchar *controlList[] = 
@@ -451,7 +455,7 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "Robust", "WtPower",
      "RobustIF", "TaperIF", "MFTaper","doGPU", "doGPUGrid","GPU_no",
      NULL};
-  gchar *routine = "ObitUVImagerWeight";
+  gchar *routine = "ObitUVImagerMFWeight";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -493,6 +497,10 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
 
   /* Copy control info to uvwork */
   ObitInfoListCopyList (in->uvdata->info, in->uvwork->info, controlList);
+
+  /* Want to calculate effective Freq? */
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (in->uvwork->info, "doEffFreq", OBIT_bool, dim, &doEffFreq);
 
   /* Weight uvwork */
   ObitUVWeightData (in->uvwork, err);
@@ -542,6 +550,10 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
     ObitInfoListAlwaysPut (in->uvwork2->info, "doCalSelect", OBIT_bool, dim, &Tr);
   } /* end weight 2nd polarization */
 
+  /* Compute effective frequencies */
+  if (doEffFreq) ObitUVImagerMFEffFreq (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+ 
 } /* end ObitUVImagerMFWeight */
 
 /**
@@ -1141,3 +1153,81 @@ void ObitUVImagerMFClear (gpointer inn)
   
 } /* end ObitUVImagerMFClear */
 
+/**
+ * Determine effective frequencies, update Images on mosaic (& mosaic2)
+ * Sum of weights expected in in->uvwork->info['sumChWt']
+ * \param in  The input object
+ * \param err Obit error stack object.
+ */
+void ObitUVImagerMFEffFreq  (ObitUVImagerMF *in, ObitErr *err)
+{
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  ofloat *sumChWt, wt;
+  odouble *accum=NULL, *accumWt=NULL, freq;
+  ObitImageMF *inMF=NULL;
+  ObitUVDesc *desc;
+  olong i, ispec, nif, nch;
+  gchar *routine = "ObitUVImagerWeight";
+
+  desc = in->uvwork->myDesc;
+  nif = 1; nch = 1;
+  if (desc->jlocf>=0)  nch = desc->inaxes[desc->jlocf];
+  if (desc->jlocif>=0) nif = desc->inaxes[desc->jlocif];
+  if (ObitInfoListGetP(in->uvwork->info, "sumChWt", &type, dim, (gpointer*)&sumChWt)) {
+      /* Get subband info from first ImageMF on in->mosaic 
+       this only works if frequency varies faster than IF */
+      inMF = (ObitImageMF*)in->mosaic->images[0];
+      ObitImageMFGetSpec (inMF, err);   /* Update frequencies */
+      /* Make sure frequencies on in-uvwork up to date */
+      ObitUVGetFreq (in->uvwork, err);
+      if (err->error) Obit_traceback_msg (err, routine,in->name);
+      /* Accumulation arrays */
+      accum   = g_malloc0(inMF->nSpec*sizeof(odouble));
+      accumWt = g_malloc0(inMF->nSpec*sizeof(odouble));
+      /* Loop over channels */
+      ispec = 0;  /* which subband */
+      for (i=0; i<nch*nif; i++) {
+	wt = sumChWt[i];
+	freq = desc->freqArr[i];
+	if (freq>inMF->specFreqHi[ispec]) ispec++;
+	accum[ispec]+=wt*freq; accumWt[ispec] += wt;
+      }
+      /* Loop over subbands */
+      for (ispec=0; ispec<inMF->nSpec; ispec++) {
+	if (accumWt[ispec]>0.0) {
+	  accum[ispec] /= accumWt[ispec]; /* OK */ 
+	} else {   /* no data - use Center */
+	  accum[ispec] = inMF->specFreq[ispec];
+	}
+      } /* end loop over subbands */
+
+      /* save in in->info as "specFreqEff" */
+      dim[0] = inMF->nSpec;
+      ObitInfoListAlwaysPut (in->info, "specFreqEff", OBIT_double, dim, accum);
+
+      /* Loop over mosaic */
+      for (i=0; i<in->mosaic->numberImages; i++) {
+	inMF = (ObitImageMF*)in->mosaic->images[i];
+	/* Open and close to update disk */
+	ObitImageOpen((ObitImage*)inMF,OBIT_IO_ReadWrite, err);
+	ObitImageMFSetFreqEff (inMF, inMF->nSpec, accum, err);
+	inMF->myStatus = OBIT_Modified;  /* Grumble */
+	ObitImageClose((ObitImage*)inMF, err);
+      } /* end loop over mosaic */
+      /* Loop over mosaic2 if exists and active */
+      if (in->mosaic2 && (in->noPolImage>1) && (in->whichPol=2)) {
+	for (i=0; i<in->mosaic2->numberImages; i++) {
+	  inMF = (ObitImageMF*)in->mosaic2->images[i];
+	  ObitImageOpen((ObitImage*)inMF,OBIT_IO_ReadWrite, err);
+	  ObitImageMFSetFreqEff (inMF, inMF->nSpec, accum, err);
+	  inMF->myStatus = OBIT_Modified;  /* Grumble */
+	  ObitImageClose((ObitImage*)inMF, err);
+	} /* end loop over mosaic2 */
+      } /* end if mosaic2 */
+    } else {
+      /* No summed weights? */
+      Obit_log_error(err, OBIT_Error,"%s Do not have sum of channel weights", routine);
+      return;
+  }/* end if have sumChWt data */
+} /* end ObitUVImagerMFEffFreq */

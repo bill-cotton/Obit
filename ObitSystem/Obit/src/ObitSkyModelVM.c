@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2022                                          */
+/*;  Copyright (C) 2006-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -184,6 +184,9 @@ ObitSkyModel* ObitSkyModelVMCopy (ObitSkyModel *inn, ObitSkyModel *outt,
   out->endVMModelTime = in->endVMModelTime;
   out->curVMModelTime = in->curVMModelTime;
 
+  /* Pointing position */
+  out->RAPnt = in->RAPnt; out->DecPnt = in->DecPnt; 
+
   /* Component array */
   if (out->VMComps) ObitFArrayUnref(out->VMComps);
   if (in->VMComps) out->VMComps = ObitFArrayCopy(in->VMComps, out->VMComps, err);
@@ -224,7 +227,7 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   ObitTableCC *CCTable = NULL;
   VMFTFuncArg *args;
   ObitIOCode retCode;
-  olong ver, i;
+  olong ver, i, maxi;
   ofloat phase=0.5, cp, sp;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitSkyModelVMInitMod";
@@ -239,11 +242,16 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   /* Reset time of current model */
   in->endVMModelTime = in->curVMModelTime = -1.0e20;
 
+  /* Pointing position */
+  in->RAPnt = uvdata->myDesc->obsra; in->DecPnt =  uvdata->myDesc->obsdec;
+
   /* Is a point model being used? */
-  if ((in->pointFlux!=0.0) && (in->mosaic->numberImages <= 1)) return;
+  if ((in->pointFlux!=0.0) && in->mosaic && (in->mosaic->numberImages <= 1)) return;
 
   /* Check start and end component numbers */
-  for (i=0; i<in->mosaic->numberImages; i++) {
+  if (in->mosaic) maxi = in->mosaic->numberImages;
+  else maxi = 0;
+  for (i=0; i<maxi; i++) {
 
     /* Make sure fully instabtiated */
     ObitImageFullInstantiate(in->mosaic->images[i], TRUE, err);
@@ -351,6 +359,7 @@ void ObitSkyModelVMInitModel (ObitSkyModel* inn, ObitErr *err)
   /* Reset time of current model */
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
+  in->RAPnt = in->DecPnt = 0.0;   /* Pointing position */
   /* in->modelMode = OBIT_SkyModel_DFT;  Only can do DFT - Not true */
 } /* end ObitSkyModelVMInitModel */
 
@@ -459,6 +468,8 @@ void ObitSkyModelVMInit  (gpointer inn)
   in->VMComps        = NULL;
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
+  in->RAPnt = in->DecPnt = 0.0;
+  in->sumCCFlux = 0.0;
 } /* end ObitSkyModelVMInit */
 
 /**
@@ -585,7 +596,7 @@ gboolean ObitSkyModelVMLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
 
   /* (re)allocate structure */
   ndim = 2;
-  naxis[0] = 7; naxis[1] = 1;
+  naxis[0] = 8; naxis[1] = 1;
   if (in->pointParms[3]==1) naxis[0] += 3; /* Gaussian */
   if (in->pointParms[3]==2) naxis[0] += 2; /* Uniform sphere */
   if (in->comps!=NULL) in->comps = ObitFArrayRealloc(in->comps, ndim, naxis);
@@ -597,10 +608,20 @@ gboolean ObitSkyModelVMLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
   table[0] = 0;
   table[1] = in->pointXOff;
   table[2] = in->pointYOff;
-  table[3] = in->pointFlux * in->factor;
-  table[4] = xxoff;
-  table[5] = yyoff;
-  table[6] = zzoff;
+  /* DEBUG */
+  //table[1] = -in->pointXOff;
+  //table[2] = -in->pointYOff;
+  table[3] = 0.0; /* Spectral index */
+  table[4] = in->pointFlux * in->factor;
+  /* HACK DEBUG Don't need the *2pi???
+  xxoff/=(2.0*G_PI); yyoff/=(2.0*G_PI); zzoff/=(2.0*G_PI); */
+  table[5] = xxoff;
+  table[6] = yyoff;
+  table[7] = zzoff;
+  /* DEBUG */
+  //table[5] = -xxoff;
+  //table[6] = -yyoff;
+  //table[7] = -zzoff;
 
   /* Gaussian */
   if (in->modType==OBIT_SkyModel_GaussMod) {
@@ -623,6 +644,9 @@ gboolean ObitSkyModelVMLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
  }
   /* One component in model */
   in->numComp = 1;
+
+  /* Save sumCCFlux */
+  in->sumCCFlux = in->pointFlux * in->factor;
 
   return gotSome;
 } /* end ObitSkyModelVMLoadPoint */

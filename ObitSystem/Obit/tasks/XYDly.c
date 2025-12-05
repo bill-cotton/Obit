@@ -40,6 +40,7 @@
 #include "ObitTableSN.h"
 #include "ObitTableCL.h"
 #include "ObitSinCos.h"
+/*#include "sincos.h"*/
 
 /* internal prototypes */
 /* Get inputs */
@@ -1015,6 +1016,7 @@ ObitTableSN* ObitUVXYDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       /* linear feeds - flip phase if linP (eff. Stokes u) fn positive */
       chi  = ObitAntennaListParAng(ANList, 1,  time[0], Source);  /* Parallactic angle */
       sincos2f(chi*2.0, &chisin, &chicos);  /* Need sine/cosine of 2*chi */
+      /*sincos2f(chi, &chisin, &chicos);  DEBUG Need sine/cosine of 2*chi */
       lastTime = time[0];
       /* Calculate phase flips */
       GetFlip(numIF, numFreq, inUV, EVPAFS, EVPAFC, chisin, chicos, flip);

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2024                                          */
+/*;  Copyright (C) 2009-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -219,9 +219,20 @@ void ObitSkyModelVMBeamGetInfo (ObitSkyModel *in, gchar *prefix,
 /** Public: Jones correct and average SkyModel components */
 void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes, gboolean isCirc, 
 				    ofloat *compFlux, ofloat *sinArr, ofloat *cosArr,
-				    ObitMatx **Jones1, ObitMatx **Jones2, ofloat parAng2,
+				    ObitMatx **Jones1, ObitMatx **Jones2,
+				    ofloat cos_parAng2 ,ofloat sin_parAng2,
 				    ObitMatx **workVis, ObitMatx *work1, ObitMatx *work2,
 				    ObitMatx *sumVis);
+
+/* Public: Get info for one or two beam types */
+void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx, ofloat Stokes0,
+				 olong *numAntType, 
+				 ObitImage ***RXpol, ObitImage ***LYpol, 
+				 ObitImage ***RLpol, ObitImage ***LRpol, 
+				 ObitImage ***RXpolIm, ObitImage ***LYpolIm, 
+				 ObitImage ***RLpolIm, ObitImage ***LRpolIm, 
+				 ofloat **Diams, ObitErr *err);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -162,12 +162,15 @@ gconstpointer ObitUVWeightGetClass (void)
  * Then the data weights are modified by the weighting function.
  * The control parameters are attached to the ObitInfoList member info
  * on uvdata.  See ObitUVWeight class documentation for details
+ * Optionally determines sum of channel weights (uvdata->info["doEffFreq"])
+ * and leaves in (uvdata->info["sumChWt"]) as an array of nif*nch ofloats
  */
 void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
 {
   ObitUVWeight *myWeight = NULL;
   gchar *outName = NULL;
-  olong iif, nif, naxis[2];
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong iif, nif, nch, naxis[2];
   gboolean doUnifWt;
   gchar *routine = "ObitUVWeightData";
 
@@ -194,10 +197,10 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
   /* Are we uniform Weighting? */
   doUnifWt = myWeight->Robust[0] < 7;
 
-  /* Numnber of IFs */
-  nif = 1;
-  if (uvdata->myDesc->jlocif>=0) 
-    nif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+  /* Numnber of channels, IFs */
+  nch = 1; nif = 1;
+  if (uvdata->myDesc->jlocf>=0)  nch = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+  if (uvdata->myDesc->jlocif>=0) nif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
   myWeight->numIF      = nif;
 
   /* Gridding for uniform weighting */
@@ -246,6 +249,12 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
   /* Modify Weights */ 
   ObitUVWeightWtUV (myWeight, uvdata, err);
   if (err->error) Obit_traceback_msg (err, routine, uvdata->name);
+
+  /* Summed ch weights for effective freq? */
+  if (myWeight->doEffFreq && myWeight->sumChWt) {
+    dim[0] = nif*nch; dim[1] = dim[2] = dim[3] = 1;
+    ObitInfoListAlwaysPut (uvdata->info, "sumChWt", OBIT_float, dim, myWeight->sumChWt);
+  } /* end  Summed ch weights */
 
   /* final diagnostics */
   Obit_log_error(err, OBIT_InfoErr, 
@@ -338,6 +347,8 @@ void ObitUVWeightInit  (gpointer inn)
   in->isigma3    = NULL;
   in->temperance = NULL;
   in->wtScale    = NULL;
+  in->sumChWt    = NULL;
+  in->doEffFreq  = FALSE;
 
 } /* end ObitUVWeightInit */
 
@@ -376,6 +387,7 @@ void ObitUVWeightClear (gpointer inn)
   if (in->isigma3)     g_free(in->isigma3);
   if (in->temperance)  g_free(in->temperance);
   if (in->wtScale)     g_free(in->wtScale);
+  if (in->sumChWt)     g_free(in->sumChWt);
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -398,7 +410,7 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   ofloat temp, xCells, yCells, farr[10], *fptr, sigma2u, sigma2v, cpa, spa;
   ofloat ftemp1, ftemp2;
-  olong   i, j, itemp, *iptr, nif;
+  olong   i, j, itemp, *iptr, nif, nch;
   gboolean gotIt;
   gchar *routine = "ObitUVWeightInput";
 
@@ -418,7 +430,8 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   if (in->isigma3)     g_free(in->isigma3);
   if (in->temperance)  g_free(in->temperance);
   if (in->wtScale)     g_free(in->wtScale);
-  nif = 1;
+  nif = 1; nch = 1;
+  if (uvdata->myDesc->jlocf>=0)  nch = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
   if (uvdata->myDesc->jlocif>=0) nif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
   in->numIF      = nif;
   in->Robust     = g_malloc0(nif*sizeof(ofloat));
@@ -507,6 +520,10 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   temp = 0.0;
   ObitInfoListGetTest(uvdata->info, "MinBaseline", &type, dim, &temp);
   in->blmin = temp;
+
+  /* Calculate Effective Frequency? */
+  ObitInfoListGetTest(uvdata->info, "doEffFreq", &type, dim, &in->doEffFreq);
+  if (in->doEffFreq) in->sumChWt = g_malloc0(nif*nch*sizeof(ofloat));
 
   /* set uv to cells factors */
   in->UScale = in->nuGrid * (DG2RAD * fabs(xCells));
@@ -639,6 +656,7 @@ void ObitUVWeightReadUV (ObitUVWeight *in, ObitUV *UVin, ObitErr *err)
 /**
  * Apply any weighting to the uvdata in UVin and rewrite
  * Compute the increase in the noise due to the weighting.
+ * Accumulate channel weights if in->sumWt!=NULL
  * \param in      Weighting object.
  * \param UVin    Uv data object to be corrected.
  * \param err     ObitErr stack for reporting problems.
@@ -677,7 +695,7 @@ void ObitUVWeightWtUV (ObitUVWeight *in, ObitUV *UVin, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     firstVis = UVin->myDesc->firstVis;
     
-    /* Apply weighting */
+    /* Apply weighting w/ optional sum wts */
     WeightBuffer (in, UVin);
 
     /* rewrite buffer */
@@ -1105,6 +1123,7 @@ static void ProcessGrid (ObitUVWeight* in, ObitErr *err)
 /**
  * Corrects data in buffer using weighting grid.
  * Adds temperance factor in->temperance and multiplies by in->wtScale
+ * if in->sumChWt!=Null, accumulate channel weights
  * \param in      Object with grid to accumulate
  * \param uvdata  Object with uv data in buffer, prepared for gridding.
  */
@@ -1117,9 +1136,9 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   ofloat tape, tfact, inWt, outWt, guardu, guardv, uf, vf, minWt;
   ofloat ucell, vcell, uucell, vvcell, temperance=0.0, innerWt;
   olong pos[] = {0,0,0,0,0};
-  olong fincf, fincif;
+  olong fincf, fincif, wtIndx;
   ObitUVDesc *desc;
-  gboolean doPower, doOne, doTaper, doITaper, doUnifWt, doFlag;
+  gboolean doPower, doOne, doTaper, doITaper, doUnifWt, doFlag, sumWt;
   odouble sumInWt, sumOutWt, sumO2IWt,numberBad ;
 
   /* error checks */
@@ -1133,7 +1152,8 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   sumOutWt = in->wtSums[1];
   sumO2IWt = in->wtSums[2];
   numberBad = in->numberBad;
-
+  sumWt     = in->sumChWt != NULL;  /* Sum channel weights? */
+  
   /* how much data? */
   desc  = uvdata->myDesc;
   nvis  = desc->numVisBuff;
@@ -1220,6 +1240,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
       fvis = ifvis;
       for (ifreq = loFreq; ifreq<=hiFreq; ifreq++) {
 	ifq = iif*fincif + ifreq*fincf;  /* index in IF/freq table */
+	wtIndx = ifq;  /* Index in channel summed wt */
 
 	  /* Loop over stokes */
 	  vvis = fvis;
@@ -1292,6 +1313,8 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	    
 	    /* Output weight */
 	    outWt = *wt;
+	    /* SumWt? Only first Stokes */
+	    if (sumWt && (istok==0)) in->sumChWt[wtIndx] += *wt;
 	    
 	    /* Weighting sums for statistics */
 	    sumInWt  += inWt;

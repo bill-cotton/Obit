@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -75,3 +75,7 @@ ObitFArray **wtGrid;
 ObitFArray **cntGrid;
 /** Gridding convolution table */
 ObitFArray *convfn;
+/** Calculate effective Frequencies */
+gboolean doEffFreq;
+/** Sum of output channel weights */
+ofloat *sumChWt;

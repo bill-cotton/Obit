@@ -783,7 +783,7 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   odouble ra, dec, ra0, dec0, phase, cp, sp, u, v, w, posn[2]={0.,0.};
   gchar *rach="RA  ", rast[15], *decch="DEC ", decst[21];
   gchar *routine = "ObitUVBLAvg";
- 
+  olong ant1, ant2, suba; //DEGUG
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return outUV;
@@ -936,6 +936,15 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  } else {
 	    visRe = inUV->buffer[indx]; visIm = inUV->buffer[indx+1];
 	  }
+	  // DEBUG -  Look at bl 42-50, chan 8 (any poln)
+	  ObitUVDescGetAnts(inUV->myDesc, &inUV->buffer[i*inDesc->lrec], &ant1, &ant2, &suba); // DEBUG
+	  //fprintf (stderr,"t=%8.5f jndx =%d cp =%8.5g sp=%8.5g phase=%8.5g\n",inUV->buffer[indx+inDesc->iloct],jndx,cp,sp,phase);
+	  //fprintf (stderr,"t=%8.5f ant1 =%d ant2 =%d phase=%8.5g\n",accVis[inDesc->iloct],ant1,ant2,phase);
+	  //if ((ant1==42) && (ant2==50) && (jndx>=7*12+inDesc->nrparm) && (jndx<8*12+inDesc->nrparm)) {
+	  //  fprintf (stderr,"t=%8.5f jndx =%4d cp =%8.5f sp=%8.5f phase=%8.5f vis= %8.5f %8.5f\n",
+	  //	     inUV->buffer[i*inDesc->lrec+inDesc->iloct],jndx,cp,sp,phase,visRe,visIm);
+	  // }
+	  // END DEBUG
 	  accVis[jndx]   += visRe*wt;  accVis[jndx+1] += visIm*wt; accVis[jndx+2] += wt;
 	} /* end if valid */
 	indx += 3;

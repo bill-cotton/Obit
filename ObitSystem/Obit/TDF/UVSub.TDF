@@ -4,7 +4,7 @@
 ;! Subtracts/divides a model from/into a uv data base
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2023
+;;  Copyright (C) 2005-2025
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -70,6 +70,8 @@ doPol            -1.0       10.0   If >0 correct polarization.
 **PARAM** int 1 **DEF** -1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
+**PARAM** boo 1 **DEF** F
+keepLin                            True => Keep poln in linear
 **PARAM** float 1  **DEF** 0.0
 Alpha           -20.       20.      Spectral Index to correct
 **PARAM** int 1
@@ -99,7 +101,7 @@ nfield            0.0     4192.0   No. fields to use for model.
 **PARAM** int 1 **DEF** 1
 nStokes                            Number of Stokes'
 **PARAM** int 1
-CCVer            -1.0    46655.0   CC file version #.
+CCVer            -1.0    46655.0   CC file version#. NO DEFAULT
 **PARAM** int 64
 BComp                              First CLEAN comp to sub.
                                    1 per field.
@@ -108,6 +110,8 @@ EComp                              Last CLEAN comp to sub.
                                    to use (0 => all)
 **PARAM** float 1
 Flux                               Lowest summed CC component used.
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
 **PARAM** str 128
 outFile                            FITS output uvdata if Type=='FITS'
 **PARAM** str 12
@@ -214,6 +218,9 @@ Adverbs:
   PDVer......AIPS PD table to use for per channel instrumental
              polarization corrections if doPol=True. 0=> highest
              -1 => use IF corrections from AIPS AN table.
+  keepLin....If the input data is in a linear feed basis (XX,YY,XY,YX)
+             and doPol=T, then leave in a linear basis.  
+             Otherwise convert to circular (RR,LL,RL,LR)
   Alpha......If != 0.0 then correct data by spectral index Alpha before 
              calibration. 
              -0.7 is typical for synchrotron.
@@ -283,6 +290,8 @@ Adverbs:
              If any EComp[i] < 0, then components are only used up to
              the first negative in each field.
   Flux.......Only components > Flux are used in the model.
+  outDType..'FITS' or 'AIPS'  type of output UV, defaults to
+             DataType.
   outName....Output UV AIPS file name    Standard defaults.
   outClass...Output UV AIPS file class.  Standard defaults.
   outSeq.....Output UV AIPS file seq. #. 0 => highest unique.

@@ -1572,7 +1572,8 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   olong i, just, axis;
   ofloat xmax, xmin, ymax, ymin, dx, dy, cscale;
   PLFLT px, py, wx, wy, **map=NULL, clevel[256], delta;
-  ofloat maxval=0.0, minval=0.0;
+  ofloat maxval=0.0, minval=0.0, pixel[2];
+  odouble cenpos[2]={0.,0.};
   olong pos[2];
   olong csize, nx, ny;
   gchar rast[16], decst[16];
@@ -1600,9 +1601,19 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   
   /* Give warning if image rotated */
   if (image->myDesc->crota[1]!=0.0) {
-    Obit_log_error(err, OBIT_InfoWarn, "%s: Rotated image not handled well", 
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Rotated image not be handled well", 
 		   routine);
   }
+
+  /* Convert reference position in header to center */
+  id = image->myDesc;
+  nx = id->inaxes[0];  ny = id->inaxes[1];
+  pixel[0] = nx/2.; pixel[01] = ny/2.;
+  /* Convert pixel to position */
+  ObitImageDescGetPos (id, pixel, cenpos, err);
+  id->crval[0] = cenpos[0];        id->crval[1] = cenpos[1];
+  id->crpix[0] = (ofloat)pixel[0]; id->crpix[1] = (ofloat)pixel[1]; 
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
 
   /* Get inputs from info */
   xtick = 0.0;
@@ -1656,12 +1667,9 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   if (id->jlocd>=0) 
     in->scalex *= cos(DG2RAD*id->crval[id->jlocd]);
 
-  nx = image->myDesc->inaxes[0];
-  ny = image->myDesc->inaxes[1];
-  
   /* Define size of plot in world coordinates */
-  dx = image->myDesc->cdelt[0]; /* X Cell size */
-  dy = image->myDesc->cdelt[1]; /* X Cell size */
+  dx = id->cdelt[0]; /* X Cell size */
+  dy = id->cdelt[1]; /* Y Cell size */
   px = (PLFLT)1.0; py = (PLFLT)1.0;
   plplotCoord (px, py, &wx, &wy, (PLPointer)in);
   if (wx>0.0) xmin = (ofloat)(wx - MAX(0.015*nx, 5)*dx*in->scalex);  /* Allow extra for ticks */
@@ -1686,24 +1694,24 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   /* RA Equatorial or Galactic? */
   if (!strncmp(image->myDesc->ctype[0],"RA--", 4)) {
     if (fabs(image->myDesc->crota[1])==0.0)
-      g_snprintf (xlabel,120,"Right Ascension (%s)", units);
+      g_snprintf (xlabel,120,"#gD Right Ascension (%s)", units);
     else /* Don't call it RA */
-      g_snprintf (xlabel,120,"Rotated Right Ascension (%s)", units);
+      g_snprintf (xlabel,120,"#gD Rotated Right Ascension (%s)", units);
   } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
-      g_snprintf (xlabel,120,"Gal. Long. (%s)", units);
+      g_snprintf (xlabel,120,"#gD Gal. Long. (%s)", units);
   } else { /* Don't recognize */
-      g_snprintf (xlabel,120,"X (%s)", units);
+      g_snprintf (xlabel,120,"#gD X (%s)", units);
   }
   /* Dec Equatorial or Galactic? */
   if (!strncmp(image->myDesc->ctype[1],"DEC-", 4)) {
     if (fabs(image->myDesc->crota[1])==0.0)
-      g_snprintf (ylabel,120,"Declination (%s)", units);
+      g_snprintf (ylabel,120,"#gD Declination (%s)", units);
     else  /* Don't call it Dec */
-      g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
+      g_snprintf (ylabel,120,"#gD Rotated Declination (%s)", units);
   } else if (!strncmp(image->myDesc->ctype[1],"GLAT", 4)) {
-      g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
+      g_snprintf (ylabel,120,"#gD Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
-      g_snprintf (ylabel,120,"Y (%s)", units);
+      g_snprintf (ylabel,120,"#gD Y (%s)", units);
   }
 
   ObitPlotLabel (in, xlabel, ylabel, label, err);
@@ -3633,11 +3641,12 @@ static void parseOutput (gchar *output, gchar **dev, gchar **file)
 
 /**
  * Function for plplot to convert pixel numbers to world coordinates
+ * Gives position relative to center
  * \param  px   [in] X pixel (0-rel)
  * \param  py   [in] Y pixel (0-rel)
  * \param  wx   [out] X world coordinate value
  * \param  wy   [out] Y world coordinate value
- * \param  ID   [in] Image descriptor
+ * \param  OP   [in] ObitPlot object
  */
 static void plplotCoord (PLFLT px, PLFLT py, PLFLT* wx, PLFLT *wy, 
 			  PLPointer OP)

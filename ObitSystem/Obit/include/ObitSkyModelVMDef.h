@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -42,3 +42,7 @@ ofloat endVMModelTime;
 ofloat updateInterval;
 /** Number of actual components in model */
 olong numComp;
+/** Pointing position */
+odouble RAPnt, DecPnt;
+/** Sum of component flux densities - sum abs for Stokes I,Q,U,V */
+ofloat sumCCFlux;

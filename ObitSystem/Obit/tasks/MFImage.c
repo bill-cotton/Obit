@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2023                                          */
+/*;  Copyright (C) 2010-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2073,12 +2073,14 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
   ObitUVSelfCal *selfCal = NULL;
   ObitUV       *scrUV = NULL;
   ObitImageMF  *fitImage=NULL;
+  ObitImage    *inMF=NULL;
   ObitInfoType type;
   oint         otemp;
-  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter=0, NiterQU, NiterV;
+  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter=0, NiterQU, NiterV, nFreq;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen, useMinFlux=0.0;
   ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0,  minFluxV=0.0;
   ofloat       *minFList=NULL, antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
+  odouble      *specFreqEff=NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1},  FLdim[MAXINFOELEMDIM];
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC, doBeam, doLast;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE; 
@@ -2667,7 +2669,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
     clnClass->ObitDConCleanFlatten((ObitDConClean*)myClean, err);
 
     /* Display flattened field? */
-    if (myClean->display && myClean->mosaic->FullField && myClean->mosaic->FullField)
+    if (myClean->display && myClean->mosaic->FullField)
       ObitDisplayShow (myClean->display, (Obit*)myClean->mosaic->FullField, NULL, 
 		       1, err);
    } else {
@@ -2677,6 +2679,21 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
 		       1, err);
   }
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+
+  /* Copy effective Frequencies myClean->skyModel->info['specFreqEff')
+     to output - this one hopefully works  */
+  if (ObitInfoListGetP(myClean->skyModel->info, "specFreqEff", &type, dim, (gpointer*)&specFreqEff)) {
+    nFreq = dim[0];
+    if (myClean->mosaic->FullField) inMF = (ObitImage*)myClean->mosaic->FullField;
+    else inMF = (ObitImage*)myClean->mosaic->images[0];
+    /* Open and close to update disk */
+    ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+    ObitImageMFSetFreqEff ((ObitImageMF*)inMF, nFreq, specFreqEff, err);
+    inMF->myStatus = OBIT_Modified;  /* Grumble */
+    ObitImageClose(inMF, err);
+    Obit_log_error(err, OBIT_InfoErr,  "%s: Updated eff. freqs.", routine);
+  } /* end update effective freq  */
+  else Obit_log_error(err, OBIT_InfoWarn,  "%s: Could not update eff. freqs.", routine);
   
   /* Fit Spectrum? */
   if (doFit) {

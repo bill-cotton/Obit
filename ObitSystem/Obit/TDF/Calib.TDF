@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry calibration software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2015
+;;  Copyright (C) 2006-2025
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -79,6 +79,8 @@ doPol                               Apply polarization cal?
 **PARAM** int 1 **DEF** -1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
+**PARAM** boo 1 **DEF** F
+keepLin                            True => Keep poln in linear
 **PARAM** float 1  **DEF** 0.0
 Alpha           -20.       20.      Spectral Index to correct
 **PARAM** boo 1   **DEF** F
@@ -240,6 +242,9 @@ Adverbs:
   PDVer......AIPS PD table to use for per channel instrumental
              polarization corrections if doPol=True. 0=> highest
              -1 => use IF corrections from AIPS AN table.
+  keepLin....If the input data is in a linear feed basis (XX,YY,XY,YX)
+             and doPol=T, then leave in a linear basis.  
+             Otherwise convert to circular (RR,LL,RL,LR)
   Alpha......If != 0.0 then correct data by spectral index Alpha before 
              calibration. 
              -0.7 is typical for synchrotron.

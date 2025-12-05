@@ -33,7 +33,7 @@ MFBeam     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 MFBeam:    Wideband imaging w/ correction for tabulated beamshape
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inFile                              FITS input uvdata if Type=='FITS'
 **PARAM** str 12
 inName                              Input multisource UV data AIPS
@@ -99,7 +99,7 @@ BLchAvg                             If True, and BLFact >1.0 then also
 in3DType                           "FITS" or "AIPS" type of in3-in4
 **PARAM** float 1
 in3Diam                            Diameter (m) of in3-in4
-**PARAM** str 48
+**PARAM** str 128
 in3File                            FITS Beam Amp/Real image if Type=='FITS'
 **PARAM** str 12
 in3Name                            Beam Amp/Real  map AIPS name
@@ -111,7 +111,7 @@ in3Seq            0.0     9999.0   Beam Amp/Real AIPS seq. #
 in3Disk                            Beam Amp/Real map disk unit #
 **PARAM** boo 1
 doCmplx                            Use Complex beam images
-**PARAM** str 48
+**PARAM** str 128
 in4File                            FITS Beam imaginary image if Type=='FITS'
 **PARAM** str 12
 in4Name                            Beam imaginary map AIPS name
@@ -125,7 +125,7 @@ in4Disk                            Beam imaginary map disk unit #
 in5DType                           "FITS" or "AIPS" type of in5-in6
 **PARAM** float 1
 in5Diam                            Diameter (m) of in5-in6
-**PARAM** str 48
+**PARAM** str 128
 in5File                            FITS 2nd Beam Amp/Real image if 'FITS'
 **PARAM** str 12
 in5Name                            2nd Beam Amp/Real map AIPS name
@@ -135,7 +135,7 @@ in5Class                           2nd Beam Amp/Real map AIPS class
 in5Seq            0.0     9999.0   2nd Beam Amp/Real AIPS seq. #
 **PARAM** int 1
 in5Disk                            2nd Beam Amp/Real map disk unit #
-**PARAM** str 48
+**PARAM** str 128
 in6File                            FITS 2nd Beam imaginary image if 'FITS'
 **PARAM** str 12
 in6Name                            2nd Beam imaginary map AIPS name
@@ -147,7 +147,7 @@ in6Seq            0.0     9999.0   2nd Beam imaginary AIPS seq. #
 in6Disk                            2nd Beam imaginary map disk unit #
 **PARAM** str 4
 outDType                            "FITS" or "AIPS" type of output
-**PARAM** str 48
+**PARAM** str 128
 outFile                             Output FITS image file ending
 **PARAM** str 12
 outName                             Output AIPS image name
@@ -159,7 +159,7 @@ outSeq          -1.0     9999.0     Output AIPS image seq. no.
 outDisk                             Output image disk drive #
 **PARAM** int 1 **DEF** 1
 CCVer                               Output CC table version number
-**PARAM** str 48
+**PARAM** str 128
 out2File                            Output FITS uvdata file ending
 **PARAM** str 12
 out2Name                            Output AIPS uvdata name

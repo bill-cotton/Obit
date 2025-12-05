@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2023                                          */
+/*;  Copyright (C) 2010-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -162,6 +162,9 @@ static gboolean MFResetSkyModel (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: reset Pixel List. */
 static void MFResetPixelList (ObitDConCleanVis *in, ObitErr *err);
+
+/** Private: Set Effective Frequencies on members of mosaic */
+static void MFSetEffFreq (ObitDConCleanVisMF *in, ObitErr *err);
 
 
 /*----------------------Public functions---------------------------*/
@@ -804,6 +807,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
  * Wideband imaging version, supports dual Q&U imaging
  * Flattens all Spectral planes
  * Does Flatten if FullField member of mosaic member is defined.
+ * Updates effective frequencies of subbands
  * \param inn  The object to deconvolve
  * \param err Obit error stack object.
  */
@@ -829,11 +833,16 @@ void ObitDConCleanVisMFFlatten(ObitDConClean *inn, ObitErr *err)
   }
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* Set Effective Frequencies, use "specFreqEff" on UVImagerMF member */
+  MFSetEffFreq (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
 } /* end ObitDConCleanVisMFFlatten */
 
 /**
  * Subtract components from uv data.
  * Frees any work arrays on mosaic images
+ * Updates effective frequencies
  * \param inn  The object to deconvolve
  * \param err  Obit error stack object.
  */
@@ -914,6 +923,11 @@ void ObitDConCleanVisMFSub(ObitDConClean *inn, ObitErr *err)
     /* Reset max residual on Pixel List */
     in->Pixels2->resMax    = -1.0e20;  /* Maximum residual */
   } /* end subtract U Pol */
+
+  /* Set Effective Frequencies, use "specFreqEff" on UVImagerMF member */
+  MFSetEffFreq (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
 } /* end ObitDConCleanVisMFSub */
 
 /**
@@ -1133,6 +1147,11 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
      if (in->mosaic2->isAuto[ifld] > 0) in->mosaic2->isAuto[ifld] = ifld+1;
 
   } /* end secondary images */
+
+  /* Set Effective Frequencies, use "specFreqEff" on UVImagerMF member */
+  MFSetEffFreq (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+ 
 } /* end MakeResiduals */
 
 /**
@@ -1225,7 +1244,11 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
       }
     }
   } /* end secondary */
-  
+
+  /* Set Effective Frequencies, use "specFreqEff" on UVImagerMF member */
+  MFSetEffFreq (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+ 
 } /* end MakeAllResiduals */
 
 /**
@@ -2380,6 +2403,7 @@ gboolean ObitDConCleanVisMFSelect(ObitDConClean *inn, ObitFArray **pixarray,
  * the reuseFlux option uses the Pixels member and the list of CC Tables
  * which must be fully instantiated.
  * Sets BChan, EChan, BIF, EIF to default
+ * Sets Effective frequency on mosaics 
  * \param in   The Clean object
  * \param err Obit error stack object.
  * \return true if components in the sky model need to be subtracted
@@ -2407,6 +2431,10 @@ static gboolean MFResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
   /* Use parent class for Pixels */
   doSub = VisResetSkyModel(inn, err);
   if (err->error) goto cleanup;
+
+  /* Set Effective Frequencies, use "specFreqEff" on UVImagerMF member */
+  MFSetEffFreq (in, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, doSub);
 
   /* Does the secondary (UPol) sky model need resetting? */
   if ((in->reuseFlux<=0.0) && (!in->isDual)) return doSub;
@@ -2526,4 +2554,59 @@ static void MFResetPixelList(ObitDConCleanVis *inn, ObitErr *err)
     ObitDConCleanPxListMFReset(in->Pixels2, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 } /* end MFResetPixelList */
+
+/**
+ * Set Effective Frequencies on members of mosaic(s) and SkyModel
+ * \param in   The Clean object
+ *        from info "specFreqEff"
+ * \param err Obit error stack object.
+ */
+static void MFSetEffFreq(ObitDConCleanVisMF *in, ObitErr *err)
+{
+  gint32 dim[MAXINFOELEMDIM];
+  ObitInfoType type;
+  odouble *specFreqEff;
+  ObitImageMF* inMF;
+  olong i;
+  /*gchar *routine = "MFSetEffFreq";*/
+
+  if (ObitInfoListGetP(in->imager->info, "specFreqEff", &type, dim, (gpointer*)&specFreqEff)) {
+    /* Write on SkyModel */
+    ObitInfoListAlwaysPut (in->skyModel->info, "specFreqEff", type, dim, specFreqEff);
+    for (i=0; i<in->mosaic->numberImages; i++) {
+      inMF = (ObitImageMF*)in->mosaic->images[i];
+      /* Open and close to update disk */
+      ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+      ObitImageMFSetFreqEff (inMF, inMF->nSpec, specFreqEff, err);
+      inMF->myStatus = OBIT_Modified;  /* Grumble */
+      ObitImageClose(inMF, err);
+    } /* end loop over mosaic */
+    /* Full Field image is it exists */
+    if (in->mosaic->FullField) {
+      inMF = (ObitImageMF*)in->mosaic->FullField;
+      ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+      ObitImageMFSetFreqEff (inMF, inMF->nSpec, specFreqEff, err);
+      inMF->myStatus = OBIT_Modified;  /* Grumble */
+      ObitImageClose(inMF, err);
+    }
+    /* Loop over mosaic2 if exists and active */
+    if (in->mosaic2) {
+      for (i=0; i<in->mosaic2->numberImages; i++) {
+	inMF = (ObitImageMF*)in->mosaic2->images[i];
+	ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+	ObitImageMFSetFreqEff (inMF, inMF->nSpec, specFreqEff, err);
+	inMF->myStatus = OBIT_Modified;  /* Grumble */
+	ObitImageClose(inMF, err);
+      } /* end loop over mosaic2 */
+      /* Full Field image is it exists */
+      if (in->mosaic2->FullField) {
+	inMF = (ObitImageMF*)in->mosaic2->FullField;
+	ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+	ObitImageMFSetFreqEff (inMF, inMF->nSpec, specFreqEff, err);
+	inMF->myStatus = OBIT_Modified;  /* Grumble */
+	ObitImageClose(inMF, err);
+      }
+    } /* end if mosaic2 */
+  } /* end if specFreqEff */
+} /* end MFSetEffFreq */
 

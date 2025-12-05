@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -5882,7 +5882,7 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
 /**
  * Fill an image with blank pixels (3rd dim only)
  * \param in        Input image to blank
- * \param err       Error stack, returns if not empty.
+ * \param err       Error stack, returns if error set
  */
 void ObitImageUtilBlankFill (ObitImage* in, ObitErr* err)
 {
@@ -5931,6 +5931,71 @@ void ObitImageUtilBlankFill (ObitImage* in, ObitErr* err)
   in->image = ObitFArrayUnref(in->image);
 
 } /* end ObitImageUtilBlankFill */
+/**
+ * Determine RMSes for histogram analysis of planes in an image
+ * Fully blank planes are given a very large number (1.0e20)
+ * \param in        Input image
+ *                  results in info member as PlnRMS
+ * \param err       Error stack, returns if error set
+ */
+void ObitImageUtilGetRMS (ObitImage* in, ObitErr* err)
+{
+  olong i, iplane, nplane;
+  olong blc[IM_MAXDIM], trc[IM_MAXDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat fblank = ObitMagicF();
+  ObitIOSize IOBy = OBIT_IO_byPlane;
+  ofloat *PlnRMS=NULL, RMS;
+  gchar *routine="ObitImageUtilGetRMS";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitImageIsA(in));
+
+  /* Access images a plane at a time */
+  dim[0] = 1;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+  ObitInfoListPut (in->info, "IOBy", OBIT_long, dim, &IOBy, err);
+  dim[0] = IM_MAXDIM;
+  ObitInfoListPut (in->info, "BLC", OBIT_long, dim, blc, err);
+  ObitInfoListPut (in->info, "TRC", OBIT_long, dim, trc, err);
+
+  /* Open input */
+  ObitImageOpen (in, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* How many input planes? */
+  nplane = in->myDesc->inaxes[2];
+
+  /* Create output array */
+  PlnRMS = g_malloc0 (nplane*sizeof(ofloat));
+
+  /* Loop over planes */
+  for (iplane=0; iplane<nplane; iplane++) {
+    /* Read plane */
+    ObitImageRead (in, NULL, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    RMS =  ObitFArrayRMS(in->image);
+    /* Trap NaNs, zeroes, fblanks */
+    if (isnan(RMS) || (RMS==0.0) || (RMS==fblank)) RMS = 1.0e20;
+    PlnRMS[iplane] =  RMS;
+  }
+  //DEBUGfor (iplane=0; iplane<nplane; iplane++) fprintf(stderr,"RMS %d %10.5g\n",iplane+1,PlnRMS[iplane]);
+ 
+  /* Save array on info member */
+  dim[0] = nplane; dim[1]=dim[2]=dim[3]=dim[4]=1;
+  ObitInfoListAlwaysPut(in->info, "PlnRMS", OBIT_float, dim, &PlnRMS[0]);
+
+  /* Close input */
+  ObitImageClose (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* release buffer */
+  in->image = ObitFArrayUnref(in->image);
+  if (PlnRMS) g_free(PlnRMS);  /* Cleanup */
+
+} /* end ObitImageUtilGetRMS */
 /*----------------------Private functions---------------------------*/
 
 /**

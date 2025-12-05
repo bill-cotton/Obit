@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2022                                         */
+/*;  Copyright (C) 2006-2025                                         */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -652,7 +652,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
-    "doPol", "PDVer", "Antennas", "Mode", "ModelType", "Alpha",
+    "doPol", "PDVer", "keepLin", "Antennas", "Mode", "ModelType", "Alpha",
      NULL};
   gchar *routine = "getInputData";
 
@@ -1152,7 +1152,7 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Qual", "souCode", "timeRange", "UVRange", "WtUV", 
     "subA", "solnVer", "selBand", "selFreq", "FreqID", "BChan", "EChan", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "PDVer", "Antennas",  "refAnts", "doTwo",
+    "doPol", "PDVer", "keepLin", "Antennas",  "refAnts", "doTwo",
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "Alpha", "PBCor", "antSize", "solnVer", 

@@ -333,8 +333,8 @@ olong ObitAIPSDirAlloc(olong disk, olong user,
     g_memmove(entry.type,  lAtype, 2);
   }
 
-  /* access time time if it's a new file */
-  if ((cno>0) && (!*exist)) {
+  /* access time  */
+  if (cno>0) {
     ObitAIPSDirUpdateEntry(&entry);
     
     /* write it back */

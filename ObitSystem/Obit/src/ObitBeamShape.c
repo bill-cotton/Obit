@@ -76,6 +76,14 @@ static ofloat GetMKBeam (ObitBeamShape *in, odouble Angle);
 
 /** Private: Interpolate tabulated beam. */
 static ofloat GetTabBeam (ObitBeamShape *in, odouble Angle);
+
+/** Private: Cosine squared beam  */
+static ofloat GetCos2Beam (ObitBeamShape *in, odouble Angle);
+
+#ifndef VELIGHT  /* Speed of light */
+#define VELIGHT 2.997924562e8
+#endif /* VELIGHT */
+
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -158,8 +166,10 @@ ObitBeamShape* ObitBeamShapeCopy  (ObitBeamShape *in, ObitBeamShape *out, ObitEr
   out->doJinc  = in->doJinc;
   out->doTab   = in->doTab;
   out->doVLITE = in->doVLITE;
+  out->doVLA   = in->doVLA;
   out->doMeerKAT = in->doMeerKAT;
   out->beamAng = in->beamAng;
+  out->fudge   = in->fudge;
   out->refFreq = in->refFreq;
   out->itabRefFreq = in->itabRefFreq;
   out->icellSize   = in->icellSize;
@@ -201,8 +211,10 @@ void ObitBeamShapeClone  (ObitBeamShape *in, ObitBeamShape *out, ObitErr *err)
   out->doJinc  = in->doJinc;
   out->doTab   = in->doTab;
   out->doVLITE = in->doVLITE;
+  out->doVLA   = in->doVLA;
   out->doMeerKAT = in->doMeerKAT;
   out->beamAng = in->beamAng;
+  out->fudge   = in->fudge;
   out->refFreq = in->refFreq;
   out->itabRefFreq = in->itabRefFreq;
   out->icellSize   = in->icellSize;
@@ -213,7 +225,7 @@ void ObitBeamShapeClone  (ObitBeamShape *in, ObitBeamShape *out, ObitErr *err)
 } /* end ObitBeamShapeClone */
 
 /**
- * Creates an ObitBeamShape 
+ * Creates an ObitBeamShape for images
  * \param name    An optional name for the object.
  * \param image   Image for which beam shape is desired
  *                Control on info member:
@@ -230,7 +242,7 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
 				    gboolean doGain)
 {
   ObitBeamShape* out;
-  gboolean doTab=FALSE, isMeerKAT=FALSE, doVLITE=FALSE;
+  gboolean doTab=FALSE, isMeerKAT=FALSE, doVLITE=FALSE, doVLA=FALSE;
   gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
 
@@ -242,22 +254,75 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
   out->beamAng = -1.0;
   out->doGain  = doGain;
   out->refFreq = ObitImageMFGetPlaneFreq(image);
-  out->doJinc  = out->refFreq >= 1.0e9;
   ObitImageDescGetPoint(out->myDesc, &out->raPnt, &out->decPnt) ;
   out->raPnt  *= DG2RAD;  /* to radians */
   out->decPnt *= DG2RAD;  /* to radians */
+  doVLA = !strncmp(image->myDesc->teles, "EVLA",4); /* EVLA */
+  out->doVLA = doVLA;
+  out->doJinc  = doVLA && (out->refFreq >= 1.0e9);  /* Jinc for VLA cassegraine */
   /* tabulated beam? */
   ObitInfoListGetTest(image->info, "doTab", &type, dim, &doTab);
   isMeerKAT = !strncmp(image->myDesc->teles, "MeerKAT",7); /* MeerKAT */
   out->doMeerKAT = isMeerKAT;
   ObitInfoListGetTest(image->info, "doVLITE", &type, dim, &doVLITE); /* VLITE */
   doVLITE = doVLITE || !strncmp(image->myDesc->instrument, "VLITE",5);
-   /* if (isMeerKAT)   MeerKATTabBeam(out);  Always use for MeerKAT */
+  /* if (isMeerKAT)   MeerKATTabBeam(out);  Always use for MeerKAT */
   if (doVLITE) FindVLITEBeam(out);   /* Use VLITE beam  */
   else if (doTab)   FindTabBeam(out);     /* Use standard if available */
-
   return out;
 } /* end ObitBeamShapeCreate */
+
+/**
+ * Creates an ObitBeamShape for uv data
+ * \param name    An optional name for the object.
+ * \param uvdata  Data for which beam shape is desired
+ *                Control on info member:
+ * \li doTab      If TRUE use tabulated beam if available [def FALSE]
+ *                Traps MeerKAT case, uses Tabulated beam
+ *                Traps VLITE case, uses Tabulated beam
+ * \param pbmin   Minimum gain, lower values will be clipped at this value
+ * \param antSize Size of Antenna in (m)
+ * \param doGain  If true gain wanted, else gain set to 1.0
+ * \param doTab   If TRUE use tabulated beam if available 
+ * \return the new object.
+ */
+ObitBeamShape* ObitBeamShapeCreateUV (gchar* name, ObitUV *uvdata, 
+				      ofloat pbmin, ofloat antSize, 
+				      gboolean doGain, gboolean doTab)
+{
+  ObitBeamShape* out;
+  gboolean doVLITE=FALSE, doVLA=FALSE;
+  gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+
+  /* Create basic structure */
+  out = newObitBeamShape (name);
+  out->myDesc  = NULL; /* No imageDesc */
+  out->pbmin   = pbmin;
+  out->antSize = antSize;
+  out->beamAng = -1.0;
+  out->doGain  = doGain;
+  out->refFreq = uvdata->myDesc->freq;
+  out->itabRefFreq = 1.0/out->refFreq;
+  out->icellSize   = 1.0;
+  out->myFI        =NULL;
+  out->raPnt   = uvdata->myDesc->obsra * DG2RAD;
+  out->decPnt  = uvdata->myDesc->obsdec * DG2RAD; 
+  /* tabulated beam? */
+  out->doTab  = doTab;
+  doVLA = !strncmp(uvdata->myDesc->teles, "EVLA",4); /* EVLA */
+  out->doVLA   = doVLA;
+  out->doJinc  = doVLA && (out->refFreq >= 1.0e9);  /* Jinc for VLA cassegraine */
+  out->doMeerKAT = !strncmp(uvdata->myDesc->teles, "MeerKAT",7); /* MeerKAT */
+  out->doKAT     = !strncmp(uvdata->myDesc->teles, "KAT7",4);   /* KAT-7 */
+  ObitInfoListGetTest(uvdata->info, "doVLITE", &type, dim, &doVLITE); /* VLITE */
+  doVLITE = doVLITE || !strncmp(uvdata->myDesc->instrument, "VLITE",5);
+  out->doVLITE= doVLITE;
+  /* if (isMeerKAT)   MeerKATTabBeam(out);  Always use for MeerKAT */
+  if (doVLITE)    FindVLITEBeam(out);   /* Use VLITE beam  */
+  else if (doTab) FindTabBeam(out);     /* Use standard if available */
+  return out;
+} /* end ObitBeamShapeCreateUV */
 
 /**
  * Calculate gain in a given direction.
@@ -286,8 +351,11 @@ ofloat ObitBeamShapeGain (ObitBeamShape *in, odouble ra, odouble dec,
 
   /* Compute */
   if (in->doTab)  gain = GetTabBeam (in, Angle);
+  /* Includes VLA cassegrain */
   else if (in->doJinc) gain = ObitPBUtilJinc(Angle, in->refFreq, in->antSize, in->pbmin);
-  else                 gain = ObitPBUtilPoly(Angle, in->refFreq, in->pbmin);
+  /* VLA prime focus */
+  else if (in->doVLA)  gain = ObitPBUtilPoly(Angle, in->refFreq, in->pbmin);
+  else                 gain = GetCos2Beam (in,Angle);
   return gain;
 } /* end ObitBeamShapeGain */
 
@@ -311,9 +379,12 @@ ofloat ObitBeamShapeGainSym (ObitBeamShape *in, odouble Angle)
   if (in->doTab)          gain = GetTabBeam (in, Angle);
   else if (in->doVLITE)   gain = GetTabBeam (in, Angle);
   else if (in->doMeerKAT) gain = GetMKBeam (in, Angle);
-  else if (doKAT)         gain = ObitPBUtilKAT7 (Angle, in->refFreq, 0.0);
+  /* Includes VLA cassegrain */
   else if (in->doJinc)    gain = ObitPBUtilJinc(Angle, in->refFreq, in->antSize, in->pbmin);
-  else                    gain = ObitPBUtilPoly(Angle, in->refFreq, in->pbmin);
+  /* VLA prime focus */
+  else if (in->doVLA)     gain = ObitPBUtilPoly(Angle, in->refFreq, in->pbmin);
+  else if (doKAT)         gain = ObitPBUtilKAT7 (Angle, in->refFreq, 0.0);
+  else                    gain = GetCos2Beam (in,Angle);
   return gain;
 } /* end ObitBeamShapeGainSym */
 
@@ -416,6 +487,7 @@ void ObitBeamShapeInit  (gpointer inn)
   in->myFI       = NULL;
   in->pbmin      = 0.0;
   in->antSize    = 0.0;
+  in->fudge      = 1.052;  /* Appropriate for MeerKAT */
   in->icellSize  = 0.0;
   in->doGain     = FALSE;
   in->raPnt      = 0.0;
@@ -424,6 +496,10 @@ void ObitBeamShapeInit  (gpointer inn)
   in->itabRefFreq= 0.0;
   in->doJinc     = FALSE;
   in->doTab      = FALSE;
+  in->doVLA      = FALSE;
+  in->doVLITE    = FALSE;
+  in->doMeerKAT  = FALSE;
+  in->doKAT      = FALSE;
 } /* end ObitBeamShapeInit */
 
 /**
@@ -859,4 +935,25 @@ static ofloat GetMKBeam (ObitBeamShape *in, odouble Angle)
   gain = (cos(G_PI*rhor)/div);
 
   return gain*gain;
-} /* end GetTabBeam */
+} /* end GetMKBeam */
+
+/**
+/ * Cosine squared beam
+ *  Calculate cosine beam shape (Condon & Ransom, Essential Radio Astronomy eq 3.94)
+ * \param in  the BeamShape object
+ * \param in  Angle from pointing in degrees
+ * \return  beam power gain
+ */
+static ofloat GetCos2Beam (ObitBeamShape *in, odouble Angle)
+{
+  ofloat gain=1.0, arg, div;
+  if (Angle<=0.0) return gain;
+  if (in->beamAng<0.0)
+    in->beamAng = in->fudge*in->antSize*in->refFreq*DG2RAD/VELIGHT;
+  arg = (ofloat)(in->beamAng*Angle);
+  div = (1.-4.*(arg*arg));
+  if (fabs(div)<1.0e-5) div = 1.0e-5;
+  gain = (cos(G_PI*arg)/div);
+  return gain*gain;
+} /* end GetCos2Beam */
+

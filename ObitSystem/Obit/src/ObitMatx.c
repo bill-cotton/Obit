@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020-2024                                          */
+/*;  Copyright (C) 2020-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -229,6 +229,7 @@ ObitMatx* ObitMatxCreate (ObitMatxType type, olong ndim, olong *naxis)
 					out->naxis[0]*sizeof(ofloat),
 					"Matx array");
     out->cpx = (ocomplex*)out->array;
+    out->flt = (ofloat*)out->array;
     break;
   case OBIT_Double:
     size *= 2;

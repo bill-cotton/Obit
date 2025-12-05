@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2025                                          */
+/*;  Copyright (C) 2003-2023                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1029,7 +1029,7 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
   odouble cdtest;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  int i, nfound, nhdu, hdutype, status = 0, xstatus = 0;
+  int i,ihdu, nfound, nhdu, hdutype, status = 0, xstatus = 0;
   int temp=0;
   long extver, ltemp;
   float ftemp, farr[10];
@@ -1049,30 +1049,9 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
   sel  = in->mySel;  /* selector pointer */
   tableList = (ObitTableList*)in->tableList;
 
-  /* Index tables in file and update TableList if not already done*/
-  if (tableList && (tableList->number <= 0)) {
-    fits_get_num_hdus (in->myFptr, &nhdu, &status);
-    for (i=1; i<=nhdu; i++) {
-      fits_movabs_hdu (in->myFptr, i, &hdutype, &status);
-      if (hdutype==BINARY_TBL) { /* If it's a table enter it in the list */
-	/* table name */
-	fits_read_key_str (in->myFptr, "EXTNAME", (char*)sdata, (char*)commnt, &status);
-	/* version number default to 0 */
-	extver = 0;
-	fits_read_key_lng (in->myFptr, "EXTVER", &extver, commnt, &xstatus);
-	if (status==0) { /* Add to TableList */
-	  otemp = (olong)extver;
-	  ObitTableListPut (tableList, sdata, &otemp, NULL, err);
-	  if (err->error)
-	    Obit_traceback_val (err, "ObitIOImageFITSReadDescriptor", 
-				tableList->name, OBIT_IO_OpenErr);
-	}
-      }
-    } /* end loop indexing file */
-  } /* end update Table List */
-
   /* Position to HDU 1, the image 1 */
-  fits_movabs_hdu (in->myFptr, 1, &hdutype, &status);
+  ihdu = 1;
+  fits_movabs_hdu (in->myFptr, ihdu, &hdutype, &status);
 
   /* Read keyword values, use default where possible */
   ftemp = (float)desc->maxval;
@@ -1132,8 +1111,10 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
   fits_read_keys_str (in->myFptr, "CTYPE", 1, IM_MAXDIM, cdum, &nfound, 
 		      &status);
     if (status==0) {
-      for (i=0; i<nfound; i++) strncpy (desc->ctype[i], cdata[i], IMLEN_KEYWORD-1); 
-      desc->ctype[i][IMLEN_KEYWORD-1] = 0;
+      for (i=0; i<nfound; i++) {
+	strncpy (desc->ctype[i], cdata[i], IMLEN_KEYWORD-1); 
+	desc->ctype[i][IMLEN_KEYWORD-1] = 0;
+      }
     }
   if (status==KEY_NO_EXIST) status = 0;
 
@@ -1235,6 +1216,28 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
   /* Trap IRAF images - CD1_1 */
   if (ObitInfoListGetTest(desc->info, "CD1_1", &type, dim, &cdtest))
     fixIRAF (desc, err);
+
+  /* Index tables in file and update TableList if not already done*/
+  if (tableList && (tableList->number <= 0)) {
+    fits_get_num_hdus (in->myFptr, &nhdu, &status);
+    for (ihdu=1; ihdu<=nhdu; ihdu++) {
+      fits_movabs_hdu (in->myFptr, ihdu, &hdutype, &status);
+      if (hdutype==BINARY_TBL) { /* If it's a table enter it in the list */
+	/* table name */
+	fits_read_key_str (in->myFptr, "EXTNAME", (char*)sdata, (char*)commnt, &status);
+	/* version number default to 0 */
+	extver = 0;
+	fits_read_key_lng (in->myFptr, "EXTVER", &extver, commnt, &xstatus);
+	if (status==0) { /* Add to TableList */
+	  otemp = (olong)extver;
+	  ObitTableListPut (tableList, sdata, &otemp, NULL, err);
+	  if (err->error)
+	    Obit_traceback_val (err, "ObitIOImageFITSReadDescriptor", 
+				tableList->name, OBIT_IO_OpenErr);
+	} else status = 0;  /* Ignore malformed tables */
+      }
+    } /* end loop indexing file */
+  } /* end update Table List */
 
   /* was there an error? */
   if (status!=0) {
@@ -2239,6 +2242,7 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
    "CLEAN", NULL};
   olong number, *len;
   gboolean bvalue, bad=FALSE;
+  gchar *blank="        ";
   gchar *routine = "ObitIOImageKeysOtherRead";
 
   /* error checks */
@@ -2281,13 +2285,17 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
 	case 'C':  /* Character string */
 	  first = index (value,'\'')+1; /* a string? */
 	  last = rindex(value,'\'')-1;
-	  g_memmove(svalue, first, (last-first+1));
+	  memmove(svalue, first, (last-first+1));
 	  svalue[last-first+1] = 0; /* null terminate */
 	  /* add to InfoList */
 	  dim[0] = strlen(svalue);
-	  if (dim[0]>0) { /* Trap NULL string */
+	  if (dim[0]>0) 
 	    ObitInfoListAlwaysPut(desc->info, (char*)keywrd, OBIT_string, dim, 
 				  (gconstpointer)svalue);
+	  else {  /* replace zero length string with blank */
+	    dim[0] = strlen(blank), 
+	    ObitInfoListAlwaysPut(desc->info, (char*)keywrd, OBIT_string, dim, 
+				  (gconstpointer)blank);
 	  }
 	  
 	  break;

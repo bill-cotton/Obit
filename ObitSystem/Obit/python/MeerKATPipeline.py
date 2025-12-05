@@ -82,7 +82,8 @@ retCode = 0
 doBand = -1
 BPVer = 0
 maxgap = max(parms["CalAvgTime"], 160.*8.)/60. # for indexing
-fileRoot =  './'+project+"_"+session+"_"+band  # root of file names
+fileRoot  =  './'+project+"_"+session+"_"+band  # root of file names
+fileRoot2 =  project+"_"+session+"_"+band  # root of file names, not to confuse OPlot
 uvc           = None
 avgClass      = ("UVAv"+band)[0:6]  # Averaged data AIPS class
 outIClass     = parms["outIClass"]  # image AIPS class
@@ -144,11 +145,16 @@ if parms["doLoad"] and not exists:
     nif   = uf.Desc.Dict['inaxes'][uf.Desc.Dict['jlocif']]
     if nif==1:
         first_chan = int(nchan*parms["begChanFrac"])
-        last_chan=nchan-int(nchan*parms["endChanFrac"])
-        chan_after_ifs=(last_chan-first_chan +1)%16
-        first_chan=first_chan+(chan_after_ifs//2)
-        last_chan=last_chan-(chan_after_ifs-(chan_after_ifs//2))
-        BChan = first_chan-1;  EChan = last_chan+1
+        last_chan = nchan-int(nchan*parms["endChanFrac"])
+        if parms["noHann"]:  # will use Splat
+            chan_after_ifs = (last_chan-first_chan +1)%8
+            BChan = first_chan+(chan_after_ifs//2)
+            EChan = last_chan-(chan_after_ifs-(chan_after_ifs//2))
+        else :    # Hann - result will have an odd nuber of channels
+            chan_after_ifs = (last_chan-first_chan +1)%16
+            first_chan = first_chan+(chan_after_ifs//2)
+            BChan = first_chan+(chan_after_ifs//2)
+            EChan = last_chan-(chan_after_ifs-(chan_after_ifs//2))-1
     else:
         BChan = 1;  EChan = 0
     uv = MKHann(uf, MKAIPSName(project), data_class, disk, data_seq, err, \
@@ -321,8 +327,8 @@ if parms["doNDCal"] and parms["doPol"] and doNDCal:
         raise RuntimeError("Error in XY phase calibration")
     # Plot table?
     if parms["doBPPlot"] and not check:
-        # PLPlot doesn't like long names
-        plotFile = project+"_XYPhaseBP.ps"
+        # PLPlot doesn't like long names (really "./")
+        plotFile = project+"_"+session+"_"+band+"_XYPhaseBP.ps"
         MKPlotXYBPTab(uv, 1, plotFile, err, \
                       logfile=logFile, check=check, debug=debug)
 
@@ -364,6 +370,17 @@ if parms["doBPCal"] and parms["BPCals"]:
                       nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError("Error in Bandpass calibration")
+    # Plot fit?
+    if parms["doBPFitPlot"]:
+        plotFile = fileRoot2+"_BP_Fit.ps"
+        BPVer = uv.GetHighVer("AIPS BP")
+        if doBand:  # Were BP tables merged?
+            BPVer -= 1;
+        retCode = MKPlotAmpBPTab(uv, BPVer, plotFile, err,
+                                 check=check, debug=debug, logfile=logFile )
+        if retCode!=0:
+            raise  RuntimeError("Error in Plotting Bandpass fit")
+ 
     # Plot corrected data? 
     if parms["doSpecPlot"] and  parms["plotSource"]:
         plotFile = fileRoot+"_BPSpec.ps"
@@ -488,7 +505,7 @@ if parms["doRecal"]:
         # Plot table?
         if parms["doBPPlot"] and not check:
             # PLPlot doesn't like long names
-            plotFile = project+"_XYPhaseBP2.ps"
+            plotFile = project+"_"+session+"_"+band+"_XYPhaseBP2.ps"
             MKPlotXYBPTab(uv, 1, plotFile, err, \
                           logfile=logFile, check=check, debug=debug)
      
@@ -530,6 +547,17 @@ if parms["doRecal"]:
                           nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError("Error in Bandpass calibration")
+        # Plot fit?
+        if parms["doBPFitPlot"]:
+            plotFile = fileRoot2+"_BP_Fit2.ps"
+            BPVer = uv.GetHighVer("AIPS BP")
+            if doBand:  # Were BP tables merged?
+                BPVer -= 1;
+            retCode = MKPlotAmpBPTab(uv, BPVer, plotFile, err,
+                                     check=check, debug=debug, logfile=logFile )
+        if retCode!=0:
+            raise  RuntimeError("Error in Plotting Bandpass fit")
+ 
         
     # Amp & phase Recalibrate
     if parms["doAmpPhaseCal2"]:

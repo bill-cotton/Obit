@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -123,8 +123,10 @@ gboolean doGrid;
 /** message level for deconvolution progress messages, 
     0=none, 1=summary, 2=normal, higher numbers for diagnostics */
 olong prtLv;
-/** Number of spectral terms  */
+/** Number of planes of spectral terms  */
 olong nSpecTerm;
+/** Number of terms in fit to spectrum */
+olong nTerm;
 /** Number of threads (elements in threadArgs)  */
 olong nThreads;
 /** Array of FT Function structures  */

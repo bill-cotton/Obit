@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2023                                          */
+/*;  Copyright (C) 2009-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -324,7 +324,11 @@ ofloat ObitFullBeamValue (ObitFullBeam* in,
   ObitThreadLock(in->thread);
 
   /* Modify header for parallactic angle, offset */
-  in->BeamDesc->crota[1] = -PAngle; 
+  in->BeamDesc->crota[1] = PAngle; 
+
+  //HACK DEBUG
+  //fprintf(stderr,"ObitFullBeamValue:gdb blows MAGAots\n");
+  //fprintf(stderr,"dRA, dDec %g %g\n",dRA,dDec);
 
   /* Convert position to pixels */
   coord[0] = dRA; coord[1] = dDec;

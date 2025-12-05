@@ -33,7 +33,7 @@ UVPolCor  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 UVPolCor  Correct off-axis instrumental polarization in UV data
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inFile                             FITS input uvdata if Type=='FITS'
 **PARAM** str 12
 inName                             Input UV file name (name)
@@ -76,7 +76,9 @@ doBand           -1.0       10.0   If >0 apply bandpass cal.
 BPVer                              Bandpass table version
 **PARAM** float 3
 Smooth                             Smoothing function. 
-**PARAM** str 48
+**PARAM** str 4
+DataType2                          "FITS" or "AIPS" type of model
+**PARAM** str 128
 in2File                            FITS input image if Type=='FITS'
 **PARAM** str 12
 in2Name                            Cleaned map AIPS name
@@ -102,7 +104,7 @@ Flux                               Lowest summed CC component used.
 in3DType                           "FITS" or "AIPS" type of in3, in4
 **PARAM** float 1
 in3Diam                            Diameter (m) of in3-in4
-**PARAM** str 48
+**PARAM** str 128
 in3File                            FITS Beam amp/real image if Type=='FITS'
 **PARAM** str 12
 in3Name                            Beam amp/real map AIPS name
@@ -114,7 +116,7 @@ in3Seq            0.0     9999.0   Beam amp/real AIPS seq. #
 in3Disk                            Beam amp/real map disk unit #
 **PARAM** boo 1
 doCmplx                            Use complex beam images
-**PARAM** str 48
+**PARAM** str 128
 in4File                            FITS Beam imag. image if Type=='FITS'
 **PARAM** str 12
 in4Name                            Beam imag. map AIPS name
@@ -128,7 +130,7 @@ in4Disk                            Beam imag. map disk unit #
 in5DType                           "FITS" or "AIPS" type of in5-in6
 **PARAM** float 1
 in5Diam                            Diameter (m) of in5-in6
-**PARAM** str 48
+**PARAM** str 128
 in5File                            FITS 2nd Beam image if 'FITS'
 **PARAM** str 12
 in5Name                            2nd Beam map AIPS name
@@ -138,7 +140,7 @@ in5Class                           2nd Beam map AIPS class
 in5Seq            0.0     9999.0   2nd Beam AIPS seq. #
 **PARAM** int 1
 in5Disk                            2nd Beam map disk unit #
-**PARAM** str 48
+**PARAM** str 128
 in6File                            FITS 2nd Beam imag. image if 'FITS'
 **PARAM** str 12
 in6Name                            2nd Beam imag. map AIPS name
@@ -150,7 +152,7 @@ in6Seq            0.0     9999.0   2nd Beam imag. AIPS seq. #
 in6Disk                            2nd Beam imag. map disk unit #
 **PARAM** str 4
 outDType                           "FITS" or "AIPS" type of output
-**PARAM** str 48 
+**PARAM** str 128
 outFile                            FITS output uvdata if Type=='FITS'
 **PARAM** str 12
 outName                            Output UV AIPS file name
@@ -238,7 +240,7 @@ Adverbs:
              files or the SN table for single-source files.
              0 => highest.
   doPol......If True apply polarization calibration
-             NB: This calibration must have been applied to correct the 
+             NB: This calibration must be applied to correct the 
              on-axis instrumental polarization before UVPolCor can 
              correct the off-axis instrumental polarization.
   PDVer......AIPS PD table to use for per channel instrumental
@@ -285,6 +287,8 @@ Adverbs:
                function has value - in channels.  Defaults: 1,3,1,4
                times Smooth(2) used when input Smooth(3) < net
                Smooth(2).
+      Model
+  DataType2.'FITS' or 'AIPS'  type of input, defaults to DataType
   in2Name....Model AIPS name .      Standard defaults.
   in2Class...Model AIPS class .     Standard defaults.
   in2Seq.....Model AIPS seq. # .    0 => highest.
@@ -311,71 +315,51 @@ Adverbs:
              DataType.
   in3Diam....Diameter in m of antennas described by in3* and in4*
   in3Name....Power Beam AIPS name.      Standard defaults.
-  in3Class...Power Beam AIPS class. Expected form "Sxxxxx" where "S"
-             is the Stokes parameter (IVQU) and "xxxx" arbitrary.
-             The task will search for the different stokes images 
-             and I+V or I+V+Q+U should be provided.
+  in3Class...Power Beam AIPS class. Expected form "SSxxxx" where "SS"
+             is the Stokes correlation (RR,LL,RL,LR or XX,YY,XY,YX) and 
+	     "xxxx" is arbitrary.
+             The task will search for the different Stokes images. 
   in3Seq.....Beam AIPS seq. # .    0 => highest.
   in3Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
   in3File....FITS Power Beam input root if in3DataType=='FITS'
-             Expected form "Sxxxxx" where "S" is the Stokes parameter 
-             (IVQU) and "xxxx" is arbitrary. 
-             The task will search for the different Stokes images 
-             and I+V or I+V+Q+U should be provided
+             Expected form "SSxxxx.fits" where "SS" is the Stokes 
+	     correlation (RR,LL,RL,LR or XX,YY,XY,YX) and 
+	     "xxxx" is arbitrary.
+             The task will search for the different Stokes images.
   doCmplx....If True, use complex beam images
   in4Name....Voltage Beam imag. AIPS name. Only used if doCmplx = True
-  in4Class...Beam imag. AIPS class. Expected form "Sxxxxx" where "S"
-             is the Stokes parameter (IVQU) and "xxxx" arbitrary.
-             The task will search for the different stokes images 
-             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+  in4Class...Beam imag. AIPS class. Expected form "SSxxxx" where "SS"
+             Expected form "SSxxxx.fits" where "SS" is the Stokes 
+	     correlation (RR,LL,RL,LR or XX,YY,XY,YX) and 
+	     "xxxx" is arbitrary.
+             The task will search for the different Stokes images.
   in4Seq.....Beam imag. AIPS seq. # .    0 => highest.
   in4Disk....Disk drive # of beam imag. (FITS or AIPS).
   in4File....Power FITS Beam imag. input root if in3DataType=='FITS'
-             Expected form "Sxxxxx" where "S" is the Stokes parameter 
-             (IVQU) and "xxxx" is arbitrary. 
-             The task will search for the different stokes images 
-             and I+V or I+V+Q+U should be provided
+             Expected form "SSxxxx" where "SE" is the Stokes  
+	     correlation (RR,LL,RL,LR or XX,YY,XY,YX) and 
+	     "xxxx" is arbitrary.
+             The task will search for the different Stokes images 
              Only used if doCmplx = True
   in5DType..'FITS' or 'AIPS'  type of Beam images, defaults to
              DataType.
   in5Diam....Diameter in m of antennas described by in5* and in6*
              If > 0.0 then a second beam type is specified
   in5Name....Voltage 2nd Beam AIPS name.
-  in5Class...Voltage 2nd Beam AIPS class. Expected form "SSxxxx" 
-             where "S" is the correlation ('RR', 'XX'...) 
-             and "xxxx" arbitrary.
-             The task will search for the different stokes images 
-             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
-	     NB: Application of instrumental poln cal. for linear 
-	     feeds will convert to a circular basis
+  in5Class...Voltage 2nd Beam AIPS class. 
+             Like in3Class but for the second beam type.
   in5Seq.....Beam AIPS seq. # .    0 => highest.
   in5Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
   in5File....FITS Voltage 2nd Beam input root if in5DType=='FITS'
-             Expected form "Sxxxxx" where "S" is the correlation 
-	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
-             The task will search for the different stokes images 
-             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
-	     NB: Application of instrumental poln cal. for linear 
-	     feeds will convert to a circular basis
+  	     Like in3File but for the second beam type.   
   in6Name....Voltage 2nd Beam imag. AIPS name. Only used if 
              doCmplx = True
-  in6Class...2nd Beam imag. AIPS class. Expected form "Sxxxxx" 
-             where "S" is the correlation ('RR', 'XX'...) 
-             and "xxxx" arbitrary.
-             The task will search for the different stokes images 
-             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
-	     NB: Application of instrumental poln cal. for linear 
-	     feeds will convert to a circular basis
+  in6Class...2nd Beam imag. AIPS class. 
+             Like in4Class but for the second beam type.
   in6Seq.....2nd Beam imag. AIPS seq. # .    0 => highest.
   in6Disk....Disk drive # of beam imag. (FITS or AIPS).
   in6File....Power FITS 2nd Beam imag. input root if in3DType=='FITS'
-             Expected form "Sxxxxx" where "S" is the correlation 
-	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
-             The task will search for the different stokes images 
-             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
-	     NB: Application of instrumental poln cal. for linear 
-	     feeds will convert to a circular basis
-             Only used if doCmplx = True
+             Like in4File but for the second beam type.
   outDataType..'FITS' or 'AIPS'  type of output UV, defaults to
              DataType.
   outFile....Output UV FITS file name.  Defaults to
@@ -473,27 +457,8 @@ the Fourier transform of a specified model file(s) from/to/into
 a visibility data set.  The input model may consist of the
 CLEAN components associated with one of more input files;
 one or more input images; or, a specified point model.
-This model together with Beam images in I,V,(Q,&U) are used to 
-correct the output data for the instrumental circular (and 
-linear) polarization.
-
-
-EDITING A VISIBILITY DATA SET FOR BAD DATA:
-     Suppose the field contains a moderately strong source
-source, which produces signal on many baselines comparable or
-stronger than the suspected bad data.  One then maps and cleans
-the source (down to a level which does not include the effects
-of the bad data), then subtracts the Fourier transform of the CC
-(Clean Components )file with UVPolCor, leaving a vis data set in
-which the bad data should now be dominant and easily isolated.
-One then can identify it explicitly by use of UVFND, and flag
-it.  Or, one can judge its level (above noise) by UVPLT, then
-use AutoFlag to flag all vis data above a desired level.  Finally,
-one adds the Fourier transform of the CC file back into the
-edited vis data set, using UVPolCor with Factor = -1.0, to produce
-an edited final data set.
-   Obit task AutoFlag can also be used to flag data based on high 
-residuals.
+This model together with Beam images in RR,LL,RL,LR or XX,YY,XY,YX
+are used to correct the output data.
 
 
 SUBTRACTION OF CONTINUUM FROM SPECTRAL LINE DATA

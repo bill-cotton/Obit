@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -248,4 +248,7 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err);
  
 /* Blank fill image */
 void ObitImageUtilBlankFill (ObitImage* in, ObitErr* err);
+
+/* Determine RMSes of planes of an image */
+void ObitImageUtilGetRMS (ObitImage* in, ObitErr* err);
 #endif /* OBITIMAGEUTIL_H */ 

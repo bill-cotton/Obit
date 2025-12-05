@@ -1,6 +1,6 @@
-/* $Id$  */
+/* $Id$                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021,2025                                          */
+/*;  Copyright (C) 2025                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -17,43 +17,13 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence concerning Obit should be addressed as follows:   */
+/*;  Correspondence this software should be addressed as follows:     */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitImageMF structure      */
-/*  This is intended to be included in a class structure definition   */
-/**
- * \file ObitImageMFDef.h
- * ObitImageMF structure members for derived classes.
- */
-#include "ObitImageDef.h"  /* Parent class definitions */
-/** Maximum order of the imaging 
-    Spectral index only = 1, plus curvature = 2 */
-olong maxOrder;
-/** Current order of the imaging 
-    Spectral index only = 1, plus curvature = 2 */
-olong curOrder;
-/** Reference frequency */
-odouble refFreq;
-/** Number of coarse frequency planes */
-olong nSpec;
-/** Arrays of start and finish IFs (0-rel), per coarse channel */
-olong *BIFSpec, *EIFSpec;
-/** Arrays of start and finish Channels (0-rel), per coarse channel */
-olong *BChanSpec, *EChanSpec;
-/** Arrays of Center Frequency, per coarse channel */
-odouble *specFreq;
-/** Arrays of low frequency, per coarse channel */
-odouble *specFreqLo;
-/** Arrays of high frequency, per coarse channel */
-odouble *specFreqHi;
-/** Arrays of effective frequency, per coarse channel */
-odouble *specFreqEff;
-/** Spectral index correction applied to data making image (wrt alphaRefF) */
-ofloat alpha;
-/** Reference frequency (Hz) for spectral index */
-odouble alphaRefF;
+/*  Define the basic components of the ObitSpectrumInterp InfoClass structure   */
+/* This is intended to be included in a classInfo structure definition*/
+#include "ObitClassDef.h"  /* Parent class ClassInfo definition file */

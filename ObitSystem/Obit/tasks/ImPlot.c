@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Plots images                                                       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2022                                          */
+/*;  Copyright (C) 2010,2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -52,9 +52,9 @@ void doPlot (ObitInfoList *myInput, ObitImage* inImage,
 	     ObitInfoList *myOutput, ObitErr *err);
 
 /* Program globals */
-gchar *pgmName = "ImPLot";       /* Program name */
-gchar *infile  = "ImPLot.inp";   /* File with program inputs */
-gchar *outfile = "ImPLot.out";   /* File to contain program outputs */
+gchar *pgmName = "Implot";       /* Program name */
+gchar *infile  = "Implot.inp";   /* File with program inputs */
+gchar *outfile = "Implot.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
@@ -538,7 +538,7 @@ void doPlot (ObitInfoList *myInput, ObitImage* inImage,
   ObitPlot *plot=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *plotType, *defType = "Gray", *plotFile, *format;
+  gchar *plotType, *defType = "Gray", *plotFile, *format, *title;
   gchar *defPlotFile="Plot.png", *defFormat="png";
   gchar *outputfile=NULL;
   gboolean doSQRT=FALSE, doINVERT=FALSE;
@@ -553,6 +553,7 @@ void doPlot (ObitInfoList *myInput, ObitImage* inImage,
   ObitInfoListGetTest(myInput, "cntfac",   &type, dim, &cntfac);
   ObitInfoListGetTest(myInput, "doSqrt",   &type, dim, &doSQRT);
   ObitInfoListGetTest(myInput, "doInvert", &type, dim, &doINVERT);
+  ObitInfoListGetP(myInput, "title", &type, dim, (gpointer)&title);
   if (!ObitInfoListGetP(myInput, "plotType", &type, dim, (gpointer)&plotType)) {
     plotType = defType;
   }
@@ -566,11 +567,12 @@ void doPlot (ObitInfoList *myInput, ObitImage* inImage,
   ObitTrimTrail (plotFile);
 
   /* Output file name */
-  outputfile = g_strconcat (plotFile, "/", format, NULL);
+  outputfile = g_strconcat (plotFile, "/", format, NULL); 
 
   /* Make plot White background */
   plot = newObitPlot ("Plot");
   ObitPlotInitPlot (plot, outputfile, 15, 1, 1, err);
+  //DAMN ObitPlotInitPlot (plot, plotFile, 15, 1, 1, err);
   /* Set foreground to Black  */
 #ifdef HAVE_PLPLOT  /* Only if plplot available */
   /*  plscol0(5, 0, 0, 0);*/
@@ -584,6 +586,7 @@ void doPlot (ObitInfoList *myInput, ObitImage* inImage,
   ObitInfoListAlwaysPut(plot->info,"PIX_MAX",OBIT_float, dim, &PixRange[1]);
   ObitInfoListAlwaysPut(plot->info,"SQRT",   OBIT_bool,  dim, &doSQRT);
   ObitInfoListAlwaysPut(plot->info,"INVERT", OBIT_bool,  dim, &doINVERT);
+  ObitTrimTrail (title); 
 
   /* Branch by type of plot */
   if (!strncmp (plotType, "Contour", 7)) {            /* Contour plot */
@@ -591,7 +594,7 @@ void doPlot (ObitInfoList *myInput, ObitImage* inImage,
   } else if (!strncmp (plotType, "Gray", 4)) {        /* Grayscale plot */
     dim[0] = strlen("GRAY");
     ObitInfoListAlwaysPut(plot->info,"COLOR",OBIT_string, dim, "GRAY");
-    ObitPlotGrayScale (plot, label, inImage, err);
+    ObitPlotGrayScale (plot, title, inImage, err);
   } else if (!strncmp (plotType, "ColorCont", 9)) {   /* Color Contour plot */
     dim[0] = strlen("CONTOUR");
     ObitInfoListAlwaysPut(plot->info,"COLOR",OBIT_string, dim, "CONTOUR");
@@ -599,7 +602,7 @@ void doPlot (ObitInfoList *myInput, ObitImage* inImage,
   } else if (!strncmp (plotType, "Phlame", 6)) {      /* Phlame pseudo color plot */
     dim[0] = strlen("PHLAME");
     ObitInfoListAlwaysPut(plot->info,"COLOR",OBIT_string, dim, "PHLAME");
-    ObitPlotGrayScale (plot, label, inImage, err);
+    ObitPlotGrayScale (plot, title, inImage, err);
   } else { /* invalid */
     Obit_log_error(err, OBIT_Error, "%s: Unknown Plot type %s", 
                    pgmName, plotType);

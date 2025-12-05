@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008,2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -29,8 +29,10 @@
 /* and to be used as the template for generating new classes derived    */
 /* from Obit.                                                           */
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
-/** Function pointer to Constructor. */
+/** Function pointer to Constructor for images. */
 ObitBeamShapeCreateFP ObitBeamShapeCreate;
+/** Function pointer to Constructor for uv data. */
+ObitBeamShapeCreateUVFP ObitBeamShapeCreateUV;
 /** Function pointer to Gain. */
 ObitBeamShapeGainFP ObitBeamShapeGain;
 /** Function pointer to GainSym. */

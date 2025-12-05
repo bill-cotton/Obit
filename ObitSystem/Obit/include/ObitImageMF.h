@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2016                                          */
+/*;  Copyright (C) 2010,2016,2025                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -127,12 +127,16 @@ ObitImageMFCopy  (ObitImageMF *in, ObitImageMF *out,
 /** Public: Delete underlying structures. */
 ObitImage* ObitImageMFZap  (ObitImage *in, ObitErr *err);
 
-/** Public: Set Coarse spectral channels */
+/** Public: Set Coarse spectral channels (subbands) */
 void ObitImageMFSetSpec (ObitImageMF *image, ObitUV *inData, ofloat maxFBW,
 			 ofloat alpha, odouble alphaRefF, ObitErr *err);
 
-/** Public: Get Coarse spectral channel info */
+/** Public: Get Coarse spectral channel (subband) info */
 void ObitImageMFGetSpec (ObitImageMF *image, ObitErr *err);
+
+/** Public: Set effective subband frequencies */
+void ObitImageMFSetFreqEff (ObitImageMF *image, olong nFreq, odouble *FreqEff,
+			    ObitErr *err);
 
 /** Public: Set order of SW spectral imaging */
 void ObitImageMFSetOrder (ObitImageMF *image, olong order, ObitErr *err);

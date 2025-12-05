@@ -3374,7 +3374,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
     /* Count actual entries in source list - ignore after first blank */
     count = 0;  j = 0;
     for (i=0; i<dim[1]; i++) {
-      if ((sptr[j]==' ') || (sptr[j+1]==' ') || (sptr[j+2]==' ')) break;
+      if ((sptr[j]==' ') && (sptr[j+1]==' ') && (sptr[j+2]==' ')) break;
       count++; j += dim[0];
     }
     sel->numberSourcesList = count;
@@ -3415,6 +3415,12 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
    sel->numberSourcesList = 0; /* everything selected */
   }
 
+  /* If one source selected set name on desc->object */
+  if (sel->numberSourcesList==1) {
+    strncpy(desc->object,"        ",8);
+    strncpy(desc->object,sptr,8);
+  } /* End if one source selected */
+  
   /* Subscan interval - default very large */
   sel->SubScanTime = 1.0e20;
   ObitInfoListGetTest(info, "SubScanTime", &type, dim, &sel->SubScanTime);

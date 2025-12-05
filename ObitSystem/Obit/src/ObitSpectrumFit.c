@@ -998,6 +998,7 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
 			       ObitErr *err)
 {
   ofloat *out = NULL;
+  ofloat fblank = ObitMagicF();
   olong i, j;
   NLFitArg *arg=NULL;
   gchar *routine = "ObitSpectrumFitSingle";
@@ -1031,16 +1032,20 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
   /* Create function argument */
   arg = g_malloc(sizeof(NLFitArg));
   arg->in             = NULL;     /* Not needed here */
+  arg->first          = 1; arg->last      = 0;
   arg->nfreq          = nfreq;
   arg->nterm          = nterm;
   arg->doError        = TRUE;
   arg->doBrokePow     = doBrokePow;
   arg->doPBCorr       = FALSE;
+  arg->fitTerm        = 0;
   arg->corAlpha       = 0.0;
   arg->maxIter        = 100;
+  arg->minFlux        = 0.0;
   arg->minDelta       = 1.0e-5;  /* Min step size */
   arg->maxChiSq       = 1.5;     /* max acceptable normalized chi squares */
   arg->refFreq        = refFreq; /* Reference Frequency */
+  arg->ithread        = -1;
   arg->weight         = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->isigma         = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->obs            = g_malloc0(arg->nfreq*sizeof(ofloat));
@@ -1048,16 +1053,17 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
   arg->logNuOnu0      = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->coef           = g_malloc0(3*arg->nterm*sizeof(ofloat));
   for (i=0; i<nfreq; i++) {
-    if (sigma[i]>0.0) {
+    if ((sigma[i]>0.0) && (flux[i]!=0) && (flux[i]!=fblank)) {
       /* Weights either explicitly given or 1/sigma^2 */
       arg->isigma[i] = 1.0 / sigma[i];
+      arg->obs[i]    = flux[i];
       if (doWt) arg->weight[i] = weight[i];
       else      arg->weight[i] = arg->isigma[i]*arg->isigma[i];
     } else {
       arg->isigma[i]   = 0.0;
       arg->weight[i]   = 0.0;
+      arg->obs[i]      = fblank;
     }
-    arg->obs[i]       = flux[i];
     arg->nu[i]        = freq[i];
     arg->logNuOnu0[i] = log(freq[i]/refFreq);
   }
@@ -1164,6 +1170,30 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
 } /* end ObitSpectrumFitSingle */
 
 /**
+ * Evaluate a spectrum as returned by  ObitSpectrumFitSingle at a given frequency 
+ * \param nterm    Number of coefficients of powers of log(nu) to fit
+ * \param refFreq  Reference frequency (Hz)
+ * \param spFit    Fit coefficients as returned by ObitSpectrumFitSingle
+ * \param Freq     Frequency at which the spectrum is to be evaluated  
+ * \return  flux density of spectrum at Freq, fblank if failed
+ */
+ofloat ObitSpectrumEval (olong nterm, odouble refFreq, ofloat *spFit, odouble Freq)
+{
+  ofloat fblank = ObitMagicF();
+  ofloat flux = fblank;
+  olong j;
+  ofloat logNuONu0, arg, sum;
+
+    logNuONu0 = (ofloat)log(Freq/refFreq); arg = logNuONu0; sum = 0.0;
+    for (j=1; j<nterm; j++) {
+      if ((spFit[j]==0.0) || (spFit[j]==fblank)) break;
+      sum += arg*spFit[j]; arg *= logNuONu0;
+    } /* end summing */
+    flux = spFit[0]*expf(sum);
+  return flux;
+} /* end ObitSpectrumFitSingle */
+
+/**
  * Make single spectrum fitting argument array
  * Without GSL, only the average intensity is determined (no spectrum)
  * \param nfreq    Number of entries in freq, flux, sigma
@@ -1214,16 +1244,21 @@ gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm, odouble refFreq,
   /* Create function argument */
   arg = g_malloc(sizeof(NLFitArg));
   arg->in             = NULL;     /* Not needed here */
+  arg->first          = 1; arg->last      = 0;
   arg->nfreq          = nfreq;
   arg->nterm          = nterm;
   arg->doError        = TRUE;
+  arg->doWt           = TRUE;
   arg->doBrokePow     = doBrokePow;
   arg->doPBCorr       = FALSE;
+  arg->fitTerm        = 0;
   arg->corAlpha       = 0.0;
   arg->maxIter        = 100;
+  arg->minFlux        = 0.0;
   arg->minDelta       = 1.0e-5;  /* Min step size */
   arg->maxChiSq       = 3.0;     /* max acceptable normalized chi squares */
   arg->refFreq        = refFreq; /* Reference Frequency */
+  arg->ithread        = -1;
   arg->weight         = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->isigma         = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->obs            = g_malloc0(arg->nfreq*sizeof(ofloat));
@@ -1338,8 +1373,9 @@ void ObitSpectrumFitSingleArg (gpointer aarg, ofloat *flux, ofloat *sigma,
    for (i=0; i<arg->nfreq; i++) {
      arg->obs[i]    = flux[i];
      if (arg->obs[i]!=fblank) allBad = FALSE;
-     arg->isigma[i] = 1.0 / sigma[i];
-     if (!arg->doWt) arg->weight[i] = arg->isigma[i]*arg->isigma[i];
+     if (sigma[i]>1.0e-10) arg->isigma[i] = 1.0 / sigma[i];
+     else               arg->isigma[i] =0.0;
+     if (arg->doWt) arg->weight[i] = arg->isigma[i]*arg->isigma[i];
    }
 
    /* Return fblanks/zeroes for no data */
@@ -2001,7 +2037,7 @@ static gpointer ThreadNLFit (gpointer arg)
 
 /**
  * Do non linear fit to a spectrum
- * Only fits for up to 5 terms
+ * Only fits for up to 5 terms, 1 if the data has negative values
  * \param arg      NLFitArg structure
  *                 fitted parameters returned in arg->in->coef
  */
@@ -2011,7 +2047,7 @@ static void NLFit (NLFitArg *arg)
   ofloat avg, delta, chi2Test, sigma, fblank = ObitMagicF();
   ofloat meanSNR, SNRperTerm=1.0;
   odouble sum, sumwt, sum2, sumSig;
-  gboolean isDone;
+  gboolean isDone, hasNeg=FALSE;
   int status;
 #ifdef HAVE_GSL
   gsl_multifit_fdfsolver *solver=NULL;
@@ -2035,6 +2071,7 @@ static void NLFit (NLFitArg *arg)
       sumwt  += arg->weight[i];
       sumSig += arg->isigma[i];
       nvalid++;
+      hasNeg |= arg->obs[i]<0.0;   /* any negative values in spectrum? */
     }
   }
   if (nvalid<=0) return;  /* any good data? */
@@ -2070,12 +2107,12 @@ static void NLFit (NLFitArg *arg)
 
   /* Errors wanted? */
   if (arg->doError) {
-    arg->coef[2] = sigma;  /* Flux error */
+    arg->coef[arg->nterm]   = sigma;       /* Flux error */
     arg->coef[2*arg->nterm] = arg->ChiSq;  /* Chi^2 */
   }
 
   /* Is this good enough? */
-  isDone = (arg->ChiSq<0.0) || (arg->minFlux>avg);
+  isDone = hasNeg || (arg->ChiSq<0.0) || (arg->minFlux>avg);
   //if (meanSNR>(SNRperTerm*3.0)) isDone = FALSE;   /* Always try for high SNR */
   if ((meanSNR>SNRperTerm) && (arg->minFlux<avg)) isDone = FALSE;  /* Try for high SNR */
   if (isDone) goto done;
@@ -2157,7 +2194,7 @@ static void NLFit (NLFitArg *arg)
 	gsl_multifit_covar (J, 0.0, covar);
 	/* Cleanup */
 #if HAVE_GSL2==1
-	if (J) gsl_matrix_free (J); J = NULL;
+	if (J) {gsl_matrix_free (J); J = NULL;}
 #endif /* HAVE_GSL2 */ 
 	for (i=0; i<nterm; i++) {
 	  arg->coef[arg->nterm+i] = sqrt(gsl_matrix_get(covar, i, i));
@@ -2182,17 +2219,19 @@ static void NLFit (NLFitArg *arg)
   } /* end loop over adding terms */
 #endif /* HAVE_GSL */ 
  done:
+  return;  /* DEBUG */
   if (best==1) {arg->coef[0] = avg; arg->coef[1] = fblank;} /* Only fitted one term? */
   /* sanity check, if flux < sigma, don't include higher order terms */
   if (fabs(arg->coef[0])<sigma)  {
     arg->coef[0] = avg;
     for (i=1; i<arg->nterm; i++) arg->coef[i] = fblank; 
   }
-  /*  Gonzo higher order fit */
-  if ((fabs(arg->coef[1])>3.0) || ((nterm>2) && (fabs(arg->coef[2])>2.0))) {
+  /*  Gonzo higher order fit - NO for higher order fitting the values are arbitrary
+      Besides coef should be zeroed notm fblanked.
+  if ((fabs(arg->coef[1])>6.0) || ((nterm>2) && (fabs(arg->coef[2])>2.0))) {
     arg->coef[0] = avg;arg->coef[1] = fblank;
     for (i=1; i<arg->nterm; i++) arg->coef[i] = fblank; 
-  }
+  } */
   /* If minFlux given, use weighted average flux density */
   if (arg->minFlux>0.0) arg->coef[0] = avg;
 
@@ -2307,7 +2346,7 @@ static void NLFitBP (NLFitArg *arg)
 #endif /* HAVE_GSL2 */ 
     gsl_multifit_covar (J, 0.0, covar);
 #if HAVE_GSL2==1
-    if (J) gsl_matrix_free (J); J = NULL;
+    if (J) {gsl_matrix_free (J); J = NULL;}
 #endif /* HAVE_GSL2 */ 
     for (i=0; i<nterm; i++) {
       arg->coef[arg->nterm+i] = sqrt(gsl_matrix_get(covar, i, i));

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2019                                           */
+/*;  Copyright (C) 2008-2025                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -87,7 +87,7 @@ void ObitBeamShapeClassInit (void);
 /** Public: Default Constructor. */
 ObitBeamShape* newObitBeamShape (gchar* name);
 
-/** Public: Create/initialize ObitBeamShape structures */
+/** Public: Create/initialize ObitBeamShape structures for image */
 ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image, 
 				    ofloat pbmin, ofloat antSize, 
 				    gboolean doGain);
@@ -95,6 +95,15 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
 typedef ObitBeamShape* (*ObitBeamShapeCreateFP) (gchar* name, ObitImage *image, 
 						 ofloat pbmin, ofloat antSize, 
 						 gboolean doGain);
+
+/** Public: Create/initialize ObitBeamShape structures for uv data */
+ObitBeamShape* ObitBeamShapeCreateUV (gchar* name, ObitUV *uvdata, 
+				      ofloat pbmin, ofloat antSize, 
+				      gboolean doGain, gboolean doTab);
+/** Typedef for definition of class pointer structure */
+typedef ObitBeamShape* (*ObitBeamShapeCreateUVFP) (gchar* name, ObitImage *image, 
+						   ofloat pbmin, ofloat antSize, 
+						   gboolean doGain, gboolean doTab);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitBeamShapeGetClass (void);
@@ -140,6 +149,11 @@ static inline void ObitBeamShapeSetFreq (ObitBeamShape *in, odouble newFreq) {
 static inline void ObitBeamShapeSetAntSize (ObitBeamShape *in, ofloat antSize) {
   in->antSize = antSize;
 } /* end  ObitBeamShapeSetAntSize */
+
+/** Public: set Cos2 beam fudge factor -1.052=MeerKAT */
+static inline void ObitBeamShapeSetFudge (ObitBeamShape *in, ofloat fudge) {
+  in->fudge = fudge;
+} /* end  ObitBeamShapeSetFudge */
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

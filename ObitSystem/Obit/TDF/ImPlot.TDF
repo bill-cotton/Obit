@@ -3,7 +3,7 @@
 ;! Image plots
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2012
+;;  Copyright (C) 2007-2025
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ ImPlot    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ImPlot:    Plot images 
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inFile                             input Filename if FITS image
 **PARAM** str 12
 inName                             Image name (name)
@@ -53,10 +53,12 @@ PixRange                           Range of pixel values in image
 **PARAM** str 12  **DEF** Gray
 plotType                           Plot type: "Contour", "Gray"
                                    "ColorCont", "Phlame"
-**PARAM** str 128 **DEF** plot.png
+**PARAM** str 128 **DEF** plot.ps
 plotFile                           Output plot file (only does CWD)
-**PARAM** str 12 **DEF** png
+**PARAM** str 12 **DEF** ps
 format                             Output type, see help
+**PARAM** str 64
+title                              Plot title
 **PARAM** float 1
 lev                                Basic contour level (def 0.1 peak)
 **PARAM** float 1  **DEF** 1.41421356237
@@ -74,6 +76,8 @@ Use:  Plot images in a variety of forms
 
 More flexible plotting options are available in ObitTalk using 
 class OPlot.
+If you ask for a plot format for which a driver is not available,
+you will be prompted for one that is.
 
 Parameters:
   DataType...."FITS" or "AIPS"
@@ -90,9 +94,10 @@ Parameters:
   PixRange....Range of pixels in image to plot, 0's => all
   plotType....Type of plot:
               "Contour" Contour plot
-              "Gray" plots a grayscale plot of image 1
-              "ColorCont" plots a color contour plot of image 1
-              "Phlame" plots a "phlame" pseudocolor plot of image 1
+              "Gray" plots a grayscale plot of image
+              "ColorCont" plots a color contour plot of image
+              "Phlame" plots a "phlame" pseudocolor plot of image
+	           use format="psc"
   plotFile....Name of the output plot file 
               NB: plplot only writes in the current directory
   format......Output plot format (plplot options:)
@@ -105,6 +110,7 @@ Parameters:
                    "png"   PNG file
                    "jpeg"  JPEG file
                    "gif"   GIF file
+  title.......Plot Title
   lev.........Basic contour level (def 0.1 peak)
   cntfac......Factor for spacing between contours
   doSqrt......If True, show the square root of the intensity

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2023                                          */
+/*;  Copyright (C) 2004-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -5029,6 +5029,7 @@ void ObitSkyModelInit  (gpointer inn)
   in->DFTFunc   = NULL;
   in->GridFunc  = NULL;
   in->nSpecTerm = 0;
+  in->nTerm     = 0;
   for (i=0; i<10; i++) in->pointParms[i] = 0.0;
 #if HAVE_GPU==1  /*  GPU? */
   in->GPUSkyModel = NULL;

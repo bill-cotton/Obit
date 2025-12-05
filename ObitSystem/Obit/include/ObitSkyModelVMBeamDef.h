@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2020                                          */
+/*;  Copyright (C) 2009-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -34,6 +34,8 @@
 #include "ObitSkyModelVMDef.h"  /* Parent class definitions */
 /** Threshold flux density for doing high accuracy DFT model */
 ofloat Threshold;
+/** use unit Jones matrices rather than the beam */
+gboolean doUnitJones;
 /** Current maximum residual  */
 ofloat maxResid;
 /** Beginning time (d) for validity of model model in VMComps */

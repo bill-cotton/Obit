@@ -44,12 +44,12 @@
 #include <math.h>
 
 //DAMNinline void sincos2(double x, double* p_sin, double* p_cos) {
-void sincos2(double x, double* p_sin, double* p_cos) {
+static inline void sincos2(double x, double* p_sin, double* p_cos) {
   *p_sin = sin(x);
   *p_cos = cos(x);
 }
-//DAMNinline void sincos2f(float x, float* p_sinf, float* p_cosf) {
-void sincos2f(float x, float* p_sinf, float* p_cosf) {
+//damninline void sincos2f(float x, float* p_sinf, float* p_cosf) {
+static inline void sincos2f(float x, float* p_sinf, float* p_cosf) {
   *p_sinf = sinf(x);
   *p_cosf = cosf(x);
 }

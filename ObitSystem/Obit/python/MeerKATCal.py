@@ -1,4 +1,3 @@
-
 """
 Processing utilities for calibrating/imaging MeerKAT data
 Cloned from KATCal.py by Tom Mauch
@@ -163,6 +162,7 @@ def MKInitContParms():
     parms["bpUVRange"]  =    [0.0,1.e05]  # uv range for bandpass cal
     parms["specIndex"]  =   -0.7        # Spectral index of BP Cal
     parms["doSpecPlot"] =    False      # Plot the amp. and phase across the spectrum
+    parms["doBPFitPlot"]=    True       # Plot amplitude sectra of fit?
     
     # Amp/phase calibration parameters
     parms["doAmpPhaseCal"] = True
@@ -502,6 +502,7 @@ def MKStaticFlag(uv, FGver, err):
     """
     Flag static RFI channels, writes flag table FGver on uv
 
+    Deletes old FG 1
     * uv       = Python Obit UV object, AIPS or FITS
     * FGVer    = AIPS FG table to write
     * err      = Python Obit Error/message stack
@@ -513,6 +514,7 @@ def MKStaticFlag(uv, FGver, err):
            (1519316505., 1608343862.), \
        ]
     # Open and close uv for force header update
+    z = uv.ZapTable("AIPS FG",1,err)  # To be sure
     uv.Open(UV.READWRITE,err)
     # Header info
     d = uv.Desc.Dict; jlocf = d['jlocf']; jlocif = d['jlocif'];
@@ -2825,13 +2827,14 @@ def MKBPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
             bpass.BComp     = BPCal["CalBComp"]
             bpass.EComp     = BPCal["CalEComp"]
             bpass.Cmodel    = BPCal["CalCmodel"]
-        bpass.Cmethod   = BPCal["CalCmethod"]
-        bpass.Flux      = BPCal["CalFlux"]
-        bpass.modelFlux = BPCal["CalModelFlux"]
-        bpass.modelPos  = BPCal["CalModelPos"]
+            bpass.Cmethod   = BPCal["CalCmethod"]
+            bpass.Flux      = BPCal["CalFlux"]
+        else:
+            bpass.modelFlux = BPCal["CalModelFlux"]
+            bpass.modelPos  = BPCal["CalModelPos"]
         if debug:
             bpass.i
-        bpass.debug = False
+            bpass.debug = True
         # Trap failure
         try:
             if not check:
@@ -3534,7 +3537,7 @@ def MKXYDelay(uv, err, \
 
     Returns task error code, 0=OK, else failed
     X-Y Delay/phase calibration creating and applying new AIPS SN table
-    to (new) highest numbered CL table on uv
+    to previous CL table on uv (Assumes gainUse is only calibrtors)
 
     * uv       = UV data object to clear
     * err      = Obit error/message stack
@@ -3632,7 +3635,7 @@ def MKXYDelay(uv, err, \
     lsnver = uv.GetHighVer("AIPS SN")
 
     # Apply to CL table
-    retCode = MKApplyCal(uv, err, SNver=lsnver, CLin=gainUse, CLout=gainUse+1,  \
+    retCode = MKApplyCal(uv, err, SNver=lsnver, CLin=max(1,gainUse-1), CLout=gainUse+1,  \
                          maxInter=1440.0, refAnt=-1, \
                          logfile=logfile, check=check,debug=debug)
     if retCode!=0:
@@ -4400,7 +4403,8 @@ def MKPlotTab(uv, inext, invers, err, \
         print(exception)
         mess = "SNPLT Failed "
         printMess(mess, logfile)
-        return 1
+        # Allow failure - it's AIPS return 1
+        return 0
     else:
         pass
 
@@ -4412,7 +4416,8 @@ def MKPlotTab(uv, inext, invers, err, \
         OErr.printErr(err)
         mess = "Update UV header failed"
         printMess(mess, logfile)
-        return 1
+        # Allow failure - it's AIPS return 1
+        return 0
 
     return 0
     # end MKPlotTab
@@ -4420,6 +4425,7 @@ def MKPlotTab(uv, inext, invers, err, \
 def MKPlotXYBPTab(uv, BPVer, plotfile, err, 
                 logfile=None, check=False, debug=False):
     """
+    * Plot X-Y phase from a BP table
     * uv       = UV data object to plot
     * BPVer    = BP table version number, 0-> highest
     * err      = Obit error/message stack
@@ -4461,13 +4467,80 @@ def MKPlotXYBPTab(uv, BPVer, plotfile, err,
         print(exception)
         mess = "MKPlotXYBPTab Failed "
         printMess(mess, logfile)
-        return 1
+        # Allow failure return 1
+        return 0
     else:
         pass
 
     OErr.printErrMsg(err, "Error plotting BP Table")
     return 0
 # end MKPlotXYBPTab
+
+
+def MKPlotAmpBPTab(uv, BPVer, plotfile, err, 
+                logfile=None, check=False, debug=False):
+    """
+    * Plot amplitudes from a BP table
+    * uv       = UV data object to plot
+    * BPVer    = BP table version number, 0-> highest
+    * err      = Obit error/message stack
+    * logfile  = logfile for messages
+    * check    = Only check script, don't execute tasks
+    * debug    = show input
+    """
+    ################################################################
+    mess = "MKPlotAmpBPTab with plotfile "+plotfile+" BPVer "+str(BPVer)
+    print (mess)
+    if check:
+        return 0
+    try:
+        import OPlot, Table, FArray
+        
+        fblank = FArray.fblank
+        uv.Header(err)
+        bptab = uv.NewTable(Table.READONLY, "AIPS BP",BPVer, err)
+        bptab.Open(Table.READONLY, err)
+        nrow  = bptab.Desc.Dict['nrow']
+        nchan = bptab.Desc.Dict['repeat'][10]
+        #DAMNplot = OPlot.newOPlot("plot", err, output=plotfile+"/psc",bgcolor=OPlot.WHEAT, ny=4)
+        plot = OPlot.newOPlot("plot", err, output=plotfile+"/ps",bgcolor=OPlot.WHEAT, ny=4)
+        plot.List.set("XLABEL","channel/IF")    
+        plot.List.set("YLABEL","Gain Amplitude")    
+        # loop over row
+        for ir in range(1,nrow+1):
+            r = bptab.ReadRow(ir, err)
+            plot.List.set("TITLE","Gain Amp Antenna "+str(r['ANTENNA'][0])+\
+                          "  R/X = blue, L/Y = red")
+            amp1 = []; amp2 = []; x1 = []; x2 = []
+            for j in range(0,nchan):
+                if r['REAL 1'][j] != fblank:
+                    amp = (r['REAL 1'][j]**2 + r['IMAG 1'][j]**2)**0.5
+                    amp1.append(amp); x1.append(float(j))
+                if r['REAL 2'][j] != fblank:
+                    amp = (r['REAL 2'][j]**2 + r['IMAG 2'][j]**2)**0.5
+                    amp2.append(amp); x2.append(float(j))
+            ymax = 1.1*max(max(amp1),max(amp2)); ymin = 0.9*min(min(amp1),min(amp2));
+            plot.List.set("YMIN",ymin); plot.List.set("YMAX",ymax); 
+            OPlot.PSetColor(plot, OPlot.BLACK, err)
+            OPlot.PXYPlot(plot, 2, x1, amp1, err)
+            OPlot.PSetColor(plot, OPlot.BLUE, err)
+            OPlot.PXYOver(plot, 2, x1, amp1, err)  # Again for color
+            OPlot.PSetColor(plot, OPlot.RED, err)
+            OPlot.PXYOver(plot, 3, x2, amp2, err)
+        OPlot.PShow(plot,err)
+        OErr.printErrMsg(err, "Error plotting BP Table")
+    except Exception as exception:
+        print(exception)
+        mess = "MKPlotAmpBPTab Failed "
+        printMess(mess, logfile)
+        # Allow failure return 1
+        return 0
+    else:
+        pass
+
+    OErr.printErrMsg(err, "Error plotting BP Table")
+    return 0
+# end MKPlotAmpBPTab
 
 def MKWritePlots(uv, loPL, hiPL, plotFile, err, \
                    plotDesc="Diagnostic plot", \
@@ -5254,13 +5327,13 @@ def MKStdModel(Cals, freq):
              "DataType":"FITS", "file":"1934-638LModel.fits", "nfield":1, "disk":1}
     stdModel.append(model)
     # 0408-65 Mauch/Hugo Mar 21 UHF
-    model = {"Source":["0408-65", "0408-658", "J0407-658"],
+    model = {"Source":["0408-65", "0408-658", "J0407-658", "J0408-6545"],
              "freqRange":[300.,800.],
              "dtoff":0., "spec":[-41.59292326, 44.81497595, -15.18277173, 1.67166122,0.0, 0.0],
              "DataType":"FITS", "file":"0408-65UHFModel.fits","nfield":1, "disk":1}
     stdModel.append(model)
     # 0408-65 Mauch/Hugo Mar 21 L Band
-    model = {"Source":["0408-65", "0408-658", "J0407-658"],
+    model = {"Source":["0408-65", "0408-658", "J0407-658", "J0408-6545"],
              "freqRange":[800.,5000.],
              "dtoff":0., "spec":[-41.59292326, 44.81497595, -15.18277173, 1.67166122,0.0, 0.0],
              "DataType":"FITS", "file":"0408-65LModel.fits", "nfield":1, "disk":1}

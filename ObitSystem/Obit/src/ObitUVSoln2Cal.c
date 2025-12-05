@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -85,7 +85,7 @@ ObitTableCL* ObitUVSoln2Cal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   gboolean want, allPass, warnMaxInter;
-  olong iRow, oRow, ver, highVer, limitC;
+  olong iRow, oRow, ver, highVer, limitC, nWrite=0;
   olong  solnVer, calIn, calOut, refAnt, subA, iif,itemp;
   oint numPol, numIF, numTerm;
   ObitIOCode retCode;
@@ -359,6 +359,7 @@ ObitTableCL* ObitUVSoln2Cal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     oRow = -1;
     retCode = ObitTableCLWriteRow (outCal, oRow, CalRow, err);
     if (err->error) goto cleanup;
+    nWrite++;  /* How many records written? */
   } /* end loop calibrating Cal table */
   
   if (outCal) ObitTableCLClose (outCal, err);
@@ -372,7 +373,11 @@ ObitTableCL* ObitUVSoln2Cal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     Obit_log_error(err, OBIT_InfoWarn, 
 		   "Output CL entries flagged due to maxInter");
   }
-  
+
+  /* Barf and die if none written */
+   Obit_retval_if_fail((nWrite>=1), err, outCal,
+		       "%s: NO records written to output CL Table", routine);
+ 
   /* Cleanup */
  cleanup:
   /* Close cal tables */

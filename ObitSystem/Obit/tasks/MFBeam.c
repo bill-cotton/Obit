@@ -107,12 +107,6 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 void BeamOne (ObitInfoList* myInput, ObitUV* inData, ObitDConCleanVis *myClean,
 	      ObitErr* err);
 
-/* Get beam images*/
-void getBeam (ObitInfoList *myInput, gboolean doCmplx, ofloat Stokes0, olong *numAntType, 
-	      ObitImage ***RXpol, ObitImage ***LYpol, ObitImage ***RLpol, ObitImage ***LRpol, 
-	      ObitImage ***RXpolIm, ObitImage ***LYpolIm, ObitImage ***RLpolIm, ObitImage ***LRpolIm, 
-	      ofloat **Diams, ObitErr *err);
-
 /* Program globals */
 gchar *pgmName = "MFBeam";       /* Program name */
 gchar *infile  = "MFBeam.in" ;   /* File with program inputs */
@@ -1568,6 +1562,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(myInput, "EChan",  OBIT_long, dim, &EChan);
   chInc = EChan - BChan + 1;
+
   strcpy (Stokes, "F   ");  /* 'F'=> Formal I=(RR+LL)/2 */
 
   /* Place to save parameters */
@@ -1647,9 +1642,9 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "doCmplx", &type, dim, &doCmplx); 
 
   /* Get Beam images */
-  getBeam (myInput, doCmplx, inData->myDesc->crval[inData->myDesc->jlocs], &numAntType,
-	   &RXBeam,   &LYBeam,   &RLBeam,   &LRBeam, 
-	   &RXBeamIm, &LYBeamIm, &RLBeamIm, &LRBeamIm, &Diams, err);
+  ObitSkyModelVMBeamGet2Beam (myInput, doCmplx, inData->myDesc->crval[inData->myDesc->jlocs],
+			     &numAntType, &RXBeam,   &LYBeam,   &RLBeam,   &LRBeam, 
+			     &RXBeamIm, &LYBeamIm, &RLBeamIm, &LRBeamIm, &Diams, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Loop over polarization */
@@ -1719,6 +1714,10 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 							   RXBeam, LYBeam, RLBeam, LRBeam,
 							   RXBeamIm, LYBeamIm, RLBeamIm, LRBeamIm,
 							   Diams, err);
+      /* Copy antSize to myInput, outData */
+      dim[0] = dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (myInput, "antSize", OBIT_float, dim, &skyModel->antSize);
+      ObitInfoListAlwaysPut (outData->info, "antSize", OBIT_float, dim, &skyModel->antSize);
 
       /* No alpha correction in model */
       btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
@@ -1834,12 +1833,15 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Subtract sky model from outData if any cleaning requested */
     niter = 0;
     ObitInfoListGetTest(myInput, "Niter",  &type, dim, &niter);
-    /* Q sub messes up U pol ;*/
+    /* ??? Q sub messes up U pol  */
     if ((niter>0) && doSub)  subPolModel (outData, skyModel, &selFGver, err);
-    /* only I 
-    if ((ipoln==1) && (niter>0) && doSub && 
-	((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' '))) 
-	subPolModel (outData, skyModel, &selFGver, err); */
+    /* only I */
+    //if ((ipoln==1) && (niter>0) && doSub && 
+    //	((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' '))) {
+      /*HACKHACKHACKENSACK DEBUG leave Model rather than residuals */
+      //skyModel->doReplace=TRUE; /* HACK DEBUG */
+    // subPolModel (outData, skyModel, &selFGver, err);
+    //} /* End subtract model */
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
@@ -1950,15 +1952,16 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 {
   ObitUVSelfCal *selfCal = NULL;
   ObitUV       *scrUV = NULL;
-  ObitImage    *outImage=NULL;
+  ObitImage    *outImage=NULL, *inMF;
   ObitImageMF  *fitImage=NULL;
   ObitInfoType type;
   oint         otemp;
-  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter=0, NiterQU, NiterV;
+  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter=0, NiterQU, NiterV, nFreq;
   ofloat       *minFList=NULL;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen, useMinFlux=0.0;
   ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0,  minFluxV=0.0;
   ofloat       antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
+  odouble      *specFreqEff=NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1},  FLdim[MAXINFOELEMDIM];
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK, doBeam, converged = FALSE;
@@ -2620,6 +2623,20 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
    
+  /* Copy effective Frequencies myClean->skyModel->info['specFreqEff')
+     to output - this one hopefully works  */
+  if (ObitInfoListGetP(myClean->skyModel->info, "specFreqEff", &type, dim, (gpointer*)&specFreqEff)) {
+    nFreq = dim[0];
+    inMF = (ObitImage*)outImage;
+    /* Open and close to update disk */
+    ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+    ObitImageMFSetFreqEff ((ObitImageMF*)inMF, nFreq, specFreqEff, err);
+    inMF->myStatus = OBIT_Modified;  /* Grumble */
+    ObitImageClose(inMF, err);
+    Obit_log_error(err, OBIT_InfoErr,  "%s: Updated eff. freqs.", routine);
+  } /* end update effective freq  */
+  else Obit_log_error(err, OBIT_InfoWarn,  "%s: Could not update eff. freqs.", routine);
+  
   /* Fit Spectrum? */
   if (doFit) {
     if (doFlatten && myClean->mosaic->FullField)
@@ -3573,11 +3590,11 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   olong *ipnt, BIF=1, EIF=0, saveEIF, seq=0, disk=1, user=1, cno;
   ofloat xyCells, Beam[3] = {0.0,0.0,0.0};
   gboolean exist, btemp=TRUE, saveCalSelect=FALSE;
-  gchar *Type, *scrName="SCRATCH Ima", *scrClass="Beam1",*scrBClass="BeamB" ;
+  gchar *Type, *scrName="SCRATCH Imag", *scrClass="Beam1 ",*scrBClass="BeamB " ;
   gchar *scrFile="SCRATCH ImageBeam1.fits", *scrBFile="SCRATCH ImageBeamBeam.fits";
   gchar *Stokes = "I   ";
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
-    "doFull", "do3D", "FOV", "PBCor", "antSize", 
+    "doFull", "do3D", "FOV", 
     "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam",

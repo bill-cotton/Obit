@@ -42,7 +42,6 @@
 #define VELIGHT 2.997924562e8
 #endif /* VELIGHT */
 #include <math.h>
-void sincosf(float x, float *sin, float *cos); /* Shouldn't need */
 #if HAVE_GSL==1  /* GSL stuff */
 #include "gsl/gsl_blas.h"
 #include "gsl/gsl_vector.h"
