@@ -1,9 +1,8 @@
 """
 Processing utilities for calibrating/imaging MeerKAT data
 Cloned from KATCal.py by Tom Mauch
-does not use katdal, katpointModified by W. Cotton
+does not use katdal, katpoint, Modified by W. Cotton
 """
-#SHIT from . import AIPSLiteTask as AIPSTask
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSDir, OErr, History
 import InfoList, Table, OSystem, AIPSTask
 from AIPSData import AIPSImage
@@ -18,6 +17,7 @@ import ObitTalkUtil
 from PipeUtil import day2dhms, imstat, setname, setoname
 from PipeUtil import getStartStopTime, getSVNVersion, printMess
 from PipeUtil import AllDest, FetchObject, SaveObject, XMLAddDescription, XMLSetAttributes
+from PipePlots import VisPlot, PlotSNTab, PlotSNDlyTab, MKPlotXYBPTab, MKPlotBPTab, MKPlotPDTab, isCirc
 import os, os.path, re, math, copy, pprint, string
 import sys
 #???import itertools
@@ -57,6 +57,7 @@ def MKInitContParms():
     parms["nThreads"]      = 16              # How many threads (cores) to allow?
     parms["doGPU"]         = False           # Use GPU for model calculations
     parms["doGPUGrid"]     = False           # Use GPU for gridding
+    parms["doStaticFlag"]  = False           # Apply Static flagging
     
     # User Supplied data parameters
     parms["BPCal"] = []
@@ -66,14 +67,23 @@ def MKInitContParms():
     parms["polcal"] = []
     
     # Input data parameters
-    parms["doLoadFITS"]   = True       # Load from FITS uvtab file?
-    parms["FITSinDisk"]   = 0           # Input FITS disk
-    parms["DataFile"]     = "Some_MeerKAT_Data.uvtab"  # Main data file
-    parms["DlyCalFile"]   = "DelayCal.uvtab"           # DelayCal file if doPolCal=True
-    
+    parms["doLoadFITS"]   = True # Load from FITS uvtab file?
+    parms["FITSinDisk"]   = 0   # Input FITS disk
+    parms["DataFile"]     = ""  # Main data file
+    parms["DlyCalFile"]   = ""  # DelayCal file if doPolCal=True
+    parms["DCalFile"]     = ""  # DelayCal file if doPolCal=True
+    parms["DataName"]     = ""  # Main data AIPS file name
+    parms["DCalName"]     = ""  # DelayCal AIPS file name if doPolCal=True
+    parms["DataClass"]    = ""  # Main data AIPS file class
+    parms["DCalClass"]    = ""  # DelayCal AIPS file class if doPolCal=True
+    parms["DataDisk"]     = -1  # Main data AIPS file disk
+    parms["DCalDisk"]     = -1  # DelayCal AIPS file disk if doPolCal=True
+    parms["DataSeq"]      = -1  # Main data AIPS file sequence
+    parms["DCalSeq"]      = -1  # DelayCal AIPS file sequence if doPolCal=True
+ 
     # Hanning    parms["doLoad"]       = True       # Load Data to AIPS with Hann or Splat
     parms["doDescm"]      = True       # Descimate in Hanning?
-    parms["noHann"]       = False      # use Splat rather than Hann to import
+    parms["noHann"]       = False      # use Splat rather than Hann to import?
     
     # Parallactic angle correction
     parms["doPACor"]      = False       # Make parallactic angle correction
@@ -162,7 +172,7 @@ def MKInitContParms():
     parms["bpUVRange"]  =    [0.0,1.e05]  # uv range for bandpass cal
     parms["specIndex"]  =   -0.7        # Spectral index of BP Cal
     parms["doSpecPlot"] =    False      # Plot the amp. and phase across the spectrum
-    parms["doBPFitPlot"]=    True       # Plot amplitude sectra of fit?
+    parms["doBPPlot"]=    True       # Plot amplitude sectra of fit?
     
     # Amp/phase calibration parameters
     parms["doAmpPhaseCal"] = True
@@ -191,8 +201,9 @@ def MKInitContParms():
     # Polarization
     parms["doPol"]     = False         # Determine/apply polarization cal and image QUV
     parms["XYtarg"]    = None
-    parms["doBPPlot"]  = True          # Plot XY phase cal BP table?
+    parms["doXYPlot"]  = True          # Plot XY phase cal BP table?
     parms["doPhsCal"]  = False         # Phase calibrate poln calibrators?
+    parms["doPDPlot"]  = True          # Plot PD Table?
 
     # Instrumental polarization cal?
     parms["doPolCal"]  =  False      # Determine instrumental polarization from PCInsCals?
@@ -685,11 +696,17 @@ def MKCopyFG(uv, err, inVer=1, outVer=2, logfile='', check=False, debug = False)
 
     * uv       = UV data object to copy
     * err      = Obit error/message stack
+    * inVer    = input FG verson Table, dummy entry added if=1
+    * outVer   = output FG tabel version
     * logfile  = logfile for messages
     * check    = Only check script, don't execute tasks
     * debug    = Run tasks debug, show input
     """
     ################################################################
+    # Just to be sure:
+    if inVer==1:
+        UV.PFlag(uv, err,flagVer=1,  timeRange=[-100.,-99.], Ants=[200,200], \
+                 Stokes='0000',Reason='Dummy')
     taco = ObitTask.ObitTask("TabCopy")
     try:
         taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
@@ -1952,17 +1969,23 @@ def MKDelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, BChan=1, EChan=0, \
     SNver = uv.GetHighVer("AIPS SN")
     # Plot fits?
     if doPlot:
-        retCode = MKPlotTab(uv, "SN", SNver, err, nplots=6, optype="DELA", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-
-        retCode = MKWritePlots (uv, 1, 0, plotFile, err, \
-                                  plotDesc="Group delay plots", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-
+        # Try matplotlib first
+        OK = PlotSNDlyTab(uv, SNver, plotFile, err, 
+                          logfile=logfile, check=check, debug=debug)
+        if not OK:
+            mess = "Plot with matplotlib failed - try AIPS SNPLT "
+            printMess(mess, logfile)
+            retCode = MKPlotTab(uv, "SN", SNver, err, nplots=6, optype="DELA", \
+                                logfile=logfile, check=check, debug=debug)
+            if retCode!=0:
+                return retCode
+            
+            retCode = MKWritePlots (uv, 1, 0, plotFile+".ps", err, \
+                                    plotDesc="Group delay plots", \
+                                    logfile=logfile, check=check, debug=debug)
+            if retCode!=0:
+                return retCode
+            
     # end SN table plot
     # Apply to CL table
     retCode = MKApplyCal(uv, err, maxInter=1440.0, refAnt=refAnts[0], logfile=logfile, check=check,debug=debug)
@@ -2035,6 +2058,7 @@ def MKPhsCal(uv, cals, refAnt, err, \
     calib.avgPol   = avgPol
     calib.avgIF    = avgIF
     calib.noScrat  = noScrat
+    calib.taskLog  = logfile
     if debug:
         calib.i
         calib.debug = debug
@@ -2051,6 +2075,10 @@ def MKPhsCal(uv, cals, refAnt, err, \
         pass
     # Apply with CLCal
     clcal=ObitTask.ObitTask('CLCal'); setname(uv,clcal)
+    try:
+        clcal.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception as exception:
+        pass
     i = 0
     for c in cals:
         clcal.Sources[i] = c
@@ -2061,6 +2089,7 @@ def MKPhsCal(uv, cals, refAnt, err, \
     clcal.calIn     = gainUse; 
     clcal.calOut    = gainUse+1; 
     clcal.refAnt    = refAnt
+    clcal.taskLog   = logfile
     if debug:
         clcal.i
         clcal.debug = debug
@@ -2166,7 +2195,7 @@ def MKCalAP(uv, target, ACals, GCalList, err, \
                 setjy.g
         except Exception as exception:
             print(exception)
-            mess = "SetJy Failed retCode="+str(setjy.retCode)+" for "+setjy.Sources[0]
+            mess = "SetJy Failed retCode="+str(setjy.retCode)+" for "+setjy.Sources[0]+" rerun"
             printMess(mess, logfile)
             # return 1  # allow some failures
             BadAmpCals.append(setjy.Sources[0])
@@ -2356,7 +2385,7 @@ def MKCalAP(uv, target, ACals, GCalList, err, \
                     break
             if doIgnore:
                 OK= True  # If we have A cals then its ok!
-                mess = PCal["Source"]+" in ACal list"
+                mess = PCal["Source"]+" done in ACal list"
                 printMess(mess, logfile)
                 continue
             calib.Sources[0]= PCal["Source"]
@@ -2544,24 +2573,30 @@ def MKCalAP(uv, target, ACals, GCalList, err, \
     if solnVer2==None:
         solnVer2 = solnVer
     if doPlot:
-        # Amplitude corrections
-        retCode = MKPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="AMP ", \
+         # Try matplotlib first
+        OK = PlotSNTab(uv, solnVer2, plotFile, err, 
+                          logfile=logfile, check=check, debug=debug)
+        if not OK:
+            mess = "Plot with matplotlib failed - try AIPS SNPLT "
+            printMess(mess, logfile)
+            # Amplitude corrections
+            retCode = MKPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="AMP ", \
+                                logfile=logfile, check=check, debug=debug)
+            # Phase corrections
+            retCode = MKPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", \
                               logfile=logfile, check=check, debug=debug)
-        # Phase corrections
-        retCode = MKPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", \
-                              logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-        # R-L phase corrections
-        retCode = MKPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", stokes="DIFF", \
-                              logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-        retCode = MKWritePlots (uv, 1, 0, plotFile, err, \
-                                  plotDesc="Amplitude and phase calibration plots", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
+            if retCode!=0:
+                return retCode
+            # R-L phase corrections
+            retCode = MKPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", stokes="DIFF", \
+                                logfile=logfile, check=check, debug=debug)
+            if retCode!=0:
+                return retCode
+            retCode = MKWritePlots (uv, 1, 0, plotFile, err, \
+                                    plotDesc="Amplitude and phase calibration plots", \
+                                    logfile=logfile, check=check, debug=debug)
+            if retCode!=0:
+                return retCode
     # end SN table plot
 
     # Set up for CLCal - use phase & amp calibrators
@@ -2607,33 +2642,34 @@ def MKCalAP(uv, target, ACals, GCalList, err, \
     # end MKCalAP
 
 
-def MKXPhase(inDELA, inUV, err, timeRange=[0.,0.], ChWid=0, doCalib=-1,
-             gainUse=0, doBand=0, BPVer=0, flagVer=-1, BPSoln=0, CHWid=0,
+def MKXPhase(inDELA, inUV, err, timeRange=[0.,0.], doCalib=-1,
+             gainUse=0, doBand=0, BPVer=0, flagVer=1, BPSoln=0, ChWid=0,
              refAnt=0, solInt=0.0, logfile="", noScrat=[], check=False, debug=False):
     """ Perform Cross Phase calibration using auto-corrs on a delay calibrator scan and
         attach BP table to UV data
 
+    DelayCal file indexed
     Returns task error code, 0=OK, else failed
     inUV       = UV data to have BP table attached
     inDELA     = DELAY calibration UV data (Assumed just one required scan)
     err        = Obit error/message stack
-    doCalib  = Apply calibration table, positive=>calibrate
-    gainUse  = CL/SN table to apply
-    doBand   = If >0.5 apply previous bandpass cal.
-    ChWid    = use CWid channels in BP calibration
-    Antennas = Antennas to use
-    BPVer    = previous Bandpass table (BP) version
-    flagVer  = Input Flagging table version
-    timerange= timerange in days to use, set to last minute
-    BPSoln    = output version of BP table
-    refAnt   = Reference antenna number
-    solInt   = Solution interval (min) BP table entries.
-    taskLog  =Log file to write messages to INSTEAD of the terminal
-    noScrat  =A list of AIPS disk numbers on which you do not 
-             wish scratch files
+    doCalib    = Apply calibration table, positive=>calibrate
+    gainUse    = CL/SN table to apply
+    doBand     = If >0.5 apply previous bandpass cal.
+    ChWid      = use CWid channels in BP calibration
+    Antennas   = Antennas to use
+    BPVer      = previous Bandpass table (BP) version
+    flagVer    = Input Flagging table version
+    timerange  = timerange in days to use, set to last minute
+    BPSoln     = output version of BP table
+    refAnt     = Reference antenna number
+    solInt     = Solution interval (min) BP table entries.
+    taskLog    = Log file to write messages to INSTEAD of the terminal
+    noScrat    = List of AIPS disk numbers on which you do not 
+                 wish scratch files
     """
     ################################################################
-
+    UV.PUtilIndex(inDELA, err)
     xphase = ObitTask.ObitTask("MKXPhase")
     try:
         xphase.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
@@ -2694,7 +2730,7 @@ def MKBPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
               BChan2=1, EChan2=0, ChWid2=1, Alpha=0.0, \
               solInt1=0.0, solInt2=0.0, solMode="A&P", refAnt=0, ampScalar=False, \
               doAuto=False, doPol=False, avgPol=False, avgIF=False, \
-              doPlot=False, maxgap=30.0, plotFile="./BPCal.ps", \
+              doPlot=False, maxgap=30.0, plotFile="./BPCal", \
               check=False, debug = False, nThreads=1, noScrat=[], logfile = ""):
     """
     Bandbass calibration
@@ -4422,126 +4458,6 @@ def MKPlotTab(uv, inext, invers, err, \
     return 0
     # end MKPlotTab
 
-def MKPlotXYBPTab(uv, BPVer, plotfile, err, 
-                logfile=None, check=False, debug=False):
-    """
-    * Plot X-Y phase from a BP table
-    * uv       = UV data object to plot
-    * BPVer    = BP table version number, 0-> highest
-    * err      = Obit error/message stack
-    * logfile  = logfile for messages
-    * check    = Only check script, don't execute tasks
-    * debug    = show input
-    """
-    ################################################################
-    mess = "MKPlotXYBPTab with plotfile "+plotfile+" BPVer "+str(BPVer)
-    print (mess)
-    if check:
-        return 0
-    try:
-        import OPlot, Table, FArray
-        from math import atan2, degrees
-        
-        fblank = FArray.fblank
-        uv.Header(err)
-        bptab = uv.NewTable(Table.READONLY, "AIPS BP",BPVer, err)
-        bptab.Open(Table.READONLY, err)
-        nrow  = bptab.Desc.Dict['nrow']
-        nchan = bptab.Desc.Dict['repeat'][10]
-        plot = OPlot.newOPlot("plot", err, output=plotfile+"/ps", ny=4)
-        plot.List.set("XLABEL","channel/IF")    
-        plot.List.set("YLABEL","X-Y Phase (deg.)")    
-        # loop over row
-        for ir in range(1,nrow+1):
-            r = bptab.ReadRow(ir, err)
-            plot.List.set("TITLE","X-Y Phase Antenna "+str(r['ANTENNA'][0]))
-            phz = []; x = []
-            for j in range(0,nchan):
-                if r['REAL 2'][j] != fblank:
-                    p = degrees(atan2(r['IMAG 2'][j],r['REAL 2'][j]))
-                    phz .append(p); x.append(float(j))
-            OPlot.PXYPlot(plot, 2, x, phz, err)
-        OPlot.PShow(plot,err)
-        OErr.printErrMsg(err, "Error plotting BP Table")
-    except Exception as exception:
-        print(exception)
-        mess = "MKPlotXYBPTab Failed "
-        printMess(mess, logfile)
-        # Allow failure return 1
-        return 0
-    else:
-        pass
-
-    OErr.printErrMsg(err, "Error plotting BP Table")
-    return 0
-# end MKPlotXYBPTab
-
-
-def MKPlotAmpBPTab(uv, BPVer, plotfile, err, 
-                logfile=None, check=False, debug=False):
-    """
-    * Plot amplitudes from a BP table
-    * uv       = UV data object to plot
-    * BPVer    = BP table version number, 0-> highest
-    * err      = Obit error/message stack
-    * logfile  = logfile for messages
-    * check    = Only check script, don't execute tasks
-    * debug    = show input
-    """
-    ################################################################
-    mess = "MKPlotAmpBPTab with plotfile "+plotfile+" BPVer "+str(BPVer)
-    print (mess)
-    if check:
-        return 0
-    try:
-        import OPlot, Table, FArray
-        
-        fblank = FArray.fblank
-        uv.Header(err)
-        bptab = uv.NewTable(Table.READONLY, "AIPS BP",BPVer, err)
-        bptab.Open(Table.READONLY, err)
-        nrow  = bptab.Desc.Dict['nrow']
-        nchan = bptab.Desc.Dict['repeat'][10]
-        #DAMNplot = OPlot.newOPlot("plot", err, output=plotfile+"/psc",bgcolor=OPlot.WHEAT, ny=4)
-        plot = OPlot.newOPlot("plot", err, output=plotfile+"/ps",bgcolor=OPlot.WHEAT, ny=4)
-        plot.List.set("XLABEL","channel/IF")    
-        plot.List.set("YLABEL","Gain Amplitude")    
-        # loop over row
-        for ir in range(1,nrow+1):
-            r = bptab.ReadRow(ir, err)
-            plot.List.set("TITLE","Gain Amp Antenna "+str(r['ANTENNA'][0])+\
-                          "  R/X = blue, L/Y = red")
-            amp1 = []; amp2 = []; x1 = []; x2 = []
-            for j in range(0,nchan):
-                if r['REAL 1'][j] != fblank:
-                    amp = (r['REAL 1'][j]**2 + r['IMAG 1'][j]**2)**0.5
-                    amp1.append(amp); x1.append(float(j))
-                if r['REAL 2'][j] != fblank:
-                    amp = (r['REAL 2'][j]**2 + r['IMAG 2'][j]**2)**0.5
-                    amp2.append(amp); x2.append(float(j))
-            ymax = 1.1*max(max(amp1),max(amp2)); ymin = 0.9*min(min(amp1),min(amp2));
-            plot.List.set("YMIN",ymin); plot.List.set("YMAX",ymax); 
-            OPlot.PSetColor(plot, OPlot.BLACK, err)
-            OPlot.PXYPlot(plot, 2, x1, amp1, err)
-            OPlot.PSetColor(plot, OPlot.BLUE, err)
-            OPlot.PXYOver(plot, 2, x1, amp1, err)  # Again for color
-            OPlot.PSetColor(plot, OPlot.RED, err)
-            OPlot.PXYOver(plot, 3, x2, amp2, err)
-        OPlot.PShow(plot,err)
-        OErr.printErrMsg(err, "Error plotting BP Table")
-    except Exception as exception:
-        print(exception)
-        mess = "MKPlotAmpBPTab Failed "
-        printMess(mess, logfile)
-        # Allow failure return 1
-        return 0
-    else:
-        pass
-
-    OErr.printErrMsg(err, "Error plotting BP Table")
-    return 0
-# end MKPlotAmpBPTab
-
 def MKWritePlots(uv, loPL, hiPL, plotFile, err, \
                    plotDesc="Diagnostic plot", \
                    logfile=None, check=False, debug=False):
@@ -4609,14 +4525,17 @@ def MKWritePlots(uv, loPL, hiPL, plotFile, err, \
     # end MKWritePlots
 
 def MKSpecPlot(uv, Source, timerange, maxgap, refAnt, err, Stokes=["RR","LL"], \
-                 doband=0, plotFile="./spec.ps", doPol=False, PDVer=-1,  flagVer=-1, \
+                 doband=0, plotFile="spec", doPol=False, PDVer=-1,  flagVer=-1, \
                  check=False, docalib=2, debug=False, logfile = ""):
     """
     Plot amplitude and phase across the spectrum.
 
-    returns scratch file with plot
-    Note: possm can't apply flags so data copied to scratch file
-    Returns task error code, 0=OK, else failed
+    returns scratch file with plot if OPlot used
+    If matplotlib and numpy are available, they are used and the output plot is pdf
+    otherwise, tries AIPS/POSSM
+    Note: POSSM can't apply flags so data copied to scratch file
+    and time averaged.
+    Returns scratch file with plot, or None
 
     * uv        = uv data object
     * Source    = List of sources to plot
@@ -4629,7 +4548,7 @@ def MKSpecPlot(uv, Source, timerange, maxgap, refAnt, err, Stokes=["RR","LL"], \
     * doPol     = Apply polarization cal?
     * PDVer     = PD version for pol cal, -1=>use IF
     * flagVer   = Flag table to apply
-    * plotFile  = name of output PS file
+    * plotFile  = root of output, ".pdf", or ".ps" added
     * check     = Only check script, don't execute tasks
     * debug     = Run tasks debug, show input
     * logfile   = Log file for task
@@ -4644,7 +4563,7 @@ def MKSpecPlot(uv, Source, timerange, maxgap, refAnt, err, Stokes=["RR","LL"], \
         printMess(mess, logfile)
         return None
     # Calibrate and edit data
-    scr  = uv.Scratch(err)
+    scr0  = uv.Scratch(err)
     info = uv.List
     info.set("doCalSelect", True)
     info.set("doCalib", docalib)
@@ -4653,17 +4572,21 @@ def MKSpecPlot(uv, Source, timerange, maxgap, refAnt, err, Stokes=["RR","LL"], \
     info.set("BPVer", 0)
     info.set("flagVer", flagVer)
     info.set("Sources", Source)
-    info.set("Stokes", "    ")
+    if Stokes[0]=="I":
+        info.set("Stokes", "I")
+    else:
+        info.set("Stokes", "    ")
     info.set("timeRange", timerange)
     if doPol:
         info.set("doPol", 1)
     else:
         info.set("doPol", 0)
     info.set("PDVer", PDVer)
+    info.set("keepLin", True)
     #uv.Header(err) # DEBUG
     # Trap failure
     try:
-        uv.Copy(scr, err)
+        uv.Copy(scr0, err)
     except Exception as exception:
         print(exception)
         mess = "Copy plot data failed - continuing"
@@ -4671,13 +4594,39 @@ def MKSpecPlot(uv, Source, timerange, maxgap, refAnt, err, Stokes=["RR","LL"], \
         return None
     else:
         pass
+    # Time average
+    try:
+        scr = UV.PUtilAvgT (scr0, None, err, scratch=True, timeAvg=1440.0)
+    except Exception as exception:
+        print(exception)
+        mess = "Average plot data failed - continuing"
+        printMess(mess, logfile)
+        if scr0!=None:
+            scr0.Zap(err)
+        return None
+    else:
+        if scr0!=None:
+            scr0.Zap(err)
     scr.Info(err)     # Get file information
     #Reindex the file
     UV.PUtilIndex(scr, err, maxGap=float(maxgap))
     # Make sure source name is in "object"
     d = scr.Desc.Dict; d['object']=Source[0]; scr.Desc.Dict=d
     scr.UpdateDesc(err)
-
+    
+    # First try matplotlib version
+    OK = VisPlot(scr,Source[0],plotFile, err, selAnt=refAnt, XPol=Stokes[0]=="RL")
+    #print ("VisPlot returns",OK)
+    if err.isErr:
+        OErr.printErr(err)
+        OK = False
+    if OK:
+        scr.Zap(err)
+        return None
+    
+    mess = "Spectrum with matplotlib failed - Try POSSM"
+    printMess(mess, logfile)
+     # Go with POSSM
     info = uv.List
     # Reset selection
     info.set("doCalSelect",True)
@@ -4729,7 +4678,7 @@ def MKSpecPlot(uv, Source, timerange, maxgap, refAnt, err, Stokes=["RR","LL"], \
     possm.ltype    = 3            # include all labels
     possm.solint   = -1 #solint       # time interval of plot
     possm.logFile  = logfile
-    possm.msgkill  = 0          # Suppress blather as much as possible
+    possm.msgkill  = 0            # Suppress blather as much as possible
     # Loop over Stokes
     for s in Stokes:
         possm.stokes   = s
@@ -5906,6 +5855,14 @@ def MKGetParms( projectDict):
               ('@BAND@',       projectDict['Band']),
               ('@DATAFILE@',   str(projectDict['DataFile'])),
               ('@DCALFILE@',   str(projectDict['DCalFile'])),
+              ('@DATADISK@',   str(projectDict['DataDisk'])),
+              ('@DCALDISK@',   str(projectDict['DCalDisk'])),
+              ('@DATANAME@',   str(projectDict['DataName'])),
+              ('@DCALNAME@',   str(projectDict['DCalName'])),
+              ('@DATACLASS@',  str(projectDict['DataClass'])),
+              ('@DCALCLASS@',  str(projectDict['DCalClass'])),
+              ('@DATASEQ@',    str(projectDict['DataSeq'])),
+              ('@DCALSEQ@',    str(projectDict['DCalSeq'])),
               ('@NOHANN@',     str(projectDict['noHann'])),
               ('@BPCAL@',      str(projectDict['BPCal'])),
               ('@GAINCAL@',    str(projectDict['GainCal'])),
@@ -6022,8 +5979,10 @@ def MKLookupRefAnt(MKRefAnt, meta):
 
 def MKPrepare(inUV, err, \
               project=None, session=None, template=None, parmFile=None,
-              Targets=None, DataFile= '', DCalFile='', noHann=False, doPol=False, 
-              BPCal = None, DlyCal = None, GainCal = None,
+              Targets=None, DataFile= None, DCalFile=None, noHann=False, 
+              DataName=None, DataClass=None, DataDisk=1, DataSeq=1,
+              DCalName=None, DCalClass=None, DCalDisk=2, DCalSeq=1,
+              doPol=False, BPCal = None, DlyCal = None, GainCal = None,
               AmpCal = None, PolCal = None, UnPolCal = None, MKrefAnt = None,
               outputDest='./'):
     """
@@ -6039,6 +5998,14 @@ def MKPrepare(inUV, err, \
     * Targets  = List of names of targets
     * DataFile = Main raw data archive uvtab file
     * DCalFile = DelayCal raw data archive uvtab file if doPol
+    * DataName = Main data AIPS file name if input in the form of AIPS directory
+    * DataClass= Main data AIPS file class
+    * DataDisk = Main data AIPS file disk 
+    * DataSeq  = Main data AIPS file seq
+    * DCalName = DelayCal data AIPS file name
+    * DCalClass= DelayCal data AIPS file class
+    * DCalDisk = DelayCal data AIPS file disk 
+    * DCalSeq  = DelayCal data AIPS file seq
     * noHann   = True if use Splat rather than Hann to import data
     * doPol    = True if polarization calibration and imaging wanted
     * BPCal    = List of names of bandpass calibrator(s)
@@ -6053,10 +6020,15 @@ def MKPrepare(inUV, err, \
     # Must give project,DataFile,Target, BPCal,DlyCal,GainCal,AmpCal
     if not project:
         print ("You MUST specify project"); return
-    if not DataFile:
-        print ("You MUST specify DataFile"); return
-    # Get metadata from data
-    inUV = UV.newPFUV('Raw', DataFile, 0, True, err)
+    if not(DataFile or DataName):
+        print ("You MUST specify DataFile or DataName"); return
+    # Get metadata from data - by type
+    if DataFile:
+        inUV = UV.newPFUV('Raw', DataFile, 0, True, err)
+    elif DataName:
+        inUV = UV.newPAUV('in',DataName,DataClass,DataDisk,DataSeq, True, err)
+    else:
+        raise  RuntimeError("No input data specified")
     meta = MKGetMeta(inUV, {}, "", err)
     # Get list of sources in data
     srcList = []
@@ -6093,8 +6065,8 @@ def MKPrepare(inUV, err, \
         if meta['nstokes']<4:
             print ("Need 4 correlations for polarization, have",meta['nstokes']); return
         Stokes = "IQUV"
-        if not DCalFile:
-            print ("You MUST specify DCalFile for polarization"); return
+        if not (DCalFile or DCalName):
+            print ("You MUST specify DCalFile or DCalName for polarization"); return
         if not PolCal:
             print ("You MUST specify PolCal for polarization"); return
         for t in PolCal:
@@ -6115,10 +6087,24 @@ def MKPrepare(inUV, err, \
     else:
         projectDict['session'] = "A" 
     projectDict['Band']      = meta["band"]
-    projectDict['DataFile']  = DataFile
+    if DataFile:
+        projectDict['DataFile']  = DataFile
+        projectDict['DCalFile']  = DCalFile
+    elif DataName:
+        projectDict['DataName']  = DataName
+        projectDict['DCalName']  = DCalName
+        projectDict['DataClass'] = DataClass
+        projectDict['DCalClass'] = DCalClass
+        projectDict['DataDisk']  = DataDisk
+        projectDict['DCalDisk']  = DCalDisk
+        projectDict['DataSeq']   = DataSeq
+        projectDict['DCalSeq']   = DCalSeq
+        projectDict['DataFile']  = ""
+        projectDict['DCalFile']  = ""
+        projectDict['noHann']    = ""
+        projectDict['noHann']    = noHann
     projectDict['Targets']   = Targets
     projectDict['Stokes']    = Stokes
-    projectDict['DCalFile']  = DCalFile
     projectDict['doPol']     = doPol
     projectDict['BPCal']     = BPCal
     projectDict['DlyCal']    = DlyCal
@@ -6128,7 +6114,6 @@ def MKPrepare(inUV, err, \
     projectDict['UnPolCal']  = UnPolCal
     projectDict['refAnt']    = MKLookupRefAnt(MKrefAnt, meta)
     projectDict['DestDir']   = outputDest
-    projectDict['noHann']    = noHann
     # First scan on first BP cal for plot
     plotsrc = BPCal[0]
     projectDict['PlotSrc']   = plotsrc
@@ -6993,7 +6978,7 @@ def MKProjMetadata( uv, AIPS_VERSION, err,
     r["obsStop"] = times[1]
     r["procDate"] = str( datetime.date.today() ) # processing date
     r["obitVer"] = Version() # Obit version
-    r["pipeVer"] = getSVNVersion(os.getenv("MKPIPE",".")) # Pipeline version
+    #r["pipeVer"] = getSVNVersion(os.getenv("MKPIPE",".")) # Pipeline version
     # Does this need to be passed as a function argument?
     r["aipsVer"] = AIPS_VERSION + '(' + str( datetime.date.today() ) + ')' # AIPS version
     r["pyVer"] = sys.version # python version

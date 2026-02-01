@@ -1,6 +1,6 @@
 # Package of tools for processing MeerKAT data
 #exec(open('MK_Tools.py').read())
-SetMFImage=None; ImageA2F=None; RMFitQU=None; MakeMask=None
+SetMFImage=None; ImageA2F=None; RMFitQU=None; MakeMask=None; XYPassCal=None;
 HugoPerley_3C286_l2 =None; HugoPerley_3C286=None; PlotRM=None; PlotSpec=None
 linRegW =None; RMClip=None
 
@@ -265,6 +265,52 @@ def MakeMask (img, err, name=None, sigma=10.0, nThreads=10, maxWid=60., minSNR=5
     fd.close()
 # end MakeMask
 
+del XYPassCal
+def XYPassCal (uv, src, EVPA, RM, refAnt, err, BPSoln=1, solInt=1440, 
+               PDVer=1, gainUse=2, FGVer=1, BPVer=-1,
+               ChWid2=1, fitType=0,minSNR=5,  nThreads=1):
+    """
+    Calibrate the X-Y Phase of an L Band dataset using XYPass
+
+    This produces and output BP Table
+    Assumes PCal has previously been run
+    This is best for 3C138 and 3C286
+    Returns the task interface object for XYPass, run with xypass.g
+    * uv       = Python Obit UV object
+    * src      = List of polarized sources to use (see xypass.h)
+    * EVPA     = EVPA at ref. freq. for src (deg)
+    * RM       = RM for src (rad/m^2)
+    * refAnt   = Reference antennaq
+    * err      = Obit error/message stack
+    * BPSoln   = Output BP Table
+    * solInt   = solution interval (min)q
+    * PDVer    = if >=1 the apply poln. cal, PD table PDVer
+    * gainUse  = if >=0 calibrate with this CL table
+    * FGVer    = FG flagging table to apply
+    * BPVer    = if >=0, Apply BP table
+    * fitType  = Fit type,0=joint,1=XY,2=YX
+    * ChWid2   = number of channels to average, should be odd
+    * minSNR   = Minimum SNR
+    """
+    # outSoln = uv.GetHighVer("AIPS SN")+1  # Solution tables to write
+    #pdver   = uv.GetHighVer("AIPS PD")    # PD table to apply
+    xypass=ObitTask.ObitTask('XYPass'); setname(uv,xypass)
+    xypass.UVRange=[3.0,200.]; xypass.WtUV=0.1  # Downweight very short
+    xypass.flagVer=FGVer;
+    if (gainUse>=0):
+        xypass.doCalib=2;xypass.gainUse=gainUse;
+    if (PDVer>=1):
+        xypass.doPol=True; xypass.PDVer=PDVer; xypass.keepLin=True
+    if (BPVer>=0):
+        xypass.doBand=1; xypass.BPVer=BPVer
+    xypass.Sources = src; xypass.EVPA = EVPA; xypass.RM = RM
+    xypass.BPSoln=BPSoln; xypass.minSNR=minSNR; xypass.fitType=fitType
+    xypass.refAnt=refAnt;xypass.nThreads=nThreads; xypass.prtLv=1
+    xypass.ChWid2=ChWid2; xypass.solInt1 = 0.5; xypass.solInt2=solInt
+    return xypass
+    #xypass.g
+# end XYPassCal
+
 import math
 from math import isnan
 del HugoPerley_3C286
@@ -448,8 +494,6 @@ def PlotRM (src, icube, qcube, ucube, pos, plotfile, err,
     pdif =  phs[0]-math.degrees(RMParms[1])
     evpa0 += round(pdif/180)*180
     #print (math.degrees(RMParms[1]),phs[0],pdif)
-
-    plot=OPlot.newOPlot("Plot", err,output=plotfile+".ps/ps",ny=2)
     # In Hugo & Perley 2024 (3C286)?
     HPP = []; HPEVPA = []
     if src in HPAlias:
@@ -457,6 +501,67 @@ def PlotRM (src, icube, qcube, ucube, pos, plotfile, err,
             (hpP,hpEVPA) = HugoPerley_3C286_l2 (ll2)
             HPP.append(100*hpP);  HPEVPA.append(hpEVPA); 
             
+
+    # Plot - first try matplotlib
+    try:
+        import matplotlib
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(nrows=2,sharex='col')
+        # EVPA
+        ax[0].errorbar(l2, phs, yerr=ephs, ecolor='red', fmt='o', label='Observed')
+        ax[0].set_title("%s: RM=%6.2f (%5.3f), EVPA$_{ref}$ =%7.2f (%5.2f)"\
+                     %(label, RMParms[0], RMParms[2],evpa0,eevpa0))
+        #ax[0].set_xlabel(r"$\lambda^2 (m^2)$"); 
+        ax[0].set_ylabel("EVPA (deg)");
+        minEVPA = min(phs) -10.; maxEVPA = max (phs)+20.
+        # In Hugo& Perley 2024?
+        if src in HPAlias:
+            ax[0].scatter(l2,HPEVPA,marker="*",c="red",label="Hugo&Perley24")
+        # Else In Perley&Butler?
+        elif src in PB:
+            lab = "Perley&Butler13"
+            for dd in PB[src]:
+                x1 = ((clight/(dd[0]*1.0e9))**2);  y1 = dd[2];
+                ax[0].scatter([x1],[y1],marker="*",c="red", label=lab); lab=None
+        # Set plot range
+        ax[0].set_xlim(min(l2)*0.9,max(l2)*1.1)
+        minEVPA = min(phs) -10.; maxEVPA = max (phs)+20.
+        ax[0].set_ylim(minEVPA,maxEVPA)
+        # Line at ref lambda^2
+        ax[0].plot([lamb20, lamb20],[-2000., 2000.],linestyle='dashed',label=r"$\lambda^2_{ref}$")
+        # Plot RM fit - a few times to cover a few wraps
+        noff = 7
+        offs = [0.0, 180, -180., 360., -360, 540. -540.]
+        lab = "Fit"
+        for off in offs:
+            x1 = 1.1*max(l2)
+            y1 = math.degrees(RMParms[1]+RMParms[0]*(x1-refLamb2))+off
+            x2 = 0.9*min(l2)
+            y2 = math.degrees(RMParms[1]+RMParms[0]*(x2-refLamb2))+off
+            #print(off,x1,y1,x2,y2, refLamb2)
+            ax[0].plot([x1,x2], [y1,y2],'g', label=lab); lab=None
+        ax[0].legend()
+        # fractional poln
+        ax[1].errorbar(l2, fpol, yerr=efpol, ecolor='red', fmt='o')
+        ax[1].set_title("") #"%s: RM=%6.2f (%5.3f), EVPA$_ref$ =%7.2f (%5.2f)"  %(label, RMParms[0], RMParms[2],evpa0,eevpa0))
+        ax[1].set_xlabel(r"$\lambda^2 (m^2)$"); 
+        ax[1].set_ylabel("frac. pol. (%)");
+        # In Hugo&Perley24?
+        if src in HPAlias:
+            ax[1].scatter(l2,HPP,marker="*",c="red")
+        # Else In Perley&Butler?
+        elif src in PB:
+            for dd in PB[src]:
+                x1 = ((clight/(dd[0]*1.0e9))**2);  y1 = 100*dd[1];
+                ax[1].scatter([x1],[y1],marker="*",c="red")
+        matplotlib.pyplot.savefig(plotfile+".pdf")
+        return
+    except Exception as exception:
+        print(exception)
+        print ("Will try PLPlot")
+        
+    # PLPlot verson
+    plot=OPlot.newOPlot("Plot", err,output=plotfile+".ps/ps",ny=2)
     # Plot EVPA
     plot.List.set("TITLE"," %s: RM=%6.2f (%5.3f), EVPA#d_ref#u =%7.2f (%5.2f)"\
                   %(label, RMParms[0], RMParms[2],evpa0,eevpa0))
@@ -553,13 +658,13 @@ del PlotSpec
 def PlotSpec (src, icube, pos, plotfile, err,
               label=None,  nThreads=1):
     """
-    Plot the spectrum at a location in an image
+    Plot the spectrum at a location in an ImageMF
     
     * src     = Source name
     * icube   = Obit IPol image cube
     * pos     = (RA, dec) in deg.
     * label   = label for plot, defaults to src
-    * plotfile= name of postscript plot file
+    * plotfile= name of plot (pdf or postscript) file
     * err     = Python Obit Error/message stack
     * nthreads= the number of threads to be used in calculations
     """
@@ -589,17 +694,15 @@ def PlotSpec (src, icube, pos, plotfile, err,
             val = FInterpolate.PPixel(fi, pixel, err)
             #print (i,j,val,rms[i],freqs[i])
             if val>0.0:
-                vals.append(val)
+                vals.append(val*1.0e3)
                 key = 'FREQ%4.4d'%(i+1)
-                freqs.append(1.0e-9*icube.Desc.List.Dict[key][2][0]) # GHz
-                rms.append(rmss) # Plane RMS
+                freqs.append(1.0e-6*icube.Desc.List.Dict[key][2][0]) # MHz
+                rms.append(rmss*1.0e3) # Plane RMS
                 
                 
     # end loop over planes
     OErr.printErrMsg(err,message='Interpolating values')
 
-    # Plot
-    plot=OPlot.newOPlot("Plot", err,output=plotfile+".ps/ps")
     # Fit Spectrum
     nterm=2; refFreq = freqs[0]
     # Inconsistent results
@@ -610,18 +713,45 @@ def PlotSpec (src, icube, pos, plotfile, err,
     #print ("\nFit",FitParms)
     #print ("vals",vals)
     #print ("rms",rms)
+    # Plot fitted spectrum
+    x0 = min(freqs); y0 = FitParms[0]*(x0/refFreq)**FitParms[1]
+    x1 = max(freqs); y1 = FitParms[0]*(x1/refFreq)**FitParms[1]
+
+    # Labeling
+    xlabel = "log Frequency (MHz)"
+    ylabel = "log Flux density (mJy)"
     ras = ImageDesc.PRA2HMS(pos[0])[:13]; decs = ImageDesc.PDec2DMS(pos[1])[:11];
     #label = "%s %s %s s=%6.4f(%8.5f) #ga=%5.2f(%4.2f)"\
     #        %(src, ras[1:], decs, FitParms[0], FitParms[2],FitParms[1], FitParms[3])
     # PLPlot can't handle the longer label
-    label = "%s %s %s s=%6.4f #ga=%5.2f"\
-            %(src, ras[1:], decs, FitParms[0], FitParms[1])
-    plot.List.set("TITLE",label)
-    plot.List.set("YLABEL","Flux density (Jy)")
-    plot.List.set("XLABEL","Frequency (GHz)")
+    label = "%s %s %s s=%6.4f "\
+            %(src, ras[1:], decs, FitParms[0])
+    ymn = 0.9*10**int(-0.9+math.log10(min(vals)))  # y min.
+    # Plot - first try matplotlib
+    try:
+        import matplotlib
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        ax.errorbar(freqs, vals, yerr=rms, ecolor='red', fmt='o',label='Observed')
+        ax.set_title(r" %s $\alpha$=%5.2f"%(label,FitParms[1]))
+        ticks=[0.03e3,0.5e5,0.8e3,1.0e3,1.2e3,1.5e3,2.e3,5.0e3,8.0e3,10.0e3,12.0e3,15.0e3,20.0e3,50.0e3]
+        ax.set_xlabel(xlabel); ax.set_xscale('log'); ax.set_xticks(ticks,minor=True)
+        ax.set_ylabel(ylabel); ax.set_yscale('log')
+        # Set plot range
+        ax.set_xlim(0.95*min(freqs),1.05*max(freqs))
+        ax.plot([x0,x1], [y0,y1],'g',label='Fit')  # Plot fitted spectrum
+        ax.legend()
+        matplotlib.pyplot.savefig(plotfile+".pdf")
+        return
+    except Exception as exception:
+        print(exception)
+        print ("Will try PLPlot")
+    plot=OPlot.newOPlot("Plot", err,output=plotfile+".ps/ps")
+    plot.List.set("TITLE",label+" #ga=%5.2f"%FitParms[1])
+    plot.List.set("YLABEL",ylabel)
+    plot.List.set("XLABEL",xlabel)
     plot.List.set("XOPT","LBCN")
     plot.List.set("YOPT","LBCN")
-    ymn = 0.9*10**int(-0.9+math.log10(min(vals)))
     plot.List.set("YMIN",ymn)
     plot.List.set("CSIZE",1)
     plot.List.set("SSIZE",3)

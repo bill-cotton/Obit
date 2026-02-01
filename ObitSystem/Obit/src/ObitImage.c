@@ -1020,6 +1020,10 @@ void ObitImageCloneMem  (ObitImage *in, ObitImage *out, ObitErr *err)
   ObitInfoListPut (out->info, "FileType", OBIT_long, dim, &out->mySel->FileType, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* Mark as scratch */
+  out->isScratch = TRUE;
+
+
 } /* end ObitImageCloneMem */
 
 /**

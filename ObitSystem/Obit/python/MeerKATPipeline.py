@@ -9,22 +9,45 @@ import ObitTalkUtil, AIPSTask, ObitTask
 from AIPS import AIPSDisk
 from FITS import FITSDisk
 from PipeUtil import *
+import PipePlots
 from MeerKATCal import *
 import OPlot, Table, FArray
-############################# Initialize OBIT ##########################################                                 
+############################# Initialize OBIT ##########################################
 setup = sys.argv[1]
 noScrat     = []    
 #exec(compile(open(setup).read(), setup, 'exec'))
 exec(open(setup).read())
-
 ############################# Set Project Processing parameters ########################
 ####### Initialize parameters dictionary ##### 
 parms = MKInitContParms()
-############################# Set Project Processing parameters ##################
+
+############################# Set Project Processing parameters ########################
 parmFile = sys.argv[2]
 #exec(compile(open(parmFile).read(), parmFile, 'exec'))
 exec(open(parmFile).read())
 MKAddOutFile(parmFile, 'project', 'Pipeline input parameters')
+
+# General AIPS data parameters at script level
+# if input from UVTab get AIPS file specs.
+if isUVTAB:
+    parms["DataName"]    = MKAIPSName(project)
+    parms["DCalName"]    = MKAIPSName(project)
+    parms["DataClass"]   = ("UVDa"+band)[0:6] # AIPS class of raw uv data
+    parms["DCalClass"]   = ("DELA"+band)[0:6] # AIPS class of DelayCal data
+    parms["DataDisk"]    = disk
+    parms["DCalDisk"]    = disk
+    parms["DataSeq"]     = 1
+    parms["DCalSeq"]     = 1
+outIClass = parms["outIClass"] # image AIPS class
+# Set uv name, class, disk, sequence number
+data_name   = parms["DataName"] 
+delay_name  = parms["DCalName"] 
+data_class  = parms["DataClass"] 
+delay_class = parms["DCalClass"] 
+data_disk   = parms["DataDisk"] 
+delay_disk  = parms["DCalDisk"] 
+data_seq    = parms["DataSeq"] 
+delay_seq   = parms["DCalSeq"] 
 
 ################################## Process #####################################
 #logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
@@ -45,22 +68,12 @@ if check:
     printMess(mess, logFile)
 
 
-# General AIPS data parameters at script level
-parms["data_class"]  = ("UVDa"+band)[0:6] # AIPS class of raw uv data
-parms["delay_class"] = ("DELA"+band)[0:6] # AIPS class of DelayCal data
-outIClass = parms["outIClass"] # image AIPS class
-# Set uv  class, sequence number
-data_class  = parms["data_class"] 
-delay_class = parms["delay_class"] 
-data_seq  = 1 
-delay_seq = 1 
-
 ####################### Import data into AIPS from uvtab file via Hann or Splat  ##########################
-# Is Hanned/copied data there already?
-exists = UV.AExist(MKAIPSName(project), data_class, disk, data_seq, err)
+# Is Hanned/copied/ archive data there already?
+exists = UV.AExist(data_name, data_class, data_disk, data_seq, err)
 # Loading is done via Hann or Splat
 if exists:
-    uv = UV.newPAUV("AIPS UV DATA", MKAIPSName(project), data_class, disk, data_seq, True, err)
+    uv = UV.newPAUV("AIPS UV DATA", data_name, data_class, data_disk, data_seq, True, err)
     # Extract metadata from data
     meta = MKGetMeta(uv, parms, logFile, err)
 else:
@@ -82,7 +95,7 @@ retCode = 0
 doBand = -1
 BPVer = 0
 maxgap = max(parms["CalAvgTime"], 160.*8.)/60. # for indexing
-fileRoot  =  './'+project+"_"+session+"_"+band  # root of file names
+fileRoot  =  project+"_"+session+"_"+band  # root of file names
 fileRoot2 =  project+"_"+session+"_"+band  # root of file names, not to confuse OPlot
 uvc           = None
 avgClass      = ("UVAv"+band)[0:6]  # Averaged data AIPS class
@@ -134,8 +147,8 @@ if parms["doPol"]:
 # end of doPol checks
 
 # Hanning or Splat (if noHann) to load data if it doesn't already exist
-doNDCal = len(parms["DCalFile"])>0  # Name given
-if parms["doLoad"] and not exists:
+doNDCal = (len(parms["DCalFile"])>0) or (len(parms["DCalName"])>0)  # Name given
+if isUVTAB and parms["doLoad"] and not exists:
     uf = UV.newPFUV("Raw", parms["DataFile"], 0, True, err)
     # Create FG 1 for static flagging 
     MKStaticFlag(uf, 1, err)
@@ -157,7 +170,7 @@ if parms["doLoad"] and not exists:
             EChan = last_chan-(chan_after_ifs-(chan_after_ifs//2))-1
     else:
         BChan = 1;  EChan = 0
-    uv = MKHann(uf, MKAIPSName(project), data_class, disk, data_seq, err, \
+    uv = MKHann(uf, data_name, data_class, data_disk, data_seq, err, \
                 doDescm=parms["doDescm"], flagVer=1, BChan=BChan, EChan=EChan, \
                 noHann=parms["noHann"], \
                 logfile=logFile, zapin=False, check=check, debug=debug)
@@ -167,7 +180,7 @@ if parms["doLoad"] and not exists:
         import MakeIFs
         MakeIFs.UVMakeIF(uv,8,err)
     # Now import the DelayCal data - do we have it
-    doNDCal = len(parms["DCalFile"])>0  # Name given
+    doNDCal = (len(parms["DCalFile"])>0) or (len(parms["DCalName"])>0)  # Name given
     # Only if doPol and it doesn't already exist
     if parms["doPol"] and doNDCal:
         mess = "Importing delay calibration scan"
@@ -175,9 +188,9 @@ if parms["doLoad"] and not exists:
         # Create FG 1 for static flagging 
         MKStaticFlag(delay_uf, 1, err)
         printMess(mess, logFile)
-        delay_uv = MKHann(delay_uf, MKAIPSName(project), delay_class, disk, \
-                          delay_seq, err, doDescm=parms["doDescm"], flagVer=1, 
-                          BChan=BChan, EChan=EChan, logfile=logFile, zapin=False, 
+        delay_uv = MKHann(delay_uf, delay_name, delay_class, delay_disk, delay_seq, err, \
+                          doDescm=parms["doDescm"], flagVer=1, \
+                          BChan=BChan, EChan=EChan, logfile=logFile, zapin=False, \
                           noHann=parms["noHann"], check=check, debug=debug)
         parms["delay_uv"] = delay_uv
     if nif==1:
@@ -187,7 +200,7 @@ if parms["doLoad"] and not exists:
         raise RuntimeError("Cannot Import data ")
 
 # Print the uv data header to screen.
-uv = UV.newPAUV("AIPS UV DATA", MKAIPSName(project),data_class,disk,data_seq,True,err)
+uv = UV.newPAUV("AIPS UV DATA", data_name,data_class,data_disk,data_seq,True,err)
 uv.Header(err)
 OErr.printErrMsg(err, "Error Finding AIPS Data")
 
@@ -210,6 +223,16 @@ if parms["doCopyFG"]:
     except Exception as exception:
         mess =  "Error Copying FG table "
         printMess(mess, logFile)
+
+# Static flagging if not isUVTAB, data will have had only online flagging
+if (not isUVTAB) and parms['doStaticFlag'] :
+    mess =  "Apply static flags"
+    printMess(mess, logFile)
+    MKStaticFlag(uv, parms["editFG"], err)
+    # Delay Cal?
+    if  parms["doNDCal"] and parms["doPol"]:
+         delay_uv = UV.newPAUV("AIPS UV DATA", delay_name,delay_class,delay_disk,delay_seq,True,err)
+         MKStaticFlag(delay_uv, 1, err)
 
 # Special editing
 if parms["doEditList"] and not check:
@@ -306,7 +329,7 @@ if not parms["refAnt"]:
 if parms["doRawSpecPlot"] and parms["plotSource"]:
     mess =  "Raw Spectral plot for: "+' '.join(parms["BPCal"])
     printMess(mess, logFile)
-    plotFile = fileRoot+"_RawSpec.ps"
+    plotFile = fileRoot+"_RawSpec"
     retCode = MKSpectrum(uv, parms["BPCal"], parms["plotTime"], maxgap, plotFile, parms["refAnt"], err, \
                          Stokes=["RR","LL"], doband=-1, flagVer=2,   \
                          check=check, debug=debug, logfile=logFile )
@@ -318,26 +341,28 @@ if parms["doNDCal"] and parms["doPol"] and doNDCal:
     mess = "XYphase bandpass noise diode calibration"
     printMess(mess, logFile)
     # Delay cal data
-    delay_uv = UV.newPAUV("AIPS UV DATA", MKAIPSName(project),delay_class,disk,delay_seq,True,err)
+    delay_uv = UV.newPAUV("AIPS UV DATA", delay_name,delay_class,delay_disk,delay_seq,True,err)
     retCode = MKXPhase(delay_uv, uv, err, logfile=logFile, check=check, debug=debug,
-                       doCalib=-1, flagVer=0, doBand=-1, BPSoln=1, refAnt=parms['refAnt'])
+                       doCalib=-1, flagVer=1, doBand=-1, BPSoln=1, refAnt=parms['refAnt'])
     doBand = 1
     BPVer += 1
     if retCode!=0:
         raise RuntimeError("Error in XY phase calibration")
     # Plot table?
-    if parms["doBPPlot"] and not check:
-        # PLPlot doesn't like long names (really "./")
-        plotFile = project+"_"+session+"_"+band+"_XYPhaseBP.ps"
-        MKPlotXYBPTab(uv, 1, plotFile, err, \
-                      logfile=logFile, check=check, debug=debug)
+    if parms["doXYPlot"] and not check:
+        plotFile = project+"_"+session+"_"+band+"_XYPhaseBP"
+        # Refresh header
+        uv = UV.newPAUV("AIPS UV DATA", data_name,data_class,data_disk,data_seq,True,err)
+        #imhead(uv) # DEBUG
+        PipePlots.MKPlotXYBPTab(uv, 1, plotFile, err, \
+                        logfile=logFile, check=check, debug=debug)
 
-# delay calibration
+# Group delay calibration
 if parms["doDelayCal"] and parms["DCals"] and not check:
-    plotFile = fileRoot+"_DelayCal.ps"
+    plotFile = fileRoot+"_DelayCal"
     retCode = MKDelayCal(uv, parms["DCals"], err,  \
                          BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
-                         doCalib=-1, flagVer=0, doBand=doBand, BPVer=BPVer, \
+                         doCalib=-1, flagVer=2, doBand=doBand, BPVer=BPVer, \
                          solInt=parms["delaySolInt"], smoTime=parms["delaySmoo"],  \
                          refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], 
                          doZeroPhs=parms["delayZeroPhs"], \
@@ -350,7 +375,7 @@ if parms["doDelayCal"] and parms["DCals"] and not check:
     
     # Plot corrected data?  No - turn off
     if parms["doSpecPlot"] and parms["plotSource"] and not True:
-        plotFile = fileRoot+"_DelaySpec.ps"
+        plotFile = fileRoot+"_DelaySpec"
         retCode = MKSpectrum(uv, parms["BPCal"], parms["plotTime"], maxgap, \
                              plotFile, parms["refAnt"], err, flagVer=2, \
                              Stokes=["RR","LL"], doband=doBand,          \
@@ -366,24 +391,23 @@ if parms["doBPCal"] and parms["BPCals"]:
                       BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                       BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
                       doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
-                      UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=0, doPlot=False, \
+                      UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
                       nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError("Error in Bandpass calibration")
     # Plot fit?
-    if parms["doBPFitPlot"]:
-        plotFile = fileRoot2+"_BP_Fit.ps"
+    if parms["doBPPlot"]:
+        plotFile = fileRoot2+"_BP_Fit"
+        # Refresh header
+        uv = UV.newPAUV("AIPS UV DATA", data_name,data_class,data_disk,data_seq,True,err)
         BPVer = uv.GetHighVer("AIPS BP")
         if doBand:  # Were BP tables merged?
             BPVer -= 1;
-        retCode = MKPlotAmpBPTab(uv, BPVer, plotFile, err,
-                                 check=check, debug=debug, logfile=logFile )
-        if retCode!=0:
-            raise  RuntimeError("Error in Plotting Bandpass fit")
+        PipePlots.MKPlotBPTab(uv, BPVer, plotFile, err, check=check, debug=debug, logfile=logFile )
  
     # Plot corrected data? 
     if parms["doSpecPlot"] and  parms["plotSource"]:
-        plotFile = fileRoot+"_BPSpec.ps"
+        plotFile = fileRoot+"_BPSpec"
         retCode = MKSpectrum(uv, parms["BPCal"], parms["plotTime"], maxgap, plotFile, \
                              parms["refAnt"], err, Stokes=["RR","LL"], doband=1, flagVer=2, \
                              check=check, debug=debug, logfile=logFile )
@@ -392,7 +416,7 @@ if parms["doBPCal"] and parms["BPCals"]:
  
 # Amp & phase Calibrate
 if parms["doAmpPhaseCal"]:
-    plotFile = fileRoot+"_APCal.ps"
+    plotFile = fileRoot+"_APCal"
     retCode = MKCalAP (uv, [], parms["ACals"], parms["GCalList"], err, PCals=parms["PCals"],\
                        doCalib=2, doBand=1, BPVer=0, flagVer=2, \
                        BChan=parms["ampBChan"], EChan=parms["ampEChan"], \
@@ -404,9 +428,9 @@ if parms["doAmpPhaseCal"]:
     
     if retCode!=0:
         raise RuntimeError("Error calibrating")
-    # Plot corrected data?  NO, turn off
-    if parms["doSpecPlot"] and  parms["plotSource"] and not True:
-        plotFile = fileRoot+"_APSpec.ps"
+    # Plot corrected data? 
+    if parms["doSpecPlot"] and parms["plotSource"]:
+        plotFile = fileRoot+"_APSpec"
         retCode = MKSpectrum(uv, parms["BPCal"], parms["plotTime"], maxgap, plotFile, \
                              parms["refAnt"], err, Stokes=["RR","LL"], doband=1, flagVer=2, \
                              check=check, debug=debug, logfile=logFile )
@@ -434,7 +458,7 @@ if parms["doAutoFlag"]:
     else:
         clist = []
         
-        retCode = MKAutoFlag (uv, clist, err, flagVer=2, flagTab =2, \
+        retCode = MKAutoFlag (uv, clist, err, flagVer=2, flagTab=2, \
                               doCalib=2, gainUse=0, doBand=1, BPVer=BPVer,  \
                               minAmp=parms["minAmp"], timeAvg=parms["timeAvg"], \
                               doFD=parms["doFirstAFFD"], FDmaxAmp=parms["FDmaxAmp"], FDmaxV=parms["FDmaxV"], \
@@ -493,29 +517,30 @@ if parms["doRecal"]:
     doBand = -1;
     # Run MKXPhase on delaycal data and attach BP table to UV data
     if parms["doNDCal2"] and parms["doPol"] and doNDCal:
-        delay_uv = UV.newPAUV("AIPS UV DATA", MKAIPSName(project),delay_class,disk,delay_seq,True,err)
+        delay_uv = UV.newPAUV("AIPS UV DATA", delay_name,delay_class,delay_disk,delay_seq,True,err)
         mess = "XYphase bandpass noise diode calibration"
         printMess(mess, logFile)
         retCode = MKXPhase(delay_uv, uv, err, logfile=logFile, check=check, debug=debug,
-                           doCalib=-1, flagVer=0, doBand=-1, refAnt=parms['refAnt'])
+                           doCalib=-1, flagVer=1, doBand=-1, refAnt=parms['refAnt'])
         BPVer += 1
         doBand = 1;
         if retCode!=0:
             raise RuntimeError("Error in Xphase calibration")
         # Plot table?
-        if parms["doBPPlot"] and not check:
-            # PLPlot doesn't like long names
-            plotFile = project+"_"+session+"_"+band+"_XYPhaseBP2.ps"
-            MKPlotXYBPTab(uv, 1, plotFile, err, \
+        if parms["doXYPlot"] and not check:
+            # Refresh header
+            uv = UV.newPAUV("AIPS UV DATA", data_name,data_class,data_disk,data_seq,True,err)
+            plotFile = project+"_"+session+"_"+band+"_XYPhaseBP2"
+            PipePlots.MKPlotXYBPTab(uv, 1, plotFile, err, \
                           logfile=logFile, check=check, debug=debug)
      
         
     # Delay recalibration
     if parms["doDelayCal2"] and parms["DCals"] and not check:
-        plotFile = fileRoot+"_DelayCal2.ps"
+        plotFile = fileRoot+"_DelayCal2"
         retCode = MKDelayCal(uv, parms["DCals"], err, \
                              BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
-                             doCalib=-1, flagVer=0, doBand=doBand, BPVer=BPVer, \
+                             doCalib=-1, flagVer=2, doBand=doBand, BPVer=BPVer, \
                              solInt=parms["delaySolInt"], smoTime=parms["delaySmoo"],  \
                              refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], \
                              doZeroPhs=parms["delayZeroPhs"], \
@@ -528,14 +553,14 @@ if parms["doRecal"]:
         
         # Plot corrected data? - no turn off
         if parms["doSpecPlot"] and parms["plotSource"] and not True:
-            plotFile = fileRoot+"_DelaySpec2.ps"
+            plotFile = fileRoot+"_DelaySpec2"
             retCode = MKSpectrum(uv, parms["BPCal"], parms["plotTime"], maxgap, plotFile, parms["refAnt"], err, \
                                  Stokes=["RR","LL"], doband=doBand, flagVer=2,  \
                                  check=check, debug=debug, logfile=logFile )
             if retCode!=0:
                 raise  RuntimeError("Error in Plotting spectrum")
 
-    # Bandpass calibration
+    # Bandpass recalibration
     if parms["doBPCal2"] and parms["BPCals"]:
         retCode = MKBPCal(uv, parms["BPCals"], err, doBand=doBand, BPVer=BPVer, newBPVer=0, \
                           noScrat=noScrat, solInt1=parms["bpsolint1"], \
@@ -543,27 +568,26 @@ if parms["doRecal"]:
                           BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                           BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
                           doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
-                          UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=0, doPlot=False, \
+                          UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
                           nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError("Error in Bandpass calibration")
         # Plot fit?
-        if parms["doBPFitPlot"]:
-            plotFile = fileRoot2+"_BP_Fit2.ps"
+        if parms["doBPPlot"]:
+            # Refresh header
+            uv = UV.newPAUV("AIPS UV DATA", data_name,data_class,data_disk,data_seq,True,err)
+            plotFile = fileRoot2+"_BP_Fit2"
             BPVer = uv.GetHighVer("AIPS BP")
             if doBand:  # Were BP tables merged?
                 BPVer -= 1;
-            retCode = MKPlotAmpBPTab(uv, BPVer, plotFile, err,
-                                     check=check, debug=debug, logfile=logFile )
-        if retCode!=0:
-            raise  RuntimeError("Error in Plotting Bandpass fit")
- 
-        
+            PipePlots.MKPlotBPTab(uv, BPVer, plotFile, err, \
+                          logfile=logFile, check=check, debug=debug)
+     
     # Amp & phase Recalibrate
     if parms["doAmpPhaseCal2"]:
-        plotFile = fileRoot+"_APCal2.ps"
+        plotFile = fileRoot+"_APCal2"
         retCode = MKCalAP (uv, [], parms["ACals"],  parms["GCalList"], err, PCals=parms["PCals"], \
-                           doCalib=2, doBand=1, BPVer=0, flagVer=0, \
+                           doCalib=2, doBand=1, BPVer=0, flagVer=2, \
                            BChan=parms["ampBChan"], EChan=parms["ampEChan"], \
                            solInt=parms["solInt"], solSmo=parms["solSmo"], ampScalar=parms["ampScalar"], \
                            doAmpEdit=True, ampSigma=parms["ampSigma"], \
@@ -575,7 +599,7 @@ if parms["doRecal"]:
         
         # Plot corrected data?
         if parms["doSpecPlot"] and parms["plotSource"]:
-            plotFile = fileRoot+"_APSpec2.ps"
+            plotFile = fileRoot+"_APSpec2"
             retCode = MKSpectrum(uv, parms["BPCal"], parms["plotTime"], maxgap, plotFile, parms["refAnt"], err, \
                                  Stokes=["RR","LL"], doband=1, flagVer=2,   \
                                  check=check, debug=debug, logfile=logFile )
@@ -609,7 +633,7 @@ if parms["doCalAvg"] == 'Splat':
     if retCode!=0:
         raise  RuntimeError("Error in CalAvg")
 elif parms["doCalAvg"] == 'BL':
-    retCode = MKBLCalAvg (uv, avgClass, parms["seq"], err, \
+    retCode = MKBLCalAvg (uv, avgClass, data_seq, err, \
                           flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=0, doPol=False, \
                           avgFreq=parms["avgFreq"], chAvg=parms["chAvg"], FOV=parms['blFOV'], \
                           maxInt=min(parms["blMaxInt"],parms["solAInt"]), Stokes=parms["avgStokes"], \
@@ -622,8 +646,7 @@ elif parms["doCalAvg"] == 'BL':
 # Get calibrated/averaged data
 if not check:
     try:
-        uvc = UV.newPAUV("AIPS UV DATA", MKAIPSName(project), avgClass[0:6], \
-                         disk, parms["seq"], True, err)
+        uvc = UV.newPAUV("AIPS UV DATA", data_name, avgClass[0:6], data_disk,  data_seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     except Exception as exception:
@@ -671,6 +694,12 @@ if parms["doPolCal"] and uvc:
              nThreads=nThreads, noScrat=noScrat, logfile=logFile)
     if err.isErr:
         OErr.printErrMsg(err, "Error in instrumental polarization calibration.")
+    # Plot instrumental polarization table?
+    if parms["doPDPlot"]:
+        plotFile = fileRoot+"_PDTable"
+        # Refresh header
+        uvc = UV.newPAUV("AIPS UV DATA", data_name, avgClass[0:6], data_disk,  data_seq, True, err)
+        PipePlots.MKPlotPDTab(uvc, 1, plotFile, err, check=check, debug=debug, logfile=logFile)
 
 if parms["doXYDelay"] and uvc:
     mess =  "X-Y phase & delay calibration:"
@@ -696,7 +725,7 @@ if parms["doSaveTab"]:
 
 # Final Stokes I Spectrum
 if parms["doSpecPlot"] and uvc:
-    plotFile = fileRoot+"_Spec.ps"
+    plotFile = fileRoot+"_Spec"
     retCode = MKSpectrum(uvc, parms["BPCal"], parms["plotTime"], maxgap, \
                          plotFile, parms["refAnt"], err, flagVer=1, \
                          Stokes=["I"], doband=-1, docalib=-1,      \
@@ -708,7 +737,7 @@ if parms["doSpecPlot"] and uvc:
 if parms["doPolSpecPlot"] and parms["XYDCal"] and uvc:
     mess =  "Polarized Spectral plot for: "+parms["XYDCal"][0]
     printMess(mess, logFile)
-    plotFile = fileRoot+"_PolSpec.ps"
+    plotFile = fileRoot+"_PolSpec"
     # Lookup time range
     plotTime = [0.,0.]; plotSrc = parms["XYDCal"]
     for t in meta['targets']:
@@ -730,6 +759,7 @@ if parms["doPolSpecPlot"] and parms["XYDCal"] and uvc:
 if parms['doSaveUV'] and uvc and not check:
     mess =  "Save UV data:"
     printMess(mess, logFile)
+    uvc = UV.newPAUV("AIPS UV DATA", data_name, avgClass[0:6], data_disk,  data_seq, True, err)
     MKUVFITab(uvc, fileRoot+'.uvtab', 0, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error writing uvtab data")

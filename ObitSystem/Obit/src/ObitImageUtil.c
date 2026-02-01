@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2025                                          */
+/*;  Copyright (C) 2003-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -705,7 +705,14 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     myGrid = (ObitUVGrid*)outImage->myGrid;
     myGrid->BeamNorm = sumwts;
     BeamNorm = sumwts;
-  }    
+  } else {  /* Making beam */
+    /* Make sure beam image cube descriptors are consistent 
+       - not sure why this is necessary*/
+    theBeam = (ObitImage*)outImage->myBeam;
+    theBeam->myDesc->inaxes[0] = ((ObitImageDesc*)(theBeam->myIO->myDesc))->inaxes[0];
+    theBeam->myDesc->inaxes[1] = ((ObitImageDesc*)(theBeam->myIO->myDesc))->inaxes[1];
+    theBeam->myDesc->inaxes[2] = ((ObitImageDesc*)(theBeam->myIO->myDesc))->inaxes[2];
+  } /* end if doBeam */
 
   myGrid = (ObitUVGrid*)outImage->myGrid;
   gridClass =  (ObitUVGridClassInfo*)myGrid->ClassInfo;   /* Gridder class */
@@ -1105,6 +1112,14 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   if (doBeam) {
     nImage += (norder+1)*nImage;  /* Doing Beams as well? */
     bmInc = 2;  /* increment in grids array */
+    /* Make sure beam images cubes descriptors are consistent 
+       - not sure why this is necessary*/
+    for (j=0; j<nPar; j++) {
+      theBeam = (ObitImage*)outImage[j]->myBeam;
+      theBeam->myDesc->inaxes[0] = ((ObitImageDesc*)(theBeam->myIO->myDesc))->inaxes[0];
+      theBeam->myDesc->inaxes[1] = ((ObitImageDesc*)(theBeam->myIO->myDesc))->inaxes[1];
+      theBeam->myDesc->inaxes[2] = ((ObitImageDesc*)(theBeam->myIO->myDesc))->inaxes[2];
+    }
   } else {
     /* Add number of images without a beam  */
     for (j=0; j<nPar; j++) {
@@ -4430,7 +4445,7 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
 
   /* Copy information not directly related to an axis */
   /* Strings */
-  strncpy (imageDesc->object, UVDesc->object, IMLEN_VALUE-1);
+  strncpy (imageDesc->object, UVDesc->object, IMLEN_VALUE-1); /* grumble */
   strncpy (imageDesc->teles,  UVDesc->teles,  IMLEN_VALUE-1);
   strncpy (imageDesc->instrument,  UVDesc->instrument,  IMLEN_VALUE-1);
   strncpy (imageDesc->observer,  UVDesc->observer,  IMLEN_VALUE-1);

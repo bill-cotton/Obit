@@ -11,6 +11,7 @@ import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV, UVDesc, Table
 import mjd
 from six.moves import range
 from six.moves import input
+import datetime
 
 def setname (inn, out):
     """ 
@@ -112,8 +113,20 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
     * logfile  = file to write results to, if None don't print
     """
     ################################################################
+    # Local image if ImageMF
+    xim = inImage.cast('ObitImage')
     # Read plane
-    p    = Image.PReadPlane(inImage,err,blc=blc,trc=trc)
+    lblc = [1,1]+blc[2:]
+    ltrc = [0,0]+trc[2:]
+    pp  = Image.PReadPlane(xim,err,blc=lblc,trc=ltrc)
+    d = xim.Desc.Dict
+    lblc=[]; ltrc=[]  # zero rel
+    for i in range(0,min(len(blc),d['naxis'],pp.Ndim,)):
+        lblc.append(max(0,blc[i]-1))
+        ltrc.append(min(d['inaxes'][i]-1,trc[i]-1))
+        if ltrc[i]<=0:
+            ltrc[i] = d['inaxes'][i]-1
+    p   = FArray.PSubArr(pp, lblc, ltrc, err)
     OErr.printErrMsg(err, "Error with input image")
     head = inImage.Desc.Dict  # Header
 
@@ -974,3 +987,147 @@ def dateStringToMJD( date ):
         return none
     m = mjd.mjd()
     return m.mjd_now( month, day, year, hour, min, sec )
+
+def ProjMetadata( uv, AIPS_VERSION, err,
+    PCals=[], ACals=[], BPCals=[], DCals=[],
+    project='project', session='session', band='band', dataInUVF='',
+    archFileID='' ):
+    """
+    Return a dictionary holding project metadata. Contents:
+
+    ===============  ========================================================
+    "project"        observation project name
+    "session"        observation project session
+    "CorrMode"       correlator code
+    "obsDate"        observation date
+    "obsStart"       observation start time (MJD)
+    "obsStop"        observation stop time (MJD)
+    "procDate"       pipeline processing date
+    "PhsCals"        array of phase calibrators
+    "AmpCals"        array of amplitude calibrators
+    "BPCals"         array of bandpass calibrators
+    "DlyCals"        array of delay calibrators
+    "obitVer"        Obit version (TBD)
+    "aipsVer"        AIPS version
+    "pyVer"          Python version
+    "sysInfo"        system information on processing machine (uname -a)
+    "anNames"        names of all antennas used
+    "freqCov"        frequency coverage (low & up sideband pairs for all IFs)
+    "minFring"       minimum fringe spacing (asec)
+    "dataSet"        Data set archive file name
+    "archFileID"     Archive file ID
+    ===============  ========================================================
+
+    * uv = uv data object for which the report will be generated
+    * AIPS_VERSION = AIPS version information
+    * err = Python Obit Error/message stack
+    * PCals  = list of phase cal models
+    * ACals  = list of amp cal models
+    * BPCals = list of bandpass cal models
+    * DCals  = list of delay cal models
+    * project = Observation project name
+    * session = Observation project session
+    * band = correlator mode code
+    * dataInUVF = data set archive file name
+    * archFileID = archive file ID
+    """
+    # Get lists of calibrator names from model lists.
+    PCalList = []
+    for s in PCals:
+        PCalList.append(s['Source'])
+    ACalList = []
+    for s in ACals:
+        ACalList.append(s['Source'])
+    BPCalList = []
+    for s in BPCals:
+        BPCalList.append(s['Source'])
+    DCalList = []
+    for s in DCals:
+        DCalList.append(s['Source'])
+    r = {}
+    r["project"] = project
+    r["session"] = session
+    r["CorrMode"] = band # Correlator mode
+    r["obsDate"] = uv.Desc.Dict["obsdat"] # observation date
+    times = getStartStopTime( uv, err )
+    r["obsStart"] = times[0]
+    r["obsStop"] = times[1]
+    r["procDate"] = str( datetime.date.today() ) # processing date
+    #r["obitVer"] = Version() # Obit version
+    # Does this need to be passed as a function argument?
+    r["aipsVer"] = AIPS_VERSION + '(' + str( datetime.date.today() ) + ')' # AIPS version
+    r["pyVer"] = sys.version # python version
+    p = os.popen("uname -a") # get sys info
+    r["sysInfo"] = p.read()
+    r["PhsCals"] = PCalList # list of phase calibrators
+    r["AmpCals"] = ACalList # list of amp calibrators
+    r["BPCals"]  = BPCalList # list of bandpass calibrators
+    r["DlyCals"] = DCalList # list of delay calibrators
+    parts = dataInUVF.split(os.sep)
+    r["dataSet"] = parts[len(parts)-1]
+    r["archFileID"] = archFileID # archive file ID
+    r["fileSetID"] = r["project"] + "_" + r["obsDate"][2:].replace('-','') + "_" + \
+        str(r["archFileID"])
+
+    # Get antenna names and positions
+    antab = uv.NewTable(Table.READONLY,"AIPS AN",1,err)
+    antab.Open(Table.READONLY,err)
+    OErr.printErrMsg(err) # catch table open errors
+    nrow = antab.Desc.Dict["nrow"]
+    annames = []
+    anpos = []
+    for i in range(1,nrow+1):
+        anrow = antab.ReadRow(i, err)
+        name = anrow["ANNAME"][0].rstrip()
+        annames.append( name )
+        pos = anrow["STABXYZ"]
+        anpos.append( pos )
+    antab.Close(err)
+    r["anNames"] = annames # list of antennas used
+
+    # Get the frequency coverage
+    d = uv.Desc.Dict # UV data descriptor dictionary
+    refFreq = d["crval"][ d["jlocf"] ] # reference frequency
+    fqtab = uv.NewTable(Table.READONLY,"AIPS FQ",1,err)
+    fqtab.Open(Table.READONLY,err)
+    OErr.printErrMsg(err) # catch table open errors
+    nrow = fqtab.Desc.Dict["nrow"]
+    freqCov = []
+    for i in range(1,nrow+1):
+        fqrow = fqtab.ReadRow(i, err)
+        freq = fqrow["IF FREQ"]
+        bw = fqrow["TOTAL BANDWIDTH"]
+        sb = fqrow["SIDEBAND"] # +1 => 'IF FREQ' is upper-side band; -1 => lower-side band
+        for i in range( len(freq) ):
+            f1 = refFreq + freq[i] # 1st bound of IF
+            f2 = f1 + sb[i] * bw[i] # 2nd bound of IF
+            fc = [ f1, f2 ]
+            fc.sort()
+            freqCov.append( fc ) # sort bounds and add to list
+    fqtab.Close(err)
+    r["freqCov"] = freqCov
+
+    # Calculate the minimum fringe spacing
+    maxBl = 0 # maximum baseline length
+    # maxBlAnt = [] # antenna indices forming maximum baseline
+    for (i, p1) in enumerate( anpos ):
+        for (j, p2) in enumerate( anpos ):
+            if i == j: continue
+            dpos = [0, 0, 0]
+            for k in range(3):
+                dpos[k] = p1[k] - p2[k]
+            # Baseline length in meters
+            bl = ( dpos[0]**2 + dpos[1]**2 + dpos[2]**2 )**(0.5)
+            if bl > maxBl:
+                maxBl = bl
+                # maxBlAnt = [i, j]
+    # r["maxBl"] = [ annames[ maxBlAnt[0] ], # antennas forming max baseline
+    #                annames[ maxBlAnt[1] ] ]
+    lightSpeed = 299792458 # ( meters / second)
+    wavelength = lightSpeed / refFreq
+    maxBlWavelength = maxBl / wavelength # max baseline (units of wavelength)
+    # minimum fringe spacing (asec)
+    r["minFringe"] = 1 / maxBlWavelength / 4.8481368e-6
+    return r
+# end ProjMetadata
+

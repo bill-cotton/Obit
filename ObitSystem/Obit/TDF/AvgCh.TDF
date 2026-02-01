@@ -1,0 +1,99 @@
+; $Id$
+; AvgCh
+;---------------------------------------------------------------
+;! Average planes of an image
+;# Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2026
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+AvgCh     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+AvgCh:  Task to copy a sub region of an image
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of file
+**PARAM** str 128
+inFile                             input Filename if FITS image
+**PARAM** str 12
+inName                             input AIPS Image name (name)
+**PARAM** str 6
+inClass                            input AIPS Image name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  input AIPS Image name (seq. #)
+**PARAM** int 1
+inDisk           0.0          9.0  input AIPS Disk drive #
+**PARAM** int 7
+BLC              0.0      99999.0  Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0.0      99999.0  Top right corner of image
+                                     0=>entire image
+**PARAM** int 1  **DEF** 2
+chAvg            0.0      32768.0  Number of channels to avg.
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 128
+outFile                            output Filename if FITS image
+**PARAM** str 12
+outName                            output AIPS Image name (name)
+**PARAM** str 6
+outClass                           output AIPS Image name (class)
+**PARAM** int 1
+outSeq            0.0       9999.0 output AIPS Image name (seq. #)
+**PARAM** int 1
+outDisk           0.0          9.0 output AIPS Disk drive #
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+AvgCh
+Type: Task
+Use:  AvgCh Average adjacent channels of an image
+Adverbs:
+  Userid......User ID of owner of image.  0=>current user 32000=>all 
+              users
+  DataType...."FITS" or "AIPS" data for all input and output
+  inFile......Input File name if a FITS file
+  inName......input AIPS Image name(name).       Standard defaults.
+  inClass.....input AIPS Image name(class).      Standard defaults.
+  inSeq.......input AIPS Image name(seq. #).     0 => highest.
+  inDisk......input AIPS Disk drive # of image.  0 => any.
+  BLC.........The Bottom Left-hand pixel of the subarray of the image to
+              be analysed. The value (0,0) means (1,1). 1-rel
+  TRC.........The Top Right-hand pixel of the subarray of the image to
+              be analysed.  The value (0,0) means the top right hand
+              corner of the entire image.  1-rel
+  chAvg.......Number of channels to avg.
+  outDType....'FITS' or 'AIPS'  type of output
+              Defaults to DataType.
+  outFile.....Output File name if a FITS file
+  outName.....Output AIPS Image name(name). def. inName
+  outClass....Output AIPS Image name(class). def 'AvgCh'
+  outSeq......Output AIPS Image name(seq. #).     0 => highest.
+  outDisk.....Output AIPS Disk drive # of image.  0 => any.
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
+----------------------------------------------------------------

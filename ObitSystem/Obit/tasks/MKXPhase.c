@@ -1,7 +1,7 @@
 /* $Id$  */
 /* MeerKAT X/Y phase bandpass calibration from noise diode            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2019,2022                                          */
+/*;  Copyright (C) 2019-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -779,7 +779,7 @@ void MKXPhaseHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "outFile",  "outDisk", "outName", "outClass", "outSeq", 
     "Sources","timeRange",  "BChan", "EChan",  "ChWid", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "Antennas",  "refAnt", "BPSoln", "nThreads", "fakeBP", 
+    "Antennas",  "refAnt", "BPSoln", "solInt", "nThreads", "fakeBP", 
    NULL};
   gchar *routine = "MKXPhaseHistory";
 

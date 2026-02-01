@@ -55,8 +55,20 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
     logfile  = file to write results to
     """
     ################################################################
+    # Local image if ImageMF
+    xim = inImage.cast('ObitImage')
     # Read plane
-    p    = Image.PReadPlane(inImage,err,blc=blc,trc=trc)
+    lblc = [1,1]+blc[2:]
+    ltrc = [0,0]+trc[2:]
+    pp  = Image.PReadPlane(xim,err,blc=lblc,trc=ltrc)
+    d = xim.Desc.Dict
+    lblc=[]; ltrc=[]  # zero rel
+    for i in range(0,min(len(blc),d['naxis'],pp.Ndim,)):
+        lblc.append(max(0,blc[i]-1))
+        ltrc.append(min(d['inaxes'][i]-1,trc[i]-1))
+        if ltrc[i]<=0:
+            ltrc[i] = d['inaxes'][i]-1
+    p   = FArray.PSubArr(pp, lblc, ltrc, err)
     OErr.printErrMsg(err, "Error with input image")
     head = inImage.Desc.Dict  # Header
 

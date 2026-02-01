@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2025                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -413,7 +413,7 @@ void Usage(void)
 /*----------------------------------------------------------------------- */
 {
     fprintf(stderr, "Usage: MFImage -input file -output ofile [args]\n");
-    fprintf(stderr, "MFImage Obit task to SW wideband image/CLEAN data\n");
+    fprintf(stderr, "MFImage Obit task for wideband image/CLEAN data\n");
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "  -input input parameter file, def MFImage.in\n");
     fprintf(stderr, "  -output output result file, def MFImage.out\n");
@@ -2688,7 +2688,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
     else inMF = (ObitImage*)myClean->mosaic->images[0];
     /* Open and close to update disk */
     ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
-    ObitImageMFSetFreqEff ((ObitImageMF*)inMF, nFreq, specFreqEff, err);
+    ObitImageMFSetFreqEff (inMF, nFreq, specFreqEff, err);
     inMF->myStatus = OBIT_Modified;  /* Grumble */
     ObitImageClose(inMF, err);
     Obit_log_error(err, OBIT_InfoErr,  "%s: Updated eff. freqs.", routine);
