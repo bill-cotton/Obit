@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011                                               */
+/*;  Copyright (C) 2011,2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -56,4 +56,4 @@ ofloat priorAlpha;
 odouble priorAlphaRefF;
 /** Spectral smoothing wanted in model? */
 gboolean doSmoo;
-/* End  following MUST be identical to ObitSkyModelMFDef.h */
+

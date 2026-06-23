@@ -1,7 +1,7 @@
 /* $Id$ */
-/*  Imaging software correcting for tabulated beamshape               */
+/*  Imaging software correcting for antenna beamshape                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2025                                          */
+/*;  Copyright (C) 2011-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -428,7 +428,7 @@ void Usage(void)
 /*     out2Disk  Int        output AIPS or FITS uv disk no  [def 1]       */
 /*     Sources   Str (16,1) Sources selected, blank = all                 */
 /*     Stokes    Str (4)    Stokes parameter to image, def=I              */
-/*     Threshold Flt (1)    Beam squint correction Threshold [0.0]        */
+/*     Threshold Flt (1)    Beam correction Threshold [0.0]               */
 /*     FOV       Flt (1)    Field of view in deg , NO DEFAULT (0.0)       */
 /*     UVRange   Flt (2)    Range n uv plane in klambda, def=all          */
 /*     timeRange Flt (2)    Timerange in days , def=all                   */
@@ -1060,7 +1060,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
   /* Set number of vis per IO */
-  nvis = 1000;  /* How many vis per I/O? */
+  nvis = 5000;  /* How many vis per I/O? */
   nvis =  ObitUVDescSetNVis (inData->myDesc, myInput, nvis);
   dim[0] = dim[1] = dim[2] = dim[3] = 1;
   ObitInfoListAlwaysPut (inData->info, "nVisPIO", OBIT_long, dim,  &nvis);
@@ -1459,7 +1459,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData, 
 		 ObitErr* err)
 {
-  ObitDConCleanVis *myClean=NULL;
+  ObitDConCleanVis *myClean=NULL, *saveClean=NULL;
   ObitUV       *outData = NULL;
   ObitImage    *outField=NULL;
   ObitImage    *outImage[6]={NULL,NULL,NULL,NULL,NULL,NULL}, *tmpImage=NULL;
@@ -1477,8 +1477,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   olong        i, chInc, BChan, EChan, BIF, nchan, istok, ipoln=1, npoln, bpoln, epoln;
   olong        niter, *IChanSel, order;
-  gboolean     first, doFlat, autoWindow, Tr=TRUE, do3D, doCmplx=FALSE, doVPol, btemp;
-  gboolean     HalfStoke, FullStoke, doSub;
+  gboolean     first, doFlat, autoWindow, Tr=TRUE, do3D, doCmplx=FALSE, btemp;
+  gboolean     HalfStoke, FullStoke, doSub, doVPol=FALSE;
   olong        numAntType, inver, outver, selFGver, *unpeeled=NULL, plane[5] = {0,1,1,1,1};
   oint         otemp;
   gchar        Stokes[5],  IStokes[5], *chStokes=" IQUVRL", *CCType = "AIPS CC";
@@ -1497,7 +1497,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect", 
-    "numBeamTapes", "BeamTapes", "MResKnob", "doGPUGrid", "GPU_no",
+    "numBeamTapes", "BeamTapes", "MResKnob", "doGPU", "doGPUGrid", "GPU_no",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -1604,19 +1604,16 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   /* Number of stokes parameter, I (or F), Q, U, V */
   npoln = 0;
   bpoln = 1;
-  doVPol = FALSE;
   if ((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' ')) npoln = 1;
   if ((npoln==1) && (Stokes[1]=='Q')) npoln = 2;
   if ((npoln==2) && (Stokes[2]=='U')) npoln = 3;
   if ((npoln==3) && (Stokes[3]=='V')) npoln = 4;
-  if ((npoln==1) && (Stokes[1]=='V')) {npoln = 2; doVPol = TRUE;}
+  if ((npoln==1) && (Stokes[1]=='V')) {npoln = 2, doVPol=TRUE;}  // IV Mode
   epoln = bpoln + npoln - 1;
   /* Single poln cases */
   if (Stokes[0]=='Q') {bpoln=2; epoln=2; npoln = 1;}
   if (Stokes[0]=='U') {bpoln=3; epoln=3; npoln = 1;}
   if (Stokes[0]=='V') {bpoln=4; epoln=4; npoln = 1;}
-  if ((Stokes[0]=='R') && (Stokes[1]=='R')) {bpoln=5; epoln=5; npoln = 1;}
-  if ((Stokes[0]=='L') && (Stokes[1]=='L')) {bpoln=6; epoln=6; npoln = 1;}
   /* Make sure Stokes OK */
   Obit_return_if_fail((epoln>=bpoln), err, 
 			"%s: Problem with Stokes %s", routine, Stokes);
@@ -1644,65 +1641,61 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   /* Get Beam images */
   ObitSkyModelVMBeamGet2Beam (myInput, doCmplx, inData->myDesc->crval[inData->myDesc->jlocs],
 			     &numAntType, &RXBeam,   &LYBeam,   &RLBeam,   &LRBeam, 
-			     &RXBeamIm, &LYBeamIm, &RLBeamIm, &LRBeamIm, &Diams, err);
+			     &RXBeamIm,   &LYBeamIm, &RLBeamIm, &LRBeamIm, &Diams, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Loop over polarization */
-  first = TRUE;
+  first = TRUE; 
   for (ipoln=bpoln; ipoln<=epoln; ipoln++) {
     istok = ipoln-1;  /* 0-rel */
   
-    /* set selected Stokes  */
+    /* set selected Stokes
+       If I (or F) use only parallel hands, else all */
     dim[0] = 4;
-    sprintf (IStokes, "    ");
-    if (ipoln<=4) sprintf (IStokes, "%c   ", chStokes[ipoln]);
-    else if (ipoln==5) sprintf (IStokes, "RR  ");
-    else if (ipoln==6) sprintf (IStokes, "LL  ");
-    /* Trap for 'IV' mode */
-    if (doVPol && (ipoln>bpoln)) {IStokes[0] = 'V'; istok=3;}
+    if (ipoln==1) sprintf (IStokes, "HALF");
+    else          sprintf (IStokes, "    ");
     ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, IStokes);
     dim[0] = 1;
     ObitInfoListAlwaysPut (outData->info, "doCalSelect", OBIT_bool, dim, &Tr);
     
     /* Message */
-    Obit_log_error(err, OBIT_InfoErr, " Image %cPol", IStokes[0]);
+    Obit_log_error(err, OBIT_InfoErr, " Image %cPol", chStokes[ipoln]);
     ObitErrLog(err); 
 
     /* Define output image */
     setOutputData (Source, istok, myInput, outData, &tmpImage, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
     
-    /* Need half Stokes?  Only first time = I */
-    HalfStoke = first;
+    /* Need half Stokes?  Only  I (F) */
+    HalfStoke = ipoln==1;
     /* Other Stokes need all */
-    FullStoke = !first;
+    FullStoke = ipoln!=1;
     dim[0] = dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (outData->info, "HalfStoke", OBIT_bool, dim, &HalfStoke);
     ObitInfoListAlwaysPut (outData->info, "FullStoke", OBIT_bool, dim, &FullStoke);
     
     /* Create Imager & SkyModel */
-    /* initialization - first time need beam correction, subsequent = normal imaging */
-    if (first ) {
-      first = FALSE;  /* Only once */
-      
-      /* Save old mosaic */
-      if ((imager) && (imager->mosaic)) mosaic = ObitImageMosaicRef(imager->mosaic);
-
+    /* Save old mosaic */
+    if ((imager) && (imager->mosaic)) mosaic = ObitImageMosaicRef(imager->mosaic);
+    
+    /* initialization first pass  */
+    if (first) {
+      first = FALSE;  /* Now done */
       /* Delete any old */
       imager   = ObitUVImagerUnref(imager);
       skyModel = ObitSkyModelUnref(skyModel);
-
+      
       /* Create wideband Imager - first time to determine alphaRefF */
       imager = (ObitUVImager*)ObitUVImagerMFCreate("imager", order, maxFBW, 
 						   alpha, alphaRefF, outData, err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
-    
+      
       /* Set reference frequency for spectral index corrections -
 	 use inData reference freq */
       alphaRefF = imager->mosaic->images[0]->myDesc->crval[imager->mosaic->images[0]->myDesc->jlocf];
       dim[0] = dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (outData->info, "AlphaRefF", OBIT_double, dim, &alphaRefF);
-
+      
       /* Again for real */
       imager = ObitUVImagerUnref(imager);
       imager = (ObitUVImager*)ObitUVImagerMFCreate("imager", order, maxFBW, 
@@ -1718,17 +1711,21 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       dim[0] = dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "antSize", OBIT_float, dim, &skyModel->antSize);
       ObitInfoListAlwaysPut (outData->info, "antSize", OBIT_float, dim, &skyModel->antSize);
-
+    
       /* No alpha correction in model */
       btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (skyModel->info, "doAlphaCorr", OBIT_bool, dim, &btemp);
       ObitInfoListCopyList (myInput, skyModel->info, SkyParms);
-
-      /* Make CleanVis */
-      myClean = ObitDConCleanVisMFCreate2("Clean Object", outData, 
-					  imager, skyModel, order, maxFBW, 
-					  alpha, alphaRefF, err);
+      
+      /* Make CleanVis if needed */
+      
+      if ((myClean==NULL) && (saveClean)) myClean = ObitDConCleanVisMFRef(saveClean); /* Did old one get lost?*/
+      if (myClean==NULL) 
+	myClean = ObitDConCleanVisMFCreate2("Clean Object", outData, 
+					    imager, skyModel, order, maxFBW, 
+					    alpha, alphaRefF, err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      saveClean = ObitDConCleanVisMFRef(myClean); /* Keep a reference */
       
       /* Get input parameters from myInput, copy to myClean */
       ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
@@ -1736,44 +1733,18 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       
       /* Save imaging parms for weighting - from defaults in mosaic creation */	
       ObitInfoListCopyList (outData->info, saveParmList, saveParms);
- 
-     /* Save mosaic parameters */	
+      
+      /* Save mosaic parameters */	
       ObitInfoListCopyList (myInput, myClean->mosaic->info, mosaicParms);
-
+      
       /* Get beam for first IF if a target beam not specified */
       BeamOne (myInput, outData, myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
-
-    } else { /* Polarized Stokes - Normal imaging - redo SkyModel */
-      /* DEBUG NO NO NO use beam polarized model */
-      /* Delete old 
-      skyModel = ObitSkyModelUnref(skyModel);
-
-      skyModel = (ObitSkyModel*)ObitSkyModelMFCreate("Sky Model", imager->mosaic);*/
-
-      /* Replace sky model on Clean 
-      myClean->skyModel = ObitSkyModelUnref(myClean->skyModel);
-      myClean->skyModel = ObitSkyModelRef(skyModel);*/
-    } /* end setup imager & skymodel */
-
+    } /* end initialization */
+  
     /* Save parameters */
     ObitInfoListCopyList (myInput, skyModel->info, SkyParms);
 
-    /* No alpha correction in model */
-    btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
-    ObitInfoListAlwaysPut (skyModel->info, "doAlphaCorr", OBIT_bool, dim, &btemp);
-    ObitInfoListCopyList (myInput, skyModel->info, SkyParms);
-    
-    /* Save imaging parms for weighting - from defaults in mosaic creation */	
-    ObitInfoListCopyList (outData->info, saveParmList, saveParms);
-    
-    /* Save mosaic parameters */	
-    ObitInfoListCopyList (myInput, myClean->mosaic->info, mosaicParms);
-    
-    /* Get beam for first IF if a target beam not specified */
-    BeamOne (myInput, outData, myClean, err);
-    if (err->error) Obit_traceback_msg (err, routine, outData->name);
-    
     /* Set CLEAN windows for Stokes I*/
     if (ipoln==bpoln) ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
@@ -1789,8 +1760,6 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Create output image for this poln. */
     sprintf (IStokes, "    ");
     if (ipoln<=4) sprintf (IStokes, "%c   ", chStokes[ipoln]);
-    else if (ipoln==5) sprintf (IStokes, "RR  ");
-    else if (ipoln==6) sprintf (IStokes, "LL  ");
     /* Trap for 'IV' mode */
     if (doVPol && (ipoln>bpoln)) IStokes[0] = 'V';
     /* Create header in temporary, normal image */
@@ -1833,15 +1802,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Subtract sky model from outData if any cleaning requested */
     niter = 0;
     ObitInfoListGetTest(myInput, "Niter",  &type, dim, &niter);
-    /* ??? Q sub messes up U pol  */
-    if ((niter>0) && doSub)  subPolModel (outData, skyModel, &selFGver, err);
-    /* only I */
-    //if ((ipoln==1) && (niter>0) && doSub && 
-    //	((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' '))) {
-      /*HACKHACKHACKENSACK DEBUG leave Model rather than residuals */
-      //skyModel->doReplace=TRUE; /* HACK DEBUG */
-    // subPolModel (outData, skyModel, &selFGver, err);
-    //} /* End subtract model */
+    if ((niter>0) && doSub)  subPolModel (outData, myClean->skyModel, &selFGver, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
@@ -1911,6 +1872,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     }
   }
   myClean  = ObitDConCleanVisUnref(myClean); /* Also gets images, skyModel */
+  saveClean= ObitDConCleanVisUnref(saveClean); /* Protection */
   mosaic   = ObitImageMosaicUnref(mosaic);
   outData  = ObitUVUnref(outData);
   for (i=0; i<numAntType; i++) {
@@ -2694,7 +2656,8 @@ void subPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
 
   if (ncomp>0) {
     /* Message */
-    Obit_log_error(err, OBIT_InfoErr, "Subtracting Pol model from output uv data");
+    Obit_log_error(err, OBIT_InfoErr, "Subtracting %cPol model from output uv data",
+		   skyModel->stokes[0]);
     ObitErrLog(err); 
     
     /* unset selection flagging */
@@ -2837,7 +2800,7 @@ void MFBeamHistory (gchar *Source, ObitInfoList* myInput,
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF", "doSub",
     "nTaper", "Tapers", "MResKnob",
-    "nThreads","doGPUGrid","GPU_no",
+    "nThreads","doGPU","doGPUGrid","GPU_no",
     NULL};
   gchar *routine = "MFBeamHistory";
 

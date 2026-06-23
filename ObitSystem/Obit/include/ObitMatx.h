@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020-2024                                          */
+/*;  Copyright (C) 2020-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -48,6 +48,16 @@ enum obitMatxType{
   OBIT_Double,
 }; /* end enum obitMatxType */
 typedef enum obitMatxType ObitMatxType;
+
+/*-------------------- unions -------------------------------------*/
+/** data array - types set to array pointer*/
+union ObitMatxDataEquiv { 
+  ofloat *array;
+  ofloat  *flt;
+  odouble *dbl;
+  ocomplex *cpx;
+};
+
 /*--------------Class definitions-------------------------------------*/
 /** ObitMatx Class structure. */
 typedef struct {
@@ -85,9 +95,9 @@ static inline gboolean ObitMatxIsBlank(ObitMatx *matx) {
   ofloat fblank = ObitMagicF();
   gboolean out=FALSE;
   if (matx->type==OBIT_Real) {
-    out = matx->flt[0]==fblank;
+    out = matx->data.flt[0]==fblank;
   } else if (matx->type==OBIT_Complex) {
-     out = matx->cpx[0].real==fblank;
+     out = matx->data.cpx[0].real==fblank;
   } else { /* Double */
     out = FALSE;  /* no test */
   }
@@ -102,14 +112,14 @@ static inline gboolean ObitMatxIsBlank(ObitMatx *matx) {
  */
 static inline void ObitMatxGet(ObitMatx *matx, olong i1, olong i2, void *val) {
   if (matx->type==OBIT_Real) {
-    *(ofloat*)val = matx->flt[i1+i2*matx->naxis[0]];
+    *(ofloat*)val = matx->data.flt[i1+i2*matx->naxis[0]];
   } else if (matx->type==OBIT_Complex) {
-    ((ofloat*)val)[0] = matx->cpx[i1+i2*matx->naxis[0]].real;
-    ((ofloat*)val)[1] = matx->cpx[i1+i2*matx->naxis[0]].imag;
-    COMPLEX_SET(matx->cpx[i1+i2*matx->naxis[0]], 
+    ((ofloat*)val)[0] = matx->data.cpx[i1+i2*matx->naxis[0]].real;
+    ((ofloat*)val)[1] = matx->data.cpx[i1+i2*matx->naxis[0]].imag;
+    COMPLEX_SET(matx->data.cpx[i1+i2*matx->naxis[0]], 
 		((ofloat*)val)[0], ((ofloat*)val)[1]);
   } else { /* Double */
-    *((odouble*)val) = matx->dbl[i1+i2*matx->naxis[0]];
+    *((odouble*)val) = matx->data.dbl[i1+i2*matx->naxis[0]];
   }
 } /* end ObitMatxGet */
 
@@ -121,12 +131,12 @@ static inline void ObitMatxGet(ObitMatx *matx, olong i1, olong i2, void *val) {
  */
 static inline void ObitMatxSet(ObitMatx *matx, void *val, olong i1, olong i2) {
   if (matx->type==OBIT_Real) {
-    matx->flt[i1+i2*matx->naxis[0]] = ((float*)val)[0];
+    matx->data.flt[i1+i2*matx->naxis[0]] = ((float*)val)[0];
   } else if (matx->type==OBIT_Complex) {
-    COMPLEX_SET(matx->cpx[i1+i2*matx->naxis[0]], 
+    COMPLEX_SET(matx->data.cpx[i1+i2*matx->naxis[0]], 
 		((ofloat*)val)[0], ((ofloat*)val)[1]); 
   } else { /* Double */
-    matx->dbl[i1+i2*matx->naxis[0]] = *((odouble*)val);}
+    matx->data.dbl[i1+i2*matx->naxis[0]] = *((odouble*)val);}
 } /* end ObitMatxSet */
 
 /** Fill 2x2  complex */
@@ -141,6 +151,9 @@ void ObitMatxGet2C(ObitMatx *matx, ofloat *R00, ofloat *I00, ofloat *R01, ofloat
 typedef void (*ObitMatxGet2CFP) (ObitMatx *matx, ofloat *R00, ofloat *I00, 
 				 ofloat *R01, ofloat *I01,  ofloat *R10, ofloat *I10, 
 				 ofloat *R11, ofloat *I11);
+/** Add two 2x2 complex */
+void ObitMatxAdd2C(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
+typedef void (*ObitMatxAdd2CFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
 /** Create empty (0) matrix */
 ObitMatx* ObitMatxCreate(ObitMatxType type, olong ndim, olong *naxis);
 typedef ObitMatx* (*ObitMatxCreateFP) (ObitMatxType type, olong ndim, olong *naxis);
@@ -168,6 +181,9 @@ typedef void (*ObitMatxCTransFP) (ObitMatx *in, ObitMatx *out);
 /** Zero values */
 void ObitMatxZero(ObitMatx *out);
 typedef void (*ObitMatxZeroFP) (ObitMatx *in);
+/** Zero values in a 2x2 complex */
+void ObitMatxZero2C(ObitMatx *out);
+typedef void (*ObitMatxZero2CFP) (ObitMatx *in);
 /** Unit matrix */
 void ObitMatxUnit(ObitMatx *out);
 typedef void (*ObitMatxUnitFP) (ObitMatx *in);

@@ -4,7 +4,7 @@
 ;! Correct off-axis instrumental polarization in UV data
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009-2025
+;;  Copyright (C) 2009-2026
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -195,8 +195,16 @@ PBCor                              If true, apply freq.
 **PARAM** float 1  **DEF** 25.0
 antSize                            Pri. antenna size (m) to use
                                    in PBCor
+**PARAM** float 1
+Threshold       0.0                Threshold for accurate model
 **PARAM** int 1 **DEF** 1
 nThreads            0              Number of threads to use
+**PARAM** boo 1 **DEF** F
+doGPU            0                 Use GPU for sky model if available
+**PARAM** int 10 **DEF** -1
+GPU_no           -1                GPU numbers to use, -1 terminates
+**PARAM** int 1 
+prtLv             0.0              Print level in selfcal
 **PARAM** str 128
 taskLog                            Logfile to write task messages to
 **PARAM** int 10
@@ -326,6 +334,7 @@ Adverbs:
 	     correlation (RR,LL,RL,LR or XX,YY,XY,YX) and 
 	     "xxxx" is arbitrary.
              The task will search for the different Stokes images.
+	     "H","V" get mapped to "X" and "Y"
   doCmplx....If True, use complex beam images
   in4Name....Voltage Beam imag. AIPS name. Only used if doCmplx = True
   in4Class...Beam imag. AIPS class. Expected form "SSxxxx" where "SS"
@@ -341,6 +350,7 @@ Adverbs:
 	     "xxxx" is arbitrary.
              The task will search for the different Stokes images 
              Only used if doCmplx = True
+	     "H","V" get mapped to "X" and "Y"
   in5DType..'FITS' or 'AIPS'  type of Beam images, defaults to
              DataType.
   in5Diam....Diameter in m of antennas described by in5* and in6*
@@ -352,6 +362,7 @@ Adverbs:
   in5Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
   in5File....FITS Voltage 2nd Beam input root if in5DType=='FITS'
   	     Like in3File but for the second beam type.   
+	     "H","V" get mapped to "X" and "Y"
   in6Name....Voltage 2nd Beam imag. AIPS name. Only used if 
              doCmplx = True
   in6Class...2nd Beam imag. AIPS class. 
@@ -360,6 +371,7 @@ Adverbs:
   in6Disk....Disk drive # of beam imag. (FITS or AIPS).
   in6File....Power FITS 2nd Beam imag. input root if in3DType=='FITS'
              Like in4File but for the second beam type.
+	     "H","V" get mapped to "X" and "Y"
   outDataType..'FITS' or 'AIPS'  type of output UV, defaults to
              DataType.
   outFile....Output UV FITS file name.  Defaults to
@@ -429,12 +441,32 @@ Adverbs:
   PBCor......If true, apply frequency dependent primary beam 
           .  corrections.  Default True
   antSize....Primary antenna size (m) to use for PBCor def. 25
+  Threshold..This value is used to control when the high accuracy 
+             beam squint model is used.  In CLEANing, whenever the 
+             peak residual is above this value the beam model 
+             is used for all components but when the residuals drop 
+             below this level a faster method is used.  
+             For self calibration, all merged components with a 
+             flux density above this value use the high accuracy 
+             model and those below a faster model.
+             If there are a large number of low level components 
+             then setting Threshold larger than zero will speed the
+             execution and if suitably chosen will not limit the
+             dynamic range of the image. 
+             (One percent of the peak would be a plausible value.)
   nThreads...If the Obit libraries are compiled with multiple
              thread operation enabled, this parameter sets the 
              number of threads that can be used for parallel 
              operations. 
              NB: This only improves performance if there are 
              multiple processors and/or cores in the host.
+  doGPU.......If software is built for a GPU and one is available
+              True=> use it for the DFT model calculation, 
+              otherwise use the CPU
+  GPU_no......List of GPU numbers to use in gridding, 0-rel
+              The list is terminated by a -1.
+              DO NOT INCLUDE DUPLICATE ENTRIES!!!
+  prtLv.......Print level in selfcal, 0=>none [def. 0],>=5 -> progress
   taskLog....Log file to write messages to INSTEAD of the terminal
              This is useful in long runs or batch files where
              a bug in the ObitTalk message handling may cause

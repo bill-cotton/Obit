@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2023                                          */
+/*;  Copyright (C) 2002-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -506,7 +506,7 @@ void ObitErrTimeLog  (ObitErr *in, gchar *errMsg)
  */
 gboolean ObitErrIsA (ObitErr* in)
 {
-  gboolean out;
+  gboolean out=TRUE;
 
   /* error checks */
   if (in == NULL) return FALSE;
@@ -515,10 +515,21 @@ gboolean ObitErrIsA (ObitErr* in)
   /* sanity checks */
   if ((in->number<0) || (in->number>50000) || 
       (in->ReferenceCount<0) || (in->ReferenceCount>1000)  ||
-      (in->error>100)) return FALSE;
+      (in->error>100)) {
+    out = FALSE;
+    /* Debug */
+    fprintf (stderr, "ObitErrIsA failed: number %d refCnt %d error %d\n",
+	     in->number, in->ReferenceCount,in->error);
+    return FALSE;
+  }
 
   /* compare class name member */
   out = !strcmp(in->className, myClassName);
+  if (out==FALSE) {
+    /* Debug */
+    fprintf (stderr, "ObitErrIsA failed: inClass %s myClass %s \n",
+	     in->className, myClassName);
+  }
 
   return out;
 } /* end ObitErrIsA */

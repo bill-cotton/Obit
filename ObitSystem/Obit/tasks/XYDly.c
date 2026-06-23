@@ -1,7 +1,7 @@
 /* $Id$  */
 /* X-Y delay/phase calibration                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2025                                               */
+/*;  Copyright (C) 2025-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1060,30 +1060,31 @@ ObitTableSN* ObitUVXYDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	      tr   = xpol1[(jif*numFreq+ii)*3];
 	      ti   = xpol1[(jif*numFreq+ii)*3+1];
 	      if ((tr==0.0) && (ti==0.0)) continue;
+	      /* channel XY residual */
 	      p1   = 57.295*atan2(ti, tr);
-	      cp1  = p1 + fmod(360.0*(delay[jif]*dFreq)*(ii+BChan),360.0) - phase0*57.296;
+	      cp1  = p1 + fmod(360.0*(delay[jif]*dFreq)*(ii+BChan),180.0) - phase0*57.296; // DEBUG
+	      if (cp1> 90.0) {cp1 -= 180.0;} if (cp1> 90.0) {cp1 -= 180.0;}//DEBUG
+	      if (cp1<-90.0) {cp1 += 180.0;} if (cp1<-90.0) {cp1 += 180.0;}//DEBUG
 	      if (xpol1[(jif*numFreq+ii)*3+2]>0.0) {
 		tr /= xpol1[(jif*numFreq+ii)*3+2]; ti /= xpol1[(jif*numFreq+ii)*3+2];
 		amp1 = sqrtf(tr*tr+ti*ti);
 	      } else amp1 = 0.0;
-	      /* channel XY residual */
-	      if (cp1> 180.0) {cp1 -= 360.0;} if (cp1> 180.0) {cp1 -= 360.0;}
-	      if (cp1<-180.0) {cp1 += 360.0;} if (cp1<-180.0) {cp1 += 360.0;}
+	      /* channel YX residual */
 	      tr   = xpol2[(jif*numFreq+ii)*3];
 	      ti   = xpol2[(jif*numFreq+ii)*3+1];
 	      p2   = 57.295*atan2(ti, tr);
+	      cp2  = p2 + fmod(360.0*(delay[jif]*dFreq)*(ii+BChan),180.0) - phase0*57.296; 
+	      if (cp2> 90.0) {cp2 -= 180.0;} if (cp2> 90.0) {cp2 -= 180.0;}
+	      if (cp2<-90.0) {cp2 += 180.0;} if (cp2<-90.0) {cp2 += 180.0;}
 	      if (xpol2[(jif*numFreq+ii)*3+2]>0.0) {
 		tr /= xpol2[(jif*numFreq+ii)*3+2]; ti /= xpol2[(jif*numFreq+ii)*3+2];
 		amp2 = sqrtf(tr*tr+ti*ti);
 	      } else amp2 = 0.0;
-	      /* channel YX residual */
-	      cp2  = p2 + fmod(360.0*(delay[jif]*dFreq)*(ii+BChan),360.0) - phase0*57.296; 
-	      if (cp2> 180.0) {cp2 -= 360.0;} if (cp2> 180.0) {cp2 -= 360.0;}
-	      if (cp2<-180.0) {cp2 += 360.0;} if (cp2<-180.0) {cp2 += 360.0;}
 	      Obit_log_error(err, OBIT_InfoErr, 
 			     "ch %4d xc1 %8.2f xc2 %8.2f corr %8.2f xc1 %8.2f xc2 %8.2f a1 %8.5f a2 %8.5f ",
 			     BChan+ii, p1, p2, 360.0*(delay[jif]*dFreq)*(ii+BChan), cp1, cp2, amp1, amp2);
 	    } /* end channel loop */
+
 	  }
 	  if (err->prtLv>=1) {
 	    Obit_log_error(err, OBIT_InfoErr, "IF %2d delay %8.2f nsec phase %8.2f SNR %5.1f",
@@ -1246,7 +1247,7 @@ void XYFitDelay (olong numFreq, olong BChan, ofloat dFreq,
 {
   olong i, j, cnt, cnt1, cnt2, ntry;
   ofloat td1, td2, td3, td4, d1, d2, d3, d4, test=0, best, best2, best3, best4;
-  ofloat corr, cori, tr, ti, w, p, tp, dp;
+  ofloat corr, cori, tr, ti, w, p, tp=0.0, dp=0.0, tp2=0.0, dp2=0.0, dpf=0.0, dpf2=0.0;
   ofloat *xp1=NULL, *xp2=NULL;
   odouble sumr=0, sumi=0, sumw=0, sumr1=0, sumi1=0, sumw1=0, sumr2=0, sumi2=0, sumw2=0;
   /* error checks */
@@ -1385,10 +1386,10 @@ void XYFitDelay (olong numFreq, olong BChan, ofloat dFreq,
       tr = xp1[j+0]*corr - xp1[j+1]*cori;
       ti = xp1[j+0]*cori + xp1[j+1]*corr;
       if (xp1[j+2]>0.0) {
-	tp = atan2 (ti, tr);
-	dp = (tp - p);
-	if (dp> G_PI) {dp -= 2.0*G_PI;} if (dp<-G_PI) {dp += 2.0*G_PI;}
-	sumr1 += dp*dp;
+	tp = fmod(atan2 (ti, tr), G_PI); 
+	dp = (tp - p); dpf = dp;
+	if (dpf>0.5* G_PI) {dpf -= G_PI;} if (dpf<-0.5*G_PI) {dpf += G_PI;}
+	sumr1 += dpf*dpf;//DEBUG
 	cnt1++;
       }
     }
@@ -1397,10 +1398,10 @@ void XYFitDelay (olong numFreq, olong BChan, ofloat dFreq,
       tr = xp2[j+0]*corr - xp2[j+1]*cori;
       ti = xp2[j+0]*cori + xp2[j+1]*corr;
       if (xpol2[j+2]>0.0) {
-	tp = atan2 (ti, tr);
-	dp = (tp - p);
-	if (dp> G_PI) {dp -= 2.0*G_PI;} if (dp<-G_PI) {dp += 2.0*G_PI;}
-	sumr2 += dp*dp;
+	tp2 = fmod(atan2 (ti, tr), G_PI);
+	dp2 = (tp2 - p); dpf2 = dp2;
+	if (dpf2> 0.5*G_PI) {dpf2 -= G_PI;} if (dpf2<-0.5*G_PI) {dpf2 += G_PI;}
+	sumr2 += dpf2*dpf2;
 	cnt2++;
       }
     }
@@ -1412,7 +1413,7 @@ void XYFitDelay (olong numFreq, olong BChan, ofloat dFreq,
   cnt  = cnt1  + cnt2;
   /* SNR from variance of phase residuals */
   if (cnt>=2) *snr = 1.0 / sqrt(sumr/(cnt-1));
-  
+
   return;
 } /* end XYFitDelay  */
 

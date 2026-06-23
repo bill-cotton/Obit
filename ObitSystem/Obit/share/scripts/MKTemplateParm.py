@@ -223,7 +223,7 @@ parms["doSaveTab"]     = T        # Save UV tables to FITS
 parms["doSaveUV"]      = T        # Save calibrated UV data to FITS
 parms["doImage"]       = T        # Image targets
 parms["doSaveImg"]     = T        # Save results to FITS
-parms["doCleanup"]     = T        # Destroy AIPS files, May NOT want this
+parms["doCleanup"]     = F        # Destroy AIPS files, May NOT want this
 
 # diagnostics
 parms["doSNPlot"]      = T                       # Plot SN tables

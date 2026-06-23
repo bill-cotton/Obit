@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2019                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -40,6 +40,8 @@ olong schemaVersion;
 gboolean isEVLA;
 /* Is this ALMA data? */
 gboolean isALMA;
+/** Is this ATCA data? */
+gboolean isATCA;
 /* Leave in SW Order? */
 gboolean SWOrder;
 /* Make different source/calCode a different source? */
@@ -146,3 +148,5 @@ ofloat integTime;
 olong maxLine;
 /** xml parsing Buffer */
 gchar *line;
+/** Max. antenna number */
+olong maxAnt;

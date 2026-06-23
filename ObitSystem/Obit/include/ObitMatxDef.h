@@ -1,6 +1,6 @@
 /* $Id$                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020                                               */
+/*;  Copyright (C) 2020,2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -39,8 +39,5 @@ olong ndim;
 olong arraySize;
 /** Dimensionality array */
 olong *naxis;
-/** data array - types set to array pointer*/
-ofloat *array;
-ofloat  *flt;
-odouble *dbl;
-ocomplex *cpx;
+/** data pointers by type */
+union ObitMatxDataEquiv data;

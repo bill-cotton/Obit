@@ -782,7 +782,7 @@ void AvgChAver (ObitInfoList* myInput, ObitImage* inImage, ObitImage* outImage,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
-  olong        inext=0, chAvg = 1;
+  olong        inext=0, chAvg = 1, nout;
   gchar        *exclist[] = {NULL};
   gchar        *today=NULL;
   olong        i, plane[IM_MAXDIM-2] = {0,1,1,1,1};;
@@ -826,6 +826,7 @@ void AvgChAver (ObitInfoList* myInput, ObitImage* inImage, ObitImage* outImage,
   /* Output image averaged on third axis */
   tmp = 0.99 + (ofloat)inImage->myDesc->inaxes[2] / (ofloat)chAvg;
   outImage->myDesc->inaxes[2] = (olong)tmp;
+  nout = outImage->myDesc->inaxes[2];  /* Number of output planes */
   outImage->myDesc->cdelt[2]  = inImage->myDesc->cdelt[2] * chAvg;
   outImage->myDesc->crpix[2]  = 1.0 + ((inImage->myDesc->crpix[2]-1.0) / chAvg);
   if (chAvg>1) outImage->myDesc->crval[2] += inImage->myDesc->cdelt[2] * (chAvg/2.0);
@@ -872,6 +873,8 @@ void AvgChAver (ObitInfoList* myInput, ObitImage* inImage, ObitImage* outImage,
       ObitImageWrite(outImage, PlanePix[0]->array, err);
       if (err->error) Obit_traceback_msg (err, routine, outImage->name);
       plnDone = FALSE; inext = 0; /* reset */
+      /* Finished? */
+      if (outImage->myDesc->plane>=nout) done=TRUE; 
     } /* end dump */
     if (done) break;
   } /* End loop over input image */

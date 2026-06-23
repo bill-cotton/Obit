@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -122,6 +122,12 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
 			      gchar *start, ofloat *target, olong n, 
 			      gboolean byteFlip, ofloat scale, 
 			      ObitBDFDataType Dtype, ObitErr *err);
+
+/* Copy binary float data to longlong */
+static ObitIOCode CopyFloat2LongLong (ObitBDFData *in, 
+				      gchar *start, ollong *target, olong n, 
+				      gboolean byteFlip, ofloat scale, 
+				      ObitBDFDataType Dtype, ObitErr *err);
 
 /* Copy binary long integer data */
 static ObitIOCode CopyLongs (ObitBDFData *in, 
@@ -408,6 +414,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   /* ALMA is a bit confused */
   if (!in->isALMA) in->isALMA = !strncmp(in->SDMData->ExecBlockTab->rows[0]->telescopeName, "OSF", 3);
   if (!in->isALMA) in->isALMA = !strncmp(in->SDMData->ExecBlockTab->rows[0]->telescopeName, "AOS", 3);
+  /* Is this ATCA data? */
+  in->isATCA = !strncmp(in->SDMData->ExecBlockTab->rows[0]->telescopeName, "ATCA", 4);
 
   /* Init */
   in->ScanInfo->iMain         = iMain;
@@ -494,8 +502,13 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     /* ALMA variant */
     prior = "<numTime>";
     in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
+  } else if (in->isATCA) {  /* ATCA different order */
+    /* ATCA variant */
+    prior = "<dimensionality axes=\"TIM\">";
+    in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
   }
-  in->numTime = in->ScanInfo->numTime;
+  
+   in->numTime = in->ScanInfo->numTime;
   in->currTimeIndx = 0;
   
   /* correlation Mode */
@@ -828,8 +841,9 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 
     /* Crack name to get number Assume EVLA starts with "ea" */
     aname = in->SDMData->AntennaTab->rows[jAnt]->name;
-    if ((aname[0]=='e') && (aname[1]=='a'))
-      in->antNo[iAnt]    = (olong)strtol(&aname[2],NULL,10);
+    if ((aname[0]=='e') && (aname[1]=='a')) in->antNo[iAnt] = (olong)strtol(&aname[2],NULL,10);
+    /* ATCA names start with "ac" -  make 0 rel */
+    else if ((aname[0]=='c') && (aname[1]=='a')) in->antNo[iAnt] = (olong)strtol(&aname[2],NULL,10);
     else in->antNo[iAnt] = in->SDMData->AntennaTab->rows[jAnt]->antennaNo;
     /* Inverse lookup */
     in->antId[in->antNo[iAnt]] = iAnt;
@@ -1295,9 +1309,16 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       /* Is this the case for ALMA? */
       scale = 1.0;
       if (in->isALMA) scale = 1.0 / in->ScanInfo->BBinfo[0]->SWinds[0]->scaleFactor;
-      retCode = CopyLongLongs (in, start, (ollong*)in->actualDurationsData, 
-			       in->ScanInfo->actualDurationsSize, 
-			       byteFlip, Dtype, err);
+      /* Convert by type */
+      if (Dtype==BDFDataType_INT64_TYPE) {  /*longlong EVLA, ALMA) */
+	retCode = CopyLongLongs (in, start, (ollong*)in->actualDurationsData, 
+				 in->ScanInfo->actualDurationsSize, 
+				 byteFlip, Dtype, err);
+      } else { /*  Float? convert to longlong (ATCA) */
+	retCode = CopyFloat2LongLong (in, start, (ollong*)in->actualDurationsData,
+				      in->ScanInfo->actualDurationsSize, 
+				      byteFlip, scale, Dtype, err);
+      }
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
       if (retCode==OBIT_IO_EOF) return retCode;
       /* Lookup table entry per spw,poln for each baseline, 
@@ -1427,8 +1448,9 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	  if (in->isLSB[iIF]) jChan = nChan-iChan-1;
 	  else jChan = iChan;
 	  for (iStok=0; iStok<nStok; iStok++) {
-	    /* Weight from Actual or default Duration - 1st channel */
-	    if (iChan==0) {
+	    /* Weight from Actual or default Duration - 1st channel 
+	     this doesn't work for ATCA use integration time */
+	    if ((iChan==0) && !in->isATCA) {
 	      weight = GetActualDuration(in, in->ant1, in->ant2, bin, iIF, iStok);
 	    }
 	    ondx = in->desc->nrparm +
@@ -1692,6 +1714,7 @@ void ObitBDFDataInit  (gpointer inn)
   in->curSource           = NULL;
   in->isEVLA              = FALSE;
   in->isALMA              = FALSE;
+  in->isATCA              = FALSE;
   in->binFlag             = FALSE;
   in->selAtmCorr          = FALSE;
   in->numAtmCorr          = 1;
@@ -2379,6 +2402,244 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
   }  /* end scaling */
   return retCode;
 } /* end CopyFloats */
+
+ /**
+ * Copy binary and convert to longlong data 
+ * May update buffer contents.
+ * \param in       The object to update
+ * \param start    input array
+ * \param target   output array
+ * \param n        Number of floats
+ * \param byteFlip If TRUE flip bytes
+ * \param scale    scaling factor
+ * \param Dtype    Data type (short, float...)
+ * \param err   Obit error stack object.
+ * \return return code, OBIT_IO_OK => OK, OBIT_IO_EOF = EOF.
+ */
+static ObitIOCode CopyFloat2LongLong (ObitBDFData *in, 
+				      gchar *start, ollong *target, olong n, 
+				      gboolean byteFlip, ofloat scale, 
+				      ObitBDFDataType Dtype, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_OK;
+  olong i, nleft, ncopy, ncopyb, nhere;
+  ollong *out;
+  ofloat *fdata;
+  short *sdata;
+  gint32 *ldata;
+  char  *bdata, btemp;
+  gchar *lstart;
+  union fequiv inu, outu;
+  gchar *routine = "CopyFloats";
+
+  /* error checks */
+  if (err->error) return retCode;
+
+  /* Copy data by type */
+  if (Dtype==BDFDataType_INT16_TYPE) {  /* scaled shorts */
+    /* How many in current buffer load */
+    nhere = (in->nBytesInBuffer - (olong)(start-in->buffer))/2;
+    nleft = n;
+    out = target;
+    lstart = start;
+    /* All in buffer? */
+    if (nhere>=n) {  /* All in current */
+      sdata = (short*)lstart;
+      ncopy = n*2;
+      /* byte flip if necessary */
+      if (byteFlip) {
+	bdata = (char*)sdata;
+	for (i=0; i<ncopy; i+=2) {
+	  btemp      = bdata[i];
+	  bdata[i]   = bdata[i+1];
+	  bdata[i+1] = btemp;
+	}
+      } /* end byte flip */
+      for (i=0; i<n; i++) out[i] = (ollong)(scale*sdata[i]);
+      in->current = lstart + ncopy;
+    } else {         /* Multiple buffers */
+      while (nleft>0) {
+	/* Copy what's here */
+	ncopy = MIN (nleft, nhere);
+	ncopyb = ncopy*2;  /* in bytes */
+	sdata = (short*)lstart;
+	/* byte flip if necessary */
+	if (byteFlip) {
+	  bdata = (char*)sdata;
+	  for (i=0; i<ncopyb; i+=2) {
+	    btemp      = bdata[i];
+	    bdata[i]   = bdata[i+1];
+	    bdata[i+1] = btemp;
+	  }
+	} /* end byte flip */
+	for (i=0; i<ncopy; i++) out[i] = (ollong)sdata[i];
+	out += ncopy;
+	in->current = lstart + ncopyb;
+	nleft -= ncopy;
+	if (nleft<=0) break;  /* Done? */
+	/* Get more */
+	retCode = ObitBDFDataFillBuffer (in, err);
+	if (err->error) {
+	  Obit_traceback_val (err, routine, in->name, retCode);
+	}
+	/* If EOF and not done - bail */
+	if ((retCode==OBIT_IO_EOF) && (nleft>0)) return retCode;
+	lstart = in->current;
+	nhere = (in->nBytesInBuffer - (olong)(lstart-in->buffer))/2;
+      }  /* end loop over buffers */
+    } /* end multiple buffers */
+    
+    /* If in last segment of buffer, update */
+    if ((olong)(in->current-in->buffer)>(BDFBUFFERSIZE*(BDFBUFFERFRAMES-1))) {
+      retCode = ObitBDFDataFillBuffer (in, err);
+      if (err->error) {
+	Obit_traceback_val (err, routine, in->name, retCode);
+      }
+    }
+    /* end 16 bit integer */
+  /* Scaled 32 bit integers */
+  } else if (Dtype==BDFDataType_INT32_TYPE) {  /* scaled 32 bit */
+    /* How many in current buffer load */
+    nhere   = (in->nBytesInBuffer - (olong)(start-in->buffer))/4;
+    nleft  = n;
+    out    = target;
+    lstart = start;
+    /* All in buffer? */
+    if (nhere>=n) {  /* All in current */
+      ldata = (gint32*)lstart;
+      ncopy = n*4;
+      /* byte flip if necessary */
+      if (byteFlip) {
+	bdata = (char*)ldata;
+	for (i=0; i<ncopy; i+=4) {
+	  btemp      = bdata[i];
+	  bdata[i]   = bdata[i+1];
+	  bdata[i+1] = btemp;
+	  btemp      = bdata[i+2];
+	  bdata[i+2] = bdata[i+3];
+	  bdata[i+3] = btemp;
+	}
+      } /* end byte flip */
+      for (i=0; i<n; i++) out[i] = (ollong)(scale*ldata[i]);
+      in->current = lstart + ncopy;
+    } else {         /* Multiple buffers */
+      while (nleft>0) {
+	/* Copy what's here */
+	ncopy  = MIN (nleft, nhere);
+	ncopyb = ncopy*sizeof(gint32);  /* in bytes */
+	ldata  = (gint32*)lstart;
+	/* byte flip if necessary */
+	if (byteFlip) {
+	  bdata = (char*)ldata;
+	  for (i=0; i<ncopyb; i+=4) {
+	    btemp      = bdata[i];
+	    bdata[i]   = bdata[i+1];
+	    bdata[i+1] = btemp;
+	    btemp      = bdata[i+2];
+	    bdata[i+2] = bdata[i+3];
+	    bdata[i+3] = btemp;
+	  }
+	} /* end byte flip */
+	for (i=0; i<ncopy; i++) out[i] = (ollong)(scale*ldata[i]);
+	out += ncopy;
+	in->current = lstart + ncopyb;
+	nleft -= ncopy;
+	if (nleft<=0) break;  /* Done? */
+	/* Get more */
+	retCode = ObitBDFDataFillBuffer (in, err);
+	if (err->error) {
+	  Obit_traceback_val (err, routine, in->name, retCode);
+	}
+	/* If EOF and not done - bail */
+	if ((retCode==OBIT_IO_EOF) && (nleft>0)) return retCode;
+	lstart = in->current;
+	nhere = (in->nBytesInBuffer - (olong)(lstart-in->buffer))/4;
+      }  /* end loop over buffers */
+    } /* end multiple buffers */
+    
+    /* If in last segment of buffer, update */
+    if ((olong)(in->current-in->buffer)>(BDFBUFFERSIZE*(BDFBUFFERFRAMES-1))) {
+      retCode = ObitBDFDataFillBuffer (in, err);
+      if (err->error) {
+	Obit_traceback_val (err, routine, in->name, retCode);
+      }
+    }
+    /* end 32 bit integer */
+    /* 32 bit floats */
+  } else if (Dtype==BDFDataType_FLOAT32_TYPE) {
+    /* How many floats in current buffer load */
+    nhere = (in->nBytesInBuffer - (olong)(start-in->buffer))/sizeof(ofloat);
+    nleft = n;
+    out = target;
+    lstart = start;
+    /* All in buffer? */
+    if (nhere>=n) {  /* All in current */
+      fdata = (float*)lstart;
+      ncopy = n*sizeof(ofloat);
+      for (i=0; i<n; i++) out[i] = (ollong)(scale*lstart[i]);
+      in->current = lstart + ncopy;
+    } else {         /* Multiple buffers */
+      while (nleft>0) {
+	/* Copy what's here */
+	ncopy = MIN (nleft, nhere);
+	fdata = (float*)lstart;
+	for (i=0; i<ncopy; i++) out[i] = (ollong)(scale*fdata[i]);
+	ncopyb = ncopy*sizeof(ofloat);  /* in bytes */
+	out += ncopy;
+	in->current = lstart + ncopyb;
+	nleft -= ncopy;
+	if (nleft<=0) break;  /* Done? */
+	/* Get more */
+	retCode = ObitBDFDataFillBuffer (in, err);
+	if (err->error) {
+	  Obit_traceback_val (err, routine, in->name, retCode);
+	}
+	/* If EOF and not done - bail */
+	if ((retCode==OBIT_IO_EOF) && (nleft>0)) return retCode;
+	lstart = in->current;
+	nhere = (in->nBytesInBuffer - (olong)(lstart-in->buffer))/sizeof(ofloat);
+      }  /* end loop over buffers */
+    } /* end multiple buffers */
+    
+    /* If in last segment of buffer, update */
+    if ((olong)(in->current-in->buffer)>(BDFBUFFERSIZE*(BDFBUFFERFRAMES-1))) {
+      retCode = ObitBDFDataFillBuffer (in, err);
+      if (err->error) {
+	Obit_traceback_val (err, routine, in->name, retCode);
+      }
+    }
+    /* byte flip if necessary */
+    if (byteFlip) {
+      out = target;
+      for (i=0; i<n; i++) {
+       inu.full = out[i];
+       outu.parts[0] = inu.parts[3]; 
+       outu.parts[1] = inu.parts[2]; 
+       outu.parts[2] = inu.parts[1]; 
+       outu.parts[3] = inu.parts[0]; 
+       out[i] = outu.full;
+      }
+    } /* end byte flip */
+    /* ATCA HACK - actual durations seem to all be zeroes */
+    if (in->isATCA) {
+      for (i=0; i<n; i++) if (out[i]==0) out[i] = 1000000000;
+    }
+
+    /* end 32 bit float */
+  } else {  /* Unsupported type */
+    Obit_log_error(err, OBIT_Error, 
+		   "%s: Unsupported data type %d", routine, Dtype);
+    return OBIT_IO_SpecErr;
+  }
+
+  /* scale if necessary */
+  if (fabs(scale-1.000)>1.0e-5) {
+    out = target;
+    for (i=0; i<n; i++) out[i] *= scale;
+  }  /* end scaling */
+  return retCode;
+} /* end CopyFloat2LongLong */
+
 
  /**
  * Copy binary and convert to long data 

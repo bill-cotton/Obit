@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020-2025                                          */
+/*;  Copyright (C) 2020-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -218,25 +218,21 @@ ObitMatx* ObitMatxCreate (ObitMatxType type, olong ndim, olong *naxis)
 
   switch (type) {
   case OBIT_Real:
-    out->array = ObitMemAlloc0Name(size*sizeof(ofloat) + 
+    out->data.array = ObitMemAlloc0Name(size*sizeof(ofloat) + 
 					out->naxis[0]*sizeof(ofloat),
 					"Matx array");
-    out->flt = (ofloat*)out->array;
    break;
   case OBIT_Complex:
     size *= 2;
-    out->array = ObitMemAlloc0Name(size*sizeof(ofloat) + 
+    out->data.array = ObitMemAlloc0Name(size*sizeof(ofloat) + 
 					out->naxis[0]*sizeof(ofloat),
 					"Matx array");
-    out->cpx = (ocomplex*)out->array;
-    out->flt = (ofloat*)out->array;
     break;
   case OBIT_Double:
     size *= 2;
-    out->array = ObitMemAlloc0Name(size*sizeof(ofloat) + 
+    out->data.array = ObitMemAlloc0Name(size*sizeof(ofloat) + 
 					out->naxis[0]*sizeof(ofloat),
 					"Matx array");
-    out->dbl = (odouble*)out->array;
     break;
   default:
      g_assert_not_reached(); /* unknown, barf */
@@ -277,9 +273,9 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
 	for (ii=0; ii<n; ii++) {
 	  indx1 = (ii + ir*n);
 	  indx2 = (ii*n + ic);
-	  sumr += in1->flt[indx1]*in2->flt[indx2];
+	  sumr += in1->data.flt[indx1]*in2->data.flt[indx2];
 	}
-	out->flt[indxo]   = sumr;
+	out->data.flt[indxo]   = sumr;
       }
     }
     break;
@@ -287,12 +283,12 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
     for (ir=0; ir<n; ir++) {
       for (ic=0; ic<n; ic++) {
 	indxo = (ic + ir*n);
-	COMPLEX_SET (out->cpx[indxo], 0.0, 0.0);
+	COMPLEX_SET (out->data.cpx[indxo], 0.0, 0.0);
 	for (ii=0; ii<n; ii++) {
 	  indx1 = (ii + ir*n);
 	  indx2 = (ii*n + ic);
-	  COMPLEX_MUL2(tcpx, in1->cpx[indx1], in2->cpx[indx2]);
-	  COMPLEX_ADD2 (out->cpx[indxo], out->cpx[indxo], tcpx);
+	  COMPLEX_MUL2(tcpx, in1->data.cpx[indx1], in2->data.cpx[indx2]);
+	  COMPLEX_ADD2 (out->data.cpx[indxo], out->data.cpx[indxo], tcpx);
 	}
       }
     }
@@ -305,9 +301,9 @@ void ObitMatxMult (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
 	for (ii=0; ii<n; ii++) {
 	  indx1 = (ii + ir*n);
 	  indx2 = (ii*n + ic);
-	  sumd += in1->dbl[indx1]*in2->dbl[indx2];
+	  sumd += in1->data.dbl[indx1]*in2->data.dbl[indx2];
 	}
-	out->dbl[indxo]   = sumd;
+	out->data.dbl[indxo]   = sumd;
       }
     }
     break;
@@ -350,9 +346,9 @@ void ObitMatxMultCT (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
 	for (ii=0; ii<n; ii++) {
 	  indx1 = (ii + ir*n);
 	  indx2 = (ii + ic*n);
-	  sumr += in1->flt[indx1]*in2->flt[indx2];
+	  sumr += in1->data.flt[indx1]*in2->data.flt[indx2];
 	}
-	out->flt[indxo]   = sumr;
+	out->data.flt[indxo]   = sumr;
       }
     }
     break;
@@ -360,13 +356,13 @@ void ObitMatxMultCT (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
     for (ir=0; ir<n; ir++) {
       for (ic=0; ic<n; ic++) {
 	indxo = (ic + ir*n);
-	COMPLEX_SET (out->cpx[indxo], 0.0, 0.0);
+	COMPLEX_SET (out->data.cpx[indxo], 0.0, 0.0);
 	for (ii=0; ii<n; ii++) {
 	  indx1 = (ii + ir*n);
 	  indx2 = (ii + ic*n);
-	  COMPLEX_CONJUGATE(tcpx2, in2->cpx[indx2]);
-	  COMPLEX_MUL2(tcpx, in1->cpx[indx1], tcpx2);
-	  COMPLEX_ADD2 (out->cpx[indxo], out->cpx[indxo], tcpx);
+	  COMPLEX_CONJUGATE(tcpx2, in2->data.cpx[indx2]);
+	  COMPLEX_MUL2(tcpx, in1->data.cpx[indx1], tcpx2);
+	  COMPLEX_ADD2 (out->data.cpx[indxo], out->data.cpx[indxo], tcpx);
 	}
       }
     }
@@ -379,9 +375,9 @@ void ObitMatxMultCT (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
 	for (ii=0; ii<n; ii++) {
 	  indx1 = (ii + ir*n);
 	  indx2 = (ii + ic*n);
-	  sumd += in1->dbl[indx1]*in2->dbl[indx2];
+	  sumd += in1->data.dbl[indx1]*in2->data.dbl[indx2];
 	}
-	out->dbl[indxo]   = sumd;
+	out->data.dbl[indxo]   = sumd;
       }
     }
     break;
@@ -411,21 +407,36 @@ void ObitMatxAdd (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
   switch (in1->type) {
   case OBIT_Real:
    for (i=0; i<in1->arraySize; i++)
-    out->flt[i] = in1->flt[i] + in2->flt[i];
+    out->data.flt[i] = in1->data.flt[i] + in2->data.flt[i];
    break;
   case OBIT_Complex:
    for (i=0; i<in1->arraySize/2; i++)
-     COMPLEX_ADD2(out->cpx[i], in1->cpx[i], in2->cpx[i]);
+     COMPLEX_ADD2(out->data.cpx[i], in1->data.cpx[i], in2->data.cpx[i]);
     break;
   case OBIT_Double:
    for (i=0; i<in1->arraySize/2; i++)
-     out->dbl[i] = in1->dbl[i] + in2->dbl[i];
+     out->data.dbl[i] = in1->data.dbl[i] + in2->data.dbl[i];
     break;
   default:
      g_assert_not_reached(); /* unknown, barf */
    };
 
 } /* end ObitMatxAdd */
+
+/**
+ *  Add corresponding elements of two 2x2 complex.
+ *  out = in1 + in2
+ * \param in1  Input object with data
+ * \param in2  Input object with data
+ * \param out  Output object
+ */
+void ObitMatxAdd2C (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
+{
+  COMPLEX_ADD2(out->data.cpx[0], in1->data.cpx[0], in2->data.cpx[0]);
+  COMPLEX_ADD2(out->data.cpx[1], in1->data.cpx[1], in2->data.cpx[1]);
+  COMPLEX_ADD2(out->data.cpx[2], in1->data.cpx[2], in2->data.cpx[2]);
+  COMPLEX_ADD2(out->data.cpx[3], in1->data.cpx[3], in2->data.cpx[3]);
+} /* end ObitMatxAdd2C */
 
 
 /**
@@ -446,15 +457,15 @@ void ObitMatxSub (ObitMatx* in1, ObitMatx* in2, ObitMatx* out)
   switch (in1->type) {
   case OBIT_Real:
    for (i=0; i<in1->arraySize; i++)
-    out->flt[i] = in1->flt[i] - in2->flt[i];
+    out->data.flt[i] = in1->data.flt[i] - in2->data.flt[i];
    break;
   case OBIT_Complex:
    for (i=0; i<in1->arraySize/2; i++)
-     COMPLEX_SUB(out->cpx[i], in1->cpx[i], in2->cpx[i]);
+     COMPLEX_SUB(out->data.cpx[i], in1->data.cpx[i], in2->data.cpx[i]);
     break;
   case OBIT_Double:
    for (i=0; i<in1->arraySize/2; i++)
-     out->dbl[i] = in1->dbl[i] - in2->dbl[i];
+     out->data.dbl[i] = in1->data.dbl[i] - in2->data.dbl[i];
     break;
   default:
      g_assert_not_reached(); /* unknown, barf */
@@ -478,15 +489,15 @@ void ObitMatxSMult (ObitMatx* in1, void *scalar, ObitMatx* out)
   switch (in1->type) {
   case OBIT_Real:
     for (i=0; i<in1->arraySize; i++)
-      out->flt[i] = in1->flt[i] * ((ofloat*)scalar)[0];
+      out->data.flt[i] = in1->data.flt[i] * ((ofloat*)scalar)[0];
     break;
   case OBIT_Complex:
     for (i=0; i<in1->arraySize/2; i++)
-      COMPLEX_MUL2(out->cpx[i], in1->cpx[i], ((ocomplex*)scalar)[0]);
+      COMPLEX_MUL2(out->data.cpx[i], in1->data.cpx[i], ((ocomplex*)scalar)[0]);
     break;
   case OBIT_Double:
     for (i=0; i<in1->arraySize/2; i++)
-      out->dbl[i] = in1->dbl[i] * ((odouble*)scalar)[0];
+      out->data.dbl[i] = in1->data.dbl[i] * ((odouble*)scalar)[0];
     break;
   default:
      g_assert_not_reached(); /* unknown, barf */
@@ -516,7 +527,6 @@ void ObitMatxCTrans (ObitMatx* in, ObitMatx* out)
   }
 } /* end ObitMatxCTrans */
 
-
 /**
  * Zero the elements of an array 
  * \param in      Input object to zero
@@ -532,19 +542,31 @@ void ObitMatxZero (ObitMatx* in)
 
   switch (in->type) {
   case OBIT_Real:
-    for (i=0; i<in->arraySize; i++) in->flt[i] = 0.0;
+    for (i=0; i<in->arraySize; i++) in->data.flt[i] = 0.0;
    break;
   case OBIT_Complex:
     for (i=0; i<in->arraySize/2; i++) 
-      COMPLEX_SET(in->cpx[i], val[0], val[1]); 
+      COMPLEX_SET(in->data.cpx[i], val[0], val[1]); 
     break;
   case OBIT_Double:
-    for (i=0; i<in->arraySize/2; i++) in->dbl[i] = 0.0;
+    for (i=0; i<in->arraySize/2; i++) in->data.dbl[i] = 0.0;
     break;
   default:
      g_assert_not_reached(); /* unknown, barf */
    };
 } /* end ObitMatxZero */
+
+/**
+ * Zero the elements of an 2x2 complex array 
+ * \param in      Input object to zero
+ */
+void ObitMatxZero2C (ObitMatx* in)
+{
+  COMPLEX_SET(in->data.cpx[0], 0., 0.);
+  COMPLEX_SET(in->data.cpx[1], 0., 0.);
+  COMPLEX_SET(in->data.cpx[2], 0., 0.);
+  COMPLEX_SET(in->data.cpx[3], 0., 0.);
+} /* end ObitMatxZero2C */
 
 /**
  * Set the matrix to a unit matrix - must be square 2D matrix
@@ -558,20 +580,20 @@ void ObitMatxUnit (ObitMatx* in)
   n = in->naxis[0]; /* dimension */
   switch (in->type) {
   case OBIT_Real:
-    for (i=0; i<in->arraySize; i++) in->flt[i] = 0.0;
+    for (i=0; i<in->arraySize; i++) in->data.flt[i] = 0.0;
     /* Diagonal terms */
-    for (i=0; i<n; i++) in->flt[i*n+i] = 1.0;
+    for (i=0; i<n; i++) in->data.flt[i*n+i] = 1.0;
     break;
   case OBIT_Complex:
     /* Zero */
-    for (i=0; i<in->arraySize/2; i++) COMPLEX_SET(in->cpx[i], val[1], val[2]); 
+    for (i=0; i<in->arraySize/2; i++) COMPLEX_SET(in->data.cpx[i], val[1], val[2]); 
     /* Diagonal terms */
-    for (i=0; i<n; i++) COMPLEX_SET(in->cpx[i*n+i], val[0], val[1]); 
+    for (i=0; i<n; i++) COMPLEX_SET(in->data.cpx[i*n+i], val[0], val[1]); 
     break;
   case OBIT_Double:
-    for (i=0; i<in->arraySize; i++) in->dbl[i] = 0.0;
+    for (i=0; i<in->arraySize; i++) in->data.dbl[i] = 0.0;
     /* Diagonal terms */
-    for (i=0; i<n; i++) in->dbl[i*n+i] = 1.0;
+    for (i=0; i<n; i++) in->data.dbl[i*n+i] = 1.0;
     break;
   default:
      g_assert_not_reached(); /* unknown, barf */
@@ -595,10 +617,10 @@ void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R10, ofloat I1
 {
   olong indx;
 
-  indx = 0; COMPLEX_SET (matx->cpx[indx], R00, I00);
-  indx = 1; COMPLEX_SET (matx->cpx[indx], R10, I10);
-  indx = 2; COMPLEX_SET (matx->cpx[indx], R01, I01);
-  indx = 3; COMPLEX_SET (matx->cpx[indx], R11, I11);
+  indx = 0; COMPLEX_SET (matx->data.cpx[indx], R00, I00);
+  indx = 1; COMPLEX_SET (matx->data.cpx[indx], R10, I10);
+  indx = 2; COMPLEX_SET (matx->data.cpx[indx], R01, I01);
+  indx = 3; COMPLEX_SET (matx->data.cpx[indx], R11, I11);
 } /* end ObitMatxSet2C */
 
 /**
@@ -617,10 +639,10 @@ void ObitMatxGet2C(ObitMatx *matx, ofloat* R00, ofloat *I00, ofloat *R10, ofloat
 		   ofloat *R01, ofloat *I01, ofloat *R11, ofloat *I11)
 {
   olong indx;
-  indx = 0; *R00 = matx->cpx[indx].real; *I00 = matx->cpx[indx].imag;
-  indx = 1; *R10 = matx->cpx[indx].real; *I10 = matx->cpx[indx].imag;
-  indx = 2; *R01 = matx->cpx[indx].real; *I01 = matx->cpx[indx].imag;
-  indx = 3; *R11 = matx->cpx[indx].real; *I11 = matx->cpx[indx].imag;
+  indx = 0; *R00 = matx->data.cpx[indx].real; *I00 = matx->data.cpx[indx].imag;
+  indx = 1; *R10 = matx->data.cpx[indx].real; *I10 = matx->data.cpx[indx].imag;
+  indx = 2; *R01 = matx->data.cpx[indx].real; *I01 = matx->data.cpx[indx].imag;
+  indx = 3; *R11 = matx->data.cpx[indx].real; *I11 = matx->data.cpx[indx].imag;
 } /* end ObitMatxGet2C */
 
 /**
@@ -639,17 +661,17 @@ void ObitMatxInv2x2(ObitMatx *in, ObitMatx *out)
 
   switch (in->type) {
   case OBIT_Real:
-    fDet = in->flt[0]*in->flt[3] - in->flt[1]*in->flt[2];
+    fDet = in->data.flt[0]*in->data.flt[3] - in->data.flt[1]*in->data.flt[2];
     if (fDet>0.0) fDet = 1.0 / fDet;
     else          fDet = 1.0;
-    out->flt[0] = +in->flt[3]*fDet;
-    out->flt[1] = -in->flt[1]*fDet;
-    out->flt[2] = -in->flt[2]*fDet;
-    out->flt[3] = +in->flt[0]*fDet;
+    out->data.flt[0] = +in->data.flt[3]*fDet;
+    out->data.flt[1] = -in->data.flt[1]*fDet;
+    out->data.flt[2] = -in->data.flt[2]*fDet;
+    out->data.flt[3] = +in->data.flt[0]*fDet;
     break;
   case OBIT_Complex:
     /* inverse of determinant */
-    matx = in->array;
+    matx = in->data.array;
     Det[0] = (matx[0]*matx[6] - matx[1]*matx[7]) - (matx[2]*matx[4] - matx[3]*matx[5]);
     Det[1] = (matx[0]*matx[7] + matx[1]*matx[6]) - (matx[2]*matx[5] + matx[3]*matx[4]);
     /* Inverse of determinant */
@@ -659,19 +681,19 @@ void ObitMatxInv2x2(ObitMatx *in, ObitMatx *out)
     Det[0] *=  d;
     Det[1] *= -d;
     /* Inverse matrix out */
-    COMPLEX_SET (out->cpx[3],   matx[0]*Det[0]-matx[1]*Det[1],    matx[0]*Det[1]+matx[1]*Det[0]);
-    COMPLEX_SET (out->cpx[2], -(matx[4]*Det[0]-matx[5]*Det[1]), -(matx[4]*Det[1]+matx[5]*Det[0]));
-    COMPLEX_SET (out->cpx[1], -(matx[2]*Det[0]-matx[3]*Det[1]), -(matx[2]*Det[1]+matx[3]*Det[0]));
-    COMPLEX_SET (out->cpx[0],   matx[6]*Det[0]-matx[7]*Det[1],    matx[6]*Det[1]+matx[7]*Det[0]);
+    COMPLEX_SET (out->data.cpx[3],   matx[0]*Det[0]-matx[1]*Det[1],    matx[0]*Det[1]+matx[1]*Det[0]);
+    COMPLEX_SET (out->data.cpx[2], -(matx[4]*Det[0]-matx[5]*Det[1]), -(matx[4]*Det[1]+matx[5]*Det[0]));
+    COMPLEX_SET (out->data.cpx[1], -(matx[2]*Det[0]-matx[3]*Det[1]), -(matx[2]*Det[1]+matx[3]*Det[0]));
+    COMPLEX_SET (out->data.cpx[0],   matx[6]*Det[0]-matx[7]*Det[1],    matx[6]*Det[1]+matx[7]*Det[0]);
     break;
   case OBIT_Double:
-    dDet = in->dbl[0]*in->dbl[3] - in->dbl[1]*in->dbl[2];
+    dDet = in->data.dbl[0]*in->data.dbl[3] - in->data.dbl[1]*in->data.dbl[2];
     if (dDet>0.0) dDet = 1.0 / dDet;
     else          dDet = 1.0;
-    out->dbl[0] = +in->dbl[3]*dDet;
-    out->dbl[1] = -in->dbl[1]*dDet;
-    out->dbl[2] = -in->dbl[2]*dDet;
-    out->dbl[3] = +in->dbl[0]*dDet;
+    out->data.dbl[0] = +in->data.dbl[3]*dDet;
+    out->data.dbl[1] = -in->data.dbl[1]*dDet;
+    out->data.dbl[2] = -in->data.dbl[2]*dDet;
+    out->data.dbl[3] = +in->data.dbl[0]*dDet;
     break;
   default:
      g_assert_not_reached(); /* unknown, barf */
@@ -704,10 +726,10 @@ void ObitMatxIPerfLinJones(ObitMatx *out)
   Det[0] *=  d;
   Det[1] *= -d;
   /* Inverse matrix out */
-  COMPLEX_SET (out->cpx[3],   Jones[0]*Det[0]-Jones[1]*Det[1],    Jones[0]*Det[1]+Jones[1]*Det[0]);
-  COMPLEX_SET (out->cpx[2], -(Jones[4]*Det[0]-Jones[5]*Det[1]), -(Jones[4]*Det[1]+Jones[5]*Det[0]));
-  COMPLEX_SET (out->cpx[1], -(Jones[2]*Det[0]-Jones[3]*Det[1]), -(Jones[2]*Det[1]+Jones[3]*Det[0]));
-  COMPLEX_SET (out->cpx[0],   Jones[6]*Det[0]-Jones[7]*Det[1],    Jones[6]*Det[1]+Jones[7]*Det[0]);
+  COMPLEX_SET (out->data.cpx[3],   Jones[0]*Det[0]-Jones[1]*Det[1],    Jones[0]*Det[1]+Jones[1]*Det[0]);
+  COMPLEX_SET (out->data.cpx[2], -(Jones[4]*Det[0]-Jones[5]*Det[1]), -(Jones[4]*Det[1]+Jones[5]*Det[0]));
+  COMPLEX_SET (out->data.cpx[1], -(Jones[2]*Det[0]-Jones[3]*Det[1]), -(Jones[2]*Det[1]+Jones[3]*Det[0]));
+  COMPLEX_SET (out->data.cpx[0],   Jones[6]*Det[0]-Jones[7]*Det[1],    Jones[6]*Det[1]+Jones[7]*Det[0]);
 } /* end ObitMatxIPerfLinJonesJones */
 
 /** Inverse perfect circular feed Jones matrix  complex 2x2 
@@ -727,10 +749,10 @@ void ObitMatxIPerfCirJones(ObitMatx *out)
   Jones[6] =  cosa[1]*cosa[3]; Jones[7] =  cosa[1]*sina[3];
   
   /* Matrix out */
-  COMPLEX_SET (out->cpx[0], Jones[0], Jones[1]);
-  COMPLEX_SET (out->cpx[1], Jones[2], Jones[3]);
-  COMPLEX_SET (out->cpx[2], Jones[4], Jones[5]);
-  COMPLEX_SET (out->cpx[3], Jones[6], Jones[7]); 
+  COMPLEX_SET (out->data.cpx[0], Jones[0], Jones[1]);
+  COMPLEX_SET (out->data.cpx[1], Jones[2], Jones[3]);
+  COMPLEX_SET (out->data.cpx[2], Jones[4], Jones[5]);
+  COMPLEX_SET (out->data.cpx[3], Jones[6], Jones[7]); 
 } /* end ObitMatxIPerfCirJones */
 
 /**
@@ -745,9 +767,9 @@ void ObitMatxOuterMult2C(ObitMatx *iin1, ObitMatx *iin2, ObitMatx *oout)
 {
   ofloat *in1, *in2, *out;
   /* Local ofloat pointers */
-  in1 = (ofloat*)iin1->array;
-  in2 = (ofloat*)iin2->array;
-  out = (ofloat*)oout->array;
+  in1 = (ofloat*)iin1->data.array;
+  in2 = (ofloat*)iin2->data.array;
+  out = (ofloat*)oout->data.array;
 
   out[0]  =  in1[0] * in2[0] + in1[1] * in2[1];  out[1]  =  in1[1] * in2[0] - in1[0] * in2[1];
   out[2]  =  in1[0] * in2[2] + in1[1] * in2[3];  out[3]  =  in1[1] * in2[2] - in1[0] * in2[3];
@@ -783,9 +805,9 @@ void ObitMatxVec4Mult(ObitMatx *iin1, ObitMatx *iin2, ObitMatx *oout) {
   ofloat sumr, sumi;
   ofloat *in1, *in2, *out;
   /* Local ofloat pointers */
-  in1 = (ofloat*)iin1->array;
-  in2 = (ofloat*)iin2->array;
-  out = (ofloat*)oout->array;
+  in1 = (ofloat*)iin1->data.array;
+  in2 = (ofloat*)iin2->data.array;
+  out = (ofloat*)oout->data.array;
   /* Check */
   g_assert ((iin1->naxis[0]==4) && (iin1->naxis[1]==4) && (iin1->type==OBIT_Complex));
   g_assert ((iin2->naxis[0]==4) && (iin2->naxis[1]==1) && (iin2->type==OBIT_Complex));
@@ -810,13 +832,15 @@ void ObitMatxVec4Mult(ObitMatx *iin1, ObitMatx *iin2, ObitMatx *oout) {
 void ObitMatxPrint (ObitMatx* in, gchar* label)
 {
   ofloat R00, I00, R01, I01, R10, I10, R11, I11;
-  odouble D00, D01, D10, D11;
+  // odouble D00, D01, D10, D11;
 
   switch (in->type) {
   case OBIT_Real:
-    ObitMatxGet(in, 0, 0, &R00); ObitMatxGet(in, 1, 0, &R10); 
-    ObitMatxGet(in, 1, 0, &R01); ObitMatxGet(in, 1, 1, &R11); 
-    fprintf (stderr, " %s \n   %10.6f %10.6f\n   %10.6f %10.6f\n", label, R00, R10, R01, R11);
+    //ObitMatxGet(in, 0, 0, &R00); ObitMatxGet(in, 1, 0, &R10); 
+    //ObitMatxGet(in, 1, 0, &R01); ObitMatxGet(in, 1, 1, &R11);
+    R00 = in->data.flt[0]; R10 = in->data.flt[1];
+    fprintf (stderr, " %s \n   %10.6f %10.6f\n   %10.6f %10.6f\n", label,
+	     in->data.flt[0], in->data.flt[1], in->data.flt[2], in->data.flt[3]);
    break;
   case OBIT_Complex:
     ObitMatxGet2C (in, &R00, &I00, &R10, &I10, &R01, &I01, &R11, &I11);
@@ -824,9 +848,10 @@ void ObitMatxPrint (ObitMatx* in, gchar* label)
 	     label, R00, I00, R10, I10, R01, I01, R11, I11);
     break;
   case OBIT_Double:
-    ObitMatxGet(in, 0, 0, &D00); ObitMatxGet(in, 1, 0, &D10); 
-    ObitMatxGet(in, 1, 0, &D01); ObitMatxGet(in, 1, 1, &D11); 
-    fprintf (stderr, " %s \n   %12.8lf %12.8lf\n   %12.8lf %12.8lf\n", label, D00, D10, D01, D11);
+    //ObitMatxGet(in, 0, 0, &D00); ObitMatxGet(in, 1, 0, &D10); 
+    //ObitMatxGet(in, 1, 0, &D01); ObitMatxGet(in, 1, 1, &D11); 
+    fprintf (stderr, " %s \n   %12.8lf %12.8lf\n   %12.8lf %12.8lf\n", label,
+	     in->data.dbl[0], in->data.dbl[1], in->data.dbl[2], in->data.dbl[3]);
     break;
   default:
     g_assert_not_reached(); /* unknown, barf */
@@ -885,9 +910,11 @@ static void ObitMatxClassInfoDefFn (gpointer inClass)
   theClass->ObitMatxMult   = (ObitMatxMultFP)ObitMatxMult;
   theClass->ObitMatxMultCT = (ObitMatxMultCTFP)ObitMatxMultCT;
   theClass->ObitMatxAdd    = (ObitMatxAddFP)ObitMatxAdd;
+  theClass->ObitMatxAdd2C  = (ObitMatxAdd2CFP)ObitMatxAdd2C;
   theClass->ObitMatxSub    = (ObitMatxSubFP)ObitMatxSub;
   theClass->ObitMatxCTrans = (ObitMatxCTransFP)ObitMatxCTrans;
   theClass->ObitMatxZero   = (ObitMatxZeroFP)ObitMatxZero;
+  theClass->ObitMatxZero2C = (ObitMatxZero2CFP)ObitMatxZero2C;
   theClass->ObitMatxUnit   = (ObitMatxUnitFP)ObitMatxUnit;
   theClass->ObitMatxSet2C  = (ObitMatxSet2CFP)ObitMatxSet2C;
   theClass->ObitMatxGet2C  = (ObitMatxGet2CFP)ObitMatxGet2C;
@@ -916,7 +943,7 @@ void ObitMatxInit  (gpointer inn)
     ParentClass->ObitInit (inn);
 
   /* set members in this class */
-  in->array        = NULL;
+  in->data.array   = NULL;
   in->arraySize    = 0;
   in->ndim         = 0;
   in->naxis        = NULL;
@@ -939,8 +966,8 @@ void ObitMatxClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  if (in->array)  in->array = ObitMemFree(in->array);
-  if (in->naxis)  in->naxis = ObitMemFree(in->naxis);
+  if (in->data.array)  in->data.array = ObitMemFree(in->data.array);
+  if (in->naxis)       in->naxis      = ObitMemFree(in->naxis);
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

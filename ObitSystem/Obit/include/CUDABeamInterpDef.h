@@ -1,8 +1,7 @@
-/* $Id$   */
+/* $Id: $                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008,2026                                          */
+/*;  Copyright (C) 2026                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
-/*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
@@ -18,54 +17,52 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*; Correspondence about this software should be addressed as follows:*/
+/*;  Correspondence this software should be addressed as follows:     */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-#ifndef OBITUTIL_H 
-#define OBITUTIL_H 
-
-#include "Obit.h"
-
-/*-------- Obit: Merx mollis mortibus nuper ------------------*/
+/*  Define the basic components of the CUDABeamInterp structure     */
+/*  This is intended to be included in a class structure definition   */
 /**
- * \file ObitUtil.h
- * ObitUtil utility module definition.
- *
+ * \file CUDABeamInterpDef.h
  */
+/* Fooey - may need local definition */
+#if HAVE_GPU==1  /* Have a GPU? */
+#ifndef CUDAIMAGEDESCDEF_H // Prevent multiple definitions
+#define CUDAIMAGEDESCDEF_H
+#define IM_MAXDIM 7       /* maximum array dimension */
+#define IMLEN_VALUE 41    /* Maximum length of descriptor string value */
+#define IMLEN_KEYWORD 21  /* Maximum length of descriptor keyword  */
+typedef struct {
+#include "CUDAImageDescDef.h"
+} CUDAImageDesc;
+#endif /* CUDAIMAGEDESCDEF_H */
+#endif /* HAVE_GPU */
 
-/*---------------Public functions---------------------------*/
-/** Public: Get mean value of an array with magic value blanking */
-ofloat meanValue (ofloat *array, olong incs, olong n);
-
-/** Public: Get median value of an array with magic value blanking */
-ofloat medianValue (ofloat *array, olong incs, olong n);
-
-/** Public: Get average around median value of an array 
-    with magic value blanking */
-ofloat medianAvg (ofloat *array, olong incs, olong navg, gboolean doWt, olong n);
-
-
-/** Public: Determine running median and sigma of a float array */ 
-void RunningMedian (olong n, olong wind, ofloat *array, ofloat alpha, 
-		    ofloat *RMS, ofloat *out, ofloat *work);
-
-/** Public: Median value of an array */
-ofloat MedianLevel (olong n, ofloat *value, ofloat alpha);
-
-/** Public: Median sigma of an array */
-ofloat MedianSigma (olong n, ofloat *value, ofloat mean);
-
-/** Public: Fit polynomial with magic value blanking */
-void  FitPoly (ofloat *poly, olong order, ofloat *x, ofloat *y, ofloat *wt, 
-	       olong n);
-
-/** Public: Evaluate polynomial */
-ofloat  EvalPoly (olong order, ofloat *poly, ofloat x);
-
-/* Human readable time string */
-void day2dhms(ofloat time, gchar *timeString);
-#endif /* OBITUTIL_H */ 
+/** Structure in GPU memory */
+float *d_BeamInterp;
+/** Dimension of plane in myArray */
+int nx, ny;
+/** Half width of interpolation kernal */
+int hwidth;
+/** Reciprocals of Lagrangian denominators */
+float denom[10];
+/** CUDA stuff */
+#if HAVE_GPU==1  /* Have a GPU? */
+/** Array to be interpolated (Host) */
+CUDAFArray *h_myArray;
+/** Array to be interpolated (GPU) */
+CUDAFArray *d_myArray;
+/** Image descriptor */
+CUDAImageDesc *d_myDesc;
+#else  /* No GPU */
+/** Array to be interpolated (Host) */
+void* *h_myArray;
+/** Array to be interpolated (GPU) */
+void* *d_myArray;
+/** Image descriptor */
+void* *d_myDesc;
+#endif /* HAVE_GPU */

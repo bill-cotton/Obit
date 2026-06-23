@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -194,3 +194,5 @@ gboolean *isLSB;
 gboolean isEVLA;
 /** Is this ALMA data? */
 gboolean isALMA;
+/** Is this ATCA data? */
+gboolean isATCA;

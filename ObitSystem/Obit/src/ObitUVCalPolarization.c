@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2023                                          */
+/*;  Copyright (C) 2003-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -420,17 +420,38 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       
       /* If it was in linear basis and keepLin then rotate to linear */
       if ((in->keepLin) & (!me->circFeed)) {
-	/* Transform */
+	/* IFR Correction if needed while it's still in a circular basis */
+	if ((cal!=NULL) && (cal->IFR[ia1]!=fblank)&&(cal->IFR[ia2]!=fblank)
+	    && ((cal->IFR[ia1]+cal->IFR[ia2])!=0.0)) {
+	  loff = (iif - 1) * cal->numLambda + ifreq - 1;
+	  Lambda2 = cal->Lambda[loff]*cal->Lambda[loff];
+	  tr = (cal->IFR[ia1] + cal->IFR[ia2]);
+	  gr1 = +cos (Lambda2 * tr);
+	  gi1 = -sin (Lambda2 * tr);
+	  /* Correct RL */
+	  jrl = joff + 2*desc->incs;
+	  tr = visIn[jrl]; 	ti = visIn[jrl+1];
+	  visIn[jrl]   = tr * gr1 - ti * gi1; 	visIn[jrl+1] = ti * gr1 + tr * gi1;
+	  
+	  /* Correct LR */
+	  jlr = joff + 3*desc->incs;
+	  tr = visIn[jlr];	ti = visIn[jlr+1];
+	  visIn[jlr]   = tr * gr1 + ti * gi1;	visIn[jlr+1] = ti * gr1 - tr * gi1;
+	} /* end of IFR correction */
+	/* Transform back to linear */
 	Cir2Lin(in, time, ant1, ant2, RP, &visIn[joff+0]);
       } else { /* better be in circular basis */
 	/* correct RL,LR for parallactic angle and ionospheric Faraday rotation: */
 	if (cal!=NULL) {
 	  loff = (iif - 1) * cal->numLambda + ifreq - 1;
 	  Lambda2 = cal->Lambda[loff]*cal->Lambda[loff];
-	  gr1 = gr * cos (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2])) -  
-	    gi * sin (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2]));
-	  gi1 = gi * cos (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2])) +  
-	    gr * sin (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2]));
+	  tr = (cal->IFR[ia1] + cal->IFR[ia2]);
+	  gr1 = gr * cos (Lambda2 * tr) + gi * sin (Lambda2 * tr);
+	  gi1 = gi * cos (Lambda2 * tr) - gr * sin (Lambda2 * tr);
+	  // gr1 = gr * cos (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2])) -  
+	  //  gi * sin (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2]));
+	  //gi1 = gi * cos (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2])) +  
+	  //  gr * sin (Lambda2 * (cal->IFR[ia1] + cal->IFR[ia2]));
 	} else {
 	  gr1 = gr;
 	  gi1 = gi;

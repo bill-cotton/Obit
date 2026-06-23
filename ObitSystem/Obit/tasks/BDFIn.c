@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2023                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -208,6 +208,7 @@ olong selIF=-1;                       /* Selected number of IFs (SpWin) */
 olong selStok=-1;                     /* Selected number of Stokes */
 gboolean isEVLA;                      /* Is this EVLA data? */
 gboolean isALMA;                      /* Is this ALMA data? */
+gboolean isATCA;                      /* Is this ATCA data? */
 gboolean SWOrder=FALSE;               /* Leave in SW Order? */
 gboolean warnHolo=TRUE;               /* Give holography warning? */
 gboolean *isHolRef;                   /* Array of antenna flags for holography, 
@@ -288,6 +289,7 @@ int main ( int argc, char **argv )
   /* Init uvw calculator */
   uvwCalc = ObitUVWCalcCreate("UVWCalc", outData, err);
   if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
+  uvwCalc->maxAnt = SDMData->maxAnt;  /* Save actual max. antenna number */
   
   /* convert data  */
   BDFData = GetData (SDMData, myInput, outData, err); 
@@ -1014,6 +1016,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
+  SDMData->maxAnt = AntArray->maxAnt;
   /* Select Spectral windows */
   ObitSDMDataSelChan (SpWinArray, selChan, selIF, ASDMBand_Any);
 
@@ -1575,6 +1578,8 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   isEVLA = SDMData->isEVLA;
   /* Is this the ALMA? */
   isALMA = SDMData->isALMA;
+  /* Is this ATCA ?*/
+  isATCA = SDMData->isATCA;
 
   /* EOP given */
   crow = 0;    /* center row in table */
@@ -1695,6 +1700,8 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outRow->noSta          = AntArray->ants[iRow-1]->antennaNo;
     /* For ALMA these are 0 rel rather than 1 rel 
     if (isALMA) outRow->noSta++; not no mo */
+    /* For ATCA these are 0 rel rather than 1 rel */
+    if (isATCA) outRow->noSta++; 
     outRow->diameter       = AntArray->ants[iRow-1]->dishDiameter;
     outRow->PolAngA        = AntArray->ants[iRow-1]->receptorAngle[0];
     outRow->polTypeA       = g_strdup("    "); 
@@ -4520,46 +4527,6 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     }
 
 } /* end  GetGainCurveInfo */
-
-/** 
- * Convert Time in days to a human readable form "dd/hh:mm:ss.s"
- * \param time  Time in days
- * \param timeString [out] time as string, should be >16 char
- */
-void day2dhms(ofloat time, gchar *timeString)
-{
-  olong day, thour, tmin;
-  ofloat ttim, ssec;
-
-  /* Trap bad times */
-  if ((time<-100.0) || (time>1000.0)) {
-    sprintf (timeString, "Bad time");
-    return;
-  }
-
-  day   = (olong)(time);
-  ttim  = 24.0*(time - day);
-  thour = MIN ((olong)(ttim), 23);
-  ttim  = 60.0*(ttim - thour);
-  tmin  = MIN ((olong)(ttim), 59);
-  ssec  = 60.0*(ttim - tmin);
-  /* avoid silliness */
-  if (ssec>59.951) {
-    tmin++;
-    ssec = 0.0;
-  }
-  if (tmin>=60) {
-    thour++;
-    tmin -= 60;
-  }
-  if (thour>23) {
-    day++;
-    thour -= 24;
-  }
-  sprintf (timeString, "%2.2d/%2.2d:%2.2d:%4.1f", day, thour, tmin, ssec);
-  /* Zero fill seconds */
-  if (timeString[9]==' ') timeString[9] = '0';
-} /* end day2dhms */
 
 /** 
  * Check uv buffer for zero visibilities

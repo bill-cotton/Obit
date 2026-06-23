@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2024                                          */
+/*;  Copyright (C) 2008-2025                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -157,6 +157,9 @@ typedef ofloat*(*ObitSpectrumFitSingleFP) (olong nfreq, olong nterm, odouble ref
 					   odouble *freq, ofloat *flux, ofloat *sigma, 
 					   gboolean doWt, ofloat *weight,
 					   gboolean doBrokePow, ObitErr *err);
+
+/** Public: Evaluate a spectrum at a frequency */
+ofloat ObitSpectrumEval (olong nterm, odouble refFreq, ofloat *spFit, odouble Freq);
 
 /** Public: Make fitting arg structure */
 gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm, 

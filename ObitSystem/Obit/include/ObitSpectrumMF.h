@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2025                                               */
+/*;  Copyright (C) 2025,2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -98,6 +98,13 @@ ObitSpectrumMF* ObitSpectrumMFClone (ObitSpectrumMF *in, ObitSpectrumMF *out);
 /** Public: Get component flux density at a  Frequency */
 ofloat ObitSpectrumMFEval (ObitSpectrumMF *in, odouble chFreq, 
 			   olong sbno, ofloat *Spectrum, ofloat* spFit);
+
+/** Public: Set channel sigmas for weighting */
+void ObitSpectrumMFSetSigma (ObitSpectrumMF *in, ofloat* sigma);
+
+/** Public: Get Spectral indices per spectral point */
+void ObitSpectrumMFSI (ObitSpectrumMF *in,  ofloat *Spectrum,
+		       ofloat *SI, ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

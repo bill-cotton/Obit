@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2022                                          */
+/*;  Copyright (C) 2003-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1386,7 +1386,7 @@ gboolean ObitUVDescShift3DPos (ObitUVDesc *uvDesc, ofloat shift[2], ofloat mrota
 
 /**
  * Set number of vis per IO for a UV data set
- * Limit not to exceed 0.5 GByte
+ * Limit not to exceed 1 GByte
  * \param uvDesc   UV data descriptor , data should have been fully 
  *                 instantiated to get this filled in.
  * \param info     InfoList potentially with nThreads
@@ -1408,12 +1408,13 @@ olong ObitUVDescSetNVis (ObitUVDesc *uvDesc, ObitInfoList* info, olong nvis)
   lrec = MAX (10, lrec);
     
   tsize = nvis * MAX (1, nThreads);                       /* How big is what is desired? */
-  maxsize = 500000000 / (lrec*sizeof (ofloat));   /* How big is allowed */
+  maxsize = 1000000000 / (lrec*sizeof (ofloat));   /* How big is allowed */
   if (tsize>maxsize) {
     nvispio = (olong)(maxsize);
   } else nvispio = (olong)(tsize);
   
-  nvispio = MAX (1, nvispio);   /* At least 1 */
+  nvispio = MAX (1, nvispio);    /* At least 1 */
+  nvispio = MIN (nvis, nvispio); /* No more then requested */
 
   return nvispio;
 } /* end ObitUVDescSetNVis  */

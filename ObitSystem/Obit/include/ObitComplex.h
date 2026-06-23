@@ -127,6 +127,19 @@ typedef struct {
 }G_STMT_END
 
 /**
+ * Multiply a complex value by the conjugate of a second
+ * out = in1 * conjg(in2)
+ * \li [out]out  = output complex
+ * \li [in] in1  = input complex 
+ * \li [in] in2  = input complex 
+ */
+#define COMPLEX_MULC(out, in1, in2)  G_STMT_START{      \
+  ofloat re = +in1.real * in2.real + in1.imag * in2.imag; \
+  ofloat im = -in1.real * in2.imag + in1.imag * in2.real; \
+  out.real = re; out.imag = im; \
+}G_STMT_END
+
+/**
  * Multiply 2 complex values
  * out = in1 * in2
  * \li [out]out  = output complex

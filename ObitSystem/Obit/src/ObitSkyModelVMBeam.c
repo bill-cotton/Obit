@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2025                                          */
+/*;  Copyright (C) 2009-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -324,8 +324,10 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 			  ofloat *Diams, ObitErr *err)
 {
   ObitSkyModelVMBeam* out=NULL;
-  olong number, i, nchan, nif, refType;
-  ofloat refDiam;
+  ObitImageDesc* beamDesc=NULL;
+  olong number, i, nchan, nif, refType, nbchan;
+  ofloat refDiam, delt_f, crp_f;
+  odouble f_0;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean doTab = TRUE, doCmplx;
   gchar *routine = "ObitSkyModelVMBeamCreate";
@@ -432,11 +434,19 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
     if (out->Diams[i] > refDiam) {
       refDiam = out->Diams[i]; refType = i;}
     }
-  /* Reference Beam shape - Tabulated if possible */
+  /* Reference Beam shape - Cos^2 */
   ObitInfoListAlwaysPut (RXBeam[refType]->info, "doTab", OBIT_bool, dim, &doTab);
   out->BeamShape = ObitBeamShapeCreate("Shape", RXBeam[refType], 0.01, refDiam, TRUE);
 
- /* Get list of planes per channel */
+  /* Get list of frequencies per beam channel */
+  beamDesc = out->RXBeam[i]->ImgDesc;
+  nbchan = beamDesc->inaxes[beamDesc->jlocf];  /* Number of beam channels */
+  out->BeamFreq = g_malloc0(nbchan*sizeof(ofloat*));
+  f_0 = beamDesc->crval[beamDesc->jlocf]; delt_f = beamDesc->cdelt[beamDesc->jlocf];
+  crp_f = beamDesc->crpix[beamDesc->jlocf];
+  for (i=0; i<nbchan; i++) out->BeamFreq[i] = (float)(f_0+(i+crp_f-1)*delt_f);
+
+  /* Get list of planes per channel */
   nchan = uvData->myDesc->inaxes[uvData->myDesc->jlocf];
   if (uvData->myDesc->jlocif>=0) 
     nif = uvData->myDesc->inaxes[uvData->myDesc->jlocif];
@@ -702,8 +712,10 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   ObitSkyModelVMBeam *in = (ObitSkyModelVMBeam*)inn;
   olong npos[2], lcomp, ncomp, i, iaty, ifield, lithread, iant=1, plane=0;
   ofloat *ccData=NULL;
+  ofloat deltaPA = 0.25*DG2RAD;  /* Maximum change in parallactic angle before update */
   ObitMatx*** JMatrix=NULL, *JPA=NULL;
-  ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy, iPBCor, jPBCor;
+  ofloat curPA, PBCor, xx, yy, iPBCor, jPBCor;
+  // ofloat fscale;
   ofloat v1, v2, minPBCor=0.0, bmNorm, fblank = ObitMagicF();
   gboolean isCirc=TRUE, badBm=FALSE;
   odouble x, y;
@@ -738,31 +750,9 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   }
 
   /* Need Parallactic angle */
-  tTime = time - 5.0*suba;  /* Correct time for subarray offset  from DBCON */
-  bTime = tTime;
-  curPA = ObitAntennaListParAng (in->AntList[suba], iant, tTime, in->curSource);
-
-  /* Beginning of model validity */
-  args->begVMModelTime = tTime + 5.0*suba;
-
-  /* Find end time of validity - need Parallactic angle */
-  tTime += 1.0/1440.0;
-  tPA = ObitAntennaListParAng (in->AntList[suba], iant, tTime, in->curSource);
-  /* Step by a min until the parallactic angle changes by 0.25 deg */
-  while (fabs(tPA-curPA) < 0.25*DG2RAD) {
-    tTime += 1.0/1440.0;
-    tPA = ObitAntennaListParAng (in->AntList[suba], iant, tTime, in->curSource);
-    /* But not forever */
-    if (tTime-time>0.25) break;
-  }
-
-  /* Time for next update */
-  args->endVMModelTime = tTime + 5.0*suba;
-
-  /* Get parallactic angle half way between now and end */
-  bTime = time + (tTime-bTime) / 2.0;
-  bTime = time; /* at current time */
-  curPA = ObitAntennaListParAng (in->AntList[suba], iant, bTime, in->curSource);
+  curPA = ObitSkyModelVMBeamPAUpdate (iant, suba, time, deltaPA,
+				      in->AntList[suba], in->curSource,
+				      &args->begVMModelTime, &args->endVMModelTime);
   /* save cos, sin of twice parallactic angle */
   args->cos2PA = cos(2.0*curPA);
   args->sin2PA = sin(2.0*curPA);
@@ -802,8 +792,9 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 
     /* Scale by ratio of frequency to beam image ref. frequency */
     plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
-    fscale = args->BeamFreq / in->RXBeam[iaty]->freqs[plane];
-
+    //fscale = args->BeamFreq / in->RXBeam[iaty]->freqs[plane];
+    args->BeamFreq = in->BeamFreq[plane];
+    
     /* Beam normalization (center (power) defined to be 0.5 per parallel hand - NO really 1.0 */
     v1 = ObitImageInterpValueInt (in->RXBeam[iaty], args->BeamRXInterp[iaty], 0.0, 0.0, curPA, plane, err);
     v2 = ObitImageInterpValueInt (in->LYBeam[iaty], args->BeamLYInterp[iaty], 0.0, 0.0, curPA, plane, err);
@@ -821,9 +812,9 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       xx = -ccData[i*lcomp+2];    /* AZ opposite of RA; offsets in beam images are of source */
       /* ?? xx = ccData[i*lcomp+1];  AZ opposite of RA; offsets in beam images are of source */
       yy = -ccData[i*lcomp+3];
-      /* Scale by ratio of frequency to beam image ref. frequency */
-      x = (odouble)xx * fscale;
-      y = (odouble)yy * fscale;
+      /* Scale by ratio of frequency to beam image ref. frequency NO */
+      x = (odouble)xx; // * fscale;
+      y = (odouble)yy; // * fscale;
       /* Flip x sign for agreement with python scripts */
       //DEBUG 
       x = x; y = -y; curPA = curPA;  /* This seems to make MeerKaT work - don't flip sign of curPA here */
@@ -1024,8 +1015,8 @@ static void ObitSkyModelVMBeamClassInfoDefFn (gpointer inClass)
  * \param cosArr   Array of cosine of phase to apply, per numComp
  * \param Jones1   Jones matrix array of first antenna of baseline, per numComp
  * \param Jones2   Jones matrix array of second antenna of baseline, per numComp
- * \param cos_parAng2  cosine (Parallactic angle*2)
- * \param sin_parAng2  sine (Parallactic angle*2)
+ * \param c2p      cosine (Parallactic angle*2)
+ * \param s2p      sine (Parallactic angle*2)
  * \param workVis  work array of numComp 2x2 complex matrices
  * \param work1    work 2x2 complex matrix
  * \param work2    work 2x2 complex matrix
@@ -1034,13 +1025,14 @@ static void ObitSkyModelVMBeamClassInfoDefFn (gpointer inClass)
 void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes,  gboolean isCirc, 
 				    ofloat *compFlux, ofloat *sinArr, ofloat *cosArr,
 				    ObitMatx **Jones1, ObitMatx **Jones2, 
-				    ofloat cos_parAng2 ,ofloat sin_parAng2,
+				    ofloat c2p ,ofloat s2p,
 				    ObitMatx **workVis, ObitMatx *work1, ObitMatx *work2,
 				    ObitMatx *sumVis)
 {
   olong i;
-  ocomplex v, gxx, gyy, gxy, gyx, hxx, hyy, hxy, hyx, t1, t2, t3, t4, J, txx, tyy, txy, tyx;
-  ofloat c2p, s2p;
+  ocomplex v, t1, t2, t3, t4, J, txx, tyy, txy, tyx;
+  ocomplex gxx, gxy, gyx, gyy, hxx, hxy, hyx, hyy;
+  ObitMatx *J1, *J2;
 
   /* Create pseudovis -
      By feed type */
@@ -1099,9 +1091,9 @@ void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes,  gboolean isCir
 	/* Use Mattieu's simple case */
 	COMPLEX_SET(v,  compFlux[i]*cosArr[i],  compFlux[i]*sinArr[i]) ;/* Visibility */
 	/* Extract Jones terms */
-	gxx = Jones1[i]->cpx[0]; gxy = Jones1[i]->cpx[1]; gyx = Jones1[i]->cpx[2]; gyy = Jones1[i]->cpx[3];
-	COMPLEX_CONJUGATE(hxx,Jones2[i]->cpx[0]); COMPLEX_CONJUGATE(hxy,Jones2[i]->cpx[1]); 
-	COMPLEX_CONJUGATE(hyx,Jones2[i]->cpx[2]); COMPLEX_CONJUGATE(hyy,Jones2[i]->cpx[3]); 
+	gxx = Jones1[i]->data.cpx[0]; gxy = Jones1[i]->data.cpx[1]; gyx = Jones1[i]->data.cpx[2]; gyy = Jones1[i]->data.cpx[3];
+	COMPLEX_CONJUGATE(hxx,Jones2[i]->data.cpx[0]); COMPLEX_CONJUGATE(hxy,Jones2[i]->data.cpx[1]); 
+	COMPLEX_CONJUGATE(hyx,Jones2[i]->data.cpx[2]); COMPLEX_CONJUGATE(hyy,Jones2[i]->data.cpx[3]); 
 	COMPLEX_MUL2(t1, gxx, hxx); COMPLEX_MUL2(t2, gyx, hyx);/*  XX */
 	COMPLEX_ADD2(t3, t1, t2);   COMPLEX_MUL2(txx, t3, v);
 	
@@ -1114,48 +1106,39 @@ void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes,  gboolean isCir
 	COMPLEX_MUL2(t1, gxy, hxy); COMPLEX_MUL2(t2, gyy, hyy);  /* YY */
 	COMPLEX_ADD2(t3, t1, t2);   COMPLEX_MUL2(tyy, t3, v);
 	/* Sum into sumVis */
-	COMPLEX_ADD2(sumVis->cpx[0], txx, sumVis->cpx[0]);
-	COMPLEX_ADD2(sumVis->cpx[1], txy, sumVis->cpx[1]);
-	COMPLEX_ADD2(sumVis->cpx[2], tyx, sumVis->cpx[2]);
-	COMPLEX_ADD2(sumVis->cpx[3], tyy, sumVis->cpx[3]);
+	COMPLEX_ADD2(sumVis->data.cpx[0], txx, sumVis->data.cpx[0]);
+	COMPLEX_ADD2(sumVis->data.cpx[1], txy, sumVis->data.cpx[1]);
+	COMPLEX_ADD2(sumVis->data.cpx[2], tyx, sumVis->data.cpx[2]);
+	COMPLEX_ADD2(sumVis->data.cpx[3], tyy, sumVis->data.cpx[3]);
       } /* end loop over components */
       return;  /* DEBUGGING */
       break;
-    case 1: /* Linear Stokes I */
+
+    case 1: /* Linear Stokes I model */
       /* Stokes I Mattieu's simplification with h=>X, v=>Y
-	 | XX XY | =
-	 | YX YY |
-	 |gxx*hxx+gxy*hxy  gxy*hyy+gxx*hyx| * v
-	 |gyx*hxx+gyy*hxy  gyy*hyy+gyx*hyx|   "c" version   */
-      /* from python CalcModVis
-         |gxx*hxx+gyx*hyx  gxx*hyx+gxy*hyy| * v
-	 |gyx*hxx+gyy*hxy  gxy*hxy+gyy*hyy|  python same(?) for unpol */
-      /* c is SO primitive! */
-      ObitMatxSet2C(sumVis, 0.0,0.0, 0.0,0.0, 0.0,0.0, 0.0,0.0); /* Init */
+	 | XX XY | = |gxx*hxx+gxy*hxy  gxy*hyy+gxx*hyx| * v
+	 | YX YY |   |gyx*hxx+gyy*hxy  gyy*hyy+gyx*hyx|    
+         J1 = |gxx gxy]  J2 = |hxx hxy]
+              [gyx gyy|,      [hyx hyy|  */
+      ObitMatxZero2C(sumVis);  /* Init output */
       for (i=0; i<numComp; i++) {
 	/* Use Mattieu's simplified case with h=>X, v=>Y*/
+	/* g??, h?? replaced with pointers into Jones matrices */
 	COMPLEX_SET(v,  compFlux[i]*cosArr[i],  compFlux[i]*sinArr[i]) ;/* Visibility */
-	/* Extract Jones terms */
-	gxx = Jones1[i]->cpx[0]; gxy = Jones1[i]->cpx[1]; gyx = Jones1[i]->cpx[2]; gyy = Jones1[i]->cpx[3];
-	COMPLEX_CONJUGATE(hxx,Jones2[i]->cpx[0]); COMPLEX_CONJUGATE(hxy,Jones2[i]->cpx[1]); 
-	COMPLEX_CONJUGATE(hyx,Jones2[i]->cpx[2]); COMPLEX_CONJUGATE(hyy,Jones2[i]->cpx[3]); 
-	COMPLEX_MUL2(t1, gxx, hxx); COMPLEX_MUL2(t2, gxy, hxy); /* XX c */
-	// py COMPLEX_MUL2(t1, gxx, hxx); COMPLEX_MUL2(t2, gyx, hyx); /* XX py*/
+	J1 = Jones1[i]; J2 = Jones2[i];
+	COMPLEX_MULC(t1, J1->data.cpx[0], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[1], J2->data.cpx[1]); /* XX */
 	COMPLEX_ADD2(t3, t1, t2);   COMPLEX_MUL2(txx, t3, v);
-	COMPLEX_MUL2(t1, gxy, hyy); COMPLEX_MUL2(t2, gxx, hyx); /* XY c */
-	// py COMPLEX_MUL2(t1, gxx, hyx); COMPLEX_MUL2(t2, gxy, hyy); /* XY py*/
+	COMPLEX_MULC(t1, J1->data.cpx[1], J2->data.cpx[3]); COMPLEX_MULC(t2, J1->data.cpx[0], J2->data.cpx[2]); /* XY */
 	COMPLEX_ADD2(t3, t1, t2);   COMPLEX_MUL2(txy, t3, v);
-	COMPLEX_MUL2(t1, gyx, hxx); COMPLEX_MUL2(t2, gyy, hxy); /* YX c */
-	// py COMPLEX_MUL2(t1, gyx, hxx); COMPLEX_MUL2(t2, gyy, hxy); /* YX py */
+	COMPLEX_MULC(t1, J1->data.cpx[2], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[3], J2->data.cpx[1]); /* YX */
 	COMPLEX_ADD2(t3, t1, t2);   COMPLEX_MUL2(tyx, t3, v);
-	COMPLEX_MUL2(t1, gyx, hyx); COMPLEX_MUL2(t2, gyy, hyy); /* YY  c */
-	// py COMPLEX_MUL2(t1, gxy, hxy); COMPLEX_MUL2(t2, gyy, hyy); /* YY py */
+	COMPLEX_MULC(t1, J1->data.cpx[2], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[3], J2->data.cpx[3]); /* YY  */
 	COMPLEX_ADD2(t3, t1, t2);   COMPLEX_MUL2(tyy, t3, v);
 	/* Sum into sumVis */
-	COMPLEX_ADD2(sumVis->cpx[0], txx, sumVis->cpx[0]);
-	COMPLEX_ADD2(sumVis->cpx[1], txy, sumVis->cpx[1]);
-	COMPLEX_ADD2(sumVis->cpx[2], tyx, sumVis->cpx[2]);
-	COMPLEX_ADD2(sumVis->cpx[3], tyy, sumVis->cpx[3]);
+	COMPLEX_ADD2(sumVis->data.cpx[0], txx, sumVis->data.cpx[0]);
+	COMPLEX_ADD2(sumVis->data.cpx[1], txy, sumVis->data.cpx[1]);
+	COMPLEX_ADD2(sumVis->data.cpx[2], tyx, sumVis->data.cpx[2]);
+	COMPLEX_ADD2(sumVis->data.cpx[3], tyy, sumVis->data.cpx[3]);
       } /* end loop over components */
       return;  
       /* OLD Full matrix
@@ -1164,41 +1147,35 @@ void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes,  gboolean isCir
 	 compFlux[i]*cosArr[i],compFlux[i]*sinArr[i]);
 	 } */
       break;
-    case 2: /* Linear Stokes Q */
+    case 2: /* Linear Stokes Q model */
       /* Stokes Q Mattieu's simplification with h=>X, v=>Y
 	 | XX XY | =
 	 | YX YY |
-	 |c2p*(gxx*hxx-gxy*hxy)-s2p*(gxy*hxx+gxx*hxy)  c2p*(gxx*hyx-gxy*hyy)-s2p*(gxy*hyx+gxx*hyy)| * v
-	 |c2p*(gyx*hxx-gyy*hxy)-s2p*(gyy*hxx+gyx*hxy)  c2p*(gyx*hyx-gyy*hyy)-s2p*(gyy*hyx+gyx*hyy)|      */
-      ObitMatxSet2C(sumVis, 0.0,0.0, 0.0,0.0, 0.0,0.0, 0.0,0.0); /* Init */
-      c2p = cos_parAng2; s2p = sin_parAng2; /* sin/cos Parallactic angle */
-      //c2p = cos_parAng2; s2p = -sin_parAng2; /* DEBUG sin/cos Parallactic angle */
+	   |c2p*(gxx*hxx-gxy*hxy)-s2p*(gxy*hxx+gxx*hxy)  c2p*(gxx*hyx-gxy*hyy)-s2p*(gxy*hyx+gxx*hyy)| * v
+	   |c2p*(gyx*hxx-gyy*hxy)-s2p*(gyy*hxx+gyx*hxy)  c2p*(gyx*hyx-gyy*hyy)-s2p*(gyy*hyx+gyx*hyy)|      */
+      ObitMatxZero2C(sumVis);  /* Init output */
       for (i=0; i<numComp; i++) {
 	/* Use Mattieu's simplified case with h=>X, v=>Y*/
 	COMPLEX_SET(v, compFlux[i]*cosArr[i], compFlux[i]*sinArr[i]) ;/* Visibility */
-	/* Extract Jones terms */
-	gxx = Jones1[i]->cpx[0]; gxy = Jones1[i]->cpx[1]; gyx = Jones1[i]->cpx[2]; gyy = Jones1[i]->cpx[3];
-	COMPLEX_CONJUGATE(hxx,Jones2[i]->cpx[0]); COMPLEX_CONJUGATE(hxy,Jones2[i]->cpx[1]); 
-	COMPLEX_CONJUGATE(hyx,Jones2[i]->cpx[2]); COMPLEX_CONJUGATE(hyy,Jones2[i]->cpx[3]); 
-
-	COMPLEX_MUL2(t1, gxx, hxx); COMPLEX_MUL2(t2, gxy, hxy); COMPLEX_SUB (t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* XX */
-	COMPLEX_MUL2(t1, gxy, hxx); COMPLEX_MUL2(t2, gxx, hxy); COMPLEX_ADD2(t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
+	J1 = Jones1[i]; J2 = Jones2[i];
+	COMPLEX_MULC(t1, J1->data.cpx[0], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[1], J2->data.cpx[1]); COMPLEX_SUB (t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* XX */
+	COMPLEX_MULC(t1, J1->data.cpx[1], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[0], J2->data.cpx[1]); COMPLEX_ADD2(t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
 	COMPLEX_SUB(t1, t3, t4); COMPLEX_MUL2(txx, t1, v);
-	COMPLEX_MUL2(t1, gxx, hyx); COMPLEX_MUL2(t2, gxy, hyy); COMPLEX_SUB (t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* XY */
-	COMPLEX_MUL2(t1, gxy, hyx); COMPLEX_MUL2(t2, gxx, hyy); COMPLEX_ADD2(t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
+	COMPLEX_MULC(t1, J1->data.cpx[0], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[1], J2->data.cpx[3]); COMPLEX_SUB (t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* XY */
+	COMPLEX_MULC(t1, J1->data.cpx[1], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[0], J2->data.cpx[3]); COMPLEX_ADD2(t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
 	COMPLEX_SUB(t1, t3, t4); COMPLEX_MUL2(txy, t1, v);
-	COMPLEX_MUL2(t1, gyx, hxx); COMPLEX_MUL2(t2, gyy, hxy); COMPLEX_SUB (t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* YX */
-	COMPLEX_MUL2(t1, gyy, hxx); COMPLEX_MUL2(t2, gyx, hxy); COMPLEX_ADD2(t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
+	COMPLEX_MULC(t1, J1->data.cpx[2], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[3], J2->data.cpx[1]); COMPLEX_SUB (t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* YX */
+	COMPLEX_MULC(t1, J1->data.cpx[3], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[2], J2->data.cpx[1]); COMPLEX_ADD2(t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
 	COMPLEX_SUB(t1, t3, t4); COMPLEX_MUL2(tyx, t1, v);
-	COMPLEX_MUL2(t1, gyx, hyx); COMPLEX_MUL2(t2, gyy, hyy); COMPLEX_SUB (t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* YY */
-	COMPLEX_MUL2(t1, gyy, hyx); COMPLEX_MUL2(t2, gyx, hyy); COMPLEX_ADD2(t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
+	COMPLEX_MULC(t1, J1->data.cpx[2], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[3], J2->data.cpx[3]); COMPLEX_SUB (t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* YY */
+	COMPLEX_MULC(t1, J1->data.cpx[3], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[2], J2->data.cpx[3]); COMPLEX_ADD2(t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
 	COMPLEX_SUB(t1, t3, t4); COMPLEX_MUL2(tyy, t1, v);
 
 	/* Sum into sumVis */
-	COMPLEX_ADD2(sumVis->cpx[0], txx, sumVis->cpx[0]);
-	COMPLEX_ADD2(sumVis->cpx[1], txy, sumVis->cpx[1]);
-	COMPLEX_ADD2(sumVis->cpx[2], tyx, sumVis->cpx[2]);
-	COMPLEX_ADD2(sumVis->cpx[3], tyy, sumVis->cpx[3]);
+	COMPLEX_ADD2(sumVis->data.cpx[0], txx, sumVis->data.cpx[0]);
+	COMPLEX_ADD2(sumVis->data.cpx[1], txy, sumVis->data.cpx[1]);
+	COMPLEX_ADD2(sumVis->data.cpx[2], tyx, sumVis->data.cpx[2]);
+	COMPLEX_ADD2(sumVis->data.cpx[3], tyy, sumVis->data.cpx[3]);
       } /* end loop over components */
       return;  
       /* OLD  Full matrix
@@ -1208,41 +1185,35 @@ void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes,  gboolean isCir
 	 -compFlux[i]*cosArr[i],-compFlux[i]*sinArr[i]);
 	 }  end loop over components */
       break;
-    case 3: /* Linear Stokes U */
+    case 3: /* Linear Stokes U model */
        /* Stokes U Mattieu's simplification with h=>X, v=>Y
 	 | XX XY | =
 	 | YX YY |
-	 |c2p*(gxy*hxx+gxx*hxy)+s2p*(gxx*hxx-gxy*hxy)  c2p*(gxy*hyx+gxx*hyy)+s2p*(gxx*hyx-gxy*hyy)| * v
-	 |c2p*(gyy*hxx+gyx*hxy)+s2p*(gyx*hxx-gyy*hxy)  c2p*(gyy*hyx+gyx*hyy)+s2p*(gyx*hyx-gyy*hyy)|      */
-      ObitMatxSet2C(sumVis, 0.0,0.0, 0.0,0.0, 0.0,0.0, 0.0,0.0); /* Init */
-      c2p = cos_parAng2; s2p = sin_parAng2; /* sin/cos Parallactic angle */
-      //c2p = cos_parAng2; s2p = -sin_parAng2; /* DEBUG sin/cos Parallactic angle */
+	   |c2p*(gxy*hxx+gxx*hxy)+s2p*(gxx*hxx-gxy*hxy)  c2p*(gxy*hyx+gxx*hyy)+s2p*(gxx*hyx-gxy*hyy)| * v
+	   |c2p*(gyy*hxx+gyx*hxy)+s2p*(gyx*hxx-gyy*hxy)  c2p*(gyy*hyx+gyx*hyy)+s2p*(gyx*hyx-gyy*hyy)|      */
+      ObitMatxZero2C(sumVis);  /* Init output */
       for (i=0; i<numComp; i++) {
 	/* Use Mattieu's simplified case with h=>X, v=>Y*/
-	COMPLEX_SET(v, compFlux[i]*cosArr[i], compFlux[i]*sinArr[i]) ;/* Visibility */
-	/* Extract Jones terms */
-	gxx = Jones1[i]->cpx[0]; gxy = Jones1[i]->cpx[1]; gyx = Jones1[i]->cpx[2]; gyy = Jones1[i]->cpx[3];
-	COMPLEX_CONJUGATE(hxx,Jones2[i]->cpx[0]); COMPLEX_CONJUGATE(hxy,Jones2[i]->cpx[1]); 
-	COMPLEX_CONJUGATE(hyx,Jones2[i]->cpx[2]); COMPLEX_CONJUGATE(hyy,Jones2[i]->cpx[3]); 
-
-	COMPLEX_MUL2(t1, gxy, hxx); COMPLEX_MUL2(t2, gxx, hxy); COMPLEX_ADD2(t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* XX */
-	COMPLEX_MUL2(t1, gxx, hxx); COMPLEX_MUL2(t2, gxy, hxy); COMPLEX_SUB (t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
+	COMPLEX_SET(v, compFlux[i]*cosArr[i], compFlux[i]*sinArr[i]) ; /* Visibility */
+	J1 = Jones1[i]; J2 = Jones2[i];
+	COMPLEX_MULC(t1, J1->data.cpx[1], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[0], J2->data.cpx[1]); COMPLEX_ADD2(t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* XX */
+	COMPLEX_MULC(t1, J1->data.cpx[0], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[1], J2->data.cpx[1]); COMPLEX_SUB (t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
 	COMPLEX_ADD2(t1, t3, t4); COMPLEX_MUL2(txx, t1, v);
-	COMPLEX_MUL2(t1, gxy, hyx); COMPLEX_MUL2(t2, gxx, hyy); COMPLEX_ADD2(t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* XY */
-	COMPLEX_MUL2(t1, gxx, hyx); COMPLEX_MUL2(t2, gxy, hyy); COMPLEX_SUB (t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
+	COMPLEX_MULC(t1, J1->data.cpx[1], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[0], J2->data.cpx[3]); COMPLEX_ADD2(t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* XY */
+	COMPLEX_MULC(t1, J1->data.cpx[0], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[1], J2->data.cpx[3]); COMPLEX_SUB (t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
 	COMPLEX_ADD2(t1, t3, t4); COMPLEX_MUL2(txy, t1, v);
-	COMPLEX_MUL2(t1, gyy, hxx); COMPLEX_MUL2(t2, gyx, hxy); COMPLEX_ADD2(t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* YX */
-	COMPLEX_MUL2(t1, gyx, hxx); COMPLEX_MUL2(t2, gyy, hxy); COMPLEX_SUB (t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
+	COMPLEX_MULC(t1, J1->data.cpx[3], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[2], J2->data.cpx[1]); COMPLEX_ADD2(t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* YX */
+	COMPLEX_MULC(t1, J1->data.cpx[2], J2->data.cpx[0]); COMPLEX_MULC(t2, J1->data.cpx[3], J2->data.cpx[1]); COMPLEX_SUB (t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
 	COMPLEX_ADD2(t1, t3, t4); COMPLEX_MUL2(tyx, t1, v);
-	COMPLEX_MUL2(t1, gyy, hyx); COMPLEX_MUL2(t2, gyx, hyy); COMPLEX_ADD2(t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* YY */
-	COMPLEX_MUL2(t1, gyx, hyx); COMPLEX_MUL2(t2, gyy, hyy); COMPLEX_SUB (t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
+	COMPLEX_MULC(t1, J1->data.cpx[3], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[2], J2->data.cpx[3]); COMPLEX_ADD2(t3, t1, t2); t3.real*=c2p; t3.imag*=c2p; /* YY */
+	COMPLEX_MULC(t1, J1->data.cpx[2], J2->data.cpx[2]); COMPLEX_MULC(t2, J1->data.cpx[3], J2->data.cpx[3]); COMPLEX_SUB (t4, t1, t2); t4.real*=s2p; t4.imag*=s2p;
 	COMPLEX_ADD2(t1, t3, t4); COMPLEX_MUL2(tyy, t1, v);
 
 	/* Sum into sumVis */
-	COMPLEX_ADD2(sumVis->cpx[0], txx, sumVis->cpx[0]);
-	COMPLEX_ADD2(sumVis->cpx[1], txy, sumVis->cpx[1]);
-	COMPLEX_ADD2(sumVis->cpx[2], tyx, sumVis->cpx[2]);
-	COMPLEX_ADD2(sumVis->cpx[3], tyy, sumVis->cpx[3]);
+	COMPLEX_ADD2(sumVis->data.cpx[0], txx, sumVis->data.cpx[0]);
+	COMPLEX_ADD2(sumVis->data.cpx[1], txy, sumVis->data.cpx[1]);
+	COMPLEX_ADD2(sumVis->data.cpx[2], tyx, sumVis->data.cpx[2]);
+	COMPLEX_ADD2(sumVis->data.cpx[3], tyy, sumVis->data.cpx[3]);
       } /* end loop over components */
       return;  
        /* OLD Full matrix
@@ -1252,36 +1223,30 @@ void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes,  gboolean isCir
 	  +compFlux[i]*cosArr[i],+compFlux[i]*sinArr[i], 0.0,0.0);
 	  }  end loop over components */
       break;
-    case 4: /* Linear Stokes V */
+    case 4: /* Linear Stokes V model */
       /* Stokes V Mattieu's simplification with h=>X, v=>Y
-	 | XX XY | =
-	 | YX YY |
-	 |(gxx*hxy-gxy*hxx)  (gxx*hyy-gxy*hyx)| * j * v
-	 |(gyx*hxy-gyy*hxx)  (gyx*hyy-gyy*hyx)|           */
-      ObitMatxSet2C(sumVis, 0.0,0.0, 0.0,0.0, 0.0,0.0, 0.0,0.0); /* Init */
-      COMPLEX_SET(J, 0.0, 1.0) ;/* sqrt(-1) */
+	 | XX XY | = |(gxx*hxy-gxy*hxx)  (gxx*hyy-gxy*hyx)| * j * v
+	 | YX YY |   |(gyx*hxy-gyy*hxx)  (gyx*hyy-gyy*hyx)|           */
+      ObitMatxZero2C(sumVis);  /* Init */
+      COMPLEX_SET(J, 0.0, 1.0); /* sqrt(-1) */
       for (i=0; i<numComp; i++) {
 	/* Use Mattieu's simplified case with h=>X, v=>Y*/
 	COMPLEX_SET(v, compFlux[i]*cosArr[i], compFlux[i]*sinArr[i]) ;/* Visibility */
-	/* Extract Jones terms */
-	gxx = Jones1[i]->cpx[0]; gxy = Jones1[i]->cpx[1]; gyx = Jones1[i]->cpx[2]; gyy = Jones1[i]->cpx[3];
-	COMPLEX_CONJUGATE(hxx,Jones2[i]->cpx[0]); COMPLEX_CONJUGATE(hxy,Jones2[i]->cpx[1]); 
-	COMPLEX_CONJUGATE(hyx,Jones2[i]->cpx[2]); COMPLEX_CONJUGATE(hyy,Jones2[i]->cpx[3]); 
-
-	COMPLEX_MUL2(t1, gxx, hxy); COMPLEX_MUL2(t2, gxy, hyy); COMPLEX_SUB(t3, t1, t2);  /* XX */
+	J1 = Jones1[i]; J2 = Jones2[i];
+	COMPLEX_MULC(t1, J1->data.cpx[0], J2->data.cpx[1]); COMPLEX_MULC(t2, J1->data.cpx[1], J2->data.cpx[3]); COMPLEX_SUB(t3, t1, t2);  /* XX */
 	COMPLEX_MUL3(txx, J, t3, v);
-	COMPLEX_MUL2(t1, gxx, hyy); COMPLEX_MUL2(t2, gxy, hyx); COMPLEX_SUB(t3, t1, t2);  /* XY */
+	COMPLEX_MULC(t1, J1->data.cpx[0], J2->data.cpx[3]); COMPLEX_MULC(t2, J1->data.cpx[1], J2->data.cpx[2]); COMPLEX_SUB(t3, t1, t2);  /* XY */
 	COMPLEX_MUL3(txy, J, t3, v);
-	COMPLEX_MUL2(t1, gyx, hxy); COMPLEX_MUL2(t2, gyy, hxx); COMPLEX_SUB(t3, t1, t2);  /* YX */
+	COMPLEX_MULC(t1, J1->data.cpx[2], J2->data.cpx[1]); COMPLEX_MULC(t2, J1->data.cpx[3], J2->data.cpx[0]); COMPLEX_SUB(t3, t1, t2);  /* YX */
 	COMPLEX_MUL3(tyx, J, t3, v);
-	COMPLEX_MUL2(t1, gyx, hyy); COMPLEX_MUL2(t2, gyy, hyx); COMPLEX_SUB(t3, t1, t2);  /* YY */
+	COMPLEX_MULC(t1, J1->data.cpx[2], J2->data.cpx[3]); COMPLEX_MULC(t2, J1->data.cpx[3], J2->data.cpx[2]); COMPLEX_SUB(t3, t1, t2);  /* YY */
 	COMPLEX_MUL3(tyy, J, t3, v);
 
 	/* Sum into sumVis */
-	COMPLEX_ADD2(sumVis->cpx[0], txx, sumVis->cpx[0]);
-	COMPLEX_ADD2(sumVis->cpx[1], txy, sumVis->cpx[1]);
-	COMPLEX_ADD2(sumVis->cpx[2], tyx, sumVis->cpx[2]);
-	COMPLEX_ADD2(sumVis->cpx[3], tyy, sumVis->cpx[3]);
+	COMPLEX_ADD2(sumVis->data.cpx[0], txx, sumVis->data.cpx[0]);
+	COMPLEX_ADD2(sumVis->data.cpx[1], txy, sumVis->data.cpx[1]);
+	COMPLEX_ADD2(sumVis->data.cpx[2], tyx, sumVis->data.cpx[2]);
+	COMPLEX_ADD2(sumVis->data.cpx[3], tyy, sumVis->data.cpx[3]);
       } /* end loop over components */
       return;  
       /* OLD Full matrix
@@ -1297,6 +1262,7 @@ void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes,  gboolean isCir
   } /* end of circular/linear */
 
   /* Loop multiplying each Jones1*workVis*conjugate transpose(Jones2) and sum */
+  /* This is not actually used -  OLD Full matrix */
   ObitMatxSet2C(sumVis, 0.0,0.0, 0.0,0.0, 0.0,0.0, 0.0,0.0); /* Init */
   for (i=0; i<numComp; i++) {
     ObitMatxMult(Jones1[i], workVis[i], work1);
@@ -1304,10 +1270,51 @@ void ObitSkyModelVMBeamJonesCorSum (olong numComp, olong Stokes,  gboolean isCir
     ObitMatxAdd (sumVis, work2, sumVis);
   } /* end loop over components */
 
-  
 } /* end ObitSkyModelVMBeamJonesCorSum */
 
-/*---------------Private functions--------------------------*/
+/** Public: Determine parallactic angle and time range of validity
+ * \param iAnt      Antenna (1-rel}
+ * \param suba      Subarray number (0-rel)
+ * \param time      Time (days) to begin evaluation
+ * \param deltaPA   Max allowable change in parallactic angle (rad)
+ * \param AntList   Antenna list for subarray
+ * \param curSource Source information
+ * \param bTime     [out] begin time of validity [days]
+ * \param etime     [out] end time of validity [days]
+ * \return parAng Parallactic angle [radians]
+ */
+ofloat ObitSkyModelVMBeamPAUpdate (olong iAnt, olong suba, ofloat time, float deltaPA, 
+				   ObitAntennaList *AntList, ObitSource *curSource,
+				   ofloat *bTime, ofloat *eTime)
+{
+  ofloat curPA, tPA, tTime;
+  
+  *bTime = 0.0; *eTime = 5.0;  /* In1t output */
+  
+  /* Search from current time */
+  tTime = time - 5.0*suba;  /* Correct time for subarray offset  from DBCON */
+  *bTime = tTime;   /* Start tiime */
+  curPA = ObitAntennaListParAng (AntList, iAnt, tTime, curSource);
+
+  /* Find end time of validity - need Parallactic angle */
+  tTime += 8.0/86400;  /* 8 sec later */
+  tPA = ObitAntennaListParAng (AntList, iAnt, tTime, curSource);
+  /* Step by a 8 sec until the parallactic angle changes by deltaPA */
+  while (fabs(tPA-curPA) < deltaPA) {
+    tTime += 8.0/86400;
+    tPA = ObitAntennaListParAng (AntList, iAnt, tTime, curSource);
+    /* But not forever */
+    if (tTime-time>0.05) break;
+  }
+
+  *eTime = tTime + 5.0*suba;  /* Time for next update */
+
+  /* Get parallactic angle half way between now and end */
+  tTime = time + (tTime-*bTime) / 2.0;
+  curPA = ObitAntennaListParAng (AntList, iAnt, tTime, curSource);
+  return curPA;
+} /* end ObitSkyModelVMBeamPAUpdate */
+
 
 /**
  * Creates empty member objects, initialize reference count.
@@ -1347,6 +1354,7 @@ void ObitSkyModelVMBeamInit  (gpointer inn)
   in->doUnitJones  = FALSE;
   in->maxResid     = 0.0;
   in->doBeamCorClean = FALSE;
+  in->BeamFreq     = NULL;
 } /* end ObitSkyModelVMBeamInit */
 
 /**
@@ -1366,8 +1374,9 @@ void ObitSkyModelVMBeamClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  if (in->numPlane){g_free(in->numPlane);} in->numPlane = NULL;
-  if (in->AntType) {g_free(in->AntType);}  in->AntType  = NULL;
+  if (in->numPlane){g_free(in->numPlane); in->numPlane = NULL;}
+  if (in->AntType) {g_free(in->AntType);  in->AntType  = NULL;}
+  if (in->BeamFreq){g_free(in->BeamFreq); in->BeamFreq  = NULL;}
   in->BeamShape = ObitBeamShapeUnref(in->BeamShape);
   for (i=0; i<in->numAntType; i++) {
     if (in->RXBeam && in->RXBeam[i]) in->RXBeam[i]  = ObitImageInterpUnref(in->RXBeam[i]);
@@ -1785,12 +1794,12 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 					    &JMatrix[iaty][kt], &JMatrix[jaty][kt],
 					    largs->cos2PA, largs->sin2PA, 
 					    workVis, work1, work2, sumVis);
-	      sumRealRR += sumVis->flt[0]; sumImagRR += sumVis->flt[1];
-	      sumRealLL += sumVis->flt[6]; sumImagLL += sumVis->flt[7];
+	      sumRealRR += sumVis->data.flt[0]; sumImagRR += sumVis->data.flt[1];
+	      sumRealLL += sumVis->data.flt[6]; sumImagLL += sumVis->data.flt[7];
 	      if (doCrossPol) {
 		/* Cross pol */
-		sumRealRL += sumVis->flt[2]; sumImagRL += sumVis->flt[3];
-		sumRealLR += sumVis->flt[4]; sumImagLR += sumVis->flt[5];
+		sumRealRL += sumVis->data.flt[2]; sumImagRL += sumVis->data.flt[3];
+		sumRealLR += sumVis->data.flt[4]; sumImagLR += sumVis->data.flt[5];
 	      } /* end xpol */
 	      kt = it+1;  /* offset in JMatrix */
 	    } /* end outer loop over components */
@@ -1829,12 +1838,12 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 					  largs->cos2PA, largs->sin2PA, 
 					  workVis, work1, work2, sumVis);
 	    
-	      sumRealRR += sumVis->flt[0]; sumImagRR += sumVis->flt[1];
-	      sumRealLL += sumVis->flt[6]; sumImagLL += sumVis->flt[7];
+	      sumRealRR += sumVis->data.flt[0]; sumImagRR += sumVis->data.flt[1];
+	      sumRealLL += sumVis->data.flt[6]; sumImagLL += sumVis->data.flt[7];
 	      if (doCrossPol) {
 		/* Cross pol */
-		sumRealRL += sumVis->flt[2]; sumImagRL += sumVis->flt[3];
-		sumRealLR += sumVis->flt[4]; sumImagLR += sumVis->flt[5];
+		sumRealRL += sumVis->data.flt[2]; sumImagRL += sumVis->data.flt[3];
+		sumRealLR += sumVis->data.flt[4]; sumImagLR += sumVis->data.flt[5];
 	      } /* end xpol */
 	      kt = it+1;  /* offset in JMatrix */
 	    } /* end outer loop over components */
@@ -1867,12 +1876,12 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 					    largs->cos2PA, largs->sin2PA, 
 					    workVis, work1, work2, sumVis);
 	      
-	      sumRealRR += sumVis->flt[0]; sumImagRR += sumVis->flt[1];
-	      sumRealLL += sumVis->flt[6]; sumImagLL += sumVis->flt[7];
+	      sumRealRR += sumVis->data.flt[0]; sumImagRR += sumVis->data.flt[1];
+	      sumRealLL += sumVis->data.flt[6]; sumImagLL += sumVis->data.flt[7];
 	      if (doCrossPol) {
 		/* Cross pol */
-		sumRealRL += sumVis->flt[2]; sumImagRL += sumVis->flt[3];
-		sumRealLR += sumVis->flt[4]; sumImagLR += sumVis->flt[5];
+		sumRealRL += sumVis->data.flt[2]; sumImagRL += sumVis->data.flt[3];
+		sumRealLR += sumVis->data.flt[4]; sumImagLR += sumVis->data.flt[5];
 	      } /* end xpol */
 	      kt = it+1;  /* offset in JMatrix */
 	    } /* end outer loop over components */
@@ -1915,12 +1924,12 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 					    largs->cos2PA, largs->sin2PA, 
 					    workVis, work1, work2, sumVis);
 	      
-	      sumRealRR += sumVis->flt[0]; sumImagRR += sumVis->flt[1];
-	      sumRealLL += sumVis->flt[6]; sumImagLL += sumVis->flt[7];
+	      sumRealRR += sumVis->data.flt[0]; sumImagRR += sumVis->data.flt[1];
+	      sumRealLL += sumVis->data.flt[6]; sumImagLL += sumVis->data.flt[7];
 	      if (doCrossPol) {
 		/* Cross pol */
-		sumRealRL += sumVis->flt[2]; sumImagRL += sumVis->flt[3];
-		sumRealLR += sumVis->flt[4]; sumImagLR += sumVis->flt[5];
+		sumRealRL += sumVis->data.flt[2]; sumImagRL += sumVis->data.flt[3];
+		sumRealLR += sumVis->data.flt[4]; sumImagLR += sumVis->data.flt[5];
 	      } /* end xpol */
 	      kt = it+1;  /* offset in JMatrix */
 	    } /* end outer loop over components */
@@ -1952,12 +1961,12 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 					    largs->cos2PA, largs->sin2PA, 
 					    workVis, work1, work2, sumVis);
 	      
-	      sumRealRR += sumVis->flt[0]; sumImagRR += sumVis->flt[1];
-	      sumRealLL += sumVis->flt[6]; sumImagLL += sumVis->flt[7];
+	      sumRealRR += sumVis->data.flt[0]; sumImagRR += sumVis->data.flt[1];
+	      sumRealLL += sumVis->data.flt[6]; sumImagLL += sumVis->data.flt[7];
 	      if (doCrossPol) {
 		/* Cross pol */
-		sumRealRL += sumVis->flt[2]; sumImagRL += sumVis->flt[3];
-		sumRealLR += sumVis->flt[4]; sumImagLR += sumVis->flt[5];
+		sumRealRL += sumVis->data.flt[2]; sumImagRL += sumVis->data.flt[3];
+		sumRealLR += sumVis->data.flt[4]; sumImagLR += sumVis->data.flt[5];
 	      } /* end xpol */
 	      kt = it+1;  /* offset in JMatrix */
 	    } /* end outer loop over components */
@@ -1999,12 +2008,12 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 					    largs->cos2PA, largs->sin2PA, 
 					    workVis, work1, work2, sumVis);
       
-	      sumRealRR += sumVis->flt[0]; sumImagRR += sumVis->flt[1];
-	      sumRealLL += sumVis->flt[6]; sumImagLL += sumVis->flt[7];
+	      sumRealRR += sumVis->data.flt[0]; sumImagRR += sumVis->data.flt[1];
+	      sumRealLL += sumVis->data.flt[6]; sumImagLL += sumVis->data.flt[7];
 	      if (doCrossPol) {
 		/* Cross pol */
-		sumRealRL += sumVis->flt[2]; sumImagRL += sumVis->flt[3];
-		sumRealLR += sumVis->flt[4]; sumImagLR += sumVis->flt[5];
+		sumRealRL += sumVis->data.flt[2]; sumImagRL += sumVis->data.flt[3];
+		sumRealLR += sumVis->data.flt[4]; sumImagLR += sumVis->data.flt[5];
 	      } /* end xpol */
 	      kt = it+1;  /* offset in JMatrix */
 	    } /* end outer loop over components */
@@ -2261,42 +2270,47 @@ static void FillJones(ObitMatx *Jones, odouble x, odouble y, ofloat curPA, olong
   
    /* Interpolate voltage gains */
   /* P1 (RR or XX) */
-  v = bmNorm*ObitImageInterpValueInt (P1BeamRe, BeamP1ReInterp, x, y, -curPA, plane, err);
+  v = ObitImageInterpValueInt (P1BeamRe, BeamP1ReInterp, x, y, -curPA, plane, err);
   if (v!=fblank) P1r = jPBCor*bmNorm*v;
   else           P1r = 0.0;
   if (P1BeamIm) {
-    v = bmNorm*ObitImageInterpValueInt (P1BeamIm, BeamP1ImInterp, x, y, -curPA, plane, err);
+    v = ObitImageInterpValueInt (P1BeamIm, BeamP1ImInterp, x, y, -curPA, plane, err);
     if (v!=fblank) P1i = jPBCor*bmNorm*v;
   } else           P1i = 0.0;
 
   /* P2 (LL or YY) */
-  v = bmNorm*ObitImageInterpValueInt (P2BeamRe, BeamP2ReInterp, x, y, -curPA, plane, err);
+  v = ObitImageInterpValueInt (P2BeamRe, BeamP2ReInterp, x, y, -curPA, plane, err);
   if (v!=fblank) P2r = jPBCor*bmNorm*v;
   else           P2r = 0.0;
   if (P2BeamIm) {
-    v = bmNorm*ObitImageInterpValueInt (P2BeamIm, BeamP2ImInterp, x, y, -curPA, plane, err);
+    v = ObitImageInterpValueInt (P2BeamIm, BeamP2ImInterp, x, y, -curPA, plane, err);
     if (v!=fblank) P2i = jPBCor*bmNorm*v;
   } else           P2i = 0.0;
 
   /* X1 (RL or XY) */
   if (X1BeamRe) {
-    v = bmNorm*ObitImageInterpValueInt (X1BeamRe, BeamX1ReInterp, x, y, -curPA, plane, err);
+    v = ObitImageInterpValueInt (X1BeamRe, BeamX1ReInterp, x, y, -curPA, plane, err);
     if (v!=fblank) X1r = jPBCor*bmNorm*v;
   }  else          X1r = 0.0;
   if (X1BeamIm) {
-    v = bmNorm*ObitImageInterpValueInt (X1BeamIm, BeamX1ImInterp, x, y, -curPA, plane, err);
+    v = ObitImageInterpValueInt (X1BeamIm, BeamX1ImInterp, x, y, -curPA, plane, err);
     if (v!=fblank) X1i = jPBCor*bmNorm*v;
   } else           X1i = 0.0;
 
   /* X2 (LR or YX) */
   if (X2BeamRe) {
-    v = bmNorm*ObitImageInterpValueInt (X2BeamRe, BeamX2ReInterp, x, y, -curPA, plane, err);
+    v = ObitImageInterpValueInt (X2BeamRe, BeamX2ReInterp, x, y, -curPA, plane, err);
     if (v!=fblank) X2r = jPBCor*bmNorm*v;
   } else           X2r = 0.0;
   if (X2BeamIm) {
-    v = bmNorm*ObitImageInterpValueInt (X2BeamIm, BeamX2ImInterp, x, y, -curPA, plane, err);
+    v = ObitImageInterpValueInt (X2BeamIm, BeamX2ImInterp, x, y, -curPA, plane, err);
     if (v!=fblank) X2i = jPBCor*bmNorm*v;
   } else           X2i = 0.0;
+
+  /* Use Unit matrices if gain <10% or crazy beam Jones */
+  if ((iPBCor>10.0) || (fabs(P1r)>1.3) || (fabs(P2r)>1.3)) {
+    P1r = P2r = 1.0; P1i = P2i = 0.0; X1r = X2r = X1i = X2i = 0.0;
+  }
 
   /* Load 'em up */
   /*DEBUG ObitMatxSet2C (Jones, P1r, P1i, X1r, X1i, X2r, X2i, P2r, P2i);*/
@@ -2522,7 +2536,7 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
   gchar     Aclass[20], *strTemp, *Type, inFile[129];
   ofloat    Diam1=0.0, Diam2=0.0;
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean  doRRLL;
+  gboolean  doRRLL, doHHVV=FALSE;
   olong     i;
   gchar *routine = "ObitSkyModelVBeamGetBeam";
 
@@ -2563,14 +2577,20 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
                    routine, Type);
     return;
   }
-  
+
+  /* If beam in3 labeled "HH" rather than "RR" or "XX" use H and V for X and Y  */
+  doHHVV =  (Stokes0<-3.5) && (inFile[0]=='H') && (inFile[1]=='H'); /* Linear feeds FITS labeled HH */
+  doHHVV =  doHHVV || ((Stokes0<-3.5) && (Aclass[0]=='H') && (Aclass[1]=='H')); /* Linear feeds AIPS labeled HH */
+
   /* Stokes R/X */
-  if (doRRLL) {inFile[0]='R';inFile[1]='R';}
-  else        {inFile[0]='X';inFile[1]='X';}
+  if (doRRLL)      {inFile[0]='R';inFile[1]='R';}
+  else if (doHHVV) {inFile[0]='H';inFile[1]='H';}
+  else             {inFile[0]='X';inFile[1]='X';}
   dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
-  if (doRRLL) {Aclass[0]='R';Aclass[1]='R';}
-  else        {Aclass[0]='X';Aclass[1]='X';}
+  if (doRRLL)      {Aclass[0]='R';Aclass[1]='R';}
+  else if (doHHVV) {Aclass[0]='H';Aclass[1]='H';}
+  else             {Aclass[0]='X';Aclass[1]='X';}
   Aclass[6] = 0;
   dim[0] = 6; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
@@ -2584,12 +2604,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
   ObitErrLog(err); /* Show messages */
 
   /* Stokes L/Y */
-  if (doRRLL) {inFile[0]='L';inFile[1]='L';}
-  else        {inFile[0]='Y';inFile[1]='Y';}
+  if (doRRLL)      {inFile[0]='L';inFile[1]='L';}
+  else if (doHHVV) {inFile[0]='V';inFile[1]='V';}
+  else             {inFile[0]='Y';inFile[1]='Y';}
   dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
-  if (doRRLL) {Aclass[0]='L';Aclass[1]='L';}
-  else        {Aclass[0]='Y';Aclass[1]='Y';}
+  if (doRRLL)      {Aclass[0]='L';Aclass[1]='L';}
+  else if (doHHVV) {Aclass[0]='V';Aclass[1]='V';}
+  else             {Aclass[0]='Y';Aclass[1]='Y';}
   dim[0] = 6; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
   LYpol1 = ObitImageFromFileInfo ("in3", myInput, err);
@@ -2602,12 +2624,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
   ObitErrLog(err); /* Show messages */
 
   /* Stokes  RL/XY */
-  if (doRRLL) {inFile[0]='R';inFile[1]='L';}
-  else        {inFile[0]='X';inFile[1]='Y';}
+  if (doRRLL)      {inFile[0]='R';inFile[1]='L';}
+  else if (doHHVV) {inFile[0]='H';inFile[1]='V';}
+  else             {inFile[0]='X';inFile[1]='Y';}
   dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
-  if (doRRLL) {Aclass[0]='R';Aclass[1]='L';}
-  else        {Aclass[0]='X';Aclass[1]='Y';}
+  if (doRRLL)      {Aclass[0]='R';Aclass[1]='L';}
+  else if (doHHVV) {Aclass[0]='H';Aclass[1]='V';}
+  else             {Aclass[0]='X';Aclass[1]='Y';}
   dim[0] = 6; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
   RLpol1 = ObitImageFromFileInfo ("in3", myInput, err);
@@ -2619,12 +2643,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
   ObitErrClear(err);  /* Suppress failure messages */
 
   /* Stokes  LR/YX */
-  if (doRRLL) {inFile[0]='L';inFile[1]='R';}
-  else        {inFile[0]='Y';inFile[1]='X';}
+  if (doRRLL)      {inFile[0]='L';inFile[1]='R';}
+  else if (doHHVV) {inFile[0]='V';inFile[1]='H';}
+  else             {inFile[0]='Y';inFile[1]='X';}
   dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
-  if (doRRLL) {Aclass[0]='L';Aclass[1]='R';}
-  else        {Aclass[0]='Y';Aclass[1]='X';}
+  if (doRRLL)      {Aclass[0]='L';Aclass[1]='R';}
+  else if (doHHVV) {Aclass[0]='V';Aclass[1]='H';}
+  else             {Aclass[0]='Y';Aclass[1]='X';}
   dim[0] = 6; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
   LRpol1 = ObitImageFromFileInfo ("in3", myInput, err);
@@ -2656,12 +2682,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
     } 
 
     /* Stokes R/X = RR or XX */
-    if (doRRLL) {inFile[0]='R';inFile[1]='R';}
-    else        {inFile[0]='X';inFile[1]='X';}
+    if (doRRLL)      {inFile[0]='R';inFile[1]='R';}
+    else if (doHHVV) {inFile[0]='H';inFile[1]='H';}
+    else             {inFile[0]='X';inFile[1]='X';}
     dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
-    if (doRRLL) {Aclass[0]='R';Aclass[1]='R';}
-    else        {Aclass[0]='X';Aclass[1]='X';}
+    if (doRRLL)      {Aclass[0]='R';Aclass[1]='R';}
+    else if (doHHVV) {Aclass[0]='H';Aclass[1]='H';}
+    else             {Aclass[0]='X';Aclass[1]='X';}
     dim[0] = 6; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
     RXpolIm1 = ObitImageFromFileInfo ("in4", myInput, err);
@@ -2674,12 +2702,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
     ObitErrLog(err); /* Show messages */
 
     /* Stokes L/Y = LL or YY */
-    if (doRRLL) {inFile[0]='L';inFile[1]='L';}
-    else        {inFile[0]='Y';inFile[1]='Y';}
+    if (doRRLL)      {inFile[0]='L';inFile[1]='L';}
+    else if (doHHVV) {inFile[0]='V';inFile[1]='V';}
+    else             {inFile[0]='Y';inFile[1]='Y';}
     dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
-    if (doRRLL) {Aclass[0]='L';Aclass[1]='L';}
-    else        {Aclass[0]='Y';Aclass[1]='Y';}
+    if (doRRLL)      {Aclass[0]='L';Aclass[1]='L';}
+    else if (doHHVV) {Aclass[0]='V';Aclass[1]='V';}
+    else             {Aclass[0]='Y';Aclass[1]='Y';}
     dim[0] = 6; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
     LYpolIm1 = ObitImageFromFileInfo ("in4", myInput, err);
@@ -2693,12 +2723,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
 
     /* Stokes RL/XY if present */
     if (RLpol1) {
-      if (doRRLL) {inFile[0]='R';inFile[1]='L';}
-      else        {inFile[0]='X';inFile[1]='Y';}
+      if (doRRLL)      {inFile[0]='R';inFile[1]='L';}
+      else if (doHHVV) {inFile[0]='H';inFile[1]='V';}
+      else             {inFile[0]='X';inFile[1]='Y';}
       dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
-      if (doRRLL) {Aclass[0]='R';Aclass[1]='L';}
-      else        {Aclass[0]='X';Aclass[1]='Y';}
+      if (doRRLL)      {Aclass[0]='R';Aclass[1]='L';}
+      else if (doHHVV) {Aclass[0]='H';Aclass[1]='V';}
+      else             {Aclass[0]='X';Aclass[1]='Y';}
       dim[0] = 6; dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
       RLpolIm1 = ObitImageFromFileInfo ("in4", myInput, err);
@@ -2713,12 +2745,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
 
     /* Stokes LR/YX if present */
     if (LRpol1) {
-      if (doRRLL) {inFile[0]='L';inFile[1]='R';}
-      else        {inFile[0]='Y';inFile[1]='X';}
+      if (doRRLL)      {inFile[0]='L';inFile[1]='R';}
+      else if (doHHVV) {inFile[0]='V';inFile[1]='H';}
+      else             {inFile[0]='Y';inFile[1]='X';}
       dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
-      if (doRRLL) {Aclass[0]='L';Aclass[1]='R';}
-      else        {Aclass[0]='Y';Aclass[1]='X';}
+      if (doRRLL)      {Aclass[0]='L';Aclass[1]='R';}
+      else if (doHHVV) {Aclass[0]='V';Aclass[1]='H';}
+      else             {Aclass[0]='Y';Aclass[1]='X';}
       dim[0] = 6; dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
       LRpolIm1 = ObitImageFromFileInfo ("in4", myInput, err);
@@ -2760,12 +2794,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
     }
     
     /* Stokes R/X = RR or XX */
-    if (doRRLL) {inFile[0]='R';inFile[1]='R';}
-    else        {inFile[0]='X';inFile[1]='X';}
+    if (doRRLL)      {inFile[0]='R';inFile[1]='R';}
+    else if (doHHVV) {inFile[0]='H';inFile[1]='H';}
+    else             {inFile[0]='X';inFile[1]='X';}
     dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in5File", OBIT_string, dim, inFile);
-    if (doRRLL) {Aclass[0]='R';Aclass[1]='R';}
-    else        {Aclass[0]='X';Aclass[1]='X';}
+    if (doRRLL)      {Aclass[0]='R';Aclass[1]='R';}
+    else if (doHHVV) {Aclass[0]='H';Aclass[1]='H';}
+    else             {Aclass[0]='X';Aclass[1]='X';}
     Aclass[6] = 0;
     dim[0] = 6; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in5Class", OBIT_string, dim, Aclass);
@@ -2779,12 +2815,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
     ObitErrLog(err); /* Show messages */
     
     /* Stokes L/Y, LL or YY */
-    if (doRRLL) {inFile[0]='L';inFile[1]='L';}
-    else        {inFile[0]='Y';inFile[1]='Y';}
+    if (doRRLL)      {inFile[0]='L';inFile[1]='L';}
+    else if (doHHVV) {inFile[0]='V';inFile[1]='V';}
+    else             {inFile[0]='Y';inFile[1]='Y';}
     dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in5File", OBIT_string, dim, inFile);
-    if (doRRLL) {Aclass[0]='L';Aclass[1]='L';}
-    else        {Aclass[0]='Y';Aclass[1]='Y';}
+    if (doRRLL)      {Aclass[0]='L';Aclass[1]='L';}
+    else if (doHHVV) {Aclass[0]='V';Aclass[1]='V';}
+    else             {Aclass[0]='Y';Aclass[1]='Y';}
     dim[0] = 6; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in5Class", OBIT_string, dim, Aclass);
     LYpol2 = ObitImageFromFileInfo ("in5", myInput, err);
@@ -2797,12 +2835,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
     ObitErrLog(err); /* Show messages */
     
     /* Stokes  RL/XY */
-    if (doRRLL) {inFile[0]='R';inFile[1]='L';}
-    else        {inFile[0]='X';inFile[1]='Y';}
+    if (doRRLL)      {inFile[0]='R';inFile[1]='L';}
+    else if (doHHVV) {inFile[0]='H';inFile[1]='V';}
+    else             {inFile[0]='X';inFile[1]='Y';}
     dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in5File", OBIT_string, dim, inFile);
-    if (doRRLL) {Aclass[0]='R';Aclass[1]='L';}
-    else        {Aclass[0]='X';Aclass[1]='Y';}
+    if (doRRLL)      {Aclass[0]='R';Aclass[1]='L';}
+    else if (doHHVV) {Aclass[0]='H';Aclass[1]='V';}
+    else             {Aclass[0]='X';Aclass[1]='Y';}
     dim[0] = 6; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in5Class", OBIT_string, dim, Aclass);
     RLpol2 = ObitImageFromFileInfo ("in5", myInput, err);
@@ -2814,12 +2854,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
     ObitErrClear(err);  /* Suppress failure messages */
     
     /* Stokes LR/YX */
-    if (doRRLL) {inFile[0]='L';inFile[1]='R';}
-    else        {inFile[0]='Y';inFile[1]='X';}
+    if (doRRLL)      {inFile[0]='L';inFile[1]='R';}
+    else if (doHHVV) {inFile[0]='V';inFile[1]='H';}
+    else             {inFile[0]='Y';inFile[1]='X';}
     dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in5File", OBIT_string, dim, inFile);
-    if (doRRLL) {Aclass[0]='L';Aclass[1]='R';}
-    else        {Aclass[0]='Y';Aclass[1]='X';}
+    if (doRRLL)      {Aclass[0]='L';Aclass[1]='R';}
+    else if (doHHVV) {Aclass[0]='V';Aclass[1]='H';}
+    else             {Aclass[0]='Y';Aclass[1]='X';}
     dim[0] = 6; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in5Class", OBIT_string, dim, Aclass);
     LRpol2 = ObitImageFromFileInfo ("in5", myInput, err);
@@ -2851,12 +2893,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
       } 
       
       /* Stokes R/X =RR or XX*/
-      if (doRRLL) {inFile[0]='R';inFile[1]='R';}
-      else        {inFile[0]='X';inFile[1]='X';}
+      if (doRRLL)      {inFile[0]='R';inFile[1]='R';}
+      else if (doHHVV) {inFile[0]='H';inFile[1]='H';}
+      else             {inFile[0]='X';inFile[1]='X';}
       dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "in6File", OBIT_string, dim, inFile);
-      if (doRRLL) {Aclass[0]='R';Aclass[1]='R';}
-      else        {Aclass[0]='X';Aclass[1]='X';}
+      if (doRRLL)      {Aclass[0]='R';Aclass[1]='R';}
+      else if (doHHVV) {Aclass[0]='H';Aclass[1]='H';}
+      else             {Aclass[0]='X';Aclass[1]='X';}
       dim[0] = 6; dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "in6Class", OBIT_string, dim, Aclass);
       RXpolIm2 = ObitImageFromFileInfo ("in6", myInput, err);
@@ -2869,12 +2913,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
       ObitErrLog(err); /* Show messages */
       
       /* Stokes L/Y = LL or YY */
-      if (doRRLL) {inFile[0]='L';inFile[1]='L';}
-      else        {inFile[0]='Y';inFile[1]='Y';}
+      if (doRRLL)      {inFile[0]='L';inFile[1]='L';}
+      else if (doHHVV) {inFile[0]='V';inFile[1]='V';}
+      else             {inFile[0]='Y';inFile[1]='Y';}
       dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "in6File", OBIT_string, dim, inFile);
-      if (doRRLL) {Aclass[0]='L';Aclass[1]='L';}
-      else        {Aclass[0]='Y';Aclass[1]='Y';}
+      if (doRRLL)      {Aclass[0]='L';Aclass[1]='L';}
+      else if (doHHVV) {Aclass[0]='V';Aclass[1]='V';}
+      else             {Aclass[0]='Y';Aclass[1]='Y';}
       dim[0] = 6; dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (myInput, "in6Class", OBIT_string, dim, Aclass);
       LYpolIm2 = ObitImageFromFileInfo ("in6", myInput, err);
@@ -2888,12 +2934,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
       
       /* Stokes RL/XY if present */
       if (RLpol2) {
-	if (doRRLL) {inFile[0]='R';inFile[1]='L';}
-	else        {inFile[0]='X';inFile[1]='Y';}
+	if (doRRLL)      {inFile[0]='R';inFile[1]='L';}
+	else if (doHHVV) {inFile[0]='H';inFile[1]='V';}
+	else             {inFile[0]='X';inFile[1]='Y';}
 	dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut (myInput, "in6File", OBIT_string, dim, inFile);
-	if (doRRLL) {inFile[0]='R';inFile[1]='L';}
-	else        {inFile[0]='X';inFile[1]='Y';}
+	if (doRRLL)      {inFile[0]='R';inFile[1]='L';}
+	else if (doHHVV) {Aclass[0]='H';Aclass[1]='V';}
+	else             {inFile[0]='X';inFile[1]='Y';}
 	dim[0] = 6; dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut (myInput, "in6Class", OBIT_string, dim, Aclass);
 	RLpolIm2 = ObitImageFromFileInfo ("in6", myInput, err);
@@ -2908,12 +2956,14 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
       
       /* Stokes LR/YX if present */
       if (LRpol2) {
-	if (doRRLL) {inFile[0]='L';inFile[1]='R';}
-	else        {inFile[0]='Y';inFile[1]='X';}
+	if (doRRLL)      {inFile[0]='L';inFile[1]='R';}
+	else if (doHHVV) {inFile[0]='V';inFile[1]='H';}
+	else             {inFile[0]='Y';inFile[1]='X';}
 	dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut (myInput, "in6File", OBIT_string, dim, inFile);
-	if (doRRLL) {Aclass[0]='L';Aclass[1]='R';}
-	else        {Aclass[0]='Y';Aclass[1]='X';}
+	if (doRRLL)      {Aclass[0]='L';Aclass[1]='R';}
+	else if (doHHVV) {Aclass[0]='V';Aclass[1]='H';}
+	else             {Aclass[0]='Y';Aclass[1]='X';}
 	dim[0] = 6; dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut (myInput, "in6Class", OBIT_string, dim, Aclass);
 	LRpolIm2 = ObitImageFromFileInfo ("in6", myInput, err);
@@ -2957,3 +3007,4 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx,
  }
   
 } /* end ObitSkyModelGet2Beam */
+

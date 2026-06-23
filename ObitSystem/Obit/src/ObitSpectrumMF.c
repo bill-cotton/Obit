@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2025                                               */
+/*;  Copyright (C) 2025,2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -99,8 +99,8 @@ ObitSpectrumMF* newObitSpectrumMF (gchar* name)
  * \param name     An optional name for the object.
  * \param nFreq    Number of frequencies (subbands) in spectrum
  * \param Freqs    Array of frequencies in spectrum 
- * \param nTerm    Number of terms in spectral fit
  * \param refFreq  Reference frequency used in Spectral fitting
+ * \param nTerm    Number of terms in spectral fit
  * \return the new object.
  */
 ObitSpectrumMF*
@@ -120,7 +120,7 @@ newObitSpectrumMFCreate (gchar* name, olong nFreq, odouble *Freqs,
   /* CreatewFrequency Array */
   out->Freqs  = g_malloc0(nFreq*sizeof(odouble));
 
-  /* Copy Data */
+  /* Copy Frequencies */
   for (i=0; i<nFreq; i++)  out->Freqs[i] = Freqs[i];
  
   return out; 
@@ -272,7 +272,7 @@ ObitSpectrumMF* ObitSpectrumMFClone  (ObitSpectrumMF *in, ObitSpectrumMF *out)
 /**
  * Interpolate value at requested cell in a spectrum
  * Values out of the frequency range are extrapolations of the first/last two
- * \param in       The object to interpolate
+ * \param in       The object to evaluate
  * \param chFreq   The frequency at which the spectral value is desired.
  * \param sbno     Closest subband number (0-rel)
  * \param Spectrum Subband spectrum; 
@@ -296,6 +296,93 @@ ofloat ObitSpectrumMFEval (ObitSpectrumMF *in, odouble chFreq,
   else                     flux = flux2;
   return flux;
 } /* end  ObitSpectrumMFEval */
+
+/**
+ * Set channel sigmas for weighting
+ * \param in       The object to update
+ * \param sigma    Sigma (RMS) per subband channel
+ */
+void ObitSpectrumMFSetSigma (ObitSpectrumMF *in, ofloat *sigma)
+{
+  olong i;
+  if (!in->sigma) in->sigma = g_malloc0(in->nFreq*sizeof(ofloat));
+  /* Copy */
+  for (i=0; i<in->nFreq; i++) in->sigma[i] = sigma[i];
+} /* end  ObitSpectrumSetSigma */
+
+/**
+ * Evaluate Spectral indices per spectral point 
+ * \param in    The object to interpolate
+ * \param Spectrum Subband spectrum; 
+ * \param SI    [out]Spectral indicies at spectral points
+ *              Should be allocated to the appropriate size.
+ *              NaNs or |SI|>6 are replaced by broadband SI
+ * \param err Error stack, returns if not empty.
+ */
+void ObitSpectrumMFSI (ObitSpectrumMF *in, ofloat *Spectrum, ofloat *SI, ObitErr *err)
+{
+  olong i, ispec;
+  ofloat flux1, flux2;
+  odouble freq1, freq2;
+  ofloat fblank =  ObitMagicF();
+
+  /* Initial values - flat  spectrum */
+  for (i=0; i<in->nFreq; i++) SI[i] = 0.0;
+
+  /* If any values are negative, use default (flat) spectrum */
+  for (i=0; i<in->nFreq; i++) if (Spectrum[i]<0.0) return;
+ 
+  /* Need fit work arrays? */
+  if (!in->fitArg) {
+    in->fitArg = ObitSpectrumFitMakeArg (in->nFreq, in->nTerm, in->refFreq, in->Freqs, FALSE, 
+					 &in->fitResult, err);
+    for (i=0; i<in->nTerm; i++) in->fitResult[i]  = 0.0;
+    /* Default sigma if needed */
+    if (!in->sigma) {
+      in->sigma = g_malloc0(in->nFreq*sizeof(ofloat));
+      for (i=0; i<in->nFreq; i++)
+	if (Spectrum[i]==fblank) in->sigma[i]  = 1.0e+5;  /* Blanked - low weight */
+	else                     in->sigma[i]  = 1.0e-5;  /* more or less good */
+    }
+  } /* end setup */
+
+  /* Fit spectrum */
+  ObitSpectrumFitSingleArg (in->fitArg, Spectrum, in->sigma, in->fitResult);
+
+  // alpha = (log(s2)-log(s1))/(log(nu2)-log(nu1))
+  /* First subband - use first two */
+  if ((Spectrum[0]!=fblank)&&(Spectrum[0]!=0.0)) {
+    freq1 = in->Freqs[0]; flux1 = ObitSpectrumEval (in->nTerm, in->refFreq,
+						    in->fitResult, freq1);  /* First Subband Freq */
+    freq2 = in->Freqs[1]; flux2 = ObitSpectrumEval (in->nTerm, in->refFreq,
+						    in->fitResult, freq2);  /* Second Subband Freq */
+    SI[0] = (ofloat)((logf(flux2)-logf(flux1)) / (log(freq2)-log(freq1)));
+  } /* end good value */
+
+  /* Loop over inner subband channels - use halfway to prior, following */
+  for (ispec=1; ispec<in->nFreq-1; ispec++) {
+    if ((Spectrum[ispec]!=fblank)&&(Spectrum[ispec]!=0.0)) {
+	freq1 = 0.5*(in->Freqs[ispec-1]+in->Freqs[ispec]);
+	freq2 = 0.5*(in->Freqs[ispec]  +in->Freqs[ispec+1]);
+	flux1 = ObitSpectrumEval (in->nTerm, in->refFreq, in->fitResult, freq1);
+	flux2 = ObitSpectrumEval (in->nTerm, in->refFreq, in->fitResult, freq2);
+	SI[ispec] = (ofloat)((logf(flux2)-logf(flux1)) / (log(freq2)-log(freq1)));
+      } /* end good value */
+  } /* end loop over subbands */
+  
+  /* Last subband - use last two */
+  if ((Spectrum[in->nFreq-1]!=fblank)&&(Spectrum[in->nFreq-1]!=0.0)) {
+    freq1 = in->Freqs[in->nFreq-2]; flux1 = ObitSpectrumEval (in->nTerm, in->refFreq,
+							      in->fitResult, freq1);  /* Next to last */
+    freq2 = in->Freqs[in->nFreq-1]; flux2 = ObitSpectrumEval (in->nTerm, in->refFreq,
+							      in->fitResult, freq2);  /* Last */
+    SI[in->nFreq-1] = (ofloat)((logf(flux2)-logf(flux1)) / (log(freq2)-log(freq1)));
+  } /* end good value */
+
+  /* Replace Nans with 0 */
+  for (ispec=0; ispec<in->nFreq; ispec++)
+    if ((isnan(SI[ispec])) || (SI[ispec]>6.0) || (SI[ispec]<-6.0)) SI[ispec] = in->fitResult[1];
+} /* end  ObitSpectrumInterpSI */
 
 /**
  * Initialize global ClassInfo Structure.
@@ -371,6 +458,9 @@ void ObitSpectrumMFInit  (gpointer inn)
   in->nTerm       = -1;
   in->Freqs       = NULL;
   in->refFreq     = -1.0;
+  in->fitArg      = NULL;
+  in->fitResult   = NULL;
+  in->sigma       = NULL;
 } /* end ObitSpectrumMFInit */
 
 /**
@@ -391,6 +481,9 @@ void ObitSpectrumMFClear (gpointer inn)
   /* delete this class members */
   in->info        = ObitInfoListUnref(in->info);
   if (in->Freqs)  {g_free (in->Freqs);  in->Freqs=NULL;}
+  if (in->fitArg)    {g_free (in->fitArg);    in->fitArg=NULL;}
+  if (in->fitResult) {g_free (in->fitResult); in->fitResult=NULL;}
+  if (in->sigma)     {g_free (in->sigma);     in->sigma=NULL;}
 
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

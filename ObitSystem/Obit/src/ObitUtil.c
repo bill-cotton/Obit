@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008,2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -455,3 +455,44 @@ static int compare_gfloat  (const void* arg1,  const void* arg2)
   else if (larg1>larg2) out = 1;
   return out;
 } /* end compare_gfloat */
+
+/** 
+ * Convert Time in days to a human readable form "dd/hh:mm:ss.s"
+ * \param time  Time in days
+ * \param timeString [out] time as string, should be >16 char
+ */
+void day2dhms(ofloat time, gchar *timeString)
+{
+  olong day, thour, tmin;
+  ofloat ttim, ssec;
+
+  /* Trap bad times */
+  if ((time<-100.0) || (time>1000.0)) {
+    sprintf (timeString, "Bad time");
+    return;
+  }
+
+  day   = (olong)(time);
+  ttim  = 24.0*(time - day);
+  thour = MIN ((olong)(ttim), 23);
+  ttim  = 60.0*(ttim - thour);
+  tmin  = MIN ((olong)(ttim), 59);
+  ssec  = 60.0*(ttim - tmin);
+  /* avoid silliness */
+  if (ssec>59.951) {
+    tmin++;
+    ssec = 0.0;
+  }
+  if (tmin>=60) {
+    thour++;
+    tmin -= 60;
+  }
+  if (thour>23) {
+    day++;
+    thour -= 24;
+  }
+  sprintf (timeString, "%2.2d/%2.2d:%2.2d:%4.1f", day, thour, tmin, ssec);
+  /* Zero fill seconds */
+  if (timeString[9]==' ') timeString[9] = '0';
+} /* end day2dhms */
+

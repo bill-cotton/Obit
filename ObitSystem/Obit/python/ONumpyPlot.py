@@ -155,8 +155,9 @@ try:
             import matplotlib.pyplot as plt
 
             def PPlotImage (inImage, plotfile, err, \
-                            color='gray', title=None, vmin=None, vmax=None, \
-                            blc=[1,1,1,1], trc=[0,0,0,0], doColorBar=False, doAsinh=False):
+                            color='gray', title=None, scale=1.0, vmin=None, vmax=None, \
+                            blc=[1,1,1,1], trc=[0,0,0,0], doColorBar=False, doAsinh=False, \
+                            barLocation='right', barLabel='Jy/beam', dpi=100, fontsize=10):
                 """
                 Plot an image in a pdf file
                 
@@ -167,12 +168,18 @@ try:
                               import matplotlib.pyplot as plt
                               see help(plt.colormaps)
                 * title     = plot title, defaults to image object
+                * scale     = Scale factor for image
                 * vmin      = min pixel value, defaults to image min
+                              after applying scale
                 * vmax      = max pixel value, defaults to image max
                 * blc       = Bottom left corner pixel (1-rel)
                 * trc       = Top right corner pixel (1-rel), 0=> all
                 * doColorBar= Show colorbar?
                 * doAsinh   = Use Asinh (nonlinear) stretch?
+                * barLocation = location of color bar "top", "right","lerft","bottom"
+                * barLabel  = label for colorbar
+                * dpi       = Output resolution in dots per inch
+                * fontsize  = font size in points for labels
                 """
                 ################################################################
                 if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
@@ -185,6 +192,7 @@ try:
                 if not title:
                     ttitle = object
                 ff=tmp.FArray;  FArray.PDeblank(ff, 0.0);  # Get pixel FArray, remove any blanks
+                FArray.PSMul(ff,scale)  # Apply scale
                 # Get max/min if needed
                 vvmin = vmin; vvmax = vmax
                 if not vmin:
@@ -198,25 +206,26 @@ try:
                 FArray.PInClip(ff, vvmax, 1.0e10, vvmax)
                 # Get numpy array
                 s=np.frombuffer(FArray.PGetBuf(ff),dtype=np.float32).reshape(nx,ny,order='F')
-                ss=s.transpose()  #Get ir right way around
+                ss=s.transpose()  #Get it right way around
                 wcs =  PGetWCS(inImage)  # Get WCS info
                 # Generate plot
-                fig = plt.figure()
+                plt.rcParams.update({'font.size': fontsize})
+                xsize=nx/dpi; ysize=ny/dpi
+                fig = plt.figure(figsize=[xsize,ysize])
                 ax = fig.add_subplot(111, projection=wcs)
+                cblabel = barLabel
                 if doAsinh:
                     # Create asinh normalization
                     norm = ImageNormalize(ss, stretch=AsinhStretch(a=0.1))
                     im=ax.imshow(ss, norm=norm,cmap=color,origin='lower')
-                    cblabel = "Asinh"
                 else:
                     im=ax.imshow(ss, cmap=color,origin='lower',vmin=vvmin,vmax=vvmax)
-                    cblabel = "Linear"
-                labx = d['ctype'][0][0:4].replace('-','');
-                laby = d['ctype'][1][0:4].replace('-','');
+                labx = d['ctype'][0][0:4].replace('-','')+" (J2000)";
+                laby = d['ctype'][1][0:4].replace('-','')+" (J2000)";
                 z=plt.xlabel(labx); z=plt.ylabel(laby); z=plt.title(ttitle);
                 if doColorBar:
-                    z=plt.colorbar(im,label=cblabel)
-                matplotlib.pyplot.savefig(plotfile+".pdf",bbox_inches="tight")
+                    z=plt.colorbar(im,label=cblabel,shrink=0.8,location=barLocation)
+                matplotlib.pyplot.savefig(plotfile+".pdf",bbox_inches="tight",dpi=dpi)
                 plt.close()  # Free resources
             # end  PPlotImage 
  

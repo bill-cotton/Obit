@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2023                                          */
+/*;  Copyright (C) 2013-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -571,6 +571,7 @@ static void ObitUVWCalcSetSubA (ObitUVWCalc *in, olong subA, ObitErr *err)
   ObitUV *inUV = in->myData;
   olong i, ver, numPCal, numOrb, numIF, cnt;
   odouble  arrX, arrY, arrZ;
+  gboolean isATCA;
   gchar *ArrName = NULL;
   gchar *routine = "ObitUVWCalcSetSubA";
 
@@ -580,7 +581,7 @@ static void ObitUVWCalcSetSubA (ObitUVWCalc *in, olong subA, ObitErr *err)
   in->curTime = -1.0e10;
   in->curSID  = -1;
 
-  in->subArr = subA;  
+  in->subArr = subA;
   /* Convert AN table into AntennaList */
   ver      = subA;
   numPCal  = 0;
@@ -591,26 +592,32 @@ static void ObitUVWCalcSetSubA (ObitUVWCalc *in, olong subA, ObitErr *err)
   if (ANTable) in->AntList = ObitTableANGetList (ANTable, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   ANTable = ObitTableANUnref(ANTable);
+  isATCA = !strncmp(in->AntList->ArrName, "ATCA", 4); /* ATCA data */
 
-  /* maximum antenna number */
-  in->maxAnt = 0;
-  for (i=0; i<in->AntList->number; i++) 
-    in->maxAnt = MAX (in->maxAnt, in->AntList->ANlist[i]->AntID);
-
+  /* maximum antenna number if not known */
+  if (in->maxAnt<=0) {
+    in->maxAnt = 0;
+    for (i=0; i<in->AntList->number; i++) 
+      in->maxAnt = MAX (in->maxAnt, in->AntList->ANlist[i]->AntID);
+  }
+  
   /* (1-rel) Index into list */
   if (in->antIndex) g_free(in->antIndex);
   in->antIndex = g_malloc0((in->maxAnt+2)*sizeof(olong));
   for (i=0; i<in->maxAnt; i++) in->antIndex[i] = -1;
   for (i=0; i<in->AntList->number; i++) {
-    if (in->AntList->ANlist[i]->AntID>=0)
-      in->antIndex[in->AntList->ANlist[i]->AntID] = i;
+    /* ATCA AntIDs are 1 rel, others 0 rel */
+    if (isATCA) {
+      if (in->AntList->ANlist[i]->AntID>=0) in->antIndex[in->AntList->ANlist[i]->AntID-1] = i;
+    } else {
+      if (in->AntList->ANlist[i]->AntID>=0) in->antIndex[in->AntList->ANlist[i]->AntID] = i;
+    }
   }
-
 
   /* Average  antenna location */
   cnt  = 0;
   arrX = arrY = arrZ = 0.0;
-  for (i=0; i<in->maxAnt; i++) {
+  for (i=0; i<in->AntList->number; i++) {
     in->AntList->ANlist[i]->AntLong = atan2 (in->AntList->ANlist[i]->AntXYZ[1], 
 					      in->AntList->ANlist[i]->AntXYZ[0]);
     if (fabs(in->AntList->ANlist[i]->AntXYZ[1])>1.0) {

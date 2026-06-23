@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to correct off-axis instrumental polarization in UV data      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2025                                          */
+/*;  Copyright (C) 2009-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -516,8 +516,8 @@ ObitInfoList* defaultInputs(ObitErr *err)
   itemp = 0; /* number of AIPS directories */
   ObitInfoListPut (out, "nAIPS", OBIT_oint, dim, &itemp, err);
 
-  /* Default type "FITS" */
-  strTemp = "FITS";
+  /* Default type "AIPS" */
+  strTemp = "AIPS";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "DataType", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
@@ -909,8 +909,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",  "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer",
-    "doPol", "PDVer", "keepLin",
-    "Smooth", "Antennas",  "Sources",  "souCode", "Qual", "Alpha", 
+    "doPol", "PDVer", "keepLin", "prtLv",
+    "Smooth", "Antennas",  "Sources",  "souCode", "Qual", "Alpha",
+    "doGPU", "GPU_no",
      NULL};
   gchar *routine = "getInputData";
 
@@ -940,7 +941,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
   /* Set number of vis per IO */
-  nvis = 1000;  /* How many vis per I/O? */
+  nvis = 10000;  /* How many vis per I/O? */
   nvis =  ObitUVDescSetNVis (inData->myDesc, myInput, nvis);
   dim[0] = dim[1] = dim[2] = dim[3] = 1;
   ObitInfoListAlwaysPut (inData->info, "nVisPIO", OBIT_long, dim,  &nvis);
@@ -992,7 +993,8 @@ ObitSkyModelVMBeamMF* getInputSkyModel (ObitInfoList *myInput, ObitUV *inData,
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "Factor", 
     "minFlux", "Mode", "ModelType", "REPLACE", "Stokes", 
     "BIF", "EIF", "BCHAN", "ECHAN",
-    "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM", 
+    "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM",
+    "doGPU", "GPU_no", "Threshold", "prtLv",
     NULL};
   gchar *routine = "getInputSkyModel";
 
@@ -1250,7 +1252,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
 
   /* Set buffer size */
-  nvis = 1000; type = OBIT_long;
+  nvis = 10000; type = OBIT_long;
   ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
   ObitInfoListAlwaysPut (outUV->info, "nVisPIO",  type, dim,  &nvis);
     
@@ -1291,12 +1293,12 @@ void UVPoCoHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "in4File",  "in4Disk", "in4Name", "in4Class", "in4Seq",
     "in5Diam", "in5DType", "in5File",  "in5Disk", "in5Name", "in5Class", "in5Seq",
     "in6File",  "in6Disk", "in6Name", "in6Class", "in6Seq",
-    "nmaps", "CCVer", "BComp",  "EComp", "Flux",
+    "nmaps", "CCVer", "BComp",  "EComp", "Flux", "Threshold", 
     "outDType", "outFile",  "outDisk",  "outName", "outClass", "outSeq",
     "Cmethod", "Cmodel", "Factor",  "Opcode", 
     "modelFlux", "modelPos", "modelParm", "noNeg",
     "mrgCC", "PBCor", "antSize", "Alpha",
-    "nThreads",
+    "nThreads", "doGPU", "GPU_no",
     NULL};
   gchar *routine = "UVPoCoHistory";
 

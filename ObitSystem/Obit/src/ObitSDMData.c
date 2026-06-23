@@ -39,7 +39,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2024                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -654,7 +654,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   gchar *fullname;
   ObitSDMData* out;
   ASDMSpectralWindowArray *damn=NULL;
-  gboolean isALMA;
+  gboolean isALMA, isATCA;
   gchar *routine="ObitSDMDataCreate";
 
   /* Create basic structure */
@@ -664,6 +664,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   out->DataRoot  = strdup(DataRoot);
   out->isEVLA    = FALSE;
   out->isALMA    = FALSE;
+  out->isATCA    = FALSE;
   out->selConfig = -1;
   out->selBand   = ASDMBand_Any;
 
@@ -689,6 +690,8 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   /* ALMA may be a bit confused */
   if (!isALMA) isALMA = !strncmp(out->ExecBlockTab->rows[0]->telescopeName, "OSF", 3);
   out->isALMA    = isALMA;
+  /* Is this ATCA data? */
+  isATCA = !strncmp(out->ExecBlockTab->rows[0]->telescopeName, "ATCA", 4);
 
   /* Main table */
   fullname = g_strconcat (DataRoot,"/Main.xml", NULL);
@@ -934,7 +937,7 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   gchar *fullname;
   ObitSDMData* out;
   ASDMSpectralWindowArray *damn=NULL;
-  gboolean isALMA;
+  gboolean isALMA, isATCA;
   gchar *routine="ObitSDMIntentCreate";
 
   /* Create basic structure */
@@ -944,6 +947,7 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   out->DataRoot  = strdup(DataRoot);
   out->isEVLA    = FALSE;
   out->isALMA    = FALSE;
+  out->isATCA    = FALSE;
   out->selConfig = -1;
   out->selBand   = ASDMBand_Any;
 
@@ -969,6 +973,8 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   /* ALMA may be a bit confused */
   if (!isALMA) isALMA = !strncmp(out->ExecBlockTab->rows[0]->telescopeName, "OSF", 3);
   out->isALMA    = isALMA;
+  /* Is this ATCA data? */
+  isATCA = !strncmp(out->ExecBlockTab->rows[0]->telescopeName, "ATCA", 4);
 
   /* Main table */
   fullname = g_strconcat (DataRoot,"/Main.xml", NULL);
@@ -1182,7 +1188,7 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
   olong jPoln, polarizationId;
   olong i, ii, j, jj, k, iMain, iConfig, jSW, iSW, jDD, numDD, iJD, ncomp;
   odouble JD, deltaFreq;
-  gboolean first = TRUE, isALMA;
+  gboolean first = TRUE, isALMA, isATCA;
   ofloat refChan, *sortStruct=NULL;
   gint number;
   size_t size;
@@ -1196,6 +1202,8 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
   isALMA = !strncmp(in->ExecBlockTab->rows[0]->telescopeName, "ALMA", 4);
   /* ALMA may be a bit confused */
   if (!isALMA) isALMA = !strncmp(in->ExecBlockTab->rows[0]->telescopeName, "OSF", 3);
+ /* Is this ATCA data? */
+  isATCA = !strncmp(in->ExecBlockTab->rows[0]->telescopeName, "ATCA", 4);
 
   out = g_malloc0(sizeof(ASDMSpectralWindowArray));
 
@@ -2103,7 +2111,8 @@ void ObitSDMDataRenumberAnt(ObitSDMData *in,  ObitAntennaList *antennaList,
  
   /* Find highest ID in antennaList */
   for (i=0; i<antennaList->number; i++) {
-    nextID = MAX(nextID, antennaList->ANlist[i]->AntID+1);
+    if (in->isATCA) nextID = MAX(nextID, antennaList->ANlist[i]->AntID+1);
+    else            nextID = MAX(nextID, antennaList->ANlist[i]->AntID);
   }
 
   /* Loop over in->AntennaTab */
@@ -2124,13 +2133,17 @@ void ObitSDMDataRenumberAnt(ObitSDMData *in,  ObitAntennaList *antennaList,
       if (!matches) continue;
       if (matches) {
 	isDone[j] = TRUE;  /* OK, no need to rewriteAN table */
-	if (in->AntennaTab->rows[j]->antennaId != (antennaList->ANlist[i]->AntID-1)) {
-	  /*fprintf(stderr,"DEBUG ant %d -> %d\n",in->AntennaTab->rows[j]->antennaNo ,antennaList->ANlist[i]->AntID);*/
-	  in->AntennaTab->rows[j]->antennaNo = antennaList->ANlist[i]->AntID;
-	  renum = TRUE;
+	if (in->isATCA) {  /* ATCA AntIDs are 1 rel, others 0 rel */
+	  if (in->AntennaTab->rows[j]->antennaId != (antennaList->ANlist[i]->AntID)) {
+	    in->AntennaTab->rows[j]->antennaNo = antennaList->ANlist[i]->AntID;}
+	} else { /* Not ATCA */
+	  if (in->AntennaTab->rows[j]->antennaId != (antennaList->ANlist[i]->AntID-1)) {
+	    /*fprintf(stderr,"DEBUG ant %d -> %d\n",in->AntennaTab->rows[j]->antennaNo ,antennaList->ANlist[i]->AntID);*/
+	    in->AntennaTab->rows[j]->antennaNo = antennaList->ANlist[i]->AntID;}
 	}
-	break;
-      }
+	renum = TRUE;
+      } /* end if matches */
+      break;
     } /* end loop over antennaList */
     /* If not found, assign new value */
     if (!matches) {
@@ -2817,6 +2830,7 @@ void ObitSDMDataInit  (gpointer inn)
   in->line                 = NULL;
   in->selCode              = NULL;
   in->doCode               = FALSE;
+  in->maxAnt               = 0;
 } /* end ObitSDMDataInit */
 
 /**
@@ -6989,9 +7003,12 @@ ParseASDMExecBlockTable(ObitSDMData *me,
    
     /* Is this EVLA data? */
     me->isEVLA = !strncmp(out->rows[0]->telescopeName, "EVLA", 4);
+    /* Is this ATCA data? */
+    me->isATCA = !strncmp(out->rows[0]->telescopeName, "ATCA", 4);
   } else { /* If nothing probably ALMA */
     me->isALMA = TRUE;
     me->isEVLA = FALSE;
+    me->isATCA = FALSE;
   }
 
  /* Close up */

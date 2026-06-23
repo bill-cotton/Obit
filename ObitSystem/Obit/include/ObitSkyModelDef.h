@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2025                                          */
+/*;  Copyright (C) 2004-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -136,7 +136,9 @@ ObitThreadFunc DFTFunc;
 /** Gridded Fourier transform routine  */
 ObitThreadFunc GridFunc;
 #if HAVE_GPU==1  /*  GPU? */
-ObitGPUSkyModel *GPUSkyModel;
+ObitGPUSkyModel  *GPUSkyModel;
+ObitGPUBeamModel *GPUBeamModel;
 #else            /* Dummy pointer */
 Obit  *GPUSkyModel;
+Obit  *GPUBeamModel;
 #endif /* HAVE_GPU */

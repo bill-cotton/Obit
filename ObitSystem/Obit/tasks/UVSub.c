@@ -466,11 +466,11 @@ ObitInfoList* defaultInputs(ObitErr *err)
   itemp = 0; /* number of AIPS directories */
   ObitInfoListPut (out, "nAIPS", OBIT_oint, dim, &itemp, err);
 
-  /* Default type "FITS" */
-  strTemp = "FITS";
-  dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "DataType", OBIT_string, dim, strTemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  /* Default type "FITS"  - NO
+     strTemp = "AIPS";
+     dim[0] = strlen (strTemp); dim[1] = 1;
+     ObitInfoListPut (out, "DataType", OBIT_string, dim, strTemp, err);
+     if (err->error) Obit_traceback_val (err, routine, "DefInput", out);*/
 
   /* input FITS file name */
   strTemp = "UVSub.intab";

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2024                                          */
+/*;  Copyright (C) 2003-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -486,6 +486,8 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 
   /* Cap dim[1] at iout */
   dim[1] = MIN(dim[1], iout);
-  
+
+  /* Make sure dim vslues are at least 1 */
+  for (i=0; i<5; i++) {dim[i] = MAX(1, dim[i]);}
   return retCode;
 } /* end ObitParserEntry */

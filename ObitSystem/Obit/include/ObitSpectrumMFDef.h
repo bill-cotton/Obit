@@ -41,3 +41,7 @@ odouble refFreq;
 olong nTerm;
 /** Number of frequencies in spectrum */
 olong nFreq;
+/** Spectral fitting arrays */
+gpointer fitArg;
+ofloat *fitResult;
+ofloat *sigma;

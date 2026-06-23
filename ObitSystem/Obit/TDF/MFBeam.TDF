@@ -1,10 +1,10 @@
 ; $Id$
 ; MFBeam 
 ;---------------------------------------------------------------
-;! Imaging software correcting for tabulated beamshape, wideband
+;! Imaging software correcting for antenna beamshape, wideband
 ;# Task Obit self calibration Imaging
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011-2025
+;;  Copyright (C) 2011-2026
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -357,6 +357,8 @@ dispURL                            Display server URL
 **PARAM** int 1 **DEF** 1
 nThreads            0              Number of threads to use
 **PARAM** boo 1 **DEF** F
+doGPU            0                 Use GPU for sky model if available
+**PARAM** boo 1 **DEF** F
 doGPUGrid        0                 Use GPU for gridding if available
 **PARAM** int 10 **DEF** -1
 GPU_no           -1                GPU numbers to use, -1 terminates
@@ -607,6 +609,7 @@ Adverbs:
              and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
+	     "H","V" get mapped to "X" and "Y"
   doCmplx.....If True, use complex beam images
   in4Name....Voltage imag. Beam  AIPS name. Only used if doCmplx= True
   in4Class...Beam imag. AIPS class. Expected form "Sxxxxx" where "S"
@@ -615,6 +618,7 @@ Adverbs:
              and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
+ 	     "H","V" get mapped to "X" and "Y"
   in4Seq.....Beam imag. AIPS seq. # .    0 => highest.
   in4Disk....Disk drive # of beam imag. (FITS or AIPS).
   in4File....Power FITS Beam imag. input root if in3DType=='FITS'
@@ -625,6 +629,7 @@ Adverbs:
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
              Only used if doImag. = True
+ 	     "H","V" get mapped to "X" and "Y"
   in5DType..'FITS' or 'AIPS'  type of Beam images, defaults to
              DataType.
   in5Diam....Diameter in m of antennas described by in5* and in6*
@@ -637,6 +642,7 @@ Adverbs:
              and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
+	     "H","V" get mapped to "X" and "Y"
   in5Seq.....Beam AIPS seq. # .    0 => highest.
   in5Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
   in5File....FITS Voltage 2nd Beam input root if in5DType=='FITS'
@@ -665,7 +671,8 @@ Adverbs:
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
              Only used if doImag. = True
-
+	     "H","V" get mapped to "X" and "Y"
+ 
       Output files
   outDType..'FITS' or 'AIPS'  type of output
              Defaults to DataType.
@@ -709,7 +716,7 @@ Adverbs:
              A value <0 =>use the IFs as the channelization.
   Threshold..This value is used to control when the high accuracy 
              beam squint model is used.  In CLEANing, whenever the 
-             peak residual is above this value the beam squint model 
+             peak residual is above this value the beam model 
              is used for all components but when the residuals drop 
              below this level a faster method is used.  
              For self calibration, all merged components with a 
@@ -1001,10 +1008,14 @@ Adverbs:
               NB: This only improves performance if there are 
               multiple processors and/or cores in the host.
 
+  doGPU.......If software is built for a GPU and one is available
+              True=> use it for the DFT model calculation, 
+              otherwise use the CPU
   doGPUGrid...If software is built for a GPU and one+ is available
               True=use it for gridding visibilities.
   GPU_no......List of GPU numbers to use in gridding, 0-rel
               The list is terminated by a -1.
+              DO NOT INCLUDE DUPLICATE ENTRIES!!!
   taskLog.....Log file to write messages to INSTEAD of the terminal
               This is useful in long runs or batch files where
               a bug in the ObitTalk message handling may lose

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2025                                          */
+/*;  Copyright (C) 2009-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -232,6 +232,11 @@ void ObitSkyModelVMBeamGet2Beam (ObitInfoList *myInput, gboolean doCmplx, ofloat
 				 ObitImage ***RXpolIm, ObitImage ***LYpolIm, 
 				 ObitImage ***RLpolIm, ObitImage ***LRpolIm, 
 				 ofloat **Diams, ObitErr *err);
+
+/* Public: Determine parallactic angle and time range of validity */
+ofloat ObitSkyModelVMBeamPAUpdate (olong iAnt, olong suba, ofloat time, float deltaPA, 
+				   ObitAntennaList *AntList, ObitSource *curSource,
+				   ofloat *bTime, ofloat *eTime);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

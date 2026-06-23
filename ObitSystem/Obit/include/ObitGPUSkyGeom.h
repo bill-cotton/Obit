@@ -1,6 +1,8 @@
 /* $Id: $   */
+
+/*HIDE c (esp.glib) structures from cuda */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2026                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -24,36 +26,53 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the CUDAFArray (GPU version of ObitFArray) class            */
+/*  Define the ObitGPUSkyGeom (GPU version of ObitImageDesc+ObitSkyGeom) */
 /**
- * \file CUDAFArray.h
- * GPU version of ObitFArray class
+ * \file ObitGPUSkyGeom.h
+ * GPU version of ObitImageDesc+ObitSkyGeom utilities
  */
-#ifndef CUDAFARRAY_H 
-#define CUDAFARRAY_H 
+#ifndef  OBITGPUSKYGEOM_H 
+#define  OBITGPUSKYGEOM_H
+#include "ObitImageDesc.h"
+#include "ObitUVDesc.h"
+#include "ObitFArray.h"
+
+/*-------------- enumerations -------------------------------------*/
+/**
+ * \enum obitCoordType
+ * enum for coordinate system types (Equatorial, Galactic, Ecliptic)
+ */
+enum cudaCoordType {
+  /** Equatorial (RA, Dec) */
+  CUDA_Equatorial, 
+  /** Galactic (GLONG, GLAT) */
+  CUDA_Galactic,  
+  /** Ecliptic (ELONG, ELAT) */
+  CUDA_Ecliptic
+}; /* end enum cudaCoordType */
+/** typedef for enum for coordinate system types. */
+typedef enum cudaCoordType CUDACoordType;
 
 /*--------------Class definitions-------------------------------------*/
-/** CUDAFArray Class structure. */
-#ifndef CUDAFARRAYDEF_H // Prevent multiple definitions
-#define CUDAFARRAYDEF_H
-typedef struct {
-#include "CUDAFArrayDef.h"   /* this class definition */
-} CUDAFArray;
-#endif /* CUDAFARRAYDEF_H */
+/** ObitGPUSkyGeom Class structures: CUDAImageDesc, CUDAUVDesc */
+#include "ObitGPUSkyGeomDef.h"   /* this class definition */
 
-#if IS_CUDA==1  /* CUDA code */
-/** Public: Create/initialize CUDAFArray structures */
-extern "C"
-CUDAFArray* CUDAFArrayCreate (int ndim, int *naxis);
+/** Public: Create/initialize CUDAImageDesc structures */
+CUDAImageDesc* ObitGPUImageDescCreate ();
 
-/** Public: Destructor */
-extern "C"
-void CUDAFArrayZap (CUDAFArray *in);
-#else  /* Not CUDA */
-/** Public: Create/initialize CUDAFArray structures */
-CUDAFArray* CUDAFArrayCreate (int ndim, int *naxis);
+/** Public: ImageDesc Destructor */
+void ObitGPUImageDescZap (CUDAImageDesc *in);
 
-/** Public: Destructor */
-void CUDAFArrayZap (CUDAFArray *in);
-#endif /* IS_CUDA */
-#endif  /* CUDAFARRAY_H */
+/** Public: Create/initialize CUDAUVDesc structures */
+CUDAUVDesc* ObitGPUUVDescCreate ();
+
+/** Public: UVDesc Destructor */
+void ObitGPUVDescZap (CUDAUVDesc *in);
+
+/** Public: Host to Device Image Descriptor conversion */
+CUDAImageDesc* ObitGPUSkyGeomImageH2D (ObitImageDesc *in);
+
+/** Public: Host to Device UV Descriptor conversion */
+CUDAUVDesc* ObitGPUSkyGeomUVH2D (ObitUVDesc *in);
+
+#endif  /* OBITGPUSKYGEOM_H */

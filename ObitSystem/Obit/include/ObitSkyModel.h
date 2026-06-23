@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -38,6 +38,7 @@
 #include "ObitTableCC.h"
 #if HAVE_GPU==1  /*  GPU? */
 #include "ObitGPUSkyModel.h"
+#include "ObitGPUBeamModel.h"
 #endif /* HAVE_GPU */
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/

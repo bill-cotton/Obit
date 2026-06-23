@@ -214,6 +214,7 @@ void ObitPlotInitPlot (ObitPlot* in, gchar *output, olong color,
   plgcol0(MAX(0, MIN(15,lcolor)), &r, &g, &b);
   plscolbg(r,g,b);
 
+  plsori(1);  /* Use portrait mode */
   plinit();   /* Init PLplot - it will ask if output not specified */
 
   /* Reset black as color 0

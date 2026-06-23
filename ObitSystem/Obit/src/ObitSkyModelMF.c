@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2023                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,6 +31,7 @@
 #include "ObitThread.h"
 #if HAVE_GPU==1  /* GPU? */
 #include "ObitGPUSkyModel.h"
+#include "ObitGPUBeamModel.h"
 #endif /* HAVE_GPU */
 #include "ObitSkyModelMF.h"
 #include "ObitSkyModelVMSquint.h"
@@ -934,9 +935,8 @@ void ObitSkyModelMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   if (in->specFreqHi)  {g_free(in->specFreqHi);}  in->specFreqHi = NULL;
   if (in->specIndex)   {g_free(in->specIndex);}   in->specIndex  = NULL;
 #if HAVE_GPU==1  /*  GPU? */
-  gchar *routine = "ObitSkyModelShutDownMod";
+  gchar *routine = "ObitSkyModelMFShutDownMod";
   ObitGPUSkyModelDFTShutdown(in->GPUSkyModel, uvdata, err);
-  in->GPUSkyModel = NULL;
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   in->GPUSkyModel = ObitGPUSkyModelUnref (in->GPUSkyModel);
 #endif /* HAVE_GPU */
@@ -951,7 +951,7 @@ void ObitSkyModelMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
 void ObitSkyModelMFInitModel (ObitSkyModel* in, ObitErr *err)
 {
 #if HAVE_GPU==1  /*  GPU? */
-  gchar *routine = "ObitSkyModelInitModel";
+  gchar *routine = "ObitSkyModelMFInitModel";
   const ObitGPUSkyModelClassInfo *GPUClass;
   if (in->doGPU) {
     GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
@@ -1359,7 +1359,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	CCTable = ObitTableCCUnref (CCTable);
 	ObitImageZapTable(in->mosaic->images[i], tabType, outCCVer, err);
       /* else simply release table  */
-      } else CCTable = ObitTableCCUnref (CCTable);
+      } else if (CCTable) CCTable = ObitTableCCUnref (CCTable);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
       continue;
     }
@@ -1601,8 +1601,8 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
     /* if outCCver>0 then the CCtable is temporary - Zap */
     if (outCCVer>0) {
-      CCTable = ObitTableCCUnref (CCTable);
       ObitImageZapTable(in->mosaic->images[i], tabType, outCCVer, err);
+      CCTable = ObitTableCCUnref (CCTable);
     /* else simply release table  */
     } else CCTable = ObitTableCCUnref (CCTable);
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);

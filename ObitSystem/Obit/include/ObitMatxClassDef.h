@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2020,2023                                          */
+/*;  Copyright (C) 2020,2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -37,12 +37,16 @@ ObitMatxMultFP ObitMatxMult;
 ObitMatxMultCTFP ObitMatxMultCT;
 /** Function pointer to Add. */
 ObitMatxAddFP ObitMatxAdd;
+/** Function pointer to Add22x2 complex. */
+ObitMatxAddFP ObitMatxAdd2C;
 /** Function pointer to Subract. */
 ObitMatxSubFP ObitMatxSub;
 /** Function pointer to Conjugate transpose. */
 ObitMatxCTransFP ObitMatxCTrans;
 /** Function pointer to Zero values. */
 ObitMatxZeroFP ObitMatxZero;
+/** Function pointer to Zero values 2x2 complex. */
+ObitMatxZeroFP ObitMatxZero2C;
 /** Function pointer to write unit matrix. */
 ObitMatxUnitFP ObitMatxUnit;
 /** Function pointer to set 2x2 complex values. */
