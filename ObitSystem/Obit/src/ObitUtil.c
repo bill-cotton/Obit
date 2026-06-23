@@ -465,6 +465,7 @@ void day2dhms(ofloat time, gchar *timeString)
 {
   olong day, thour, tmin;
   ofloat ttim, ssec;
+  /* Git sucks */
 
   /* Trap bad times */
   if ((time<-100.0) || (time>1000.0)) {

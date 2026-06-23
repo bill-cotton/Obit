@@ -37,6 +37,7 @@
  *
  */
 
+  /* Git sucks */
 /*---------------Public functions---------------------------*/
 /** Public: Get mean value of an array with magic value blanking */
 ofloat meanValue (ofloat *array, olong incs, olong n);
