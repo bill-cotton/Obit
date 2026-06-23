@@ -88,7 +88,7 @@ gboolean doCmplx;
 olong *numPlane;
 /** Number of UV channels */
 olong numUVChann;
-/** Plane for each frequency in corresponding UV data  dim numUVChann */
+/** Beam Plane for each frequency in corresponding UV data  dim numUVChann */
 olong *FreqPlane;
 /** Save Stokes request */
 gchar saveStokes[8];
@@ -98,3 +98,5 @@ gboolean saveDoCalSelect;
 olong saveDoCalib;
 /** Is this model calculation in a CLEAN? */
 gboolean doBeamCorClean;
+/** Array of beam channel central frequencies in Hz */
+ofloat *BeamFreq;
