@@ -3,7 +3,7 @@
 */
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2023                                          */
+/*;  Copyright (C) 2014-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -207,6 +207,7 @@ ObitGPUSkyModel* ObitGPUSkyModelCreate (gchar* name, gchar *type)
 void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
 			     ObitUV *uvdata, ObitErr *err)
 {
+#if HAVE_GPU==1  /* GPU? Real versions */
   ObitUVDesc *inDesc = uvdata->myDesc;
   ObitImage *img;
   int i, memsize, kincf, kincif, nchan, nif;
@@ -398,6 +399,7 @@ void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
 
   /* CALL CUDA */
   ObitCUDASkyModelDFTInit (in->gpuInfo);
+#endif /* HAVE_GPU */
   } /* end  ObitGPUSkyModelDFTInit */
 
 
@@ -414,6 +416,7 @@ void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
 void ObitGPUSkyModelDFTSetMod (ObitGPUSkyModel *in, Obit *skyModel,
 			       ObitFArray *model, ObitErr *err)
 {
+#if HAVE_GPU==1  /* GPU? Real versions */
   int i, inc, high, memsize;
 
   /* Find last non zero entry */
@@ -483,6 +486,7 @@ void ObitGPUSkyModelDFTSetMod (ObitGPUSkyModel *in, Obit *skyModel,
 
   /* CALL CUDA */
   ObitCUDASkyModelDFTSetMod (in->gpuInfo);
+#endif /* HAVE_GPU */
   return;
 } /* end ObitGPUSkyModelDFTSetMod */
 
@@ -495,6 +499,7 @@ void ObitGPUSkyModelDFTSetMod (ObitGPUSkyModel *in, Obit *skyModel,
  */
 void ObitGPUSkyModelDFTCalc (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *err)
 {
+#if HAVE_GPU==1  /* GPU? Real versions */
   size_t memsize;
    /* Reset number of vis */
    in->gpuInfo->nvis             = uvdata->myDesc->numVisBuff;
@@ -510,6 +515,7 @@ void ObitGPUSkyModelDFTCalc (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *err)
 
   /* Copy data back */
   memcpy (uvdata->buffer, in->gpuInfo->h_data, memsize);
+#endif /* HAVE_GPU */
   return;
 } /* end ObitGPUSkyModelDFTCalc */
 
@@ -523,6 +529,7 @@ void ObitGPUSkyModelDFTCalc (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *err)
  */
 void ObitGPUSkyModelDFTShutdown (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *err)
 {
+#if HAVE_GPU==1  /* GPU? Real versions */
   int i;
   gint32 dim[MAXINFOELEMDIM];
   /*fprintf(stderr,"DEBUG in ObitGPUSkyModelDFTShutdown\n");*/
@@ -568,6 +575,7 @@ void ObitGPUSkyModelDFTShutdown (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *e
     ObitCUDASkyModelDFTShutdown (in->gpuInfo);
     in->gpuInfo = NULL;
   }
+#endif /* HAVE_GPU */
 } /*end ObitGPUSkyModelDFTShutdown */
 
 /**
@@ -660,6 +668,7 @@ void ObitGPUSkyModelClear (gpointer inn)
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
 
+ #if HAVE_GPU==1  /* GPU? Real versions */
   /* delete this class members */
   if (in->gpuInfo) {
     if (in->gpuInfo->d_visInfo) {
@@ -705,6 +714,7 @@ void ObitGPUSkyModelClear (gpointer inn)
     g_free(in->gpuInfo); in->gpuInfo = NULL;
   }
   
+#endif /* HAVE_GPU */
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */
