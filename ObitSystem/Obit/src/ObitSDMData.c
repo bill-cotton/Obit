@@ -655,6 +655,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   ObitSDMData* out;
   ASDMSpectralWindowArray *damn=NULL;
   gboolean isALMA, isATCA;
+  olong i;
   gchar *routine="ObitSDMDataCreate";
 
   /* Create basic structure */
@@ -914,9 +915,13 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
 
   damn = ObitSDMDataKillSWArray(damn);
 
-  /* Get integration time from the first scan */
-  out->integTime = out->MainTab->rows[0]->interval / 
-    MAX(1, out->MainTab->rows[0]->numIntegration);
+  /* Get integration time from the first valid scan */
+  /* For EVLA failed scans are given numIntegration=1 */
+  for (i=0; i<out->MainTab->nrows; i++) {
+    out->integTime = out->MainTab->rows[i]->interval / 
+      MAX(1, out->MainTab->rows[i]->numIntegration);
+    if (out->MainTab->rows[i]->numIntegration>1) break;
+  }
 
   /* release parsing buffer */
   out->maxLine = 0;
@@ -938,6 +943,7 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   ObitSDMData* out;
   ASDMSpectralWindowArray *damn=NULL;
   gboolean isALMA, isATCA;
+  olong i;
   gchar *routine="ObitSDMIntentCreate";
 
   /* Create basic structure */
@@ -1161,9 +1167,13 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
 
   damn = ObitSDMDataKillSWArray(damn);
 
-  /* Get integration time from the first scan */
-  out->integTime = out->MainTab->rows[0]->interval / 
-    MAX(1, out->MainTab->rows[0]->numIntegration);
+  /* Get integration time from the first valid scan */
+  /* For the EVLA, failed scans will have numIntegration=1 */
+  for (i=0; i<out->MainTab->nrows; i++) {
+    out->integTime = out->MainTab->rows[i]->interval / 
+      MAX(1, out->MainTab->rows[i]->numIntegration);
+    if (out->MainTab->rows[i]->numIntegration>1) break;
+  }
 
   /* release parsing buffer */
   out->maxLine = 0;
