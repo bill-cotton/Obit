@@ -2,7 +2,7 @@
 """
 # $Id: 
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012-2023
+#  Copyright (C) 2012-2026
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -132,6 +132,47 @@ def UVMakeIF (outUV, nIF, err):
     outUV.UpdateDesc(err)
     OErr.printErrMsg(err,"Error updating output")
     # end MakeIF 
+    
+def UVRevertIF (outUV, err):
+    """ 
+    Change number of IFs to 1
+    
+    Operation done in place
+    * outUV       = output Obit UV object
+                    Only really works for AIPS
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    # Checks
+    if not UV.PIsA(outUV):
+        raise TypeError("outUV MUST be a defined Python Obit UV")
+
+    jlocif = outUV.Desc.Dict["jlocif"]
+    oldIF  = outUV.Desc.Dict["inaxes"][jlocif]
+
+    # Patch UV Descriptor
+    DescRevertIF (outUV, err)
+    # Update
+    outUV.UpdateDesc(err)
+    # Revert FQ Table
+    RevertFQ2 (outUV, oldIF, err)
+    outUV.UpdateDesc(err) # Update
+    # Revert AN Table
+    RevertAN2 (outUV, oldIF, err)
+    # Revert SU Table
+    RevertSU2 (outUV, oldIF, err)
+    outUV.UpdateDesc(err) # Update
+    # Regenerate CL table 1 - delete any old
+    outUV.ZapTable("AIPS CL",-1,err)
+    #print('(Re) generate CL table')
+    #z=UV.PTableCLGetDummy (outUV, outUV, 1, err, solInt=10.)
+    # dummy FG 1
+    print('Dummy entry in Flag table 1')
+    UV.PFlag(outUV, err, timeRange=[-10.,-9.], Ants=[200,200], Stokes='0000',Reason='Dummy')
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error updating output")
+    # end UVRevertIF 
     
 def UpdateSU (inUV, outUV, nIF, err):
     """ 
@@ -447,6 +488,43 @@ def DescMakeIF (outUV, nIF, err):
     OErr.printErrMsg(err,"Error converting Descriptor")
     # end DescMakeIF
     
+def DescRevertIF (outUV, err):
+    """ 
+    Revert outUV descriptor to 1 IF
+    
+    * outUV       = output Obit UV object
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    d = outUV.Desc.Dict
+    # Have IF axis?
+    if d["jlocif"]>=0:
+        jlocif = d["jlocif"]
+    else:  # create one
+        jlocif = d['naxis']
+        d['naxis'] += 1
+        d['ctype'][jlocif] = "IF"
+        d['crval'][jlocif] = 1.0
+        d['crpix'][jlocif] = 1.0
+        d['cdelt'][jlocif] = 1.0
+        d['crota'][jlocif] = 0.0
+         
+    jlocf  = d["jlocf"]
+    nchan  = d["inaxes"][jlocf]
+    jlocif = d["jlocif"]
+    nIF     = d["inaxes"][jlocif]
+    d["inaxes"][jlocif] = 1
+    d["inaxes"][jlocf]  = nIF*nchan
+    outUV.Desc.Dict = d
+    UV. PGetIODesc(outUV).Dict = d  # And your little dog too
+    # Update
+    outUV.UpdateDesc(err)
+    outUV.Open(UV.WRITEONLY,err)
+    outUV.Close(err)
+    #outUV.Header(err)
+    OErr.printErrMsg(err,"Error converting Descriptor")
+    # end DescRevertIF
+    
 def UpdateFQ2 (outUV, nIF, err):
     """ 
     Convert FQ table in outUV to nIF IFs
@@ -641,4 +719,172 @@ def UpdateSU2 (outUV, nIF, err):
     outUV.UpdateDesc(err)
     OErr.printErrMsg(err,"Error converting SU Table")
     # end UpdateSU2
+    
+def RevertFQ2 (outUV, oldIF, err):
+    """ 
+    Revert FQ table in outUV to 1 IFs
+    
+    * outUV       = output Obit UV object, defined but not instantiated
+    * oldIF       = previous number of IFs
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    iFQTab = outUV.NewTable(Table.READONLY, "AIPS FQ",1,err)
+    oFQTab = outUV.NewTable(Table.WRITEONLY, "AIPS FQ",2,err,numIF=1)
+    # Input info
+    d = outUV.Desc.Dict
+    # Can use row from input table
+    iFQTab.Open(Table.READONLY, err)
+    oFQTab.Open(Table.WRITEONLY, err)
+    row = iFQTab.ReadRow(1,err)
+    iFQTab.Close(err)
+    
+    # Revert row for 1 from oldIF IFs
+    freqarr = [row['IF FREQ'][0]]
+    chwarr = [ row['CH WIDTH'][0]]
+    tbwarr = [row['TOTAL BANDWIDTH'][0] * oldIF]
+    sideband = row['SIDEBAND'][0]
+    sbarr = [row['SIDEBAND'][0]]
+    rxcarr = row['RXCODE'][0][0]
+    row['IF FREQ']         = freqarr
+    row['CH WIDTH']        = chwarr
+    row['TOTAL BANDWIDTH'] = tbwarr
+    row['SIDEBAND']        = sbarr
+    row['RXCODE']          = [rxcarr]
+        
+    # Write output
+    oFQTab.WriteRow(1,row,err)
+    oFQTab.Close(err)
+    # zap FQ old
+    outUV.ZapTable("AIPS FQ",1,err)
+    # Copy
+    iFQTab = outUV.NewTable(Table.READONLY, "AIPS FQ",2,err)
+    oFQTab = outUV.NewTable(Table.WRITEONLY, "AIPS FQ",1,err)
+    Table.PCopy(iFQTab, oFQTab, err)
+    # zap FQ old
+    outUV.ZapTable("AIPS FQ",2,err)
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error reverting FQ Table")
+    # end RevertFQ2
+    
+def RevertAN2 (outUV, oldIF, err):
+    """ 
+    Revert AN table in outUV to 1 IFs
+    
+    * outUV       = output Obit UV object, defined but not instantiated
+    * oldIF       = previous number of IFs
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    iANTab = outUV.NewTable(Table.READONLY, "AIPS AN",1,err)
+    oANTab = outUV.NewTable(Table.WRITEONLY, "AIPS AN",2,err,numIF=1)
+    
+    iANTab.Open(Table.READONLY, err)
+    oANTab.Open(Table.WRITEONLY, err)
+
+    # copy keys
+    for k in iANTab.keys:
+        oANTab.keys[k] = iANTab.keys[k]
+    
+    nrow = iANTab.Desc.Dict['nrow']  # How many rows?
+    for irow in range(1,nrow+1):
+        row = iANTab.ReadRow(irow,err)  # Read input row
+        
+        # Revert  row
+        pca0 = row['POLCALA'][0]
+        pca1 = row['POLCALA'][1]
+        pcb0 = row['POLCALB'][0]
+        pcb1 = row['POLCALB'][1]
+        bm   = row['BEAMFWHM'][0]
+        Beama    = []
+        PolcalAa = []
+        PolcalBa = []
+        Beama.append(bm)
+        PolcalAa.append(pca0)
+        PolcalAa.append(pca1)
+        PolcalBa.append(pcb0)
+        PolcalBa.append(pcb1)
+        row['BEAMFWHM'] = Beama
+        row['POLCALA']  = PolcalAa
+        row['POLCALB']  = PolcalBa
+        
+        # Write output
+        oANTab.WriteRow(irow,row,err)
+        # End loop over rows
+    iANTab.Close(err)
+    oANTab.Close(err)
+    # zap AN old
+    outUV.ZapTable("AIPS AN",1,err)
+    # Copy
+    iANTab = outUV.NewTable(Table.READONLY, "AIPS AN",2,err)
+    oANTab = outUV.NewTable(Table.WRITEONLY, "AIPS AN",1,err)
+    Table.PCopy(iANTab, oANTab, err)
+    # zap AN old
+    outUV.ZapTable("AIPS AN",2,err)
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error reverting AN Table")
+    # end RevertAN2
+    
+def RevertSU2 (outUV, oldIF, err):
+    """ 
+    Revert SU table in outUV to 1 IFs
+    
+    * outUV       = output Obit UV object, defined but not instantiated
+    * oldIF       = previous number of IFs
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    # Is there an SU table?
+    try:
+        iSUTab = outUV.NewTable(Table.READONLY, "AIPS SU",1,err)
+        oSUTab = outUV.NewTable(Table.WRITEONLY, "AIPS SU",2,err,numIF=1)
+    except:
+        return
+
+    iSUTab.Open(Table.READONLY, err)
+    oSUTab.Open(Table.WRITEONLY, err)
+    nrow = iSUTab.Desc.Dict['nrow']  # How many rows?
+
+    for irow in range(1,nrow+1):
+        row = iSUTab.ReadRow(irow,err)  # Read input row
+        
+        # Revert row
+        fo   = row['FREQOFF'][0]
+        bw   = row['BANDWIDTH'][0]
+        iflx = row['IFLUX'][0]
+        qflx = row['QFLUX'][0]
+        uflx = row['UFLUX'][0]
+        vflx = row['VFLUX'][0]
+        lsr  = row['LSRVEL'][0]
+        rest = row['RESTFREQ'][0]
+        iflxa = [iflx]; qflxa = [qflx]; uflxa = [uflx]; vflxa = [vflx];
+        foa = [fo]; lsra = [lsr]; rfa = [rest]
+        
+        row['IFLUX']     = iflxa
+        row['QFLUX']     = qflxa
+        row['UFLUX']     = uflxa
+        row['VFLUX']     = vflxa
+        row['FREQOFF']   = foa
+        row['LSRVEL']    = lsra
+        row['RESTFREQ']  = rfa
+        
+        # Write output
+        oSUTab.WriteRow(irow,row,err)
+        # end loop over rows
+    iSUTab.Close(err)
+    oSUTab.Close(err)
+    # zap SU old
+    outUV.ZapTable("AIPS SU",1,err)
+    # Copy
+    iSUTab = outUV.NewTable(Table.READONLY, "AIPS SU",2,err)
+    oSUTab = outUV.NewTable(Table.WRITEONLY, "AIPS SU",1,err)
+    Table.PCopy(iSUTab, oSUTab, err)
+    # zap SU old
+    outUV.ZapTable("AIPS SU",2,err)
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error reverting SU Table")
+    # end RevertSU2
     

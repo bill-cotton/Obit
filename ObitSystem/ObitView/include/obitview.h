@@ -82,6 +82,8 @@ FStrng *log_dir;     /* logging directory */
 gboolean doLog;      /* it true position logging turned on */
 ofloat  usr_equinox; /* Equinox desired by user */
 Widget Display_shell;/* highest level widget */
+XmFontList textFontList; /* Font list for text fields */
+double sizeFactor;        /* Scaling factor for boxes with text fields */
 ObitInfoList *requestList; /* InfoList for requests to return to client */
 ObitErr *err;        /* Obit Error/message structure */
 #endif               /* end of declarations for main */
@@ -97,6 +99,8 @@ extern FStrng *log_dir;     /* logging directory */
 extern gboolean doLog;      /* if true position logging turned on */
 extern ofloat  usr_equinox; /* Equinox desired by user */
 extern Widget Display_shell;/* highest level widget */
+extern XmFontList textFontList; /* Font list for text fields */
+extern double sizeFactor;        /* Scaling factor for boxes with text fields */
 extern ObitInfoList *requestList; /* InfoList for requests to return to client */
 extern ObitErr *err;        /* Obit Error/message structure */
 #endif /* end of declarations for other files */

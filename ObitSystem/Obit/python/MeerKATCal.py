@@ -259,15 +259,15 @@ def MKInitContParms():
     parms["minFlux"]     = 0.01         # Minimum CLEAN flux density
     parms["minSNR"]      = 4.0          # Minimum Allowed SNR
     parms["solPMode"]    = "P"          # Phase solution for phase self cal
-    parms["solPType"]    = "    "       # Solution type for phase self cal
+    parms["solPType"]    = "L1"         # Solution type for phase self cal
     parms["solAMode"]    = "A&P"        # Delay solution for A&P self cal
-    parms["solAType"]    = "    "       # Solution type for A&P self cal
+    parms["solAType"]    = "L1"        # Solution type for A&P self cal
     parms["avgPol"]      = True         # Average poln in self cal?
     parms["avgIF"]       = False        # Average IF in self cal?
-    parms["maxPSCLoop"]  = 0            # Max. number of phase self cal loops
+    parms["maxPSCLoop"]  = 2            # Max. number of phase self cal loops
     parms["minFluxPSC"]  = 0.05         # Min flux density peak for phase self cal
     parms["solPInt"]     = 0.5          # phase self cal solution interval (min)
-    parms["maxASCLoop"]  = 0            # Max. number of Amp+phase self cal loops
+    parms["maxASCLoop"]  = 2            # Max. number of Amp+phase self cal loops
     parms["minFluxASC"]  = 1.000        # Min flux density peak for amp+phase self cal
     parms["solAInt"]     = 2.0          # amp+phase self cal solution interval (min)
     parms["nTaper"]      = 0            # Number of additional imaging multiresolution tapers
@@ -2698,12 +2698,12 @@ def MKXPhase(inDELA, inUV, err, timeRange=[0.,0.], doCalib=-1,
     nrow=nxtab.Desc.Dict['nrow']
     row=nxtab.ReadRow(nrow,err) # Gives central time and interval
     tc = row['TIME'][0]; ti =  row['TIME INTERVAL'][0];
-    onemin = 60./86400
-    xphase.timeRange = [tc+0.45*ti-onemin, tc+0.6*ti]
+    delta = 60./86400
+    xphase.timeRange = [tc+0.49*ti-delta, tc+0.6*ti]
     nxtab.Close(err)
     OErr.printErrMsg(err, "Error getting X-Y phase timerange")
     # Flag all but last minute
-    UV.PFlag(inDELA, err, flagVer=1, timeRange=[0.0, tc+0.45*ti-onemin], Stokes='1111', Reason='Phasing')
+    UV.PFlag(inDELA, err, flagVer=1, timeRange=[0.0, tc+0.45*ti-delta], Stokes='1111', Reason='Phasing')
 
     if debug:
         xphase.i
@@ -3999,10 +3999,10 @@ def MKImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", ban
                      doPol=False, PDVer=-1,  minFlux=0.0, nx=[0], ny=[0], \
                      xCells=0, yCells=0, Reuse=0.0, minPatch=0, OutlierSize=530, noNeg=False, \
                      Stokes="I", FOV=0.1/3600.0, Robust=-1.5, Niter=300, CleanRad=None, \
-                     maxPSCLoop=0, minFluxPSC=0.05, solPInt=0.5, \
-                     solPMode="P", solPType= "  ", CCVer=-1, CGain=0.1, \
-                     maxASCLoop=0, minFluxASC=1.0, solAInt=2.0, \
-                     solAMode="A&P", solAType= "  ", autoCen=False, \
+                     maxPSCLoop=2, minFluxPSC=0.05, solPInt=0.5, \
+                     solPMode="P", solPType= "L1", CCVer=-1, CGain=0.1, \
+                     maxASCLoop=1, minFluxASC=1.0, solAInt=2.0, \
+                     solAMode="A&P", solAType= "L1", autoCen=False, \
                      avgPol=True, avgIF=False, minSNR = 5.0, refAnt=0, \
                      do3D=False, BLFact=0.999, BLchAvg=True, doOutlier=None, \
                      doMB=True, norder=2, maxFBW=0.05, doComRes=False, \
@@ -6067,6 +6067,25 @@ def MKPrepare(inUV, err, \
         Stokes = "IQUV"
         if not (DCalFile or DCalName):
             print ("You MUST specify DCalFile or DCalName for polarization"); return
+        if DCalFile:
+            inDC = UV.newPFUV('Raw', DCalFile, 0, True, err)
+        elif DCalName:
+            inDC = UV.newPAUV('in',DCalName,DCalClass,DCalDisk,DCalSeq, True, err)
+        # Check DelayCal compatibility with data
+        DataDesc = inUV.Desc.Dict;
+        DCalDesc = inDC.Desc.Dict;
+        if (DCalDesc['inaxes'][DCalDesc['jlocf']] != DataDesc['inaxes'][DataDesc['jlocf']]):
+            print ("DelayCal and Data nfreq incompatible: "+str(DCalDesc['inaxes'][DCalDesc['jlocf']])+\
+                "!="+str(DataDesc['inaxes'][DataDesc['jlocf']])); 
+            return
+        if (DCalDesc['inaxes'][DCalDesc['jlocif']] != DataDesc['inaxes'][DataDesc['jlocif']]):
+            print ("DelayCal and Data nIF incompatible: "+str(DCalDesc['inaxes'][DCalDesc['jlocif']])+\
+                "!="+str(DataDesc['inaxes'][DataDesc['jlocif']])); 
+            return
+        if (DCalDesc['inaxes'][DCalDesc['jlocs']] != DataDesc['inaxes'][DataDesc['jlocs']]):
+            print ("DelayCal and Data nStokes incompatible: "+str(DCalDesc['inaxes'][DCalDesc['jlocs']])+\
+                "!="+str(DataDesc['inaxes'][DataDesc['jlocs']])); 
+            return
         if not PolCal:
             print ("You MUST specify PolCal for polarization"); return
         for t in PolCal:

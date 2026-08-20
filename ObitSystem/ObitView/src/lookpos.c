@@ -1,7 +1,7 @@
 /* $Id$ */
 /* lookup position from index, Equinox dialog boxes for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1998,2002-2022
+*  Copyright (C) 1996,1998,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -22,6 +22,7 @@
 #include <Xm/PushB.h>
 #include <Xm/Label.h>
 #include <Xm/ToggleB.h>
+#include <Xm/ToggleBG.h>
 #include <Xm/RowColumn.h>
 #include <Xm/Separator.h>
 #include <Xm/MessageB.h>
@@ -226,7 +227,6 @@ void LookupOKButCB (Widget w, XtPointer clientData, XtPointer callData)
     MessageShow (szErrMess);
     return;}
   
-  
   /* set scrollbar */ 
   iX = (int)(xp - 0.5);
   iY = (int)(yp - 0.5);
@@ -327,28 +327,32 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   look.dialog = XtVaCreatePopupShell ("LookupPos", xmDialogShellWidgetClass, 
 				      IDdata->shell, 
 				      XmNautoUnmanage, False,
-				      XmNwidth,     180,
-				      XmNheight,    150,
+				      XmNwidth,     (int)(180*sizeFactor),
+				      XmNheight,    (int)(150*sizeFactor),
 				      XmNdeleteResponse, XmDESTROY,
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("LookupForm", xmFormWidgetClass,
 				  look.dialog,
 				  XmNautoUnmanage, False,
-				  XmNwidth,     180,
-				  XmNheight,    150,
+				  XmNwidth,     (int)(180*sizeFactor),
+				  XmNheight,    (int)(150*sizeFactor),
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList, textFontList, // Set font 
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   
   /* info label widgets */
   toplabel = XtVaCreateManagedWidget ("Label", xmLabelWidgetClass, 
 				      form, 
-				      XmNwidth,           180,
+				      XmNwidth,         (int)(180*sizeFactor),
 				      XmNlabelString,   label,
 				      XmNtopAttachment, XmATTACH_FORM,
 				      XmNleftAttachment,  XmATTACH_FORM,
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   
   /* Equinox */
@@ -359,11 +363,12 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   equstr = XmStringCreateSimple (valuestr);
   look.equlab = XtVaCreateManagedWidget ("EquLabel", xmLabelWidgetClass, 
 					 form, 
-					 XmNwidth,           180,
+					 XmNwidth,         (int)(180*sizeFactor),
 					 XmNlabelString,   equstr,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     toplabel,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   
   RA = XmStringCreateSimple ("RA");
@@ -371,11 +376,12 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   /* RA */
   label1 = XtVaCreateManagedWidget ("RA", xmLabelWidgetClass,
 				    form,
-				    XmNheight,    30,
+				    XmNheight,    (int)(30*sizeFactor),
 				    XmNlabelString,   RA,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     look.equlab,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
   look.ra = 0.0;
   sprintf (valuestr, "00 00 00.0");
@@ -387,24 +393,27 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget,     label1,
 					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
   /* separator */
   sep1 = XtVaCreateManagedWidget ("sep1", xmSeparatorWidgetClass,
 				  form, 
-				  XmNwidth,           180,
+				  XmNwidth,        (int)(180*sizeFactor),
 				  XmNtopAttachment, XmATTACH_WIDGET,
 				  XmNtopWidget,     look.data1,
 				  XmNleftAttachment,  XmATTACH_FORM,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   /* Dec */
   Dec = XmStringCreateSimple ("Dec");
   label2 = XtVaCreateManagedWidget ("Dec", xmLabelWidgetClass,
 				    form,
-				    XmNheight,    30,
+				    XmNheight,    (int)(30*sizeFactor),
 				    XmNlabelString,   Dec,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     sep1,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
   
   sprintf (valuestr, "+00 00 00.0");
@@ -417,22 +426,25 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget,     label2,
 					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
   
   /* separator */
   /*sep2 = */
   XtVaCreateManagedWidget ("sep2", xmSeparatorWidgetClass,
 			   form, 
-			   XmNwidth,           180,
+			   XmNwidth,           (int)(180*sizeFactor),
 			   XmNtopAttachment, XmATTACH_WIDGET,
 			   XmNtopWidget,     look.data2,
 			   XmNleftAttachment,  XmATTACH_FORM,
+			   XmNfontList, textFontList, // Set font 
 			   NULL);
   /* Cancel button */
   CancelButton = XtVaCreateManagedWidget ("Cancel", xmPushButtonWidgetClass, 
 					  form, 
 					  XmNbottomAttachment, XmATTACH_FORM,
 					  XmNleftAttachment, XmATTACH_FORM,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
   XtAddCallback (CancelButton, XmNactivateCallback, LookupCancelButCB, 
 		 (XtPointer)IDdata);
@@ -444,6 +456,7 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 				      XmNleftAttachment, XmATTACH_WIDGET,
 				      XmNleftWidget,     CancelButton,
 				      XmNrightAttachment, XmATTACH_FORM,
+				      XmNfontList, textFontList, // Set font
 				      NULL);
   XtAddCallback (OKButton, XmNactivateCallback, LookupOKButCB, 
 		 (XtPointer)IDdata);
@@ -462,7 +475,7 @@ void LookPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 		 XmNx, &xpos,
 		 XmNy, &ypos,
 		 NULL);
-  ypos += 200;
+  ypos += 300;
   if (xpos<0) xpos = 0;
   XMoveWindow (XtDisplay(IDdata->shell), XtWindow(look.dialog), 
 	       xpos, ypos);
@@ -687,28 +700,31 @@ void SetEquCB (Widget parent, XtPointer clientData, XtPointer callData)
   equ.dialog = XtVaCreatePopupShell ("EquinoxBox", xmDialogShellWidgetClass, 
 				     IDdata->shell, 
 				     XmNautoUnmanage, False,
-				     XmNwidth,     180,
-				     XmNheight,    150,
+				     XmNwidth,     (int)(180*sizeFactor),
+				     XmNheight,    (int)(150*sizeFactor),
 				     XmNdeleteResponse, XmDESTROY,
+				     XmNfontList, textFontList, // Set font 
 				     NULL);
   
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("OptionForm", xmFormWidgetClass,
 				  equ.dialog,
 				  XmNautoUnmanage, False,
-				  XmNwidth,     180,
-				  XmNheight,    150,
+				  XmNwidth,     (int)(180*sizeFactor),
+				  XmNheight,    (int)(150*sizeFactor),
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   
   /* info label widgets */
   label1 = XtVaCreateManagedWidget ("Label1", xmLabelWidgetClass, 
 				    form, 
-				    XmNwidth,           180,
+				    XmNwidth,        (int)(180*sizeFactor),
 				    XmNlabelString,   label,
 				    XmNtopAttachment, XmATTACH_FORM,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
   
   /* Equinox radio buttons */
@@ -717,20 +733,40 @@ void SetEquCB (Widget parent, XtPointer clientData, XtPointer callData)
   if (usr_equinox==1950.0) iEquin = 2;
   radio = XmVaCreateSimpleRadioBox(form, "Equinox_type", iEquin, 
 				   (XtCallbackProc)EquiSetCB,
-				   XmNwidth,           180,
+				   XmNwidth,           (int)(180*sizeFactor),
 				   XmNtopAttachment, XmATTACH_WIDGET,
 				   XmNtopWidget,     label1,
 				   XmNleftAttachment,  XmATTACH_FORM,
 				   XmVaRADIOBUTTON, defau, NULL, NULL, NULL,
 				   XmVaRADIOBUTTON, J2000,NULL,NULL,NULL,
 				   XmVaRADIOBUTTON, B1950,NULL,NULL,NULL,
+				   XmNfontList, textFontList, // Set font 
 				   NULL);
+  XtManageChild(radio);
+  // set fonts on radio buttons with help from Mr. Google:
+  WidgetList children;
+  Cardinal numChildren;
+  int iii;
+  // 2. Fetch the automatically created children array from the container
+  XtVaGetValues(radio, 
+		XmNchildren, &children, 
+		XmNnumChildren, &numChildren, 
+		NULL);
+  // 3. Loop through and apply your fontList to each child button
+  for (iii = 0; iii < numChildren; iii++) {
+    // XmVaCreateSimpleRadioBox creates Gadgets by default
+    if (XtIsSubclass(children[iii], xmToggleButtonGadgetClass)) {
+      XtVaSetValues(children[iii], XmNfontList, textFontList, NULL);
+    }
+  }
+  // 4. Manage the container now that children are altered
   XtManageChild(radio);
   
   /* Cancel button */
   CancelButton = XtVaCreateManagedWidget ("Cancel", xmPushButtonWidgetClass, 
 					  form, 
 					  XmNbottomAttachment, XmATTACH_FORM,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
   XtAddCallback (CancelButton, XmNactivateCallback, EquiSetCancelButCB, 
 		 (XtPointer)IDdata);

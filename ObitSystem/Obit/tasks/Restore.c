@@ -5,7 +5,7 @@
 /* $Id$  */
 /* Obit task to restore and/or flatten an image mosaic                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021                                               */
+/*;  Copyright (C) 2021,2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -160,8 +160,15 @@ int main ( int argc, char **argv )
     Restore  (myInput, mosaic, CCver, err);
     XRestore (myInput, mosaic, CCver, err);
   }
-  if (doFlat) Flatten(mosaic, err);
-   /* Is this an ImageMF? */
+  if (doFlat) {
+    Flatten(mosaic, err);  /* Flatten */
+    /* Combine CC Tables to FullField */
+    if (mosaic->FullField) {
+      ObitImageMosaicCopyCC (mosaic, inData, err);
+    } /* end if FullField */
+  } /* End doFlat */
+
+  /* Is this an ImageMF? */
   isMF = ObitImageMFIsA(mosaic->images[0]);
   if (doFit && isMF) ObitImageMFFitSpec ((ObitImageMF*)mosaic->FullField, 
 					 antSize, err);

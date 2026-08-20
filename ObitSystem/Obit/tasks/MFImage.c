@@ -1196,9 +1196,9 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     strncpy (Aname, tname, 13); Aname[12] = 0;
     /* output AIPS class */
     if (ObitInfoListGetP(myInput, "out2Class", &type, dim, (gpointer)&strTemp)) {
-      strncpy (Aclass, strTemp, 7);
+      strncpy (Aclass, strTemp, 6); Aclass[6] = 0;
     } else { /* Didn't find */
-      strncpy (Aclass, "MFImag", 7);
+      strncpy (Aclass, "MFImag", 6);Aclass[6] = 0;
     }
     /* Default for blank */
     if (!strncmp (Aclass, "    ", 4)) strncpy (Aclass, "MFImag", 7);
@@ -1394,9 +1394,9 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     
     /* Make up AIPS-like name, class...  */
     if (strncmp (Source, "    ", 4))
-      strncpy (Aname, Source, 13);
+      {strncpy (Aname, Source, 12); Aname[12] = 0;}
     else
-      strncpy (Aname, outFile, 13);
+      {strncpy (Aname, outFile, 12); Aname[12] = 0;}
     strncpy (Aclass, "XMap", 7);
     Aclass[0] = chStokes[iStoke-1];  /* Stokes type as first char */
     Aseq = 1;
@@ -1469,7 +1469,7 @@ olong doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   for (isource = 0; isource<doList->number; isource++) {
     if (!doList->SUlist[isource]) continue; /* removed? */
     maxlen = MIN (16, strlen(doList->SUlist[isource]->SourceName));
-    strncpy (Source, doList->SUlist[isource]->SourceName, maxlen);
+    strncpy (Source, doList->SUlist[isource]->SourceName, maxlen); /* OK but compiler offended */
     Source[maxlen] = 0;
 
     Obit_log_error(err, OBIT_InfoErr, " ******  Source %s ******", Source);
@@ -1965,7 +1965,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     inver  = 1;
     outver = 1;
     if (isDual) {
-      ObitDataCopyTable ((ObitData*)outField2, (ObitData*)outImage[qstok-1],
+      ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[qstok-1],
 			 CCType, &inver, &outver, err);
       ObitDataCopyTable ((ObitData*)outField2, (ObitData*)outImage[ustok-1],
 			   CCType, &inver, &outver, err);
@@ -2033,16 +2033,16 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Leave facet images if not myClean->mosaic->doFull and myClean->mosaic->numberImages >1 */
     if (!((!myClean->mosaic->doFull) && (myClean->mosaic->numberImages>1))) {
       ObitImageMosaicZapImage (myClean->mosaic, -1, err); /* Delete mosaic members */
-      if (myClean->mosaic2) ObitImageMosaicZapImage (myClean->mosaic2, -1, err); /* Delete U mosaic */
-      
+      if (myClean->mosaic2) ObitImageMosaicZapImage (myClean->mosaic2, -1, err); /* Delete U mosaic */      
     }
     if (doFlat && (myClean->mosaic->numberImages>1)) {  /* Delete flattened as well if not output */
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
       if (outField) outField = ObitImageZap(outField, err);
-      if (isDual) {
+      /* U FullField if it exists */
+      if (myClean->mosaic2) {
 	outField = ObitImageMosaicGetFullImage (myClean->mosaic2, err);
-	if (outField) outField = ObitImageZap(outField, err);
-      }
+      } else outField=NULL;
+      if (outField) outField = ObitImageZap(outField, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     }
     myClean = ObitDConCleanVisMFUnref((ObitDConCleanVisMF*)myClean);
@@ -2051,6 +2051,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   skyModel  = ObitSkyModelUnref(skyModel);
   skyModel2 = ObitSkyModelUnref(skyModel2);
   outData   = ObitUVUnref(outData);
+  outData2  = ObitUVUnref(outData2);
   if (saveParmList) saveParmList = ObitInfoListUnref(saveParmList);
   
   }  /* end doChanPoln */
@@ -2078,7 +2079,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
   oint         otemp;
   olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter=0, NiterQU, NiterV, nFreq;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen, useMinFlux=0.0;
-  ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0,  minFluxV=0.0;
+  ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0,  minFluxV=0.0, Beam[3]={0.0,0.0,0.0};
   ofloat       *minFList=NULL, antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
   odouble      *specFreqEff=NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1},  FLdim[MAXINFOELEMDIM];
@@ -2283,6 +2284,11 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
       /* Did it run out of time - no self cal - just restore, flatten */
       if (myClean->outaTime) goto bail;
      
+      /* Save fitted beam to myInput */
+      ObitInfoListGetTest(myClean->imager->uvwork->info, "Beam", &type, dim, Beam);
+      ObitInfoListAlwaysPut(myClean->imager->uvdata->info, "Beam", OBIT_float, dim, Beam);
+      ObitInfoListAlwaysPut(myInput, "Beam", OBIT_float, dim, Beam);
+    
       /* Make sure image Cleaned if Self cal wanted, else complain and skip SC */
       if (doSC && (myClean->peakFlux==0.0)) {
 	Obit_log_error(err, OBIT_InfoWarn,  "%s: Image NOT CLEANed", routine);
@@ -2688,7 +2694,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
     else inMF = (ObitImage*)myClean->mosaic->images[0];
     /* Open and close to update disk */
     ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
-    ObitImageMFSetFreqEff (inMF, nFreq, specFreqEff, err);
+    ObitImageMFSetFreqEff ((ObitImageMF*)inMF, nFreq, specFreqEff, err);
     inMF->myStatus = OBIT_Modified;  /* Grumble */
     ObitImageClose(inMF, err);
     Obit_log_error(err, OBIT_InfoErr,  "%s: Updated eff. freqs.", routine);
@@ -2717,14 +2723,20 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
   /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
   if ((myClean->nfield>1) && myClean->mosaic->FullField) {
     if ((!myClean->mosaic->images[0]->myDesc->do3D) || 
-	(myClean->mosaic->nFlyEye==1))
+	(myClean->mosaic->nFlyEye==1)) {
       ObitImageMosaicCopyCC (myClean->mosaic, inUV, err);
-  }
+      if (isDual || myClean->mosaic2) {
+	if ((!myClean->mosaic2->images[0]->myDesc->do3D) || 
+	    (myClean->mosaic2->nFlyEye==1))
+	  ObitImageMosaicCopyCC (myClean->mosaic2, inUV2, err);
+      }
+    }
+  } /* end concate CC tables */
 
- /* Cleanup */
+  /* Cleanup */
   selfCal  = ObitUVSelfCalUnref(selfCal);
 
-} /* end MFImageLoop */
+} /* end doImage */
 
 /*----------------------------------------------------------------------- */
 /*  Write History for MFImage                                             */
@@ -3061,7 +3073,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   olong *ipnt, BIF=1, EIF=0, saveEIF, seq=0, disk=1, user=1, cno;
   ofloat xyCells, Beam[3] = {0.0,0.0,0.0};
   gboolean exist, btemp=TRUE, saveCalSelect=FALSE;
-  gchar *Type, *scrName="SCRATCH Ima", *scrClass="Beam1",*scrBClass="BeamB" ;
+  gchar *Type, *scrName="SCRATCH Ima ", *scrClass="Beam1 ",*scrBClass="BeamB " ;
   gchar *scrFile="SCRATCH ImageBeam1.fits", *scrBFile="SCRATCH ImageBeamBeam.fits";
   gchar *Stokes = "I   ";
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */

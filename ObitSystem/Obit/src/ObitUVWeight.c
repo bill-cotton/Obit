@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2025                                          */
+/*;  Copyright (C) 2003-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -170,7 +170,7 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
   ObitUVWeight *myWeight = NULL;
   gchar *outName = NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong iif, nif, nch, naxis[2];
+  olong iif, nif, nch, nstok, naxis[2];
   gboolean doUnifWt;
   gchar *routine = "ObitUVWeightData";
 
@@ -198,10 +198,13 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
   doUnifWt = myWeight->Robust[0] < 7;
 
   /* Numnber of channels, IFs */
-  nch = 1; nif = 1;
-  if (uvdata->myDesc->jlocf>=0)  nch = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
-  if (uvdata->myDesc->jlocif>=0) nif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+  nch = 1; nif = 1; nstok = 1;
+  if (uvdata->myDesc->jlocf>=0)  nch   = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+  if (uvdata->myDesc->jlocif>=0) nif   = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+  if (uvdata->myDesc->jlocs>=0)  nstok = uvdata->myDesc->inaxes[uvdata->myDesc->jlocs];
   myWeight->numIF      = nif;
+  myWeight->numFreq    = nch;
+  myWeight->numStok    = nstok;
 
   /* Gridding for uniform weighting */
   if (doUnifWt) {
@@ -748,8 +751,8 @@ void ObitUVWeightWtUV (ObitUVWeight *in, ObitUV *UVin, ObitErr *err)
  */
 static void PrepBuffer (ObitUVWeight* in, ObitUV *uvdata)
 {
-  olong ivis, nvis, ifreq, nif, iif, nfreq, loFreq, hiFreq;
-  ofloat *u, *v, *w, *vis, *ifvis, *vvis;
+  olong ivis, nvis, ifreq, nif, iif, nfreq, nstok, istok, loFreq, hiFreq;
+  ofloat *u, *v, *vis, *ifvis, *vvis, *svis; // *w
   ofloat bl2, blmax2, blmin2, wt, guardu, guardv;
   ObitUVDesc *desc;
   gboolean flip, doFlag, doPower, doOne;
@@ -767,16 +770,12 @@ static void PrepBuffer (ObitUVWeight* in, ObitUV *uvdata)
   nfreq = desc->inaxes[desc->jlocf];
   nif = 1;
   if (desc->jlocif>=0) nif = desc->inaxes[desc->jlocif];
-  
+  nstok = 1;
+  if (desc->jlocs>=0) nstok = desc->inaxes[desc->jlocs];
+ 
   /* range of channels (0-rel) */
   loFreq = 0;
   hiFreq = nfreq-1;
-
- /* initialize data pointers */
-  u   = uvdata->buffer+desc->ilocu;
-  v   = uvdata->buffer+desc->ilocv;
-  w   = uvdata->buffer+desc->ilocw;
-  vis = uvdata->buffer+desc->nrparm;
 
   /* what needed */
   /* Raising weight to a power? */
@@ -794,6 +793,12 @@ static void PrepBuffer (ObitUVWeight* in, ObitUV *uvdata)
 
   /* Loop over visibilities */
   for (ivis=0; ivis<nvis; ivis++) {
+    /* Data pointers */
+    vis = uvdata->buffer + ivis*desc->lrec;  /* start of visibility */
+    u   = vis+desc->ilocu;
+    v   = vis+desc->ilocv;
+    //w   = vis+desc->ilocw;
+    vis += desc->nrparm;   /* start of correlations */
 
     /* check extrema */
     bl2 = (*u)*(*u) + (*v)*(*v);
@@ -804,7 +809,7 @@ static void PrepBuffer (ObitUVWeight* in, ObitUV *uvdata)
     /* in the correct half plane? */
     flip = (*u) < 0.0;
 
-    /* loop over IFs */
+   /* loop over IFs */
     ifvis = vis;
     for (iif = 0; iif<nif; iif++) {
 
@@ -812,17 +817,24 @@ static void PrepBuffer (ObitUVWeight* in, ObitUV *uvdata)
       vvis = ifvis;
       for (ifreq = loFreq; ifreq<=hiFreq; ifreq++) {
 
-	/* is this one wanted? */
-	if (doFlag)  vvis[2] = 0.0;  /* baseline out of range? */
-	
-	wt = vvis[2];                /* data weight */
-	if (wt <= 0.0) continue;
-	
-	/* Replacing weights with one? */
-	if (doOne) vis[2] = 1.0;
+	/* Loop over Stokes correlation */
+	svis = vvis;
+	for (istok = 0; istok<nstok; istok++) {
 
-	/* Weights to a power? */
-	if (doPower && (vis[2]>0.0)) vis[2] = pow (vis[2], in->WtPower);
+	  /* is this one wanted? */
+	  if (doFlag)  svis[2] = 0.0;  /* baseline out of range? */
+	
+	  wt = svis[2];                /* data weight */
+	  if (wt <= 0.0) {svis += desc->incs; continue;}
+	
+	  /* Replacing weights with one? */
+	  if (doOne) svis[2] = 1.0;
+
+	  /* Weights to a power? */
+	  if (doPower && (svis[2]>0.0)) svis[2] = pow (svis[2], in->WtPower);
+	  
+	  svis += desc->incs;
+	} /* end loop over Stokes */
 	
 	vvis += desc->incf; /* visibility pointer */
       } /* end loop over frequencies */
@@ -837,12 +849,6 @@ static void PrepBuffer (ObitUVWeight* in, ObitUV *uvdata)
       *u = (*u) * in->UScale;
       *v = (*v) * in->VScale;
     }
-
-    /* update data pointers */
-    u += desc->lrec;
-    v += desc->lrec;
-    w += desc->lrec;
-    vis += desc->lrec;
   } /* end loop over visibilities */
 } /* end PrepBuffer */
 
@@ -862,8 +868,8 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
   olong ivis, nvis, ifreq, nfreq, ncol, iu, iv, icu, icv, lGridRow, lGridCol, itemp;
   olong istok, nstok;
   olong iif, ifq, nif, loFreq, hiFreq, uoff, voff, uuoff=0.0, vvoff, vConvInc, uConvInc;
-  ofloat *grid, *ggrid, *cntGrid, *u, *v, *w, *vis, *vvis, *fvis, *ifvis, *wt;
-  ofloat *convfnp, weight, rtemp, uf, vf, cnjFact=1.0;
+  ofloat *grid, *ggrid, *cntGrid, *u, *v, *vis, *vvis, *fvis, *ifvis; //, *w
+  ofloat *convfnp, weight, rtemp, uf, vf, wt, cnjFact=1.0;
   olong fincf, fincif;
   olong pos[] = {0,0,0,0,0};
   ObitUVDesc *desc;
@@ -895,12 +901,6 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
   fincf  = MAX (1, (desc->incf  / 3) / desc->inaxes[desc->jlocs]);
   fincif = MAX (1, (desc->incif / 3) / desc->inaxes[desc->jlocs]);
 
- /* initialize data pointers */
-  u   = uvdata->buffer+desc->ilocu;
-  v   = uvdata->buffer+desc->ilocv;
-  w   = uvdata->buffer+desc->ilocw;
-  vis = uvdata->buffer+desc->nrparm;
-
   lGridRow = in->cntGrid[0]->naxis[0]; /* length of row */
   lGridCol = in->cntGrid[0]->naxis[1]; /* length of column */
 
@@ -910,6 +910,12 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 
   /* Loop over visibilities */
   for (ivis=0; ivis<nvis; ivis++) {
+    /* Data pointers */
+    vis = uvdata->buffer + ivis*desc->lrec; /* start of visbility */
+    u   = vis+desc->ilocu;
+    v   = vis+desc->ilocv;
+    //w   = vis+desc->ilocw;
+    vis +=desc->nrparm;    /* start of correlations */
 
     /* loop over IFs */
     ifvis = vis;
@@ -943,11 +949,11 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	  for (istok=0; istok<nstok; istok++) {
 	
 	    /* is this one wanted? */
-	    wt = vvis + 2; /* data weight */
-	    if (*wt <= 0.0) {vvis += desc->incs; continue;}
+	    wt = vvis[2]; /* data weight */
+	    if (wt <= 0.0) {vvis += desc->incs; continue;}
 	    
 	    /* weight to grid */
-	    weight = (*wt);
+	    weight = wt;
 	    
 	    /* convolve weight onto the weight grid */
 	    /* back off half Kernel width */
@@ -1034,18 +1040,11 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	    } /* end if grid */
 	    vvis += desc->incs; /* visibility pointer */
 	  } /* end of Stokes gridding loop */
-	  
 	  fvis += desc->incf; /* visibility pointer */
 	} /* End of if datum in grid */
       } /* end loop over frequencies */
       ifvis += desc->incif; /* visibility pointer */
     } /* Loop over IFs */
-
-    /* update data pointers */
-    u += desc->lrec;
-    v += desc->lrec;
-    w += desc->lrec;
-    vis += desc->lrec;
   } /* end loop over visibilities */
 } /* end GridBuffer */
 
@@ -1109,6 +1108,7 @@ static void ProcessGrid (ObitUVWeight* in, ObitErr *err)
     for (iif=0; iif<in->numIF; iif++) {
       /* Robust temperance value */
       in->wtScale[iif]    = sumWtCnt / MAX (1.0, sumCnt);
+      /*in->wtScale[iif]   /= in->numStok;   Adjust for number of Stokes correlations */
       in->temperance[iif] = in->wtScale[iif] * pow (10.0, in->Robust[iif]) / 5.0;
       
       /* If Robust out of range turn it off */
@@ -1132,7 +1132,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   olong ivis, nvis, ifreq, nfreq, iu, iv, lGridCol=0;
   olong istok, nstok;
   olong ifq, iif, nif, loFreq, hiFreq;
-  ofloat *grid=NULL, *u, *v, *w, *vis, *vvis, *fvis, *ifvis, *wt;
+  ofloat *grid=NULL, *u, *v, *vis, *vvis, *fvis, *ifvis, *wt; //, *w
   ofloat tape, tfact, inWt, outWt, guardu, guardv, uf, vf, minWt;
   ofloat ucell, vcell, uucell, vvcell, temperance=0.0, innerWt;
   olong pos[] = {0,0,0,0,0};
@@ -1182,12 +1182,6 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   loFreq = 0;
   hiFreq = nfreq-1;
 
- /* initialize data pointers */
-  u   = uvdata->buffer+desc->ilocu;
-  v   = uvdata->buffer+desc->ilocv;
-  w   = uvdata->buffer+desc->ilocw;
-  vis = uvdata->buffer+desc->nrparm;
-
   /* what needed */
   /* Need taper? */
   doTaper = (in->sigma1[0]!=0.0) || (in->sigma2[0]!=0.0);
@@ -1215,6 +1209,12 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 
   /* Loop over visibilities */
   for (ivis=0; ivis<nvis; ivis++) {
+    /* Data pointers */
+    vis = uvdata->buffer + ivis*desc->lrec; /* srart of visibility */
+    u   = vis+desc->ilocu;
+    v   = vis+desc->ilocv;
+    //w   = vis+desc->ilocw;
+    vis += desc->nrparm; /* start of correlations */
 
     /* enforce guardband */
     doFlag = FALSE;
@@ -1233,32 +1233,32 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
     }
  
     /* loop over IFs */
-    ifvis = vis;
     for (iif=0; iif<nif; iif++) {
+    ifvis = vis + iif*desc->incif;
 
       /* loop over frequencies */
-      fvis = ifvis;
       for (ifreq = loFreq; ifreq<=hiFreq; ifreq++) {
+	fvis = ifvis + ifreq*desc->incf; /* visibility pointer */
 	ifq = iif*fincif + ifreq*fincf;  /* index in IF/freq table */
 	wtIndx = ifq;  /* Index in channel summed wt */
 
 	  /* Loop over stokes */
-	  vvis = fvis;
 	  for (istok=0; istok<nstok; istok++) {
-	
+	    vvis = fvis + istok*desc->incs; /*data pointer */
+	    /*vvis = uvdata->buffer+desc->nrparm+ivis*desc->lrec+iif*desc->incif+ifreq*desc->incf+istok*desc->incs;*/
 	    /* is this one wanted? */
-	    wt = vvis + 2; /* data weight */
+	    wt = vvis+2; /* pointer to data weight */
 	    if (doFlag) *wt = 0.0;
-	    if (*wt <= 0.0) {vvis += desc->incs; continue;}
+	    if (*wt <= 0.0) {continue;}
 	    
 	    /* Input weight */
 	    inWt = *wt;
 	    
 	    /* Replacing weights with one? */
-	    if (doOne) vis[2] = 1.0;
+	    if (doOne) *wt = 1.0;
 	    
 	    /* Weights to a power? */
-	    if (doPower && (vis[2]>0.0)) vis[2] = pow (vis[2], in->WtPower);
+	    if (doPower && (*wt>0.0)) *wt = pow (*wt, in->WtPower);
 	    
 	    /* Doing uniform weighting? */
 	    if (doUnifWt) {
@@ -1313,26 +1313,17 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	    
 	    /* Output weight */
 	    outWt = *wt;
-	    /* SumWt? Only first Stokes */
-	    if (sumWt && (istok==0)) in->sumChWt[wtIndx] += *wt;
+	    /* SumWt? Only first Stokes???
+	    if (sumWt && (istok==0)) in->sumChWt[wtIndx] += *wt;  */
+	    if (sumWt) in->sumChWt[wtIndx] += *wt;
 	    
 	    /* Weighting sums for statistics */
 	    sumInWt  += inWt;
 	    sumOutWt += outWt;
 	    sumO2IWt += outWt * outWt / inWt;
-	    vvis += desc->incs; /* visibility pointer */
 	  } /* end of Stokes gridding loop */
-	    
-	  fvis += desc->incf; /* visibility pointer */
       } /* end loop over frequencies */
-      ifvis += desc->incif; /* visibility pointer */
     } /* Loop over IFs */
-
-    /* update data pointers */
-    u += desc->lrec;
-    v += desc->lrec;
-    w += desc->lrec;
-    vis += desc->lrec;
   } /* end loop over visibilities */
 
   /* save weighting sums */
@@ -1340,7 +1331,6 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   in->wtSums[1] = sumOutWt;
   in->wtSums[2] = sumO2IWt;
   in->numberBad = numberBad;
-
 } /* end WeightBuffer */
 
 /**

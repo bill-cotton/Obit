@@ -1,7 +1,7 @@
 /* $Id$  */
 /*    control panel functions for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2022
+*  Copyright (C) 1996,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -23,6 +23,7 @@
 #include <Xm/PushB.h>
 #include <Xm/Label.h>
 #include <Xm/ToggleB.h>
+#include "obitview.h"
 #include "imagedisp.h"
 #include "color.h"
 
@@ -86,20 +87,22 @@ Widget MakeControl(Widget mainWindow, XtPointer data)
   /* make Form widget for control/info */
   control = XtVaCreateManagedWidget ("control", xmFormWidgetClass,
 				     mainWindow,
-				     XmNwidth,           CONTROLWIDTH,
-				     XmNheight,          400,
+				     XmNwidth,           (int)(CONTROLWIDTH*sizeFactor),
+				     XmNheight,          (int)(400*sizeFactor),
 				     XmNtopAttachment,  XmATTACH_FORM,
 				     XmNleftAttachment,  XmATTACH_FORM,
+				     XmNfontList,    textFontList,   // The custom font size
 				     NULL);
   
   
   /* panel label */
   toplab = XtVaCreateManagedWidget ("CPtoplab", xmLabelWidgetClass, 
 				    control, 
-				    XmNwidth,           CONTROLWIDTH,
+				    XmNwidth,           (int)(CONTROLWIDTH*sizeFactor),
 				    XmNlabelString,   topstr,
 				    XmNtopAttachment,  XmATTACH_FORM,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList,    textFontList,   // The custom font size
 				    NULL);
   
   /* add scroll bar ("scale" in X) controls */
@@ -108,16 +111,17 @@ Widget MakeControl(Widget mainWindow, XtPointer data)
   /*  label */
   brilab = XtVaCreateManagedWidget ("CPbrilab", xmLabelWidgetClass, 
 				    control, 
-				    XmNwidth,           CONTROLWIDTH,
+				    XmNwidth,           (int)(CONTROLWIDTH*sizeFactor),
 				    XmNlabelString,   bristr,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     toplab, 
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList,    textFontList,   // The custom font size
 				    NULL);
   
   BriScroll = XtVaCreateManagedWidget ("briscroll", xmScaleWidgetClass, 
 				       control, 
-				       XmNwidth,   CONTROLWIDTH,
+				       XmNwidth,   (int)(CONTROLWIDTH*sizeFactor),
 				       XmNmaximum,          256,
 				       XmNminimum,            1,
 				       XmNvalue,            128,
@@ -127,6 +131,7 @@ Widget MakeControl(Widget mainWindow, XtPointer data)
 				       XmNprocessingDirection, XmMAX_ON_RIGHT,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     brilab, 
+				       XmNfontList,    textFontList,   // The custom font size
 				       NULL);
   XtAddCallback(BriScroll, XmNvalueChangedCallback, BrightnessCB, data);
   XtAddCallback(BriScroll, XmNdragCallback, BrightnessCB, data);
@@ -136,16 +141,17 @@ Widget MakeControl(Widget mainWindow, XtPointer data)
   /*  label */
   conlab = XtVaCreateManagedWidget ("CPconlab", xmLabelWidgetClass, 
 				    control, 
-				    XmNwidth,        CONTROLWIDTH,
+				    XmNwidth,        (int)(CONTROLWIDTH*sizeFactor),
 				    XmNlabelString,   constr,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     BriScroll,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList,    textFontList,   // The custom font size
 				    NULL);
   
   ConScroll = XtVaCreateManagedWidget ("conscroll", xmScaleWidgetClass, 
 				       control,
-				       XmNwidth,   CONTROLWIDTH,
+				       XmNwidth,   (int)(CONTROLWIDTH*sizeFactor),
 				       XmNmaximum,          256,
 				       XmNminimum,            1,
 				       XmNvalue,            128,
@@ -155,6 +161,7 @@ Widget MakeControl(Widget mainWindow, XtPointer data)
 				       XmNprocessingDirection, XmMAX_ON_RIGHT,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     conlab,
+				       XmNfontList,    textFontList,   // The custom font size
 				       NULL);
   
   XtAddCallback(ConScroll, XmNvalueChangedCallback, ContrastCB, data);
@@ -164,70 +171,75 @@ Widget MakeControl(Widget mainWindow, XtPointer data)
   /* info label widgets */
   IDdata->Info1 = XtVaCreateManagedWidget ("Info1", xmLabelWidgetClass, 
 					   control, 
-					   XmNwidth,        CONTROLWIDTH,
+					   XmNwidth,        (int)(CONTROLWIDTH*sizeFactor),
 					   XmNlabelString,   blankstr,
 					   XmNtopAttachment, XmATTACH_WIDGET,
 					   XmNtopWidget,     ConScroll,
 					   XmNleftAttachment,  XmATTACH_FORM,
+					   XmNfontList,    textFontList,   // The custom font size
 					   NULL);
   
   
   IDdata->Info2 = XtVaCreateManagedWidget ("Info2", xmLabelWidgetClass, 
 					   control, 
-					   XmNwidth,        CONTROLWIDTH,
+					   XmNwidth,        (int)(CONTROLWIDTH*sizeFactor),
 					   XmNlabelString,   blankstr,
 					   XmNtopAttachment, XmATTACH_WIDGET,
 					   XmNtopWidget, IDdata->Info1,
 					   XmNleftAttachment,  XmATTACH_FORM,
+					   XmNfontList,    textFontList,   // The custom font size
 					   NULL);
-  
   
   IDdata->Info3 = XtVaCreateManagedWidget ("Info3", xmLabelWidgetClass, 
 					   control, 
-					   XmNwidth,        CONTROLWIDTH,
+					   XmNwidth,        (int)(CONTROLWIDTH*sizeFactor),
 					   XmNlabelString,   blankstr,
 					   XmNtopAttachment, XmATTACH_WIDGET,
 					   XmNtopWidget, IDdata->Info2,
 					   XmNleftAttachment,  XmATTACH_FORM,
+					   XmNfontList,    textFontList,   // The custom font size
 					   NULL);
-  
   
   IDdata->Info4 = XtVaCreateManagedWidget ("Info4", xmLabelWidgetClass, 
 					   control, 
-					   XmNwidth,         CONTROLWIDTH,
+					   XmNwidth,         (int)(CONTROLWIDTH*sizeFactor),
 					   XmNlabelString,   blankstr,
 					   XmNtopAttachment, XmATTACH_WIDGET,
 					   XmNtopWidget, IDdata->Info3,
 					   XmNleftAttachment,  XmATTACH_FORM,
+					   XmNfontList,    textFontList,   // The custom font size
 					   NULL);
   
-  
+ 
   IDdata->Info5 = XtVaCreateManagedWidget ("Info5", xmLabelWidgetClass, 
 					   control, 
-					   XmNwidth,          CONTROLWIDTH,
+					   XmNwidth,          (int)(CONTROLWIDTH*sizeFactor),
 					   XmNlabelString,   blankstr,
 					   XmNtopAttachment, XmATTACH_WIDGET,
 					   XmNtopWidget,  IDdata->Info4,
 					   XmNleftAttachment,  XmATTACH_FORM,
+					   XmNfontList,    textFontList,   // The custom font size
 					   NULL);
-  
+
   
   IDdata->Info6 = XtVaCreateManagedWidget ("Info6", xmLabelWidgetClass, 
 					   control, 
-					   XmNwidth,         CONTROLWIDTH,
+					   XmNwidth,         (int)(CONTROLWIDTH*sizeFactor),
 					   XmNlabelString,   blankstr,
 					   XmNtopAttachment, XmATTACH_WIDGET,
 					   XmNtopWidget,  IDdata->Info5,
 					   XmNleftAttachment,  XmATTACH_FORM,
+					   XmNfontList,    textFontList,   // The custom font size
 					   NULL);
   
   IDdata->Info7 = XtVaCreateManagedWidget ("Info7", xmLabelWidgetClass, 
 					   control, 
-					   XmNwidth,         CONTROLWIDTH,
+					   XmNwidth,         (int)(CONTROLWIDTH*sizeFactor),
 					   XmNlabelString,   blankstr,
 					   XmNtopAttachment, XmATTACH_WIDGET,
 					   XmNtopWidget,  IDdata->Info6,
 					   XmNleftAttachment,  XmATTACH_FORM,
+					   XmNfontList,    textFontList,   // The custom font size
 					   NULL);
   
   

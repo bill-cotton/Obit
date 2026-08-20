@@ -1,7 +1,7 @@
 /* $Id$  */
 /* image blink control box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2022
+*  Copyright (C) 1996,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -25,6 +25,7 @@
 #include <Xm/Text.h>
 #include <time.h>
 #include <math.h>
+#include "obitview.h"
 #include "imagedisp.h"
 #include "color.h"
 #include <unistd.h>
@@ -132,7 +133,6 @@ void BlinkShutDown (void)
   XtDestroyWidget (BlinkDia.dialog);  /* your wish is granted */
 
 } /* end BlinkShutDown */
-
 
 /**
  * Callback for scroll bar used to select plane
@@ -284,27 +284,29 @@ void BlinkBlinkCB (Widget parent, XtPointer clientData, XtPointer callData)
 					  xmDialogShellWidgetClass, 
 					  IDdata->shell, 
 					  XmNautoUnmanage, False,
-					  XmNwidth,     200,
-					  XmNheight,     80,
+					  XmNwidth,     (int)(200*sizeFactor),
+					  XmNheight,     (int)(80*sizeFactor),
 					  XmNdeleteResponse, XmDESTROY,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
   
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("BlinkForm", xmFormWidgetClass,
 				  BlinkDia.dialog,
 				  XmNautoUnmanage, False,
-				  XmNwidth,     200,
-				  XmNheight,    80,
+				  XmNwidth,     (int)(200*sizeFactor),
+				  XmNheight,    (int)(80*sizeFactor),
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   
   /* plane scroll */
   BlinkDia.DwellScroll = XtVaCreateManagedWidget ("BlinkDwellScroll", 
 						  xmScaleWidgetClass, 
 						  form,
-						  XmNwidth,            200,
-						  XmNheight,           15,
+						  XmNwidth,            (int)(200*sizeFactor),
+						  XmNheight,           (int)(15*sizeFactor),
 						  XmNmaximum,          100,
 						  XmNminimum,           10,
 						  XmNvalue,             20,
@@ -313,8 +315,9 @@ void BlinkBlinkCB (Widget parent, XtPointer clientData, XtPointer callData)
 						  XmNprocessingDirection, XmMAX_ON_RIGHT,
 						  XmNleftAttachment,  XmATTACH_FORM,
 						  XmNtopAttachment, XmATTACH_FORM,
+						  XmNfontList, textFontList, // Set font 
 						  NULL);
-  
+ 
   XtAddCallback(BlinkDia.DwellScroll, XmNvalueChangedCallback, 
                 BlinkScrollDwellCB, (XtPointer)IDdata);
   
@@ -324,10 +327,11 @@ void BlinkBlinkCB (Widget parent, XtPointer clientData, XtPointer callData)
   BlinkDia.DwellScrollLabel = XtVaCreateManagedWidget ("BlinkScrollLabel", 
 						       xmLabelWidgetClass, 
 						       form, 
-						       XmNwidth,           200,
+						       XmNwidth,            (int)(200*sizeFactor),
 						       XmNtopAttachment, XmATTACH_WIDGET,
 						       XmNtopWidget,     BlinkDia.DwellScroll,
 						       XmNleftAttachment,  XmATTACH_FORM,
+						       XmNfontList, textFontList, // Set font 
 						       NULL);
   if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
   BlinkLabelDwell();
@@ -339,6 +343,7 @@ void BlinkBlinkCB (Widget parent, XtPointer clientData, XtPointer callData)
 			     XmNbottomAttachment, XmATTACH_FORM,
 			     XmNleftAttachment,  XmATTACH_FORM,
 			     XmNrightAttachment, XmATTACH_FORM,
+			     XmNfontList, textFontList, // Set font 
 			     NULL);
   XtAddCallback (BlinkDia.QuitButton, XmNactivateCallback, BlinkQuitButCB, 
 		 (XtPointer)IDdata);

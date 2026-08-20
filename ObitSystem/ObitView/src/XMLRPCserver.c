@@ -2,7 +2,7 @@
 /* XMLRPC server for ObitView */
 /* Much of this material directly adapted from xmlrpc-c-1.2/examples */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2021
+*  Copyright (C) 2005-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -493,9 +493,9 @@ loadImage(xmlrpc_env *   const envP,
   xmlrpc_decompose_value(envP, paramArrayP, "(S)", &strt);
   arg =  ObitXMLReturn ("loadImage", strt, err);  /* Convert to ObitXML */
   /* Cleanup old versions */
-  if (myFileInfo.Name)   g_free(myFileInfo.Name);   myFileInfo.Name=NULL;
-  if (myFileInfo.AClass) g_free(myFileInfo.AClass); myFileInfo.AClass=NULL;
-  if (myFileInfo.ADir)   g_free(myFileInfo.ADir);   myFileInfo.ADir=NULL;
+  if (myFileInfo.Name)   {g_free(myFileInfo.Name);   myFileInfo.Name=NULL;}
+  if (myFileInfo.AClass) {g_free(myFileInfo.AClass); myFileInfo.AClass=NULL;}
+  if (myFileInfo.ADir)   {g_free(myFileInfo.ADir);   myFileInfo.ADir=NULL;}
   ObitXMLXML2FileInfo(arg, &myFileInfo.Type, &myFileInfo.Name, 
 		      &myFileInfo.AClass, &myFileInfo.ADir, &myFileInfo.ASeq, 
 		      &myFileInfo.AUser,&myFileInfo.Field,&myFileInfo.NField,err);

@@ -18,20 +18,18 @@
 #ifndef SCROLLTEXT_H
 #define SCROLLTEXT_H
 
-#define MAX_LINE 1024  /* maximum number of lines in ScrollText */
-
 typedef struct {
 Widget Parent;           /* parent window */
 char*  Title;            /* title of window */
+Widget ScrollTop;        /* top level scrolling text window */
 Widget ScrollBox;        /* scrolling text window */
 Widget TextScrollBar;    /* scroll bar */
 Widget TextDraw;         /* text drawing area */
 TextFileProc DismissProc;/* procedure to call when box destructs */
-int    TextDraw_wid;     /* width of TextDraw */
-int    TextDraw_hei;     /* height of TextDraw */
-GC     gc;               /* graphics context for box */
-char*  lines[MAX_LINE];  /* pointers to the lines of text to be displayed */
-int    num_lines;        /* total number of lines */
+int    TextDraw_wid;     /* width of TextDraw in pixels */
+int    TextDraw_hei;     /* height of TextDraw  in pixels*/
+int    num_lines;        /*  number of lines shown */
+int    num_cols;         /*  number of columns shown */
 int    first;            /* first line in display */
 int    number;           /* number of lines in display */
 int    max_lines;        /* maximum number of lines that will fit in display */

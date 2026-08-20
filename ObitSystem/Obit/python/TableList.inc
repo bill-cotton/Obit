@@ -1,8 +1,8 @@
 /* $Id$   */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for ImageDesc type                         */
+/* Swig module description for TableList type                         */
 /*                                                                    */
-/*;  Copyright (C) 2005,2019                                          */
+/*;  Copyright (C) 2005,2019,2026                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -142,6 +142,12 @@ void TableListPutHi (ObitTableList* in, ObitErr *err) {
   gchar *tabType = "AIPS HI";
   ObitTableListPut (in, tabType, &lversion, NULL, err);
 } // end TableListPutHi
+
+void TableListPutTable (ObitTableList* in, char *tabType,
+  int version, ObitErr *err) {
+  olong lversion = (olong)version;
+  ObitTableListPut (in, (gchar*)tabType, &lversion, NULL, err);
+} // end TableListPutTable
 
 // Print to stderr
 void TableListPrint (ObitTableList* in, ObitErr *err) {

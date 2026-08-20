@@ -1,7 +1,7 @@
 /* $Id$ */
 /* mark position dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2022
+*  Copyright (C) 1996,1997,1999,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -28,6 +28,7 @@
 #include <Xm/TextF.h>
 #include <Xm/Text.h>
 #include <Xm/FileSB.h>
+#include "obitview.h"
 #include "imagedisp.h"
 #include "poslabel.h"
 #include "markpos.h"
@@ -248,7 +249,6 @@ int ReadPosSize (Widget w)
   return 0;
 } /* end ReadPosSize */
 
-
 /**
  * Callback for file selection button
  * \param w           widget activated
@@ -314,7 +314,37 @@ void PosFileButCB (Widget w, XtPointer clientData, XtPointer callData)
   XtAddCallback (mark.posfilebox, XmNokCallback, PosFileOKCB, clientData);
   XtAddCallback (mark.posfilebox, XmNcancelCallback, PosFileCancelCB, 
 		 clientData);
-  
+   // Set font - one component at a time :"{
+  XtVaSetValues (mark.posfilebox,  XmNfontList, textFontList, NULL);
+  Widget textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_TEXT);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_SELECTION);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_SELECTION_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_APPLY_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_HELP_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_OK_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_LIST_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_DIR_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_DIR_LIST_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_FILTER_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(mark.posfilebox, XmDIALOG_FILTER_TEXT);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+ 
   /* set directory if it is defined */
   if (mark_dir) {
     wierdstring = XmStringCreateSimple (mark_dir->sp);
@@ -629,28 +659,31 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   mark.dialog = XtVaCreatePopupShell ("MarkPos", xmDialogShellWidgetClass, 
 				      IDdata->shell, 
 				      XmNautoUnmanage, False,
-				      XmNwidth,     150,
-				      XmNheight,    190,
+				      XmNwidth,     (int)(150*sizeFactor),
+				      XmNheight,    (int)(150*sizeFactor),
 				      XmNdeleteResponse, XmDESTROY,
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("MarkForm", xmFormWidgetClass,
 				  mark.dialog,
 				  XmNautoUnmanage, False,
-				  XmNwidth,     150,
-				  XmNheight,    190,
+				  XmNwidth,     (int)(150*sizeFactor),
+				  XmNheight,    (int)(150*sizeFactor),
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   
   /* info label widgets */
   toplabel = XtVaCreateManagedWidget ("Label", xmLabelWidgetClass, 
 				      form, 
-				      XmNwidth,           150,
+				      XmNwidth,           (int)(150*sizeFactor),
 				      XmNlabelString,   label,
 				      XmNtopAttachment, XmATTACH_FORM,
 				      XmNleftAttachment,  XmATTACH_FORM,
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   
   /* Equinox */
@@ -663,11 +696,12 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   equstr = XmStringCreateSimple (valuestr);
   mark.equlab = XtVaCreateManagedWidget ("EquLabel", xmLabelWidgetClass, 
 					 form, 
-					 XmNwidth,           150,
+					 XmNwidth,         (int)(150*sizeFactor),
 					 XmNlabelString,   equstr,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     toplabel,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   
   /* set labels from FITS file info */
@@ -681,11 +715,12 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   /* RA */
   mark.label1 = XtVaCreateManagedWidget ("RA", xmLabelWidgetClass,
 					 form,
-					 XmNheight,    30,
+					 XmNheight,    (int)(30*sizeFactor),
 					 XmNlabelString,   RA,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     mark.equlab,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   /*  first axis in hours or degrees? */
   strncpy (ctype, image[CurImag].myDesc->ctype[0], 4);
@@ -718,23 +753,26 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget,     mark.label1,
 					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
   /* separator */
   sep1 = XtVaCreateManagedWidget ("sep1", xmSeparatorWidgetClass,
 				  form, 
-				  XmNwidth,           150,
+				  XmNwidth,         (int)(150*sizeFactor),
 				  XmNtopAttachment, XmATTACH_WIDGET,
 				  XmNtopWidget,     mark.data1,
 				  XmNleftAttachment,  XmATTACH_FORM,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   /* Dec */
   mark.label2 = XtVaCreateManagedWidget ("Dec", xmLabelWidgetClass,
 					 form,
-					 XmNheight,    30,
+					 XmNheight,    (int)(30*sizeFactor),
 					 XmNlabelString,   Dec,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     sep1,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   
   decdms (mark.dec, &d, &m, &s);
@@ -749,24 +787,27 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget,     mark.label2,
 					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
-  
+ 
   /* separator */
   sep2 = XtVaCreateManagedWidget ("sep2", xmSeparatorWidgetClass,
 				  form, 
-				  XmNwidth,           150,
+				  XmNwidth,            (int)(150*sizeFactor),
 				  XmNtopAttachment, XmATTACH_WIDGET,
 				  XmNtopWidget,     mark.data2,
 				  XmNleftAttachment,  XmATTACH_FORM,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   /* size */
   label3 = XtVaCreateManagedWidget ("pos size", xmLabelWidgetClass,
 				    form,
-				    XmNheight,    30,
+				    XmNheight,    (int)(30*sizeFactor),
 				    XmNlabelString,   sizestr,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     sep2,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
   
   mark.iInner = 6;  mark.iOuter = 15;
@@ -779,14 +820,16 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget,     label3,
 					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
   /* separator */
   sep3 = XtVaCreateManagedWidget ("sep3", xmSeparatorWidgetClass,
 				  form, 
-				  XmNwidth,           150,
+				  XmNwidth,           (int)(150*sizeFactor),
 				  XmNtopAttachment, XmATTACH_WIDGET,
 				  XmNtopWidget,     mark.data3,
 				  XmNleftAttachment,  XmATTACH_FORM,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   /* File button */
   FileButton = XtVaCreateManagedWidget ("File", xmPushButtonWidgetClass, 
@@ -794,6 +837,7 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					XmNtopAttachment, XmATTACH_WIDGET,
 					XmNtopWidget,     sep3,
 					XmNleftAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
   XtAddCallback (FileButton, XmNactivateCallback, PosFileButCB, 
 		 (XtPointer)IDdata);
@@ -805,6 +849,7 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					  XmNtopWidget,     sep3,
 					  XmNleftAttachment, XmATTACH_WIDGET,
 					  XmNleftWidget,     FileButton,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
   XtAddCallback (CancelButton, XmNactivateCallback, PosCancelButCB, 
 		 (XtPointer)IDdata);
@@ -817,6 +862,7 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 				      XmNleftAttachment, XmATTACH_WIDGET,
 				      XmNleftWidget,     CancelButton,
 				      XmNrightAttachment, XmATTACH_FORM,
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   XtAddCallback (OKButton, XmNactivateCallback, PosOKButCB, (XtPointer)IDdata);
   
@@ -827,19 +873,21 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					 XmNtopWidget,     FileButton,
 					 XmNbottomAttachment, XmATTACH_FORM,
 					 XmNleftAttachment, XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   XtAddCallback (ClearButton, XmNactivateCallback, ClearOKButCB, (XtPointer)IDdata);
 
   /* Swap/Mark position button */
   SwapButton = XtVaCreateManagedWidget ("Swap/Mark", xmPushButtonWidgetClass, 
-					 form, 
-				  	 XmNtopAttachment,    XmATTACH_WIDGET,
-					 XmNtopWidget,        OKButton,
-					 XmNbottomAttachment, XmATTACH_FORM,
-					 XmNleftAttachment,   XmATTACH_WIDGET,
-					 XmNleftWidget     ,  ClearButton,
-					 XmNrightAttachment,  XmATTACH_FORM,
-					 NULL);
+					form, 
+					XmNtopAttachment,    XmATTACH_WIDGET,
+					XmNtopWidget,        OKButton,
+					XmNbottomAttachment, XmATTACH_FORM,
+					XmNleftAttachment,   XmATTACH_WIDGET,
+					XmNleftWidget     ,  ClearButton,
+					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
+					NULL);
   XtAddCallback (SwapButton, XmNactivateCallback, SwapMarkOKButCB, (XtPointer)IDdata);
 
   if (label)   {XmStringFree(label);}   label = NULL;
@@ -957,28 +1005,31 @@ int MarkPosXML (char *pos)
   mark.dialog = XtVaCreatePopupShell ("MarkPos", xmDialogShellWidgetClass, 
 				      IDdata->shell, 
 				      XmNautoUnmanage, False,
-				      XmNwidth,     150,
-				      XmNheight,    190,
+				      XmNwidth,     (int)(150*sizeFactor),
+				      XmNheight,    (int)(190*sizeFactor),
 				      XmNdeleteResponse, XmDESTROY,
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("MarkForm", xmFormWidgetClass,
 				  mark.dialog,
 				  XmNautoUnmanage, False,
-				  XmNwidth,     150,
-				  XmNheight,    190,
+				  XmNwidth,     (int)(150*sizeFactor),
+				  XmNheight,    (int)(190*sizeFactor),
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   
   /* info label widgets */
   toplabel = XtVaCreateManagedWidget ("Label", xmLabelWidgetClass, 
 				      form, 
-				      XmNwidth,           150,
+				      XmNwidth,           (int)(150*sizeFactor),
 				      XmNlabelString,   label,
 				      XmNtopAttachment, XmATTACH_FORM,
 				      XmNleftAttachment,  XmATTACH_FORM,
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   
   /* Equinox */
@@ -991,11 +1042,12 @@ int MarkPosXML (char *pos)
   equstr = XmStringCreateSimple (valuestr);
   mark.equlab = XtVaCreateManagedWidget ("EquLabel", xmLabelWidgetClass, 
 					 form, 
-					 XmNwidth,           150,
+					 XmNwidth,           (int)(150*sizeFactor),
 					 XmNlabelString,   equstr,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     toplabel,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   
   /* set labels from FITS file info */
@@ -1009,11 +1061,12 @@ int MarkPosXML (char *pos)
   /* RA */
   mark.label1 = XtVaCreateManagedWidget ("RA", xmLabelWidgetClass,
 					 form,
-					 XmNheight,    30,
+					 XmNheight,    (int)(30*sizeFactor),
 					 XmNlabelString,   RA,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     mark.equlab,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   /*  first axis in hours or degrees? */
   strncpy (ctype, image[CurImag].myDesc->ctype[0], 4);
@@ -1046,23 +1099,26 @@ int MarkPosXML (char *pos)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget,     mark.label1,
 					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
   /* separator */
   sep1 = XtVaCreateManagedWidget ("sep1", xmSeparatorWidgetClass,
 				  form, 
-				  XmNwidth,           150,
+				  XmNwidth,           (int)(150*sizeFactor),
 				  XmNtopAttachment, XmATTACH_WIDGET,
 				  XmNtopWidget,     mark.data1,
 				  XmNleftAttachment,  XmATTACH_FORM,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   /* Dec */
   mark.label2 = XtVaCreateManagedWidget ("Dec", xmLabelWidgetClass,
 					 form,
-					 XmNheight,    30,
+					 XmNheight,    (int)(30*sizeFactor),
 					 XmNlabelString,   Dec,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     sep1,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   
   decdms (mark.dec, &d, &m, &s);
@@ -1077,24 +1133,27 @@ int MarkPosXML (char *pos)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget,     mark.label2,
 					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
   
   /* separator */
   sep2 = XtVaCreateManagedWidget ("sep2", xmSeparatorWidgetClass,
 				  form, 
-				  XmNwidth,           150,
+				  XmNwidth,        (int)(150*sizeFactor),
 				  XmNtopAttachment, XmATTACH_WIDGET,
 				  XmNtopWidget,     mark.data2,
 				  XmNleftAttachment,  XmATTACH_FORM,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   /* size */
   label3 = XtVaCreateManagedWidget ("pos size", xmLabelWidgetClass,
 				    form,
-				    XmNheight,    30,
+				    XmNheight,    (int)(30*sizeFactor),
 				    XmNlabelString,   sizestr,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     sep2,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
   
   mark.iInner = 6;  mark.iOuter = 15;
@@ -1111,10 +1170,11 @@ int MarkPosXML (char *pos)
   /* separator */
   sep3 = XtVaCreateManagedWidget ("sep3", xmSeparatorWidgetClass,
 				  form, 
-				  XmNwidth,           150,
+				  XmNwidth,           (int)(150*sizeFactor),
 				  XmNtopAttachment, XmATTACH_WIDGET,
 				  XmNtopWidget,     mark.data3,
 				  XmNleftAttachment,  XmATTACH_FORM,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   /* File button */
   FileButton = XtVaCreateManagedWidget ("File", xmPushButtonWidgetClass, 
@@ -1122,6 +1182,7 @@ int MarkPosXML (char *pos)
 					XmNtopAttachment, XmATTACH_WIDGET,
 					XmNtopWidget,     sep3,
 					XmNleftAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
 					NULL);
   XtAddCallback (FileButton, XmNactivateCallback, PosFileButCB, 
 		 (XtPointer)IDdata);
@@ -1133,6 +1194,7 @@ int MarkPosXML (char *pos)
 					  XmNtopWidget,     sep3,
 					  XmNleftAttachment, XmATTACH_WIDGET,
 					  XmNleftWidget,     FileButton,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
   XtAddCallback (CancelButton, XmNactivateCallback, PosCancelButCB, 
 		 (XtPointer)IDdata);
@@ -1145,6 +1207,7 @@ int MarkPosXML (char *pos)
 				      XmNleftAttachment, XmATTACH_WIDGET,
 				      XmNleftWidget,     CancelButton,
 				      XmNrightAttachment, XmATTACH_FORM,
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   XtAddCallback (OKButton, XmNactivateCallback, PosOKButCB, (XtPointer)IDdata);
   
@@ -1155,19 +1218,21 @@ int MarkPosXML (char *pos)
 					 XmNtopWidget,     FileButton,
 					 XmNbottomAttachment, XmATTACH_FORM,
 					 XmNleftAttachment, XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   XtAddCallback (ClearButton, XmNactivateCallback, ClearOKButCB, (XtPointer)IDdata);
 
   /* Swap/Mark position button */
   SwapButton = XtVaCreateManagedWidget ("Swap/Mark", xmPushButtonWidgetClass, 
-					 form, 
-				  	 XmNtopAttachment,    XmATTACH_WIDGET,
-					 XmNtopWidget,        OKButton,
-					 XmNbottomAttachment, XmATTACH_FORM,
-					 XmNleftAttachment,   XmATTACH_WIDGET,
-					 XmNleftWidget     ,  ClearButton,
-					 XmNrightAttachment,  XmATTACH_FORM,
-					 NULL);
+					form, 
+					XmNtopAttachment,    XmATTACH_WIDGET,
+					XmNtopWidget,        OKButton,
+					XmNbottomAttachment, XmATTACH_FORM,
+					XmNleftAttachment,   XmATTACH_WIDGET,
+					XmNleftWidget     ,  ClearButton,
+					XmNrightAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font 
+					NULL);
   XtAddCallback (SwapButton, XmNactivateCallback, SwapMarkOKButCB, (XtPointer)IDdata);
 
   if (label)   {XmStringFree(label);}   label = NULL;

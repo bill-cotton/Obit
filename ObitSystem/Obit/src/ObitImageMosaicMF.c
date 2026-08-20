@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2023                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1733,9 +1733,11 @@ ObitImageMosaicMF* ObitImageMosaicMFMaxField (ObitImageMosaic *inn,
  * the weighted average polarized intensity
  * \param inQ      QPol ImageMosaicMF to process
  * \param inU      UPol ImageMosaicMF to process
+ * \param fields   if non-NULL zero terminated list of field numbers to process
  * \param err      Error/message stack
  */
-void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, ObitErr* err) 
+void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU,
+				 olong *fields, ObitErr* err) 
 {
   ObitImageMosaicMF *inQ = (ObitImageMosaicMF*)innQ;
   ObitImageMosaicMF *inU = (ObitImageMosaicMF*)innU;
@@ -1743,9 +1745,9 @@ void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, O
   ObitImageMF   *QImageMF=NULL, *UImageMF=NULL;
   ObitFArray    *accum=NULL;
   ofloat fblank = ObitMagicF();
-  gboolean incompatible=FALSE;
+  gboolean want=TRUE, incompatible=FALSE;
   gint32 dim[MAXINFOELEMDIM];
-  olong naxis[2], nfield, ifield, nplane, loPlane, iplane, plane[5]={1,1,1,1,1};
+  olong naxis[2], nfield, ifield, *jfield, nplane, loPlane, iplane, plane[5]={1,1,1,1,1};
   olong blc[7]={1,1,1,1,1,1,1}, trc[7]={0,0,0,0,0,0,0};
   ofloat rms, wt, sumwt;
   gchar *routine = "ObitImageMosaicMFMergePoln";
@@ -1778,7 +1780,7 @@ void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, O
  /* Check compatability between inQ, inU */
   incompatible = inQ->numberImages < inU->numberImages;
   incompatible = incompatible || (inQ->images[0]->myDesc->inaxes[0] != inU->images[0]->myDesc->inaxes[0]);
-  incompatible = incompatible || (inQ->images[1]->myDesc->inaxes[1] != inU->images[0]->myDesc->inaxes[1]);
+  incompatible = incompatible || (inQ->images[0]->myDesc->inaxes[1] != inU->images[0]->myDesc->inaxes[1]);
   incompatible = incompatible || (inQ->images[0]->myDesc->inaxes[2] != inU->images[0]->myDesc->inaxes[2]);
   if (incompatible) {
      Obit_log_error(err, OBIT_Error,"%s inQ and inU are incompatible",
@@ -1792,6 +1794,21 @@ void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, O
 
   /* Loop over fields */
   for (ifield=0; ifield<nfield; ifield++) {
+    /* Is this one wanted? */
+    want = fields==NULL;
+    /* If non-NULL check if ifield is in fields */
+    if (fields) {
+      jfield = fields; want = FALSE;
+      /* Find a match? NB, ifield is 0-rel */
+      while (*jfield>0) {
+	want = ((ifield+1)==(*jfield));
+	if (want) break;
+	jfield++;
+      }
+    } /* End search for match in fields */
+    if (!want) continue;
+    if (err->prtLv>=3) Obit_log_error(err, OBIT_InfoErr, "Averaging Pol. intensity for facet %d", ifield+1);
+    ObitErrLog(err);  
     QImageMF = (ObitImageMF*)inQ->images[ifield];
     UImageMF = (ObitImageMF*)inU->images[ifield];
     loPlane = 1+QImageMF->maxOrder; /* coarse cube */

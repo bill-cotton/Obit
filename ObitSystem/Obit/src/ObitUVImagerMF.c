@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2025                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -415,12 +415,16 @@ void ObitUVImagerMFAddPol2 (ObitUVImagerMF *in, ObitUV *uvdata2, ObitErr *err)
     (ObitImageMosaic*)ObitImageMosaicMFCreate (in->name, in->maxOrder, in->maxFBW, mosaic->alpha,
 					       mosaic->alphaRefF, uvdata2, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
-  /* Copy any autoCen facets */
-  for (i=0; i<in->mosaic->numberImages; i++) {
-    if (in->mosaic->isAuto[i]>0)
-      ObitImageMosaicMFAddField (in->mosaic2, uvdata2, in->mosaic->nx[i], in->mosaic->ny[i],
-				 in->mosaic->nplane[i], in->mosaic->RAShift[i], in->mosaic->DecShift[i], 
-				 in->mosaic->isAuto[i], err);
+  /* Copy any additional facets from in->mosaic to in->mosaic2
+     Don't tell ObitImageMosaicMFAddField about isAuto as this triggers it adding the isShift entries.
+     Set isAuto and isShift from in->mosaic after creating entry. */
+  /* Add any beyond the basic nfield + fly's eye + outliers */
+  for (i=in->mosaic2->numberImages; i<in->mosaic->numberImages; i++) {
+    ObitImageMosaicMFAddField (in->mosaic2, uvdata2, in->mosaic->nx[i], in->mosaic->ny[i],
+			       in->mosaic->nplane[i], in->mosaic->RAShift[i], in->mosaic->DecShift[i], 
+			       FALSE, err);
+    /* Now set isAuto/isShift */
+    in->mosaic2->isAuto[i] = in->mosaic->isAuto[i]; in->mosaic2->isShift[i] = in->mosaic->isShift[i];
   } /* End add autoCen Facets */
 
   /* Define images */
@@ -466,7 +470,7 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
   strcpy (IStokes, "F   "); 
   ObitInfoListGetTest (in->uvdata->info, "Stokes", &type, dim, IStokes);
 
-  /* Want parallel poln? */
+  /* Want parallel poln? or all? */
   ObitInfoListGetTest (in->uvdata->info, "HalfStoke", &type, dim, &HalfStoke);
   ObitInfoListGetTest (in->uvdata->info, "FullStoke", &type, dim, &FullStoke);
 
@@ -506,7 +510,7 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
   ObitUVWeightData (in->uvwork, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-  /* Image I */
+  /* Image I (?)  */
   dim[0] = 4;
   ObitInfoListAlwaysPut (in->uvwork->info, "Stokes", OBIT_string, dim, IStokes);
 
@@ -515,10 +519,10 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
   dim[0] = 1;
   ObitInfoListAlwaysPut (in->uvwork->info, "doCalSelect", OBIT_bool, dim, &Tr);
 
-  /* Repeat for second polarization (U) if given */
-  if (in->noPolImage==2) {
+  /* Repeat for second polarization (U) if given and different data */
+  if ((in->noPolImage==2) && (in->uvwork!=in->uvwork2)) {
     dim[0] = 4;
-    ObitInfoListAlwaysPut (in->uvdata->info, "Stokes", OBIT_string, dim, "U   ");
+    ObitInfoListAlwaysPut (in->uvdata2->info, "Stokes", OBIT_string, dim, "U   ");
     
     /* Open and close uvdata2 to set descriptor for scratch file */
     ObitUVOpen (in->uvdata2, OBIT_IO_ReadCal, err);
@@ -529,11 +533,11 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
     if (in->uvwork2==NULL) in->uvwork2 = newObitUVScratch (in->uvdata2, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     
-    /* Copy/calibrate/select uvdata to uvwork */
+    /* Copy/calibrate/select uvdata2 to uvwork2 */
     in->uvwork2 = ObitUVCopy (in->uvdata2, in->uvwork2, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     
-    /* Copy control info to uvwork */
+    /* Copy control info to uvwork2 */
     ObitInfoListCopyList (in->uvdata2->info, in->uvwork2->info, controlList);
     
     /* Weight uvwork */
@@ -580,6 +584,7 @@ void ObitUVImagerMFImage2 (ObitUVImagerMF *in, olong *field, gboolean doWeight,
   olong i, j, n, fldCnt, ifield, channel=0, nDo, nLeft, nImage, prtLv, *fldNo=NULL;
   olong NumPar, myAuto;
   ofloat sumwts[2];
+  gchar oldStokes[5], *UStokes="U   ";
   ObitImage *theBeam=NULL;
   gboolean *forceBeam=NULL, doGPUGrid, needBeam, doall, found;
   ObitUVImagerClassInfo *imgClass = (ObitUVImagerClassInfo*)in->ClassInfo;
@@ -604,7 +609,12 @@ void ObitUVImagerMFImage2 (ObitUVImagerMF *in, olong *field, gboolean doWeight,
   if (in->uvwork2) 
     ObitInfoListCopyList (in->uvdata2->info, in->uvwork2->info, dataParms);
 
-  /* GPU Gridding? */
+  /* Save old Stokes, set to "U" */
+  ObitInfoListGetTest(in->uvwork2->info, "Stokes", &type, dim, oldStokes);
+  dim[0] = 4; dim[1] = dim[2]= dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(in->uvwork2->info, "Stokes", OBIT_string, dim, UStokes);
+ 
+    /* GPU Gridding? */
   doGPUGrid = FALSE;
   if (!ObitInfoListGetTest(in->uvdata->info, "doGPUGrid", &type, dim, &doGPUGrid)) {
     Obit_log_error(err, OBIT_Error,"%s doGPUGrid not defined", routine);
@@ -772,6 +782,10 @@ void ObitUVImagerMFImage2 (ObitUVImagerMF *in, olong *field, gboolean doWeight,
     }
   } /* End loop over fields finalizing*/
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Restore old value of Stokes */
+  dim[0] = 4; dim[1] = dim[2]= dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(in->uvwork2->info, "Stokes", OBIT_string, dim, oldStokes);
 
   /* Make any 2D shifted images */
  shifty:

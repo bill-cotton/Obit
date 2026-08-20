@@ -134,9 +134,9 @@ if parms["doPol"]:
         for cal in parms["XYCals"]:
             badCal = badCal or (not cal[1]) or (not cal[2])
     if (badCal):
-        mess = "Pol Cal wanted and XYDCal specified as "+str(parms["XYDCal"])
+        mess = "WARNING: Pol Cal wanted and XYDCal specified as "+str(parms["XYDCal"])+", not known to be polarized"
         printMess(mess, logFile)
-        raise  RuntimeError("XY Delay calibrator(s) not fully specified")
+       # Tolerate this: raise  RuntimeError("XY Delay calibrator(s) not fully specified")
     # Check that DCals and BPCals are in unpolarized list
     for c in parms["DCals"]:
         if not MKCheckUnpol(c["Source"]):
@@ -235,7 +235,7 @@ if (not isUVTAB) and parms['doStaticFlag'] :
          MKStaticFlag(delay_uv, 1, err)
 
 # Special editing
-if parms["doEditList"] and not check:
+if parms["doEditList"] and doEditList and (len(parms["editList"])>0) and not check:
     mess =  "Special editing"
     printMess(mess, logFile)
     for edt in parms["editList"]:

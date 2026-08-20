@@ -15480,6 +15480,12 @@ void TableListPutHi (ObitTableList* in, ObitErr *err) {
   ObitTableListPut (in, tabType, &lversion, NULL, err);
 } // end TableListPutHi
 
+void TableListPutTable (ObitTableList* in, char *tabType,
+  int version, ObitErr *err) {
+  olong lversion = (olong)version;
+  ObitTableListPut (in, (gchar*)tabType, &lversion, NULL, err);
+} // end TableListPutTable
+
 // Print to stderr
 void TableListPrint (ObitTableList* in, ObitErr *err) {
   ObitTableListPrint(in, err);
@@ -63747,6 +63753,54 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_TableListPutTable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitTableList *arg1 = (ObitTableList *) 0 ;
+  char *arg2 = (char *) 0 ;
+  int arg3 ;
+  ObitErr *arg4 = (ObitErr *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
+  PyObject *swig_obj[4] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "TableListPutTable", 4, 4, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitTableList, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "TableListPutTable" "', argument " "1"" of type '" "ObitTableList *""'"); 
+  }
+  arg1 = (ObitTableList *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "TableListPutTable" "', argument " "2"" of type '" "char *""'");
+  }
+  arg2 = (char *)(buf2);
+  ecode3 = SWIG_AsVal_int(swig_obj[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "TableListPutTable" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = (int)(val3);
+  res4 = SWIG_ConvertPtr(swig_obj[3], &argp4,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "TableListPutTable" "', argument " "4"" of type '" "ObitErr *""'"); 
+  }
+  arg4 = (ObitErr *)(argp4);
+  TableListPutTable(arg1,arg2,arg3,arg4);
+  resultobj = SWIG_Py_Void();
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_TableListPrint(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   ObitTableList *arg1 = (ObitTableList *) 0 ;
@@ -74522,6 +74576,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "TableListGetList", _wrap_TableListGetList, METH_VARARGS, NULL},
 	 { "TableListGetHigh", _wrap_TableListGetHigh, METH_VARARGS, NULL},
 	 { "TableListPutHi", _wrap_TableListPutHi, METH_VARARGS, NULL},
+	 { "TableListPutTable", _wrap_TableListPutTable, METH_VARARGS, NULL},
 	 { "TableListPrint", _wrap_TableListPrint, METH_VARARGS, NULL},
 	 { "TableListCheck", _wrap_TableListCheck, METH_VARARGS, NULL},
 	 { "TableListIsA", _wrap_TableListIsA, METH_O, NULL},

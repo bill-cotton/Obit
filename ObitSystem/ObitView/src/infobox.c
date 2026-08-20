@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Information dialog box for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2022
+*  Copyright (C) 1996,1997,1999,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -21,10 +21,10 @@
 #include <Xm/Form.h>
 #include <Xm/Label.h>
 #include <Xm/PushB.h>
+#include "obitview.h"
 #include "imagedisp.h"
 #include "infobox.h"
 #include "poslabel.h"
-
 /**
  *  \file infobox.c
  * displays image "info" dialog.
@@ -40,6 +40,8 @@ typedef struct {
   Widget parent;
   ImageDisplay *IDdata;
   Position xpos, ypos;
+  XmFontList fontList;
+  double sizeFactor;
 } InfoBoxStuff;
 InfoBoxStuff Info;
 
@@ -68,6 +70,7 @@ void NextInfoLine (Widget form, Widget prev, Widget *line,
 				   XmNtopAttachment, XmATTACH_WIDGET,
 				   XmNtopWidget,     prev,
 				   XmNleftAttachment,  XmATTACH_FORM,
+				   XmNfontList,    Info.fontList,   // The custom font size
 				   NULL);
   if (xlinestr) {XmStringFree(xlinestr);} xlinestr = NULL;
 } /* end NextInfoLine */
@@ -121,9 +124,16 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   int          loop, iLine, iMaxLine=14;
   ImageDisplay *IDdata = (ImageDisplay*)clientData;
   /*  ImageData    *image = (ImageData*) IDdata->image;*/
-  int          width = 400; /* width of box */
+  int          width, height, delta;
   XmString     label = NULL;
   
+  /* Font List and scaling info - a la Mr. Google */
+  Info.fontList   = textFontList;  // Save from global
+  Info.sizeFactor = sizeFactor;    // Save from global
+  width = (int)(400*Info.sizeFactor);  // width of box 
+  height = (int)(300*Info.sizeFactor); // height of box 
+  delta  = (int)(100*Info.sizeFactor); // height of line 
+
   /* some validity checks */
   if (!IDdata) return;
   if (!image[CurImag].valid) return;
@@ -148,17 +158,18 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 		 XmNx, &Info.xpos,
 		 XmNy, &Info.ypos,
 		 NULL);
-  Info.xpos += 100; Info.ypos += 100;
+  Info.xpos += delta; Info.ypos += delta;
   }
   /* Create */
   /* mark as active */
-  InfoBoxActive = 1; 
+  InfoBoxActive = 1;
+
   
   Info.dialog = XtVaCreatePopupShell("Source information", 
 				     xmDialogShellWidgetClass, 
 				     IDdata->shell, 
 				     XmNwidth,     width,
-				     XmNheight,    300,
+				     XmNheight,    height,
 				     XmNdeleteResponse, XmDESTROY,
 				     NULL);
   
@@ -166,9 +177,10 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   form = XtVaCreateManagedWidget ("InfoForm", xmFormWidgetClass,
 				  Info.dialog,
 				  XmNwidth,     width,
-				  XmNheight,    300,
+				  XmNheight,    height,
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList,    Info.fontList,   // The custom font size
 				  NULL);
   /* source info */ 
   /* file name */
@@ -180,6 +192,7 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 				     XmNlabelString,   label,
 				     XmNtopAttachment, XmATTACH_FORM,
 				     XmNleftAttachment,  XmATTACH_FORM,
+				     XmNfontList,    Info.fontList,   // Set font
 				     NULL);
   if (label) {XmStringFree(label);} label = NULL;
   iLine = 0;
@@ -264,6 +277,7 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 			     form, 
 			     XmNbottomAttachment, XmATTACH_FORM,
 			     XmNleftAttachment,  XmATTACH_FORM,
+			     XmNfontList,    Info.fontList,   // Set font
 			     NULL);
   XtAddCallback (DismissButton, XmNactivateCallback, DismissButCB, 
 		 (XtPointer)IDdata);
@@ -274,6 +288,7 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 			     form, 
 			     XmNbottomAttachment, XmATTACH_FORM,
 			     XmNrightAttachment, XmATTACH_FORM,
+			     XmNfontList,    Info.fontList,   // Set font
 			     NULL);
   XtAddCallback (RefreshButton, XmNactivateCallback, RefreshButCB, 
 		 (XtPointer)IDdata);
@@ -284,6 +299,6 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   XMoveWindow (XtDisplay(IDdata->shell), XtWindow(Info.dialog), 
 	       Info.xpos, Info.ypos);
   
-} /* end OptionBox */
+} /* end InfoBox */
 
 

@@ -3734,6 +3734,9 @@ def TableListGetHigh(_in, tabType):
 def TableListPutHi(_in, err):
     return _Obit.TableListPutHi(_in, err)
 
+def TableListPutTable(_in, tabType, version, err):
+    return _Obit.TableListPutTable(_in, tabType, version, err)
+
 def TableListPrint(_in, err):
     return _Obit.TableListPrint(_in, err)
 

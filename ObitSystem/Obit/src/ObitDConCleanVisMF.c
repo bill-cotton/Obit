@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2025                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -102,11 +102,11 @@ void  ObitDConCleanVisMFClear (gpointer in);
 static void ObitDConCleanVisMFClassInfoDefFn (gpointer inClass);
 
 /** Private: (re)make residuals. */
-static void  MakeResiduals (ObitDConCleanVis *in, olong *fields, 
-			    gboolean doBeam, ObitErr *err);
+static void  MFMakeResiduals (ObitDConCleanVis *in, olong *fields, 
+			      gboolean doBeam, ObitErr *err);
 
 /** Private: (re)make all residuals. */
-static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err);
+static void  MFMakeAllResiduals (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: Threaded Image subtractor */
 static gpointer ThreadImSub (gpointer arg);
@@ -119,14 +119,14 @@ static olong MakeImSubFuncArgs (ObitThread *thread,
 static void KillImSubFuncArgs (olong nargs, ImSubFuncArg **ThreadArgs);
 
 /** Private: Low accuracy subtract CLEAN model. */
-static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, 
+static void MFSubNewCCs (ObitDConCleanVis *in, olong *newCC, 
 		       ObitFArray **pixarray, ObitErr *err);
 
 /** Private: Create/init PxList. */
-static void NewPxList (ObitDConCleanVis *in, ObitErr *err);
+static void MFNewPxList (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: Create/init secondary (UPol) PxList. */
-static void NewPxList2 (ObitDConCleanVis *in, ObitErr *err);
+static void MFNewPxList2 (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: Convolve spectral CCs with a Gaussian. */
 static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, 
@@ -889,7 +889,8 @@ void ObitDConCleanVisMFSub(ObitDConClean *inn, ObitErr *err)
     dim[0] = 1;dim[1] = 1;
     ObitInfoListAlwaysPut (in->skyModel2->info, "minFlux", OBIT_float, dim, &ftemp);
     dim[0] = 4;
-    ObitInfoListAlwaysPut (in->skyModel2->info, "Stokes", OBIT_string, dim, "U   ");
+    if (in->skyModel!=in->skyModel2)
+	ObitInfoListAlwaysPut (in->skyModel2->info, "Stokes", OBIT_string, dim, "U   ");
     nfield = in->mosaic2->numberImages;
     itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
     dim[0] = nfield;
@@ -986,10 +987,10 @@ static void ObitDConCleanVisMFClassInfoDefFn (gpointer inClass)
   theClass->ResetPixelList  = (ResetPixelListFP)MFResetPixelList;
 
   /* Private functions definitions for derived classes */
-  theClass->MakeResiduals   = (MakeResidualsFP)MakeResiduals;
-  theClass->MakeAllResiduals= (MakeAllResidualsFP)MakeAllResiduals;
-  theClass->SubNewCCs       = (SubNewCCsFP)SubNewCCs;
-  theClass->NewPxList       = (NewPxListFP)NewPxList;
+  theClass->MakeResiduals   = (MakeResidualsFP)MFMakeResiduals;
+  theClass->MakeAllResiduals= (MakeAllResidualsFP)MFMakeAllResiduals;
+  theClass->SubNewCCs       = (SubNewCCsFP)MFSubNewCCs;
+  theClass->NewPxList       = (NewPxListFP)MFNewPxList;
 } /* end ObitDConCleanVisMFClassDefFn */
 
 /*---------------Private functions--------------------------*/
@@ -1067,21 +1068,30 @@ void ObitDConCleanVisMFClear (gpointer inn)
  * \param doBeam If TRUE also make beam
  * \param err    Obit error stack object.
  */
-static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields, 
-			    gboolean doBeam, ObitErr *err)
+static void  MFMakeResiduals (ObitDConCleanVis *inn, olong *fields, 
+			      gboolean doBeam, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
   ObitUVImagerMF* imagerMF=NULL;
   const ObitDConCleanVisClassInfo *parentClass;
   ObitDConClean *inb = (ObitDConClean*)inn;
   gint32       dim[MAXINFOELEMDIM] = {4,1,1,1,1};
-  olong ifld, jfld, i, field;
-  gchar *routine = "ObitDConCleanVisMF:MakeResiduals";
+  olong ifld, jfld, i, field, kstok;
+  gchar *chStokes[4]={"I   ","Q   ","U   ","V   "};
+  gchar *routine = "ObitDConCleanVisMF:MFMakeResiduals";
   
   if (err->error) return; /* prior error condition? */
 
+  /* May need to have Stokes imaged refreshed */
+  kstok = (olong)(in->imager->mosaic->images[0]->myDesc->crval[in->imager->mosaic->images[0]->myDesc->jlocs]-0.5);
+  kstok = MAX(0, MIN(kstok,3));
+  dim[0] = 4; dim[1] = dim[2] = dim[3] = dim[5];
+  ObitInfoListAlwaysPut (in->imager->uvwork->info,  "Stokes", OBIT_string, dim, chStokes[kstok]);
+
+  imagerMF = (ObitUVImagerMF*)in->imager;
   parentClass = myClassInfo.ParentClass;
   /* Call MakeResiduals in parent class */
+  if (in->isDual) imagerMF->whichPol = 1;  /* First polarization - needed for shifty */
   parentClass->MakeResiduals (inn, fields, doBeam, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
@@ -1092,20 +1102,25 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
     ((ObitImageMF*)in->mosaic->images[field-1])->fresh = TRUE;
   }
   
-  /* Need secondary poln? */
+  /* Need secondary poln? This will always be U */
   if (in->isDual) {
-    imagerMF = (ObitUVImagerMF*)in->imager;
-    
+    imagerMF->whichPol = 2;  /* Second polarization - needed for shifty */
     /* Copy prtLv to in->mosaic2->info */
     dim[0] = 1;dim[1] = 1;
     ObitInfoListAlwaysPut (in->mosaic2->info, "prtLv", OBIT_long, dim, &err->prtLv);
     
+    /* May need to have Stokes imaged refreshed */
+    kstok = (olong)(imagerMF->mosaic2->images[0]->myDesc->crval[imagerMF->mosaic2->images[0]->myDesc->jlocs]-0.5);
+    kstok = MAX(0, MIN(kstok,3));
+    dim[0] = 4; dim[1] = dim[2] = dim[3] = dim[5];
+    ObitInfoListAlwaysPut (imagerMF->uvwork2->info,  "Stokes", OBIT_string, dim, chStokes[kstok]);
+
     /* Parallel Image images without needing beam */
     ObitUVImagerMFImage2 (imagerMF, fields,  FALSE, in->doBeam, FALSE, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Average polarized intensity to plane 1 to drive CLEAN */
-    ObitImageMosaicMFMergePoln (imagerMF->mosaic, imagerMF->mosaic2, err);
+    ObitImageMosaicMFMergePoln (imagerMF->mosaic, imagerMF->mosaic2, fields, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Loop over secondary fields getting statistics for Image and Beam 
@@ -1152,14 +1167,14 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
   MFSetEffFreq (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-} /* end MakeResiduals */
+} /* end MFMakeResiduals */
 
 /**
  * Make all residual images and get statistics
  * \param inn    The Clean object
  * \param err    Obit error stack object.
  */
-static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
+static void  MFMakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
   ObitDConClean *inb = (ObitDConClean*)inn;
@@ -1168,15 +1183,17 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {4,1,1,1,1};
   olong ifld, jfld, nfield, i, fields[2]={0,0};
   ofloat ftemp=0.0;
-  gchar *routine = "ObitDConCleanVisMF:MakeAll Residuals";
+  gchar *routine = "ObitDConCleanVisMF:MFMakeAllResiduals";
  
   if (err->error) return; /* prior error condition? */
 
   /* Need secondary poln? */
   if (in->isDual) {
     imagerMF = (ObitUVImagerMF*)in->imager;
+    imagerMF->whichPol = 1;  /* First polarization -needed for shifty */
     ObitInfoListAlwaysPut (imagerMF->uvwork->info,  "Stokes", OBIT_string, dim, "Q   ");
-    ObitInfoListAlwaysPut (imagerMF->uvwork2->info, "Stokes", OBIT_string, dim, "U   ");
+    if (imagerMF->uvwork!=imagerMF->uvwork2)
+      ObitInfoListAlwaysPut (imagerMF->uvwork2->info, "Stokes", OBIT_string, dim, "U   ");
   } /* end secondary */
 
   parentClass = myClassInfo.ParentClass;
@@ -1191,6 +1208,7 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
 
   /* Need secondary poln? */
   if (in->isDual) {
+    imagerMF->whichPol = 2;  /* Second polarization  -needed for shifty */
     imagerMF = (ObitUVImagerMF*)in->imager;
     nfield = in->mosaic2->numberImages;  /* May be fewer in U than Q due to autoCen */
     
@@ -1203,7 +1221,7 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Average polarized intensity to plane 1 to drive CLEAN */
-    ObitImageMosaicMFMergePoln (imagerMF->mosaic, imagerMF->mosaic2, err);
+    ObitImageMosaicMFMergePoln (imagerMF->mosaic, imagerMF->mosaic2, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Loop over secondary fields getting statistics for Image and Beam 
@@ -1249,17 +1267,17 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
   MFSetEffFreq (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-} /* end MakeAllResiduals */
+} /* end MFMakeAllResiduals */
 
 /**
  * Create Pixel list for cleaning
  * \param inn      The Clean object
  * \param err      Obit error stack object.
  */
-static void NewPxList (ObitDConCleanVis *inn, ObitErr *err)
+static void MFNewPxList (ObitDConCleanVis *inn, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
-  gchar *routine = "ObitDConCleanVis:NewPxList";
+  gchar *routine = "ObitDConCleanVis:MFNewPxList";
 
   if (in->Pixels && (in->Pixels->nfield!=in->mosaic->numberImages)) 
     in->Pixels = ObitDConCleanPxListUnref(in->Pixels);
@@ -1276,20 +1294,20 @@ static void NewPxList (ObitDConCleanVis *inn, ObitErr *err)
   ObitInfoListCopyData(in->info, in->Pixels->info);
 
   /* Need secondary poln? */
-  if (in->isDual) NewPxList2 (inn, err);
+  if (in->isDual) MFNewPxList2 (inn, err);
   ((ObitDConCleanPxListMF*)in->Pixels)->isDual = in->isDual;
 
-} /* end NewPxList */
+} /* end MFNewPxList */
 
 /**
  * Create Secondary (U Pol) Pixel list for cleaning
  * \param inn      The Clean object
  * \param err      Obit error stack object.
  */
-static void NewPxList2 (ObitDConCleanVis *inn, ObitErr *err)
+static void MFNewPxList2 (ObitDConCleanVis *inn, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
-  gchar *routine = "ObitDConCleanVis:NewPxList2";
+  gchar *routine = "ObitDConCleanVis:MFNewPxList2";
 
   if (in->Pixels2 && (in->Pixels2->nfield!=in->mosaic->numberImages)) 
     in->Pixels2 = ObitDConCleanPxListUnref(in->Pixels2);
@@ -1310,7 +1328,7 @@ static void NewPxList2 (ObitDConCleanVis *inn, ObitErr *err)
   /* Copy control info to PixelList */
   ObitInfoListCopyData(in->info, in->Pixels2->info);
 
-} /* end NewPxList2 */
+} /* end MFNewPxList2 */
 
 /**
  * Low accuracy subtract pixels from image for current CLEAN fields.
@@ -1325,7 +1343,7 @@ static void NewPxList2 (ObitDConCleanVis *inn, ObitErr *err)
  * \param err      Obit error stack object.
  * \return TRUE if attempted, FALSE if cannot do 
  */
-static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarray, 
+static void MFSubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarray, 
 		       ObitErr *err)
 {
   ObitTable *tempTable = NULL;
@@ -1341,7 +1359,7 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
   gboolean doAbs, OK;
   gchar *tabType = "AIPS CC";
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
-  gchar *routine = "SubNewCCs";
+  gchar *routine = "MFSubNewCCs";
 
   /* error checks */
   if (err->error) return;
@@ -1525,7 +1543,7 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
     ip++;
   } /* end statistics loop over fields */
   
-} /* end SubNewCCs */
+} /* end MFSubNewCCs */
 
 /**
  * Subtract a set of lists of CLEAN components from an image in a thread
@@ -2567,6 +2585,7 @@ static void MFSetEffFreq(ObitDConCleanVisMF *in, ObitErr *err)
   ObitInfoType type;
   odouble *specFreqEff;
   ObitImageMF* inMF;
+  ObitImage* inIm;
   olong i;
   /*gchar *routine = "MFSetEffFreq";*/
 
@@ -2574,37 +2593,37 @@ static void MFSetEffFreq(ObitDConCleanVisMF *in, ObitErr *err)
     /* Write on SkyModel */
     ObitInfoListAlwaysPut (in->skyModel->info, "specFreqEff", type, dim, specFreqEff);
     for (i=0; i<in->mosaic->numberImages; i++) {
-      inMF = (ObitImageMF*)in->mosaic->images[i];
+      inMF = (ObitImageMF*)in->mosaic->images[i]; inIm = in->mosaic->images[i];
       /* Open and close to update disk */
-      ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+      ObitImageOpen(inIm,OBIT_IO_ReadWrite, err);
       ObitImageMFSetFreqEff (inMF, inMF->nSpec, specFreqEff, err);
       inMF->myStatus = OBIT_Modified;  /* Grumble */
-      ObitImageClose(inMF, err);
+      ObitImageClose(inIm, err);
     } /* end loop over mosaic */
     /* Full Field image is it exists */
     if (in->mosaic->FullField) {
-      inMF = (ObitImageMF*)in->mosaic->FullField;
-      ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+      inMF = (ObitImageMF*)in->mosaic->FullField; inIm = in->mosaic->FullField;
+      ObitImageOpen(inIm,OBIT_IO_ReadWrite, err);
       ObitImageMFSetFreqEff (inMF, inMF->nSpec, specFreqEff, err);
       inMF->myStatus = OBIT_Modified;  /* Grumble */
-      ObitImageClose(inMF, err);
+      ObitImageClose(inIm, err);
     }
     /* Loop over mosaic2 if exists and active */
     if (in->mosaic2) {
       for (i=0; i<in->mosaic2->numberImages; i++) {
-	inMF = (ObitImageMF*)in->mosaic2->images[i];
-	ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+	inMF = (ObitImageMF*)in->mosaic2->images[i]; inIm = in->mosaic2->images[i];
+	ObitImageOpen(inIm,OBIT_IO_ReadWrite, err);
 	ObitImageMFSetFreqEff (inMF, inMF->nSpec, specFreqEff, err);
 	inMF->myStatus = OBIT_Modified;  /* Grumble */
-	ObitImageClose(inMF, err);
+	ObitImageClose(inIm, err);
       } /* end loop over mosaic2 */
       /* Full Field image is it exists */
       if (in->mosaic2->FullField) {
-	inMF = (ObitImageMF*)in->mosaic2->FullField;
-	ObitImageOpen(inMF,OBIT_IO_ReadWrite, err);
+	inMF = (ObitImageMF*)in->mosaic2->FullField; inIm = in->mosaic2->FullField;
+	ObitImageOpen(inIm,OBIT_IO_ReadWrite, err);
 	ObitImageMFSetFreqEff (inMF, inMF->nSpec, specFreqEff, err);
 	inMF->myStatus = OBIT_Modified;  /* Grumble */
-	ObitImageClose(inMF, err);
+	ObitImageClose(inIm, err);
       }
     } /* end if mosaic2 */
   } /* end if specFreqEff */

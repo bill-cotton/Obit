@@ -1,7 +1,7 @@
 /* $Id$  */
 /* position logging  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997-2022
+*  Copyright (C) 1996,1997-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -14,6 +14,7 @@
 *  GNU General Public License for more details.
 *-----------------------------------------------------------------------*/
 #include "logger.h"
+#include "obitview.h"
 #include "menu.h"
 #include "imagedisp.h"
 #include "poslabel.h"

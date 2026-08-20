@@ -1017,7 +1017,7 @@ void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   /* Only DFT */
   in->currentMode = OBIT_SkyModel_DFT;
   if (err->prtLv>1) {
-    Obit_log_error(err, OBIT_InfoErr, "SkyModelVMBeamMF using DFT calculation type");
+    Obit_log_error(err, OBIT_InfoErr, "SkyModelVMBeamMF using DFT calculation, Stokes %s",in->stokes);
   }
 #if HAVE_GPU==1  /*  GPU?*/
   /* Init GPU, create object if necessary */

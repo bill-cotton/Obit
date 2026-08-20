@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2022                                          */
+/*;  Copyright (C) 2010-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -160,7 +160,8 @@ ObitImageMosaicMF* ObitImageMosaicMFMaxField (ObitImageMosaic *mosaic,
 					      ObitErr* err); 
 
 /** Public: Average polarized intensity in Q,U pair  */
-void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, ObitErr* err) ;
+void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU,
+				 olong *fields, ObitErr* err) ;
 
 /** Public: Extract information about underlying structures to ObitInfoList */
 void ObitImageMosaicMFGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *outList, 

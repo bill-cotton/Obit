@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005,2019
+#  Copyright (C) 2005,2019,2026
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -134,6 +134,26 @@ def PPutHi (inTL, err):
     #
     Obit.TableListPutHi(inTL.me, err.me)
     # end PPutHi
+
+
+def PPutTable (inTL, tabType, tabVer, err):
+    """ Adds a Table to Table List
+
+    This is intended to be used when a table exists but record 
+    of such is missing from the disk resident version.
+    Use UpdateDesc to update disk resident version.
+    inTL    = Python TableList
+    tabType = Table type, e.g. "AIPS CC"
+    tabVer  = Table version number (1-rel)
+    err     = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not PIsA(inTL):
+        raise TypeError("inTL MUST be a Python Obit TableList")
+    #
+    Obit.TableListPutTable(inTL.me, tabType, tabVer, err.me)
+    # end PPutTable
 
 
 def PIsA (inTL):

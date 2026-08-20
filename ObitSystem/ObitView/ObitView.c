@@ -3,7 +3,7 @@
 /* This program requires the Motif library */
 /* Cloned from ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2016
+*  Copyright (C) 2005-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -78,6 +78,35 @@ void InitImage (ImageDisplay *IDdata, int narg, char *filename);
 olong hwndErr = 1;
 gchar szErrMess[120];
 
+// Define a structure to hold font resource values - lifted from google suggestion
+// From .Xresources
+// ObitView.textFont: fixed ! e.g. -misc-fixed-medium-r-normal--20-*-*-*-c-*-*
+// ObitView.sizeFactor: 1.0 ! e.g. 1.625
+typedef struct {
+  char *text_font;       // Font to use
+  char *raw_size_factor;    // Scaling factor to make text fit in box
+} FontInfo;
+FontInfo fontInfo;
+
+// Define how the X toolkit maps Xresources strings to structure fields
+static XtResource fontResources[] = {
+  {
+    "textFont",               // Resource name (camelCase)
+    "TextFont",               // Resource class
+    XtRString,                  // Data type requested
+    sizeof(char *),             // Size of the data type
+    XtOffsetOf(FontInfo, text_font), // Where to save it
+    XtRString,                  // Default data type if missing
+    "fixed"                     // Default fallback value
+  },
+  {
+    "sizeFactor", "SizeFactor",  // Uppercase class name
+    XtRString, sizeof(char *),   // Fetch it safely as a string
+    XtOffsetOf(FontInfo, raw_size_factor),
+    XtRString, "1.0"            // Default fallback value
+  }
+};
+
 /**
  * Main ObitView program
  * Checks command line for option of form "-port xxxx'
@@ -85,6 +114,9 @@ gchar szErrMess[120];
  * If xxx='none', no xmlrpc interface is started
  * "-port"  and "xxxx" removed from arguments
  * Default port = 8765
+ * Reads font info from .Xresources
+ * ObitView.textFont: fixed ! e.g. -misc-fixed-medium-r-normal--20-*-*-*-c-*-*
+ * ObitView.sizeFactor: 1.0 ! e.g. 1.625
  * Initializes and starts the event loop
  * \param argc  number of command line arguments
  * \param argv  array of command line arguments
@@ -149,16 +181,31 @@ int main ( int argc, char **argv )
   /*  XtSetArg(args[n], XtNwidth, 640);  n++;
       XtSetArg(args[n], XtNheight, 480);  n++; */
   
+  // Fetch font values. Xt automatically checks .Xresources and merges defaults. (from google)
+  Display *dpy = XtDisplay(Display_shell);
+  XtGetApplicationResources(Display_shell, &fontInfo, fontResources, XtNumber(fontResources), NULL, 0);
+  // Parse the string into your double using standard C libraries
+  if (fontInfo.raw_size_factor) {
+    sizeFactor = strtod(fontInfo.raw_size_factor, NULL);
+  } else {
+    sizeFactor = 1.0;
+  }
+  printf("Font loaded from .Xresources: %s, factor=%s\n", fontInfo.text_font,fontInfo.raw_size_factor);
+  XFontStruct *textFont=NULL;
+  textFont = XLoadQueryFont(dpy, fontInfo.text_font);
+  if (!textFont) textFont = XLoadQueryFont(dpy, "fixed"); // fallback
+  textFontList = XmFontListCreate(textFont, XmFONTLIST_DEFAULT_TAG);
+
   /* create main window */
   mainWindow = XtCreateManagedWidget ("mainWindow", xmMainWindowWidgetClass,
 				      Display_shell, args, n);
   /* make a form to hang everything on*/
   form = XtVaCreateManagedWidget ("form", xmFormWidgetClass,
 				  mainWindow,
-				  XmNwidth,     640,
-				  XmNheight,    480,
-				  XmNx,           0,
-				  XmNy,           0,
+				  XmNwidth,     (int)(640*sizeFactor),
+				  XmNheight,    (int)(480*sizeFactor),
+				  XmNx,           10,
+				  XmNy,           10,
 				  NULL);
   
   

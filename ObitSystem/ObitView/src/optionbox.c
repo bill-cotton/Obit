@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Option dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2022
+*  Copyright (C) 1996,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -21,11 +21,13 @@
 #include <Xm/PushB.h>
 #include <Xm/Label.h>
 #include <Xm/ToggleB.h>
+#include <Xm/ToggleBG.h>
 #include <Xm/RowColumn.h>
 #include <Xm/Separator.h>
 #include <Xm/MessageB.h>
 #include <Xm/TextF.h>
 #include <Xm/Text.h>
+#include "obitview.h"
 #include "imagedisp.h"
 #include "messagebox.h"
 #include "Image2Pix.h"
@@ -453,7 +455,7 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   int          start;
   Arg          wargs[5]; 
 #define OPTIONBOX_WIDTH 205
-#define OPTIONBOX_HEIGHT 400
+#define OPTIONBOX_HEIGHT 350
   
   
   /* register IDdata */
@@ -534,57 +536,63 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   dia.dialog = XtVaCreatePopupShell ("OptionBox", xmDialogShellWidgetClass, 
 				     IDdata->shell, 
 				     XmNautoUnmanage, False,
-				     XmNwidth,     OPTIONBOX_WIDTH,
-				     XmNheight,    OPTIONBOX_HEIGHT,
+				     XmNwidth,     (int)(OPTIONBOX_WIDTH*sizeFactor),
+				     XmNheight,    (int)(OPTIONBOX_HEIGHT*sizeFactor),
 				     XmNdeleteResponse, XmDESTROY,
+				     XmNfontList, textFontList, // Set font 
 				     NULL);
   
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("OptionForm", xmFormWidgetClass,
 				  dia.dialog,
 				  XmNautoUnmanage, False,
-				  XmNwidth,     OPTIONBOX_WIDTH,
-				  XmNheight,    OPTIONBOX_HEIGHT,
+				  XmNwidth,     (int)(OPTIONBOX_WIDTH*sizeFactor),
+				  XmNheight,    (int)(OPTIONBOX_HEIGHT*sizeFactor),
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList, textFontList, // Set font 
 				  NULL);
   
   /* Box label widgets */
   label1 = XtVaCreateManagedWidget ("Label1", xmLabelWidgetClass, 
 				    form, 
-				    XmNwidth,           OPTIONBOX_WIDTH,
+				    XmNwidth,            (int)(OPTIONBOX_WIDTH*sizeFactor),
 				    XmNlabelString,   label,
 				    XmNtopAttachment, XmATTACH_FORM,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
   
   /* Edit request timeout  label widgets */
   label1a = XtVaCreateManagedWidget ("Label1a", xmLabelWidgetClass, 
 				     form, 
-				     XmNwidth,           OPTIONBOX_WIDTH,
+				     XmNwidth,           (int)(OPTIONBOX_WIDTH*sizeFactor),
 				     XmNlabelString,   labelto,
 				     XmNtopAttachment, XmATTACH_WIDGET,
 				     XmNtopWidget,     label1,
 				     XmNleftAttachment,  XmATTACH_FORM,
+				     XmNfontList, textFontList, // Set font 
 				     NULL);
   
   g_snprintf (valuestr, 60, "%f", ERtime_out);
   dia.ERtimeout = XtVaCreateManagedWidget ("OptionTimeO", xmTextFieldWidgetClass, 
 					   form, 
-					   XmNwidth,           OPTIONBOX_WIDTH,
+					   XmNwidth,     (int)(OPTIONBOX_WIDTH*sizeFactor),
 					   XmNvalue,   valuestr,
 					   XmNtopAttachment, XmATTACH_WIDGET,
 					   XmNtopWidget,     label1a,
 					   XmNleftAttachment,  XmATTACH_FORM,
+					   XmNfontList, textFontList, // Set font 
 					   NULL);
   /* actual pixel range in plane */
   dia.pixran1 = XtVaCreateManagedWidget ("PixelRange1", xmLabelWidgetClass,
 					 form,
-					 XmNwidth,           OPTIONBOX_WIDTH,
+					 XmNwidth,       (int)(OPTIONBOX_WIDTH*sizeFactor),
 					 XmNlabelString,   pixran,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     dia.ERtimeout,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   
   g_snprintf (valuestr, 60, "  %g %g", image[CurImag].minVal, 
@@ -592,50 +600,55 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   PixelStr = XmStringCreateSimple (valuestr);
   dia.pixran2 = XtVaCreateManagedWidget ("PixelRange2", xmLabelWidgetClass, 
 					 form, 
-					 XmNwidth,           OPTIONBOX_WIDTH,
+					 XmNwidth,            (int)(OPTIONBOX_WIDTH*sizeFactor),
 					 XmNlabelString,   PixelStr,
 					 XmNtopAttachment, XmATTACH_WIDGET,
 					 XmNtopWidget,     dia.pixran1,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
   /* minimum pixrange */
   label2 = XtVaCreateManagedWidget ("OptionLabel2", xmLabelWidgetClass,
 				    form,
-				    XmNwidth,           OPTIONBOX_WIDTH,
+				    XmNwidth,       (int)(OPTIONBOX_WIDTH*sizeFactor),
 				    XmNlabelString,   minpix,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     dia.pixran2,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
   
   g_snprintf (valuestr, 60, "%f", image[CurImag].PixRange[0]);
   dia.data1 = XtVaCreateManagedWidget ("OptionData1", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           OPTIONBOX_WIDTH,
+				       XmNwidth,       (int)(OPTIONBOX_WIDTH*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     label2,
 				       XmNleftAttachment,  XmATTACH_FORM,
+				       XmNfontList, textFontList, // Set font 
 				       NULL);
   
   /* maximum pixrange */
   label3 = XtVaCreateManagedWidget ("OptionLabel3", xmLabelWidgetClass,
 				    form,
-				    XmNwidth,           OPTIONBOX_WIDTH,
+				    XmNwidth,           (int)(OPTIONBOX_WIDTH*sizeFactor),
 				    XmNlabelString,   maxpix,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     dia.data1,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
   
   g_snprintf (valuestr, 60, "%f", image[CurImag].PixRange[1]);
   dia.data2 = XtVaCreateManagedWidget ("OptionData2", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           OPTIONBOX_WIDTH,
+				       XmNwidth,           (int)(OPTIONBOX_WIDTH*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     label3,
 				       XmNleftAttachment,  XmATTACH_FORM,
+				       XmNfontList, textFontList, // Set font 
 				       NULL);
   
   /* Plane number */
@@ -646,21 +659,23 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   plalab = XmStringCreateSimple (valuestr);
   dia.planelab = XtVaCreateManagedWidget ("OptionLabel3", xmLabelWidgetClass,
 					  form,
-					  XmNwidth,           OPTIONBOX_WIDTH,
+					  XmNwidth,           (int)(OPTIONBOX_WIDTH*sizeFactor),
 					  XmNlabelString,   plalab,
 					  XmNtopAttachment, XmATTACH_WIDGET,
 					  XmNtopWidget,     dia.data2,
 					  XmNleftAttachment,  XmATTACH_FORM,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
   
   g_snprintf (valuestr, 60, "%d", image[CurImag].PlaneNo+1);
   dia.plane = XtVaCreateManagedWidget ("OptionData2", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           OPTIONBOX_WIDTH,
+				       XmNwidth,           (int)(OPTIONBOX_WIDTH*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     dia.planelab,
 				       XmNleftAttachment,  XmATTACH_FORM,
+				       XmNfontList, textFontList, // Set font 
 				       NULL);
   /* Higher dimensions */
   label4 = XtVaCreateManagedWidget ("OptionLabel4", xmLabelWidgetClass,
@@ -670,40 +685,44 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     dia.plane,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font 
 				    NULL);
    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[0]+1);
    dia.dim4 = XtVaCreateManagedWidget ("OptionDim4", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           OPTIONBOX_WIDTH/4,
+				       XmNwidth,           (int)((OPTIONBOX_WIDTH/4)*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     label4,
 				       XmNleftAttachment,  XmATTACH_FORM,
+				       XmNfontList, textFontList, // Set font 
 				       NULL);
    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[1]+1);
    dia.dim5 = XtVaCreateManagedWidget ("OptionDim5", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           OPTIONBOX_WIDTH/4,
+				       XmNwidth,           (int)((OPTIONBOX_WIDTH/4)*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     label4,
 				       XmNleftAttachment,  XmATTACH_WIDGET,
 				       XmNleftWidget,     dia.dim4,
+				       XmNfontList, textFontList, // Set font 
  				       NULL);
   g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[2]+1);
    dia.dim6 = XtVaCreateManagedWidget ("OptionDim5", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           OPTIONBOX_WIDTH/3,
+				       XmNwidth,           (int)((OPTIONBOX_WIDTH/3)*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     label4,
 				       XmNleftAttachment,  XmATTACH_WIDGET,
 				       XmNleftWidget,     dia.dim5,
+				       XmNfontList, textFontList, // Set font 
 				       NULL);
  /* separator */
   sep = XtVaCreateManagedWidget ("sep", xmSeparatorWidgetClass,
 				 form, 
-				 XmNwidth,           OPTIONBOX_WIDTH,
+				 XmNwidth,          (int)(OPTIONBOX_WIDTH*sizeFactor),
 				 XmNtopAttachment, XmATTACH_WIDGET,
 				 XmNtopWidget,     dia.dim5,
 				 XmNleftAttachment,  XmATTACH_FORM,
@@ -712,21 +731,43 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   start = image[CurImag].mapFunc;
   radio = XmVaCreateSimpleRadioBox(form, "Mapping_type", start, 
 				   (XtCallbackProc)MapFnCB,
-				   XmNwidth,           OPTIONBOX_WIDTH,
+				   XmNwidth,           (int)(OPTIONBOX_WIDTH*sizeFactor),
 				   XmNtopAttachment, XmATTACH_WIDGET,
 				   XmNtopWidget,     sep,
 				   XmNleftAttachment,  XmATTACH_FORM,
 				   XmVaRADIOBUTTON, linear, NULL, NULL, NULL,
 				   XmVaRADIOBUTTON, nonlinear, NULL,NULL,NULL,
 				   XmVaRADIOBUTTON, histEq, NULL,NULL,NULL,
+				   XmNfontList, textFontList, // Set font 
 				   NULL);
   XtManageChild(radio);
-  
+  // set fonts on radio buttons with help from Mr. Google:
+  WidgetList children;
+  Cardinal numChildren;
+  int iii;
+  // 2. Fetch the automatically created children array from the container
+  XtVaGetValues(radio, 
+		XmNchildren, &children, 
+		XmNnumChildren, &numChildren, 
+		NULL);
+  // 3. Loop through and apply your fontList to each child button
+  for (iii = 0; iii < numChildren; iii++) {
+    // XmVaCreateSimpleRadioBox creates Gadgets by default
+    if (XtIsSubclass(children[iii], xmToggleButtonGadgetClass)) {
+      XtVaSetValues(children[iii], XmNfontList, textFontList, NULL);
+    }
+  }
+  // 4. Manage the container now that children are altered
+  XtManageChild(radio);
+
+
   /* OK button */
   OKbutton = XtVaCreateManagedWidget (" OK ", xmPushButtonWidgetClass, 
 				      form, 
 				      XmNbottomAttachment, XmATTACH_FORM,
 				      XmNleftAttachment,  XmATTACH_FORM,
+				      XmNfontList, textFontList, // Set font 
+				      XmNfontList, textFontList, // Set font 
 				      NULL);
   XtAddCallback (OKbutton, XmNactivateCallback, OptOKButCB, (XtPointer)IDdata);
   
@@ -736,17 +777,19 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 					  XmNbottomAttachment, XmATTACH_FORM,
 					  XmNleftAttachment, XmATTACH_WIDGET,
 					  XmNleftWidget,     OKbutton,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
   XtAddCallback (CancelButton, XmNactivateCallback, OptCancelButCB, 
 		 (XtPointer)IDdata);
   
   /* Refresh button */
   RefreshButton = XtVaCreateManagedWidget ("Refresh", xmPushButtonWidgetClass, 
-					  form, 
-					  XmNbottomAttachment, XmATTACH_FORM,
-					  XmNleftAttachment, XmATTACH_WIDGET,
-					  XmNleftWidget,     CancelButton,
-					  NULL);
+					   form, 
+					   XmNbottomAttachment, XmATTACH_FORM,
+					   XmNleftAttachment, XmATTACH_WIDGET,
+					   XmNleftWidget,     CancelButton,
+					   XmNfontList, textFontList, // Set font 
+					   NULL);
   XtAddCallback (RefreshButton, XmNactivateCallback, OptRefreshButCB, 
 		 (XtPointer)IDdata);
   
@@ -757,6 +800,7 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 					  XmNrightAttachment, XmATTACH_FORM,
 					  XmNleftAttachment, XmATTACH_WIDGET,
 					  XmNleftWidget,     RefreshButton,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
   XtAddCallback (ReloadButton, XmNactivateCallback, OptReloadButCB, 
 		 (XtPointer)IDdata);

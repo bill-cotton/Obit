@@ -349,6 +349,8 @@ nTaper            0                Number of additional tapers
 Tapers            0                List of tapers (asec)
 **PARAM** float 10
 MResKnob          0                Multiresolution controls 
+**PARAM** boo 1 **DEF** F
+doQU             0                 CLEAN Q&U in parallel
 
 **PARAM** int 1 
 prtLv             0.0              Print level in selfcal
@@ -464,6 +466,15 @@ the PS table set to "Failed  " rather than "Done    ".
 constant resolution with frequency.  There are a couple means of
 achieving this.  See the explain section "Frequency Dependent
 Resolution" for details
+
+Data Weighting
+   MFBeam uses working data sets with 2 or 4 Stokes correlation
+products.  The ralative data weights of the different correlation
+products should be comparable - use task Lister to examine a sample.
+Task UVAppend can be used to recalculate the weights based on the
+RMS in the amplitudes of the time series of the various correlation
+products.  Very different weights for the cross- and parallel-
+hand data can cause very peculiar results.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input/output
@@ -985,6 +996,11 @@ Adverbs:
                   (1-iteration/niter)**3
               [1] SNR factor,                     0=>0.35
               [2] "Quality" factor,               0=>0.2
+  doQU........If True CLEAN Q&U in parallel.  
+              CLEAN is driven by average polarized intensity which
+              may be more robust to large Faraday rotation than
+              CLEANing separately but takes more resources.
+	      This mode does not support SDI or CLEAN middle loops.
 
                           Interactive display
   dispURL.....The URL of the display server to use. "None"=>none

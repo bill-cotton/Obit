@@ -5,10 +5,57 @@
 # write uvtab file with BP and PD tables
 # Verbose log file from PCal and XYDly in 'PolnCal_'+uv.{AF}name.strip()+'.log'
 #exec(open('MK_PolCal_XY.py').read())
-MKPolCalXY = None; SwapPDXY=None; SwapSNXY=None; PDNeg=None; CorrPD=None
+MKPolCalXY = None; SwapPDXY=None; SwapSNXY=None; PDNeg=None; CorrPD=None; SNDlyNeg=None
 import ObitTask, OErr
 err = OErr.OErr()
 from OTObit import setname, imhead
+
+del SNDlyNeg
+def SNDlyNeg(uv, err, inVer=1, outVer=2):
+    """
+    Copy SN table inVer to outVer negating the Delay solutions
+
+    * uv       = Python Obit UV object, AIPS or FITS
+    * err      = Python Obit Error/message stack
+    * inVer    = input SN version
+    * outVer   = output SN version
+    """
+    from math import pi
+    import FArray, Table, History
+    fblank=FArray.fblank
+    uv.Header(err)
+    # Copy table
+    print ("SNDlyNeg inVer=",inVer,"outVer=", outVer)
+    sntabi=uv.NewTable(Table.READONLY,"AIPS SN",inVer,err)
+    sntabi.Open(Table.READONLY,err)
+    numIF=sntabi.keys['numIF']; numPol=sntabi.keys['numPol'];
+    sntabo=Table.PClone(sntabi,None)
+    sntabo=uv.NewTable(Table.WRITEONLY,"AIPS SN",outVer,err,
+                       numIF=numIF,numPol=numPol)
+    sntabo.Open(Table.WRITEONLY,err)
+    # Patch things in header which may get lost
+    sntabo.keys['numAnt']=sntabi.keys['numAnt']
+    # 'REAL 1', 'IMAG 1','REAL 2', 'IMAG 2', 
+    inrow = sntabi.Desc.Dict['nrow']; 
+    for irow in range(1,inrow+1):
+        row=sntabi.ReadRow(irow,err)
+        # Negate Delay
+        for i in range(0,numIF):
+            row['DELAY 1'][i] = -row['DELAY 1'][i];
+            row['DELAY 2'][i] = -row['DELAY 2'][i];
+        sntabo.WriteRow (irow, row, err)
+    sntabi.Close(err); sntabo.Close(err)
+    OErr.printErrMsg(err, "Error Swapping SN tables")
+    # History entry
+    outHistory = History.History("history", uv.List, err)
+    z=History.POpen(outHistory, History.READWRITE, err)
+    z=History.PTimeStamp(outHistory," Start Obit SNDlyNeg",err)
+    z=History.PWriteRec(outHistory,-1,"SNDlyNeg / inSN = "+str(inVer),err)
+    z=History.PWriteRec(outHistory,-1,"SNDlyNeg / outSN = "+str(outVer),err)
+    z=History.PClose(outHistory, err)
+    OErr.printErrMsg(err, "Error with history")
+
+# end SNDlyNeg
 
 del SwapPDXY
 def SwapPDXY(uv, err, inVer=1, outVer=2):
@@ -70,8 +117,8 @@ def SwapSNXY(uv, err, inVer=1, outVer=2):
 
     * uv       = Python Obit UV object, AIPS or FITS
     * err      = Python Obit Error/message stack
-    * inVer    = input PD version
-    * outVer   = output PD version
+    * inVer    = input SN version
+    * outVer   = output SN version
     """
     from math import pi
     import FArray, Table, History

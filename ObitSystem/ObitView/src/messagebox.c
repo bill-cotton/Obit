@@ -2,7 +2,7 @@
 /* MessageBox routines for ObitView */
 /* uses a ScrollText to display messages from ObitView      */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996-2008
+*  Copyright (C) 1996-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -16,6 +16,7 @@
 *-----------------------------------------------------------------------*/
 
 #include <Xm/Xm.h> 
+#include <Xm/Text.h> 
 #include "scrolltext.h"
 #include "messagebox.h"
 #include "obitview.h"
@@ -42,46 +43,27 @@ void MessageDismiss(XtPointer arg);
  */
 void MessageShow (char *message)
 {
-  int next, length, new = 0;
-  
+  /* DEBUG
+     printf("MessageShow: %s\n",message); */
   /* new ScrollText? */
-  if (!MessScroll)
-    {
+  if (!MessScroll || (!MessScroll->ScrollTop))  {
       /* make ScrollText */
-      new = 1;
       MessScroll = ScrollTextMake (Display_shell, "ObitView Messages");
       if (!MessScroll) { /* error, print to stderr */
 	fprintf (stderr, message); fprintf (stderr,"\n");
 	return;
       } /* end create error */
-      /* add dismiss callback */
-      MessScroll->DismissProc = (TextFileProc)MessageDismiss;
     } /* end create ScrollText */
   
   /* add text */
-  next = MessScroll->num_lines;
-  if (next>=MAX_LINE) next = MAX_LINE - 1; /* add to end no matter */
-  length = strlen(message);
-  MessScroll->lines[next] = (char*)g_malloc(length+1);
-  strcpy (MessScroll->lines[next], message);
-  next++;
-  MessScroll->num_lines = next; /* save number in ScrollText */
-  /* make some noise */
-  XBell(XtDisplay(MessScroll->Parent), 50); 
-  /*  setup*/
-  ScrollTextInit (MessScroll); 
-  /* Go to bottom */
-  ScrollTextBottom (MessScroll); 
-  
-  if (!new) { /* pop to front */
-    if (XtIsRealized (MessScroll->ScrollBox))
-      XMapRaised (XtDisplay(MessScroll->Parent), 
-		  XtWindow(MessScroll->ScrollBox));
-    /* redraw */
-    STextExposeCB (MessScroll->ScrollBox, (XtPointer)MessScroll, NULL);
-  }
-  /* DEBUG
-     fprintf(stderr,"MessageShow: %s\n",message); */
+  XmTextPosition last_pos = XmTextGetLastPosition(MessScroll->ScrollBox);
+  XmTextInsert(MessScroll->ScrollBox, last_pos, message);
+  last_pos = XmTextGetLastPosition(MessScroll->ScrollBox);
+  XmTextInsert(MessScroll->ScrollBox, last_pos, "\n");
+  last_pos = XmTextGetLastPosition(MessScroll->ScrollBox);
+  XmTextShowPosition(MessScroll->ScrollBox, last_pos);  // show end of window 
+  // grumble XtManageChild(MessScroll->ScrollBox);      // Show it
+  XtManageChild(XtParent(MessScroll->ScrollBox));       // And its parent too
   
 } /* end MessageShow */
 

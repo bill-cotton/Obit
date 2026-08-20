@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Movie control box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999, 2002-2022
+*  Copyright (C) 1996,1997,1999, 2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -27,6 +27,7 @@
 #include <Xm/TextF.h>
 #include <Xm/Text.h>
 #include <time.h>
+#include "obitview.h"
 #include "imagedisp.h"
 #include "Image2Pix.h"
 #include "poslabel.h"
@@ -502,7 +503,6 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
    /* mark as active */
   MovieBoxActive = 1;
   
-  
   /* other initialization */
   MovieDia.CurPlane = image[CurImag].PlaneNo;
   MovieDia.StartPlane = 1;
@@ -520,19 +520,21 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 					  xmDialogShellWidgetClass, 
 					  IDdata->shell, 
 					  XmNautoUnmanage, False,
-					  XmNwidth,     150,
-					  XmNheight,    230,
+					  XmNwidth,     (int)(150*sizeFactor),
+					  XmNheight,    (int)(230*sizeFactor),
 					  XmNdeleteResponse, XmDESTROY,
+					  XmNfontList, textFontList, // Set font 
 					  NULL);
-  
+ 
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("MovieForm", xmFormWidgetClass,
 				  MovieDia.dialog,
 				  XmNautoUnmanage, False,
-				  XmNwidth,     150,
-				  XmNheight,    270,
+				  XmNwidth,    ( int)(150*sizeFactor),
+				  XmNheight,   (int)(230*sizeFactor),
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList, textFontList, // Set font
 				  NULL);
   
   /* Play button */
@@ -540,6 +542,7 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 					form, 
 					XmNtopAttachment, XmATTACH_FORM,
 					XmNleftAttachment,  XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font
 					NULL);
   XtAddCallback (PlayButton, XmNactivateCallback, MoviePlayButCB, 
 		 (XtPointer)IDdata);
@@ -550,6 +553,7 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 						 form, 
 						 XmNtopAttachment, XmATTACH_FORM,
 						 XmNrightAttachment, XmATTACH_FORM,
+						 XmNfontList, textFontList, // Set font
 						 NULL);
   XtAddCallback (MovieDia.StopButton, XmNactivateCallback, MovieStopButCB, 
 		 (XtPointer)IDdata);
@@ -559,21 +563,23 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   MovieDia.start = XtVaCreateManagedWidget ("MovieStartPlane", 
 					    xmTextFieldWidgetClass, 
 					    form, 
-					    XmNwidth,           75,
+					    XmNwidth,     (int)(75*sizeFactor),
 					    XmNvalue,   valuestr,
 					    XmNtopAttachment, XmATTACH_WIDGET,
 					    XmNtopWidget,     MovieDia.StopButton,
 					    XmNrightAttachment,  XmATTACH_FORM,
+					    XmNfontList, textFontList, // Set font
 					    NULL);
   /*label1 = */
   XtVaCreateManagedWidget ("MovieStartLabel", xmLabelWidgetClass, 
 			   form, 
-			   XmNwidth,           75,
-			   XmNheight,          30,
+			   XmNwidth,           (int)(75*sizeFactor),
+			   XmNheight,          (int)(30*sizeFactor),
 			   XmNlabelString,   StartLab,
 			   XmNtopAttachment, XmATTACH_WIDGET,
 			   XmNtopWidget,      PlayButton,
 			   XmNleftAttachment,  XmATTACH_FORM,
+			   XmNfontList, textFontList, // Set font
 			   NULL);
   
   /* end Plane */
@@ -581,21 +587,23 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   MovieDia.end = XtVaCreateManagedWidget ("MovieEndPlane", 
 					  xmTextFieldWidgetClass, 
 					  form, 
-					  XmNwidth,           75,
+					  XmNwidth,    (int)(75*sizeFactor),
 					  XmNvalue,   valuestr,
 					  XmNtopAttachment, XmATTACH_WIDGET,
 					  XmNtopWidget,     MovieDia.start,
 					  XmNrightAttachment,  XmATTACH_FORM,
+					  XmNfontList, textFontList, // Set font
 					  NULL);
   /*label2 = */
   XtVaCreateManagedWidget ("MovieEndLabel", xmLabelWidgetClass, 
 			   form, 
-			   XmNwidth,           75,
-			   XmNheight,          30,
+			   XmNwidth,        (int)(75*sizeFactor),
+			   XmNheight,       (int)(30*sizeFactor),
 			   XmNlabelString,   EndLab,
 			   XmNtopAttachment, XmATTACH_WIDGET,
 			   XmNtopWidget,      MovieDia.start,
 			   XmNleftAttachment,  XmATTACH_FORM,
+			   XmNfontList, textFontList, // Set font
 			   NULL);
   
   /* Dwell */
@@ -603,60 +611,66 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   MovieDia.dwell = XtVaCreateManagedWidget ("MovieDwell", 
 					    xmTextFieldWidgetClass, 
 					    form, 
-					    XmNwidth,           75,
+					    XmNwidth,   (int)(75*sizeFactor),
 					    XmNvalue,   valuestr,
 					    XmNtopAttachment, XmATTACH_WIDGET,
 					    XmNtopWidget,     MovieDia.end,
 					    XmNrightAttachment,  XmATTACH_FORM,
+					    XmNfontList, textFontList, // Set font
 					    NULL);
   
   /*label3 = */
   XtVaCreateManagedWidget ("MovieDwellLabel", xmLabelWidgetClass, 
 			   form, 
-			   XmNwidth,           75,
-			   XmNheight,          30,
+			   XmNwidth,         (int)(75*sizeFactor),
+			   XmNheight,        (int)(30*sizeFactor),
 			   XmNlabelString,   DwellLab,
 			   XmNtopAttachment, XmATTACH_WIDGET,
 			   XmNtopWidget,      MovieDia.end,
+			   XmNfontList, textFontList, // Set font
 			   XmNleftAttachment,  XmATTACH_FORM,
 			   NULL);
   /* Higher dimensions */
   label4 = XtVaCreateManagedWidget ("OptionLabel4", xmLabelWidgetClass,
 				    form,
-				    XmNwidth,           150,
+				    XmNwidth,           (int)(150*sizeFactor),
 				    XmNlabelString,   higher,
 				    XmNtopAttachment, XmATTACH_WIDGET,
 				    XmNtopWidget,     MovieDia.dwell,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList, textFontList, // Set font
 				    NULL);
    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[0]+1);
    MovieDia.dim4 = XtVaCreateManagedWidget ("OptionDim4", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           40,
+				       XmNwidth,           (int)(40*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     label4,
 				       XmNleftAttachment,  XmATTACH_FORM,
+				       XmNfontList, textFontList, // Set font
 				       NULL);
    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[1]+1);
    MovieDia.dim5 = XtVaCreateManagedWidget ("OptionDim5", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           40,
+				       XmNwidth,           (int)(40*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     label4,
 				       XmNleftAttachment,  XmATTACH_WIDGET,
 				       XmNleftWidget,     MovieDia.dim4,
+ 				       XmNfontList, textFontList, // Set font
  				       NULL);
   g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[2]+1);
    MovieDia.dim6 = XtVaCreateManagedWidget ("OptionDim5", xmTextFieldWidgetClass, 
 				       form, 
-				       XmNwidth,           40,
+				       XmNwidth,     (int)(40*sizeFactor),
 				       XmNvalue,   valuestr,
 				       XmNtopAttachment, XmATTACH_WIDGET,
 				       XmNtopWidget,     label4,
 				       XmNleftAttachment,  XmATTACH_WIDGET,
 				       XmNleftWidget,     MovieDia.dim5,
+ 				       XmNfontList, textFontList, // Set font
 				       NULL);
   /* plane scroll */
   slider_size = hiPlane/10; if (slider_size<1) slider_size = 1;
@@ -666,8 +680,8 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   MovieDia.PlaneScroll = XtVaCreateManagedWidget ("MoviePlaneScroll", 
 						  xmScrollBarWidgetClass, 
 						  form,
-						  XmNwidth,            150,
-						  XmNheight,           20,
+						  XmNwidth,       (int)(150*sizeFactor),
+						  XmNheight,      (int)(20*sizeFactor),
 						  XmNmaximum,    hiPlane+slider_size,
 						  XmNminimum,           1,
 						  XmNvalue,       MovieDia.CurPlane+1,
@@ -677,7 +691,8 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 						  XmNleftAttachment,  XmATTACH_FORM,
 						  XmNtopAttachment, XmATTACH_WIDGET,
 						  XmNtopWidget,     MovieDia.dim5,
-						  XmNtopOffset,            10,
+						  XmNtopOffset,    (int)(10*sizeFactor),
+						  XmNfontList, textFontList, // Set font
 						  NULL);
   XmScrollBarSetValues (MovieDia.PlaneScroll, value, slider_size, 
 			increment, page_increment, False);
@@ -691,11 +706,12 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   MovieDia.PlaneScrollLabel = XtVaCreateManagedWidget ("MovieScrollLabel", 
 						       xmLabelWidgetClass, 
 						       form, 
-						       XmNwidth,           150,
+						       XmNwidth,       (int)(150*sizeFactor),
 						       XmNtopAttachment, XmATTACH_WIDGET,
 						       XmNtopWidget,     MovieDia.PlaneScroll,
-						       XmNtopOffset,            10,
+						       XmNtopOffset,      (int)(10*sizeFactor),
 						       XmNleftAttachment,  XmATTACH_FORM,
+						       XmNfontList, textFontList, // Set font
 						       NULL);
   XtVaSetValues(MovieDia.PlaneScrollLabel, 
 		XmNlabelString,   WierdString,
@@ -708,11 +724,12 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   MovieDia.PlaneLabel = XtVaCreateManagedWidget ("MoviePlaneLabel", 
 						 xmLabelWidgetClass, 
 						 form, 
-						 XmNwidth,           150,
+						 XmNwidth,       (int)(150*sizeFactor),
 						 XmNlabelString,   WierdString,
 						 XmNtopAttachment, XmATTACH_WIDGET,
 						 XmNtopWidget,  MovieDia.PlaneScrollLabel,
 						 XmNleftAttachment,  XmATTACH_FORM,
+						 XmNfontList, textFontList, // Set font
 						 NULL);
   MovieLabelPlane(); /* fill in actual value */
   
@@ -721,6 +738,7 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 					form, 
 					XmNbottomAttachment, XmATTACH_FORM,
 					XmNrightAttachment, XmATTACH_FORM,
+					XmNfontList, textFontList, // Set font
 					NULL);
   XtAddCallback (QuitButton, XmNactivateCallback, MovieQuitButCB, 
 		 (XtPointer)IDdata);

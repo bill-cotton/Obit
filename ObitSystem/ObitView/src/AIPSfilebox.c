@@ -1,7 +1,7 @@
 /* $Id$  */
 /* AIPS image selection box for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2013,2022
+*  Copyright (C) 2013,2022,2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -27,6 +27,7 @@
 #include <Xm/TextF.h>
 #include <Xm/Text.h>
 #include <Xm/List.h>
+#include "obitview.h"
 #include "imagedisp.h"
 #include "helpbox.h"
 #include "messagebox.h"
@@ -276,13 +277,15 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 
     /* Set size */
     XtVaSetValues (AFBdia.dialog,
-		   XmNwidth,     AIPSFILEBOX_WIDTH,
-		   XmNheight,    AIPSFILEBOX_HEIGHT,
+		   XmNwidth,     (int)(AIPSFILEBOX_WIDTH*sizeFactor),
+		   XmNheight,    (int)(AIPSFILEBOX_HEIGHT*sizeFactor),
+		   XmNfontList, textFontList, // Set font 
 		   NULL);
     /* Fill in images */
     XtVaSetValues (AFBdia.Form,
-		   XmNwidth,     AIPSFILEBOX_WIDTH,
-		   XmNheight,    AIPSFILEBOX_HEIGHT,
+		   XmNwidth,     (int)(AIPSFILEBOX_WIDTH*sizeFactor),
+		   XmNheight,    (int)(AIPSFILEBOX_HEIGHT*sizeFactor),
+		   XmNfontList, textFontList, // Set font 
 		   NULL);
     XtManageChild (AFBdia.dialog);
     XtManageChild (AFBdia.Form);
@@ -311,36 +314,39 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
   AFBdia.dialog = XtVaCreatePopupShell ("AIPS Image Selection", xmDialogShellWidgetClass, 
 					Display_shell, 
 					XmNautoUnmanage, False,
-					XmNwidth,     AIPSFILEBOX_WIDTH,
-					XmNheight,    AIPSFILEBOX_HEIGHT,
+					XmNwidth,     (int)(AIPSFILEBOX_WIDTH*sizeFactor),
+					XmNheight,    (int)(AIPSFILEBOX_HEIGHT*sizeFactor),
 					XmNdeleteResponse, XmDESTROY,
 					NULL);
 
   /* form to hang things on */
   form =  XmCreateForm (AFBdia.dialog, "AIPSpanel", NULL, 0);
   XtVaSetValues (form,
-		 XmNwidth,     AIPSFILEBOX_WIDTH,
-		 XmNheight,    AIPSFILEBOX_HEIGHT,
+		 XmNwidth,     (int)(AIPSFILEBOX_WIDTH*sizeFactor),
+		 XmNheight,    (int)(AIPSFILEBOX_HEIGHT*sizeFactor),
 		 XmNx,           0,
 		 XmNy,           0,
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
   AFBdia.Form = form;
 
   /* Scrolled list for image selection */
   AFBdia.SList = XmCreateScrolledList (form, "scrolled_list",  NULL, 0);
   XtVaSetValues (AFBdia.SList,             /* List part */
-		 XmNwidth,            AIPSFILEBOX_WIDTH,
+		 XmNwidth,            (int)(AIPSFILEBOX_WIDTH*sizeFactor),
 		 XmNcolumns,          64,
 		 XmNvisibleItemCount, 20,
 		 XmNselectionPolicy,  XmBROWSE_SELECT,
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
   XtVaSetValues (XtParent(AFBdia.SList),    /* Scrolling part */
-		 XmNwidth,            AIPSFILEBOX_WIDTH,
+		 XmNwidth,            (int)(AIPSFILEBOX_WIDTH*sizeFactor),
 		 XmNcolumns,          64,
 		 XmNselectionPolicy,  XmBROWSE_SELECT,
 		 XmNtopAttachment,    XmATTACH_FORM,
 		 XmNrightAttachment,  XmATTACH_FORM,
 		 XmNleftAttachment,   XmATTACH_FORM,
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
   XtAddCallback (AFBdia.SList, XmNbrowseSelectionCallback, SelectAImageCB,
 		 (XtPointer)&AFBdia);
@@ -348,11 +354,12 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
   /* AIPS directory text box */
   AFBdia.dir = XmCreateTextField (form, "AIPS dir", NULL, 0);
   XtVaSetValues (AFBdia.dir,
-		 XmNwidth,           AIPSFILEBOX_WIDTH,
+		 XmNwidth,           (int)(AIPSFILEBOX_WIDTH*sizeFactor),
 		 XmNcolumns,         50,
 		 XmNtopAttachment,   XmATTACH_WIDGET,
 		 XmNtopWidget,       AFBdia.SList,
 		 XmNleftAttachment,  XmATTACH_FORM,
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
   XmTextFieldSetString (AFBdia.dir, AFBdia.AIPS_dir->sp);
   XtAddCallback (AFBdia.dir, XmNactivateCallback, NewADirCB,
@@ -364,7 +371,8 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		 XmNtopAttachment,  XmATTACH_WIDGET,
 		 XmNtopWidget,      AFBdia.dir,
 		 XmNleftAttachment, XmATTACH_FORM,
-		 XmNheight,         30,
+		 XmNheight,         (int)(30*sizeFactor),
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
  AFBdia.userT = XmCreateTextField (form, "user", NULL, 0);
  XtVaSetValues (AFBdia.userT,
@@ -373,7 +381,8 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		XmNtopWidget,       AFBdia.dir,
 		XmNleftAttachment,  XmATTACH_WIDGET,
 		XmNleftWidget,      labelB1,
-		XmNheight,          30,
+		XmNheight,          (int)(30*sizeFactor),
+		XmNfontList, textFontList, // Set font 
 		NULL);
   sprintf (tstr, "%d", AFBdia.AUser);
   XmTextFieldSetString (AFBdia.userT, tstr);
@@ -393,7 +402,8 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		 XmNtopAttachment,    XmATTACH_WIDGET,
 		 XmNtopWidget,        sep,
 		 XmNleftAttachment,   XmATTACH_FORM,
-		 XmNheight,           30,
+		 XmNheight,           (int)(30*sizeFactor),
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
   AFBdia.nameT = XmCreateTextField (form, "class", NULL, 0);
   XtVaSetValues (AFBdia.nameT,
@@ -402,7 +412,8 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		 XmNtopWidget,       sep,
 		 XmNleftAttachment,  XmATTACH_WIDGET,
 		 XmNleftWidget,      labelB2,
-		 XmNheight,          30,
+		 XmNfontList, textFontList, // Set font 
+		 XmNheight,          (int)(30*sizeFactor),
 		 NULL);
   XmTextFieldSetString (AFBdia.nameT, AFBdia.AClass->sp);
 
@@ -413,7 +424,8 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		 XmNtopWidget,      sep,
 		 XmNleftAttachment,  XmATTACH_WIDGET,
 		 XmNleftWidget,      AFBdia.nameT,
-		 XmNheight,         30,
+		 XmNheight,         (int)(30*sizeFactor),
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
  AFBdia.classT = XmCreateTextField (form, "class", NULL, 0);
  XtVaSetValues (AFBdia.classT,
@@ -422,7 +434,8 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		XmNtopWidget,       sep,
 		XmNleftAttachment,  XmATTACH_WIDGET,
 		XmNleftWidget,      labelB3,
-		XmNheight,          30,
+		XmNheight,          (int)(30*sizeFactor),
+		XmNfontList, textFontList, // Set font 
 		NULL);
   XmTextFieldSetString (AFBdia.classT, AFBdia.AClass->sp);
 
@@ -433,7 +446,8 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		 XmNtopWidget,       sep,
 		 XmNleftAttachment,  XmATTACH_WIDGET,
 		 XmNleftWidget,      AFBdia.classT,
-		 XmNheight,          30,
+		 XmNheight,          (int)(30*sizeFactor),
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
  AFBdia.seqT = XmCreateTextField (form, "seq", NULL, 0);
  XtVaSetValues (AFBdia.seqT,
@@ -443,7 +457,8 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		XmNleftAttachment,  XmATTACH_WIDGET,
 		XmNleftWidget,      labelB4,
 		/*XmNrightAttachment, XmATTACH_FORM,*/
-		XmNheight,          30,
+		XmNheight,          (int)(30*sizeFactor),
+		XmNfontList, textFontList, // Set font 
 		NULL);
   sprintf (tstr, "%d", AFBdia.ASeq);
   XmTextFieldSetString (AFBdia.seqT, tstr);
@@ -456,6 +471,7 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
   XtVaSetValues (OpenButton,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment,  XmATTACH_FORM,
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
   XtAddCallback (OpenButton, XmNactivateCallback, AFBOpenButCB, NULL);
   AFBdia.Open = OpenButton;
@@ -466,6 +482,7 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment,   XmATTACH_WIDGET,
 		 XmNleftWidget,       OpenButton,
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
   XtAddCallback (CancelButton, XmNactivateCallback, AFBCancelButCB, NULL);
   AFBdia.Cancel = CancelButton;
@@ -476,6 +493,7 @@ AIPSFileBoxStuff* AIPSFileBox (Widget w, ImageData *image)
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment,   XmATTACH_WIDGET,
 		 XmNleftWidget,       CancelButton,
+		 XmNfontList, textFontList, // Set font 
 		 NULL);
   /*XtAddCallback (HelpButton, XmNactivateCallback,  HelpBoxTopicCB, 
     (XtPointer)"File/Open AIPS");*/

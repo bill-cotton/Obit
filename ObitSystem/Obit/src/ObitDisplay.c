@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2021                                          */
+/*;  Copyright (C) 2005-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -313,8 +313,8 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
       desc = (ObitImageDesc*)curImage->myIO->myDesc;
       Obit_retval_if_fail(((desc->inaxes[0]==window->naxis[ifield-1][0]) && 
 			   (desc->inaxes[1]==window->naxis[ifield-1][1])), err, out,
-			  "%s: Image and window incompatible [ %d, %d] [ %d, %d]",
-			  routine, desc->inaxes[0], desc->inaxes[1], 
+			  "%s: Image and window incompatible field %d [ %d, %d] [ %d, %d]",
+			  routine, ifield, desc->inaxes[0], desc->inaxes[1], 
 			  window->naxis[ifield-1][0], window->naxis[ifield-1][1]);
       
       /* User message */

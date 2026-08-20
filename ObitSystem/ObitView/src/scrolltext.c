@@ -2,7 +2,7 @@
 /* ScrollText routines for ObitView */
 /* Scrollable boxes displaying text */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2008
+*  Copyright (C) 1996,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -23,8 +23,10 @@
 #include <Xm/Form.h>
 #include <Xm/ScrolledW.h>
 #include <Xm/PushB.h>
+#include <Xm/Text.h>
 #include <X11/Intrinsic.h>
 #include "scrolltext.h"
+#include "obitview.h"
 #include "messagebox.h"
 
 /**
@@ -39,7 +41,7 @@
 
 /*---------------Private function prototypes----------------*/
 /* resize event */
-void STextResizeCB (Widget w, XtPointer clientData, XtPointer callData);
+void STextResizeCB(Widget w, XtPointer clientData, XEvent *event, Boolean *continue_to_dispatch);
 /* scrollbar changed */
 void STextScrollCB (Widget w, XtPointer clientData, XtPointer callData);
 /* Dismiss button hit */
@@ -59,12 +61,15 @@ void ScrollTextCopy (XPointer TFilePtr)
   
   /* make it */
   TFile = (TextFilePtr)TFilePtr;
+  //printf ("in ScrollTextCopy: before ScrollTextMake file %s\n", TFile->FileName); // debug
   STextPtr = ScrollTextMake (TFile->w, TFile->FileName);
   
   /* copy text */
+  //printf ("in ScrollTextCopy: before ScrollTextFill\n"); // debug
   rcode = 0;
   if (STextPtr) rcode = ScrollTextFill(STextPtr, TFile);
   
+  //printf ("in ScrollTextCopy: rcode %d\n",rcode); // debug
   /* Error Message */
   if (!rcode) MessageShow ("Error loading text file to scrolling window");
   
@@ -83,13 +88,9 @@ void ScrollTextCopy (XPointer TFilePtr)
 ScrollTextPtr ScrollTextMake (Widget Parent, char* Title)
 {
   ScrollTextPtr STextPtr;
-  int loop;
-  Dimension text_width, text_height, scrollbar_width, butt_height;
-  int it[5];
   Widget form, DismissButton;
-  XFontStruct *XFont;
-  int value, increment, slider_size,page_increment;
   
+  //printf ("in ScrollTextMake title %s\n", Title); // debug
   /* allocate */
   STextPtr = (ScrollTextPtr)g_malloc (sizeof(ScrollTextInfo));
   if (!STextPtr) return NULL;
@@ -101,113 +102,89 @@ ScrollTextPtr ScrollTextMake (Widget Parent, char* Title)
   STextPtr->first = 0;
   STextPtr->number = 0;
   STextPtr->max_lines = 0;
+  STextPtr->TextDraw_wid = (int)(SCROLLBOX_WIDTH*sizeFactor);
+  STextPtr->TextDraw_hei = (int)(SCROLLBOX_HEIGHT*sizeFactor);
   STextPtr->Title = (char*)g_malloc(strlen(Title)+1);
   strcpy (STextPtr->Title, Title);
-  for (loop=0; loop<MAX_LINE; loop++) STextPtr->lines[loop] = NULL;
-  
+
   /* create main widget */
-  STextPtr->ScrollBox = 
+  STextPtr->ScrollTop = 
     XtVaCreatePopupShell (STextPtr->Title,
 			  xmDialogShellWidgetClass, 
 			  STextPtr->Parent,
 			  XmNautoUnmanage, False,
-			  XmNwidth,  (Dimension)SCROLLBOX_WIDTH,
-			  XmNheight, (Dimension)SCROLLBOX_HEIGHT,
+			  XmNwidth,  (Dimension)STextPtr->TextDraw_wid,
+			  XmNheight, (Dimension)STextPtr->TextDraw_hei, 
 			  XmNdeleteResponse, XmDESTROY,
+			  XmNfontList,   textFontList, 
 			  NULL);
   
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("ScrollTextForm", xmFormWidgetClass,
-				  STextPtr->ScrollBox,
+				  STextPtr->ScrollTop,
 				  XmNautoUnmanage, False,
-				  XmNwidth,  (Dimension)SCROLLBOX_WIDTH,
-				  XmNheight, (Dimension)SCROLLBOX_HEIGHT,
+				  XmNwidth,  (Dimension)STextPtr->TextDraw_wid,
+				  XmNheight, (Dimension)STextPtr->TextDraw_hei, 
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList,   textFontList, 
 				  NULL);
+  XtAddEventHandler(form, StructureNotifyMask, False, STextResizeCB, (XtPointer)STextPtr);
+  //XtAddCallback (form, XmNhelpCallback, STextResizeCB, (XtPointer)STextPtr);
   
-  /* Play button */
+  /* dismiss button */
+  /* Create the Motif compound string for the label */
+  XmString dismiss_label = XmStringCreateLocalized("Dismiss");
+
   DismissButton = 
     XtVaCreateManagedWidget (" Dismiss ", 
 			     xmPushButtonWidgetClass, 
-			     form, 
+			     form,
+			     XmNlabelString,     dismiss_label,   /* Explicitly set the visible text */
 			     XmNbottomAttachment, XmATTACH_FORM,
 			     XmNrightAttachment, XmATTACH_FORM,
 			     XmNleftAttachment,  XmATTACH_FORM,
+			     XmNfontList,        textFontList, 
 			     NULL);
-  XtAddCallback (DismissButton, XmNactivateCallback, STextDismissButCB, 
-		 (XtPointer)STextPtr);
-  
-  /* drawing area */
-  scrollbar_width = 15;
-  text_width = SCROLLBOX_WIDTH - scrollbar_width;
-  XtVaGetValues (DismissButton, XmNheight, &it[0], NULL);
-  butt_height = (Dimension)it[0];
-  text_height = SCROLLBOX_HEIGHT - butt_height;
-  STextPtr->TextDraw_wid = text_width;
-  STextPtr->TextDraw_hei = text_height;
-  value = 1;
-  slider_size = 20;
-  increment = 1;
-  page_increment = 20;
-  /* plane scroll */
-  STextPtr->TextScrollBar = 
-    XtVaCreateManagedWidget ("TextScrollBar", 
-			     xmScrollBarWidgetClass, 
-			     form,
-			     XmNheight,       text_height,
-			     XmNwidth,        scrollbar_width,
-			     XmNmaximum,         200,
-			     XmNminimum,           1,
-			     XmNvalue,             1,
-			     XmNshowValue,       True,
-			     XmNorientation,   XmVERTICAL,
-			     XmNprocessingDirection, XmMAX_ON_BOTTOM,
-			     XmNrightAttachment,  XmATTACH_FORM,
-			     XmNtopAttachment, XmATTACH_FORM,
-			     XmNbottomAttachment,  XmATTACH_WIDGET,
-			     XmNbottomWidget,      DismissButton,
-			     NULL);
-  XmScrollBarSetValues (STextPtr->TextScrollBar, value, slider_size, 
-			increment, page_increment, False);
-  XtAddCallback(STextPtr->TextScrollBar, XmNvalueChangedCallback, 
-                STextScrollCB, (XtPointer)STextPtr);
-  STextPtr->max_scroll = 200; /* maximum scroll value */
-  
-  STextPtr->TextDraw = 
-    XtVaCreateManagedWidget ("textdraw", xmDrawingAreaWidgetClass, 
-			     form, 
-			     XmNwidth,           text_width,
-			     XmNheight,          text_height,
-			     XmNtopAttachment,   XmATTACH_FORM,
-			     XmNleftAttachment,  XmATTACH_FORM,
-			     XmNrightAttachment,  XmATTACH_WIDGET,
-			     XmNrightWidget,  STextPtr->TextScrollBar,
-			     XmNbottomAttachment,  XmATTACH_WIDGET,
-			     XmNbottomWidget,      DismissButton,
-			     NULL); 
-  /*   Add callbacks to handle exposures,resize.  */
-  XtAddCallback (STextPtr->TextDraw, XmNexposeCallback, STextExposeCB, 
-		 (XtPointer)STextPtr);
-  XtAddCallback (STextPtr->TextDraw, XmNresizeCallback, STextResizeCB,
-		 (XtPointer)STextPtr);
-  
-  /* set it up */
-  XtManageChild (STextPtr->ScrollBox);
-  
-  /* create graphics context for box */
-  STextPtr->gc = XCreateGC (XtDisplay (STextPtr->ScrollBox), 
-			    DefaultRootWindow (XtDisplay(STextPtr->ScrollBox)),
-			    0, NULL );
-  /* how tall are the characters */
-  XFont = XQueryFont(XtDisplay (STextPtr->ScrollBox), 
-		     XGContextFromGC(STextPtr->gc));
-  STextPtr->baseskip = XFont->ascent + XFont->descent + 2;
-  
-  /* figure out how many lines will fit */
-  STextPtr->max_lines = ((int)text_height) / STextPtr->baseskip;
-  
-  
+  XtAddCallback (DismissButton, XmNactivateCallback, STextDismissButCB, (XtPointer)STextPtr);
+  /* Always free the compound string immediately after the widget is created */
+  XmStringFree(dismiss_label);
+
+  STextPtr->num_lines = 31;
+  STextPtr->num_cols  = 77;
+  // suggested by google:  
+  Arg args[15];
+  int n = 0;
+  // Set resources for the underlying text widget
+  XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
+  XtSetArg(args[n], XmNrows,     STextPtr->num_lines); n++;
+  XtSetArg(args[n], XmNcolumns,  STextPtr->num_cols); n++;
+  XtSetArg(args[n], XmNfontList, textFontList); n++;     // set font
+
+  // Google suggests
+ // Attach the TOP of the text widget to the TOP of the form
+XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+XtSetArg(args[n], XmNtopOffset, 10); n++; // 10-pixel gap from top
+
+// Attach the LEFT of the text widget to the LEFT of the form
+XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+XtSetArg(args[n], XmNleftOffset, 10); n++; // 10-pixel gap from left
+
+// Attach the RIGHT of the text widget to the RIGHT of the form
+XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+XtSetArg(args[n], XmNrightOffset, 10); n++; // 10-pixel gap from right
+
+// Attach the Bottom of the text widget to the top  of the dismiss button
+XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+XtSetArg(args[n], XmNbottomWidget, DismissButton); n++;
+XtSetArg(args[n], XmNbottomOffset, 10); n++; // 10-pixel gap from right
+
+// 3. Create the text widget as a child of the form
+STextPtr->TextDraw = XmCreateScrolledText(form, "textDraw", args, n);
+// 4. Manage both widgets so they display
+XtManageChild(STextPtr->TextDraw);
+XtManageChild(form);
+
   return STextPtr; /* return structure */
 } /* end ScrollTextMake */
 
@@ -218,21 +195,16 @@ ScrollTextPtr ScrollTextMake (Widget Parent, char* Title)
  */
 int ScrollTextKill( ScrollTextPtr STextPtr)
 {
-  int loop;
-  
   if (!STextPtr) return 0; /* anybody home? */
   
   /* free up text strings */
-  for (loop=0; loop<MAX_LINE; loop++) 
-    {if (STextPtr->lines[loop]) {g_free (STextPtr->lines[loop]);
-    STextPtr->lines[loop]=NULL;}}
   if (STextPtr->Title) {g_free (STextPtr->Title);} STextPtr->Title=NULL;
   
-  /* release graphics context */
-  if (STextPtr->gc) XtReleaseGC (STextPtr->ScrollBox, STextPtr->gc);
-  
   /* kill da wabbit */
-  XtDestroyWidget (STextPtr->ScrollBox);
+  //XtDestroyWidget (STextPtr->ScrollBox);
+  XtDestroyWidget (STextPtr->TextDraw);
+  //STextPtr->ScrollBox = NULL;
+  STextPtr->TextDraw = NULL;
   if (STextPtr) {g_free(STextPtr);} STextPtr=NULL;/* done with this */
   
   return 1;
@@ -246,7 +218,7 @@ int ScrollTextKill( ScrollTextPtr STextPtr)
  */
 int ScrollTextFill (ScrollTextPtr STextPtr, TextFilePtr TFilePtr)
 {
-  int loop, rcode, ccode, HitEof, length, number, maxchar=MAXCHAR_LINE;
+  int loop, rcode, ccode, HitEof, maxchar=MAXCHAR_LINE;
   char line[MAXCHAR_LINE+1];
   
   if (!STextPtr) return 0; /* anybody home? */
@@ -254,20 +226,28 @@ int ScrollTextFill (ScrollTextPtr STextPtr, TextFilePtr TFilePtr)
   for (loop=0; loop<=MAXCHAR_LINE; loop++) line[loop] = 0; /* zero fill */
   
   rcode = TextFileOpen (TFilePtr, 1); /* open */
-  if (rcode!=1) return 0;
-  HitEof = 0; number = 0;
-  while (!HitEof && (number<MAX_LINE))
+
+ // following google suggestions
+ XmTextPosition last_pos = XmTextGetLastPosition(STextPtr->TextDraw);
+ if (rcode!=1) return 0;
+  HitEof = 0; 
+  while (!HitEof)
     {rcode = TextFileRead (TFilePtr, line, maxchar); /* next line */
     if (rcode==0) break;
     /* swallow line */
-    length = strlen (line);
-    STextPtr->lines[number] = (char*)g_malloc (length+1);
-    strcpy (STextPtr->lines[number], line);
+    // 2. Insert the new text at that position
+    XmTextInsert(STextPtr->TextDraw, last_pos, line);
+    last_pos = XmTextGetLastPosition(STextPtr->TextDraw);
+    XmTextInsert(STextPtr->TextDraw, last_pos, "\n");
+    last_pos = XmTextGetLastPosition(STextPtr->TextDraw);
     HitEof = rcode == -1; /* end of file */
-    number++;             /* count entries */
     } /* end of loop reading text file */
-  STextPtr->num_lines = number;
-  
+  // 3. Optional: Automatically scroll down to show the new text
+  XmTextShowPosition(STextPtr->TextDraw, last_pos);
+  // grumble XtManageChild(STextPtr->ScrollBox); // Show it
+  //XtManageChild(XtParent(STextPtr->ScrollBox)); // And its parent too
+  XtManageChild(XtParent(STextPtr->TextDraw)); // And its parent too
+
   ccode = TextFileClose (TFilePtr); /* close */
   if ((ccode!=1) || (rcode==0)) 
     {MessageShow ("Error closing Text/FITS file ");
@@ -285,8 +265,6 @@ void ScrollTextInit (ScrollTextPtr STextPtr)
 {
   Dimension cwid, chei;
   int it[5];
-  int number;
-  int value, increment, slider_size,page_increment;
   
   if (!STextPtr) return; /* anybody home? */
   
@@ -300,131 +278,18 @@ void ScrollTextInit (ScrollTextPtr STextPtr)
   STextPtr->TextDraw_hei = chei;
   STextPtr->TextDraw_wid = cwid;
   
-  /* number of lines shown*/
-  STextPtr->max_lines = (int)chei / STextPtr->baseskip;
-  STextPtr->number = STextPtr->max_lines;
-  
-  /* set up for the expose callback to draw */
-  STextPtr->first = 1;
-  STextPtr->number = STextPtr->max_lines;
-  if (STextPtr->number > STextPtr->num_lines) 
-    STextPtr->number = STextPtr->num_lines;
-  
-  /* need scroll bars? */
-  if (STextPtr->num_lines > STextPtr->max_lines)
-    /* set scroll bar */
-    {number = STextPtr->num_lines + 5;
-    if (number<2) number = 2;
-    STextPtr->max_scroll = number; /* maximum scroll value */
-    if (STextPtr->first>STextPtr->max_scroll) 
-      STextPtr->first = STextPtr->max_scroll;
-    slider_size = STextPtr->number; 
-    value = STextPtr->first;
-    if (value>number-slider_size) value = number-slider_size;
-    STextPtr->first = value;
-    increment = 1;
-    page_increment = STextPtr->max_lines-1; 
-    if (page_increment<1) page_increment = 1;
-    XtVaSetValues(STextPtr->TextScrollBar, 
-		  XmNsliderSize, slider_size,
-		  XmNminimum,           1,
-		  XmNmaximum,       number,
-		  NULL);
-    XmScrollBarSetValues (STextPtr->TextScrollBar, value, slider_size, 
-			  increment, page_increment, False);
-    XtMapWidget (STextPtr->TextScrollBar);}
-  else
-    XtUnmapWidget (STextPtr->TextScrollBar);
 } /* end ScrollTextInit */
 
 /**
- * Move scrolling box to the bottom.
+ * Move scrolling box to the bottom - not used but needed for link.
  * \param STextPtr  Scrolling text dialog 
  */
 void ScrollTextBottom (ScrollTextPtr STextPtr)
 {
-  Dimension slider_size, slider_max;
-  int it[5];
-  if (!STextPtr) return; /* anybody home? */
-
-  /* find slider size */
-  slider_size = 0; slider_max = 0;  
-  XtVaGetValues (STextPtr->TextScrollBar,
-		 XmNsliderSize, &it[0],
-		 XmNmaximum,    &it[2],
-		 NULL);
-  slider_size = (Dimension)it[0];
-  slider_max  = (Dimension)it[2];
-
- /* need scroll bars? */
-  if (STextPtr->num_lines > STextPtr->max_lines) {
-    XmScrollBarSetValues (STextPtr->TextScrollBar,
-			  slider_max-slider_size, 0, 0, 0, True);
-    
-    STextPtr->first = STextPtr->num_lines-STextPtr->max_lines+1;
-  }
+  return;
 } /* end ScrollTextBottom */
 
 /* internal functions */
-/**
- * Callback for expose event
- * \param w           widget activated
- * \param clientData  client data
- * \param callData    call data
- */
-void STextExposeCB (Widget w, XtPointer clientData, XtPointer callData)
-{
-  int loop, start, end, x, y, inc;
-  ScrollTextPtr STextPtr = (ScrollTextPtr)clientData;
-  Display *display;
-  Drawable draw;
-  GC       gc;
-  
-  if (!STextPtr) return; /* anybody home? */
-  display = XtDisplay(STextPtr->ScrollBox); /* local copies of variables */
-  draw = (Drawable)XtWindow(STextPtr->TextDraw);
-  gc = STextPtr->gc;
-  
-  /* blank it out first, draw in white on black background*/
-  XSetForeground (display, gc, 
-		  BlackPixelOfScreen(XtScreen(STextPtr->TextDraw)));
-  XFillRectangle (display, draw, 
-		  gc, 0, 0, STextPtr->TextDraw_wid, 
-		  STextPtr->TextDraw_hei); 
-  XSetForeground (display, gc, 
-		  WhitePixelOfScreen(XtScreen(STextPtr->TextDraw)));
-  
-  start = STextPtr->first-1;
-  end = start + STextPtr->number - 1;
-  if (end>=STextPtr->num_lines) end = STextPtr->num_lines - 1;
-  inc = STextPtr->baseskip;
-  x = 2; y = inc;
-  for (loop=start; loop<=end; loop++)
-    {XDrawString (display, draw, gc, x, y, STextPtr->lines[loop], 
-		  strlen(STextPtr->lines[loop]));
-    y += inc;
-    } /* end loop loadling rows */
-} /* end STextExposeCB */
-
-/**
- * Callback for scrollbar changed
- * \param w           widget activated
- * \param clientData  client data
- * \param callData    call data
- */
-void STextScrollCB (Widget w, XtPointer clientData, XtPointer callData)
-{
-  ScrollTextPtr STextPtr = (ScrollTextPtr)clientData;
-  XmScrollBarCallbackStruct *call_data = 
-    (XmScrollBarCallbackStruct *)callData;
-  
-  /* read value of scrollbar */
-  STextPtr->first = call_data->value; /* 0 rel */
-  
-  /* redraw */
-  STextExposeCB (w, clientData, callData);
-} /* end STextScrollCB */
-
 /**
  * Callback for Dismiss button hit
  * \param w           widget activated
@@ -436,27 +301,39 @@ void STextDismissButCB (Widget w, XtPointer clientData, XtPointer callData)
   ScrollTextPtr STextPtr = (ScrollTextPtr)clientData;
   if (!STextPtr) return; /* anybody home? */
   
-  /* call any DismissProc */
-  if (STextPtr->DismissProc) STextPtr->DismissProc(clientData);
+  // Permanently deletes the widget and frees memory
+  XtDestroyWidget(STextPtr->ScrollTop);
+  STextPtr->ScrollTop = NULL;
   
   ScrollTextKill (STextPtr);
 } /* end STextDismissButCB */
 
 /**
- * Callback for ScrollText resized
+ * Callback for expose event (unused but needed to link)
  * \param w           widget activated
  * \param clientData  client data
  * \param callData    call data
  */
-void STextResizeCB (Widget w, XtPointer clientData, XtPointer callData)
+void STextExposeCB (Widget w, XtPointer clientData, XtPointer callData)
+{
+  return;  // not needed
+} /* end STextExposeCB */
+
+/**
+ * Event handler for ScrollText resized
+ * \param w           widget activated
+ * \param clientData  client data
+ * \param callData    call data
+ */
+void STextResizeCB(Widget w, XtPointer clientData, XEvent *event, Boolean *continue_to_dispatch)
 {
   Dimension cwid, chei;
   int it[5];
-  int number;
-  int value, increment, slider_size,page_increment;
   ScrollTextPtr STextPtr = (ScrollTextPtr)clientData;
+
   if (!STextPtr) return; /* anybody home? */
-  
+
+  // Any change?
   /* find new size */
   XtVaGetValues (STextPtr->TextDraw, /* get new size */
 		 XmNwidth,  &it[0],
@@ -464,36 +341,69 @@ void STextResizeCB (Widget w, XtPointer clientData, XtPointer callData)
 		 NULL);
   cwid = (Dimension)it[0];
   chei = (Dimension)it[2];
+  //printf ("in STextResizeCB, size %d %d\n", (int)cwid, (int)chei); // debug
+  // not needed?if (((int)cwid==STextPtr->TextDraw_wid) && ((int)chei==STextPtr->TextDraw_hei)) return;
+
+  // From google
+  short new_columns, new_rows;
+  int font_height,  font_width;
+  XFontStruct *fontStruct = NULL;
+  XmFontContext context;
+  XmFontListEntry entry;
+  XmStringCharSet charset;
+  /* Ensure this is a geometry change event */
+  if (event->type == ConfigureNotify) {
+    XConfigureEvent *cevent = &event->xconfigure;
+    
+    /* 1. Extract your ScrolledText widget pointer passed via client_data */
+    //Widget scrolledText = STextPtr->ScrollBox;
+    Widget scrolledText = STextPtr->TextDraw;
+    
+    /* 2. Calculate new rows and columns based on pixel sizes */
+    /* Initialize the font list context to read the first entry */
+    XmFontListInitFontContext(&context, textFontList);
+    entry = XmFontListNextEntry(context);
+    
+    if (entry != NULL) {
+        /* Extract the raw X11 font structures from the entry */
+        XtPointer font_ptr = XmFontListEntryGetFont(entry, (XmFontType *)&charset);
+        fontStruct = (XFontStruct *)font_ptr;
+        
+        if (fontStruct != NULL) {
+            /* Compute exact character height from font baselines */
+            font_height = fontStruct->ascent + fontStruct->descent;
+            
+            /* Get character width (using average or '0' character width) */
+            font_width = fontStruct->max_bounds.width; 
+            
+            /* Use font_width and font_height for your calculations here */
+        }
+    }
+    XmFontListFreeFontContext(context);
+    
+    
+    /* Subtract padding/scrollbar allowances if needed */
+    new_columns = (short)(cevent->width / font_width);
+    new_rows = (short)(cevent->height / font_height);
+    new_rows -= 3;  // don't eat Dismiss button
+    
+    /* Enforce a safe minimum size to prevent crashes */
+    if (new_columns < 5)  new_columns = 5;
+    if (new_rows < 2)     new_rows = 2;
+    
+    /* 3. Apply the new dimensions using XtVaSetValues */
+    XtVaSetValues(scrolledText,
+		  XmNrows, new_rows,
+		  XmNcolumns, new_columns,
+		  NULL);
+  } else return; // end if reconfigure
+
+  // change - new size
   STextPtr->TextDraw_hei = chei;
   STextPtr->TextDraw_wid = cwid;
   
   /* new number of lines shown*/
-  STextPtr->max_lines = (int)chei / STextPtr->baseskip;
-  STextPtr->number = STextPtr->max_lines;
-  
-  /* need scroll bars? */
-  if (STextPtr->num_lines > STextPtr->max_lines)
-    /* reset Scroll Bar size, limits */
-    {number = STextPtr->num_lines + 5;
-    STextPtr->max_scroll = number; /* maximum scroll value */
-    if (STextPtr->first>STextPtr->max_scroll) 
-      STextPtr->first = STextPtr->max_scroll;
-    slider_size = STextPtr->number; 
-    value = STextPtr->first;
-    if (value>number-slider_size) value = number-slider_size;
-    STextPtr->first = value;
-    increment = 1;
-    page_increment = STextPtr->max_lines-1;
-    XtVaSetValues(STextPtr->TextScrollBar, XmNmaximum, number, NULL);
-    XmScrollBarSetValues (STextPtr->TextScrollBar, value, slider_size, 
-			  increment, page_increment, False);
-    
-    XtMapWidget (STextPtr->TextScrollBar);}
-  else
-    XtUnmapWidget (STextPtr->TextScrollBar);
-  
-  /* redraw */
-  STextExposeCB (w, clientData, callData);
+  STextPtr->num_lines = new_rows;
+  STextPtr->num_cols  = new_columns;
 } /* end STextResizeCB */
-
 

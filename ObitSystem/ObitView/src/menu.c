@@ -89,11 +89,13 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("File", xmCascadeButtonWidgetClass,
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'F',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   /* "Open FITS" */
   File_w[0] = XtVaCreateManagedWidget ("Open FITS", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'O',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (File_w[0], XmNactivateCallback, OpenCB, IDdata);
   
@@ -101,6 +103,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   File_w[1] = XtVaCreateManagedWidget ("Open AIPS", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'A',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (File_w[1], XmNactivateCallback, OpenACB, IDdata);
   
@@ -108,6 +111,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   File_w[2] = XtVaCreateManagedWidget ("Preview", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'P',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (File_w[2], XmNactivateCallback, PreviewCB, IDdata);
   
@@ -115,6 +119,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   File_w[3] = XtVaCreateManagedWidget ("Save As", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'S',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (File_w[3], XmNactivateCallback, SaveAsCB, IDdata);
   
@@ -122,12 +127,14 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   File_w[4] = XtVaCreateManagedWidget ("Source Info", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'I',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (File_w[4], XmNactivateCallback, InfoBoxCB, IDdata);
   /* "Position logging" */
   File_w[5] = XtVaCreateManagedWidget ("Start Position Logging", 
 				       xmPushButtonWidgetClass,
 				       pulldown,
+				       XmNfontList,textFontList,// Set font
 				       XmNmnemonic, 'L',
 				       NULL);
   XtAddCallback (File_w[5], XmNactivateCallback, LoggerCB, IDdata);
@@ -136,12 +143,14 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
 				       xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'L',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (File_w[6], XmNactivateCallback, SaveImWindowCB, IDdata);
   /* help */
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown,
 			       XmNmnemonic, 'H',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpBoxTopicCB, 
 		 (XtPointer)"File menu");
@@ -152,6 +161,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Quit", xmPushButtonWidgetClass,
 			       pulldown,
 			       XmNmnemonic, 'Q',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, QuitCB, IDdata);
   
@@ -160,14 +170,17 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Options", xmCascadeButtonWidgetClass,
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'O',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   w = XtVaCreateManagedWidget ("Set Options", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'S',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, OptionBoxCB, IDdata);
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown, 
+			       XmNfontList,textFontList,// Set font
 			       XmNmnemonic, 'H',
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpBoxTopicCB, 
@@ -178,52 +191,61 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Zoom", xmCascadeButtonWidgetClass,
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'Z',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   /* "Zoom 25%" */
   Zoom_w[0] = XtVaCreateManagedWidget ("25%", xmPushButtonWidgetClass,
 				       pulldown, 
 				       XmNmnemonic, '%',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (Zoom_w[0], XmNactivateCallback, Zoom25CB, IDdata);
   /* "Zoom 50%" */
   Zoom_w[1] = XtVaCreateManagedWidget ("50%", xmPushButtonWidgetClass,
 				       pulldown, 
 				       XmNmnemonic, '5',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (Zoom_w[1], XmNactivateCallback, Zoom50CB, IDdata);
   /* "Zoom 100%" */
   Zoom_w[2] = XtVaCreateManagedWidget ("100% <=", xmPushButtonWidgetClass,
 				       pulldown, 
 				       XmNmnemonic, '1',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (Zoom_w[2], XmNactivateCallback, Zoom100CB, IDdata);
   /* "Zoom 200%" */
   Zoom_w[3] = XtVaCreateManagedWidget ("200%", xmPushButtonWidgetClass,
 				       pulldown, 
 				       XmNmnemonic, '2',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (Zoom_w[3], XmNactivateCallback, Zoom200CB, IDdata);
   /* "Zoom 400%" */
   Zoom_w[4] = XtVaCreateManagedWidget ("400%", xmPushButtonWidgetClass,
 				       pulldown, 
 				       XmNmnemonic, '4',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (Zoom_w[4], XmNactivateCallback, Zoom400CB, IDdata);
   /* "Zoom 800%" */
   Zoom_w[5] = XtVaCreateManagedWidget ("800%", xmPushButtonWidgetClass,
 				       pulldown, 
 				       XmNmnemonic, '8',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (Zoom_w[5], XmNactivateCallback, Zoom800CB, IDdata);
   /* "Zoom 1600%" */
   Zoom_w[6] = XtVaCreateManagedWidget ("1600%", xmPushButtonWidgetClass,
 				       pulldown, 
 				       XmNmnemonic, '6',
+				       XmNfontList,textFontList,// Set font
 				       NULL);
   XtAddCallback (Zoom_w[6], XmNactivateCallback, Zoom1600CB, IDdata);
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'H',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpBoxTopicCB, 
 		 (XtPointer)"Zoom menu");
@@ -233,34 +255,40 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Position", xmCascadeButtonWidgetClass,
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'P',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   /* "Set Equinox" */
   w = XtVaCreateManagedWidget ("Set Equinox", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'S',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, SetEquCB, IDdata);
   /* "Mark Position" */
   w = XtVaCreateManagedWidget ("Mark Position", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'M',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, MarkPosCB, IDdata);
   /* "Lookup Position" */
   w = XtVaCreateManagedWidget ("Lookup Position", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'L',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, LookPosCB, IDdata);
   /* "Lookup Position" */
   w = XtVaCreateManagedWidget ("Fit Position", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'F',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, FitPosCB, IDdata);
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'H',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpBoxTopicCB, 
 		 (XtPointer)"Position menu");
@@ -270,21 +298,26 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Blink", xmCascadeButtonWidgetClass,
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'B',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   w = XtVaCreateManagedWidget ("Swap Blink and Current", 
 			       xmPushButtonWidgetClass,
 			       pulldown, 
+			       XmNfontList,textFontList,// Set font
 			       XmNmnemonic, 'S',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, BlinkSwapCB, IDdata);
   w = XtVaCreateManagedWidget ("Blink Images", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'B',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, BlinkBlinkCB, IDdata);
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'H',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpBoxTopicCB, 
 		 (XtPointer)"Blink menu");
@@ -295,15 +328,18 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Movie", xmCascadeButtonWidgetClass,
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'M',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   w = XtVaCreateManagedWidget ("Movie control", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'M',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, MovieBoxCB, IDdata);
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'H',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpBoxTopicCB, 
 		 (XtPointer)"Movie menu");
@@ -313,11 +349,13 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Colorize", xmCascadeButtonWidgetClass,
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'C',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   /* "Color Contour" */
   w = XtVaCreateManagedWidget ("Color Contour", xmPushButtonWidgetClass,
 			       pulldown,
 			       XmNmnemonic, 'L',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, ColContourCB, IDdata);
   
@@ -325,6 +363,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Pseudo Flame", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'P',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, PhlameCB, IDdata);
   
@@ -332,6 +371,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Grayscale", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'G',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, GrayscaleCB, IDdata);
   
@@ -339,6 +379,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Reverse colors", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'v',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, ReverseColCB, IDdata) ;
   
@@ -346,6 +387,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Reset Colors", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'R',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, ResetColCB, IDdata);
   
@@ -354,6 +396,7 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Clear Graphics", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'Z',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, ResetGphCB, IDdata);
   
@@ -361,12 +404,14 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Set Graphics Color", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'S',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, GphCSetCB, IDdata);
 
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'H',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpBoxTopicCB, 
 		 (XtPointer)"Colorize menu");
@@ -376,16 +421,18 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
   w = XtVaCreateManagedWidget ("Help", xmCascadeButtonWidgetClass,
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'H',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   w = XtVaCreateManagedWidget ("About ObitView", xmPushButtonWidgetClass,
 			       pulldown, 
-
 			       XmNmnemonic, 'A',
+			       XmNfontList,textFontList,// Set font
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpAboutCB, IDdata);
   w = XtVaCreateManagedWidget ("Help me", xmPushButtonWidgetClass,
 			       pulldown, 
 			       XmNmnemonic, 'H',
+			       XmNfontList, textFontList, // Set font 
 			       NULL);
   XtAddCallback (w, XmNactivateCallback, HelpBoxTopicCB, 
 		 (XtPointer)"How to use help");
@@ -560,6 +607,36 @@ void OpenCB (Widget w, XtPointer clientData, XtPointer callData)
   XtAddCallback (filebox, XmNcancelCallback, FileCancelCB, clientData);
   XtAddCallback (filebox, XmNhelpCallback, HelpBoxTopicCB, 
 		 (XtPointer)"Browser");
+  // Set font - one component at a time :"{
+  XtVaSetValues (filebox,  XmNfontList, textFontList, NULL);
+  Widget textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_TEXT);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_SELECTION);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_SELECTION_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_APPLY_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_HELP_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_OK_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_LIST_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_DIR_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_DIR_LIST_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_FILTER_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_FILTER_TEXT);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
   
   /* set directory if it is defined */
   if (FITS_dir) {

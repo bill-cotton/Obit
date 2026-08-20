@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Request (of client) boxes  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2022
+*  Copyright (C) 2005-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -20,11 +20,13 @@
 #include <Xm/PushB.h>
 #include <Xm/Label.h>
 #include <Xm/ToggleB.h>
+#include <Xm/ToggleBG.h>
 #include <Xm/RowColumn.h>
 #include <Xm/Separator.h>
 #include <Xm/MessageB.h>
 #include <Xm/TextF.h>
 #include <Xm/Text.h>
+#include "obitview.h"
 #include "imagedisp.h"
 #include "helpbox.h"
 #include "messagebox.h"
@@ -98,7 +100,7 @@ void ReadField (Widget w)
  */
 void EditRequestCB (Widget w,  XtPointer clientData, XtPointer callData)
 {
-  int which = (int)clientData;
+  int which = (int)clientData; /* This is OK */
   XmToggleButtonCallbackStruct *state = (XmToggleButtonCallbackStruct*)callData;
 
   /* Cancel any timeout */
@@ -159,7 +161,7 @@ static void ReqEditButCB (Widget w, XtPointer clientData, XtPointer callData)
   /* make box disappear but still exist */
   XtPopdown(RBdia.dialog);
   EditBox ();
-  
+
 } /* end ReqEditButCB */
 
 /**
@@ -243,7 +245,7 @@ void EditRequestBox ()
   gchar        valuestr[61];
   unsigned long interval;
 #define REQUESTBOX_WIDTH 130
-#define REQUESTBOX_HEIGHT 280
+#define REQUESTBOX_HEIGHT 220
   
   /* field info from global */
   RBdia.curField = image[CurImag].Field;
@@ -255,8 +257,8 @@ void EditRequestBox ()
     
   /* don't make another one */
   if (RequestBoxActive) {
-    if (XtIsRealized (RBdia.dialog))
-      XMapRaised (XtDisplay(RBdia.dialog), XtWindow(RBdia.dialog));
+    // go boom if (XtIsRealized (RBdia.dialog))
+    //  XMapRaised (XtDisplay(RBdia.dialog), XtWindow(RBdia.dialog));
     
     /* bring it back where we can see it */
     XtPopup(RBdia.dialog, XtGrabNonexclusive);
@@ -290,6 +292,7 @@ void EditRequestBox ()
     WierdString = XmStringCreateSimple (valuestr);
     XtVaSetValues(RBdia.fieldlabel,
 		  XmNlabelString,   WierdString,
+		  XmNfontList,   textFontList, 
 		  NULL);
     if (WierdString) {XmStringFree(WierdString);} WierdString = NULL;
   
@@ -316,89 +319,109 @@ void EditRequestBox ()
   RBdia.dialog = XtVaCreatePopupShell ("RequestBox", xmDialogShellWidgetClass, 
 				       Display_shell, 
 				       XmNautoUnmanage, False,
-				       XmNwidth,     REQUESTBOX_WIDTH,
-				       XmNheight,    REQUESTBOX_HEIGHT,
+				       XmNwidth,     (int)(REQUESTBOX_WIDTH*sizeFactor),
+				       XmNheight,    (int)(REQUESTBOX_HEIGHT*sizeFactor),
 				       XmNdeleteResponse, XmDESTROY,
+				       XmNfontList,   textFontList, 
 				       NULL);
   
   /* make Form widget to stick things on */
   form = XtVaCreateManagedWidget ("RequestForm", xmFormWidgetClass,
 				  RBdia.dialog,
 				  XmNautoUnmanage, False,
-				  XmNwidth,     REQUESTBOX_WIDTH,
-				  XmNheight,    REQUESTBOX_HEIGHT,
+				  XmNwidth,     (int)(REQUESTBOX_WIDTH*sizeFactor),
+				  XmNheight,    (int)(REQUESTBOX_HEIGHT*sizeFactor),
 				  XmNx,           0,
 				  XmNy,           0,
+				  XmNfontList,   textFontList, 
 				  NULL);
-  
+
   /* info label widgets */
   label1 = XtVaCreateManagedWidget ("Label1", xmLabelWidgetClass, 
 				    form, 
-				    XmNwidth,           REQUESTBOX_WIDTH,
+				    XmNwidth,    (int)(REQUESTBOX_WIDTH*sizeFactor),
 				    XmNlabelString,   label,
 				    XmNtopAttachment, XmATTACH_FORM,
 				    XmNleftAttachment,  XmATTACH_FORM,
+				    XmNfontList,   textFontList, 
 				    NULL);
   
   /* Request radio buttons - aint Motif wonderful? */
-  radio = 
-    XtVaCreateManagedWidget("RadioBox", xmRowColumnWidgetClass,
-			    form, 
-			    XmNorientation, XmVERTICAL,
-			    XmNradioBehavior, True,
-			    XmNradioAlwaysOne, True,
-			    XmNtopAttachment, XmATTACH_WIDGET,
-			    XmNtopWidget,     label1,
-			    XmNleftAttachment,  XmATTACH_FORM,
-			    NULL);
-
   
- RBdia.radioCont = 
-   XtVaCreateManagedWidget( "Continue",
-			    xmToggleButtonWidgetClass, radio,
-			    XmNset, True,
-			    NULL);
- XtAddCallback (RBdia.radioCont, XmNvalueChangedCallback, EditRequestCB, (XtPointer)0);
+  /* Labels */
+  XmString  cont  = XmStringCreateSimple ("Continue");
+  XmString  abort = XmStringCreateSimple ("Abort");
+  XmString  quit  = XmStringCreateSimple ("Quit Operation");
+  XmString  noTV  = XmStringCreateSimple ("Turn off TV");
+  XmString  view  = XmStringCreateSimple ("View Field:");
+  radio = XmVaCreateSimpleRadioBox(form, "Operation", 0, 
+				   (XtCallbackProc)EditRequestCB,
+				   XmNwidth,           (int)(REQUESTBOX_WIDTH*sizeFactor),
+				   XmNtopAttachment, XmATTACH_WIDGET,
+				   XmNtopWidget,     label1,
+				   XmNleftAttachment,  XmATTACH_FORM,
+				   XmVaRADIOBUTTON, cont,  NULL, NULL,NULL,
+				   XmVaRADIOBUTTON, abort, NULL, NULL,NULL,
+				   XmVaRADIOBUTTON, quit,  NULL, NULL,NULL,
+				   XmVaRADIOBUTTON, noTV,  NULL, NULL,NULL,
+				   XmVaRADIOBUTTON, view,  NULL, NULL,NULL,
+				   XmNfontList, textFontList, // Set font 
+				   NULL);
+  XtManageChild(radio);
+  // default is Continue
+   // set fonts on radio buttons with help from Mr. Google:
+  WidgetList children;
+  Cardinal numChildren;
+  int iii;
+  // 2. Fetch the automatically created children array from the container
+  XtVaGetValues(radio, 
+		XmNchildren, &children, 
+		XmNnumChildren, &numChildren, 
+		NULL);
+  // 3. Loop through and apply your fontList to each child button
+  for (iii = 0; iii < numChildren; iii++) {
+    // XmVaCreateSimpleRadioBox creates Gadgets by default
+    if (XtIsSubclass(children[iii], xmToggleButtonGadgetClass)) {
+      XtVaSetValues(children[iii], XmNfontList, textFontList, NULL);
+    }
+  }
+  /* "Continue" the default */
+  XtVaSetValues(children[0], XmNset, True, NULL);
 
- RBdia.radioAbort = 
-   XtVaCreateManagedWidget("Abort", xmToggleButtonWidgetClass, radio, NULL);
- XtAddCallback (RBdia.radioAbort, XmNvalueChangedCallback, EditRequestCB, (XtPointer)1);
- RBdia.abortCnt = 0; /* Button not hit yet */
+  // 4. Manage the container now that children are altered
+  XtManageChild(radio);
 
- RBdia.radioQuit = 
-  XtVaCreateManagedWidget("Quit operation", xmToggleButtonWidgetClass, radio, NULL);
- XtAddCallback (RBdia.radioQuit, XmNvalueChangedCallback, EditRequestCB, (XtPointer)2);
-
- RBdia.radioNoTv = 
-  XtVaCreateManagedWidget("Turn off TV", xmToggleButtonWidgetClass, radio, NULL);
- XtAddCallback (RBdia.radioNoTv, XmNvalueChangedCallback, EditRequestCB, (XtPointer)3);
-
- RBdia.radioView = 
-  XtVaCreateManagedWidget("View field:", xmToggleButtonWidgetClass, radio, NULL);
- XtAddCallback (RBdia.radioView, XmNvalueChangedCallback, EditRequestCB, (XtPointer)4);
+  /* Save pointers */
+  RBdia.radioCont  = children[0];
+  RBdia.radioAbort = children[1];
+  RBdia.radioQuit  = children[2];
+  RBdia.radioNoTv  = children[3];
+  RBdia.radioView  = children[4];
 
   /* requested field */
   g_snprintf (valuestr, 60, "Request field of %d", RBdia.nfield);
   Field = XmStringCreateSimple (valuestr);
   RBdia.fieldlabel = XtVaCreateManagedWidget ("FieldRequest", xmLabelWidgetClass,
-					    form,
-					    XmNwidth,           REQUESTBOX_WIDTH,
-					    XmNlabelString,   Field,
-					    XmNtopAttachment, XmATTACH_WIDGET,
-					    XmNtopWidget,     radio,
-					    XmNleftAttachment,  XmATTACH_FORM,
-					    NULL);
+					      form,
+					      XmNwidth,   (int)(REQUESTBOX_WIDTH*sizeFactor),
+					      XmNlabelString,   Field,
+					      XmNtopAttachment, XmATTACH_WIDGET,
+					      XmNtopWidget,     radio,
+					      XmNleftAttachment,  XmATTACH_FORM,
+					      XmNfontList,   textFontList,
+					      NULL);
   
   RBdia.Field = RBdia.curField;
   g_snprintf (valuestr, 60, "%d", RBdia.Field);
   RBdia.field = XtVaCreateManagedWidget ("Field", xmTextFieldWidgetClass,
-				       form, 
-				       XmNwidth,         REQUESTBOX_WIDTH,
-				       XmNvalue,         valuestr,
-				       XmNtopAttachment, XmATTACH_WIDGET,
-				       XmNtopWidget,     RBdia.fieldlabel,
-				       XmNleftAttachment,  XmATTACH_FORM,
-				       NULL);
+					 form, 
+					 XmNwidth,    (int)(REQUESTBOX_WIDTH*sizeFactor),
+					 XmNvalue,         valuestr,
+					 XmNtopAttachment, XmATTACH_WIDGET,
+					 XmNtopWidget,     RBdia.fieldlabel,
+					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList,   textFontList,
+					 NULL);
   
   /* separator */
   sep = XtVaCreateManagedWidget ("sep", xmSeparatorWidgetClass,
@@ -415,6 +438,7 @@ void EditRequestBox ()
 					XmNtopAttachment, XmATTACH_WIDGET,
 					XmNtopWidget,     sep,
 					XmNleftAttachment,  XmATTACH_FORM,
+					XmNfontList,   textFontList,
 					NULL);
   XtAddCallback (EditButton, XmNactivateCallback, ReqEditButCB, NULL);
   
@@ -425,6 +449,7 @@ void EditRequestBox ()
 					 XmNtopWidget,     RBdia.field,
 					 XmNleftAttachment, XmATTACH_WIDGET,
 					 XmNleftWidget,    EditButton,
+					 XmNfontList,   textFontList,
 					 NULL);
   XtAddCallback (ClearButton, XmNactivateCallback, ReqClearButCB, NULL);
   /* OK button */
@@ -432,6 +457,7 @@ void EditRequestBox ()
 				      form, 
 				      XmNbottomAttachment, XmATTACH_FORM,
 				      XmNleftAttachment,  XmATTACH_FORM,
+				      XmNfontList,   textFontList,
 				      NULL);
   XtAddCallback (OKbutton, XmNactivateCallback, ReqOKButCB, NULL);
   RBdia.OK = OKbutton;
@@ -442,6 +468,7 @@ void EditRequestBox ()
 					  XmNbottomAttachment, XmATTACH_FORM,
 					  XmNleftAttachment, XmATTACH_WIDGET,
 					  XmNleftWidget,     OKbutton,
+					  XmNfontList,   textFontList, 
 					  NULL);
   XtAddCallback (CancelButton, XmNactivateCallback, ReqCancelButCB, NULL);
   
@@ -451,6 +478,7 @@ void EditRequestBox ()
 					XmNbottomAttachment, XmATTACH_FORM,
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget,     CancelButton,
+					XmNfontList,   textFontList, 
 					NULL);
   XtAddCallback (HelpButton, XmNactivateCallback,  HelpBoxTopicCB, 
 		 (XtPointer)"Window Editing");

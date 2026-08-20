@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Toolbox panel functions for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998,2002-2022
+*  Copyright (C) 1998,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -24,6 +24,7 @@
 #include <Xm/Label.h>
 #include <Xm/ToggleB.h>
 /*#include <X11/xpm.h> */
+#include "obitview.h"
 #include "imagedisp.h"
 #include "menu.h"
 #include "infobox.h"
@@ -84,7 +85,7 @@ Widget MakeToolbox(Widget mainWindow, Widget topWidget, XtPointer data)
   /* make Form widget for toolbox - same width as the Control */
   toolbox = XtVaCreateManagedWidget ("toolbox", xmFormWidgetClass,
 				     mainWindow,
-				     XmNwidth,           CONTROLWIDTH,
+				     XmNwidth,           (int)(CONTROLWIDTH*sizeFactor),
 				     XmNheight,          200,
 				     XmNtopAttachment,  XmATTACH_WIDGET,
 				     XmNtopWidget,       topWidget,

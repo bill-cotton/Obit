@@ -182,10 +182,10 @@ olong EditBox (void)
  }
     
   /* Instructions to user */
-  MessageShow(" Begin editing boxes, click mode to specify");
+  MessageShow(" Begin editing boxes, right click to specify");
   MessageShow(" [Aa]: Toggle blc/trc center/radius");
   MessageShow(" [Bb]: Delete current box");
-  MessageShow(" [Cc]: Edit another box (click to specify)");
+  MessageShow(" [Cc]: Edit another box (right click to specify)");
   MessageShow(" [Dd]: Exit editing");
   MessageShow(" [Ee]: New rectangle ");
   MessageShow(" [Ff]: New Circle ");

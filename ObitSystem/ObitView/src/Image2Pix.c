@@ -1,7 +1,7 @@
 /* $Id$  */
 /* routines to load a FITS file to a ZPixmap for ObitView*/
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996-2022
+*  Copyright (C) 1996-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -29,6 +29,7 @@
 #include "ObitAIPS.h"
 #include "ObitAIPSDir.h"
 #include "ObitMem.h"
+#include "obitview.h"
 #include "imagedisp.h"
 #include "messagebox.h"
 #include "histo.h"
@@ -62,7 +63,7 @@ void* ReadImage (void *arg);
 /*---------------Public functions ----------------*/
 
 /**
- * Routine to convert an Obitimage to a pixel array with a color table.
+ * Routine to convert an Obit image to a pixel array with a color table.
  * Obit must have been initialized prior to this call
  * using ObitSystemStartup.  The first AIPS disk should be given
  * a dummy name which will be replaced here using data->AIPSDir.
@@ -299,17 +300,19 @@ void WorkingCursor(gboolean on, gboolean verbose)
 	dialog = XtVaCreatePopupShell ("Load Image", 
 				       xmDialogShellWidgetClass, 
 				       shell, 
-				       XmNwidth,     250,
-				       XmNheight,    100,
+				       XmNwidth,     (int)(250*sizeFactor),
+				       XmNheight,    (int)(100*sizeFactor),
 				       XmNdeleteResponse, XmDESTROY,
+				       XmNfontList, textFontList, // Set font 
 				       NULL);
 	/* make Form widget to stick things on */
 	form = XtVaCreateManagedWidget ("WorkingForm", xmFormWidgetClass,
 					dialog,
-					XmNwidth,     250,
-					XmNheight,    100,
+					XmNwidth,     (int)(250*sizeFactor),
+					XmNheight,    (int)(100*sizeFactor),
 					XmNx,           0,
 					XmNy,           0,
+					XmNfontList, textFontList, // Set font 
 					NULL);
 	
 	/* info label widgets */
@@ -321,6 +324,7 @@ void WorkingCursor(gboolean on, gboolean verbose)
 					 XmNtopAttachment,   XmATTACH_FORM,
 					 XmNrightAttachment, XmATTACH_FORM,
 					 XmNleftAttachment,  XmATTACH_FORM,
+					 XmNfontList, textFontList, // Set font 
 					 NULL);
 	if (str) {XmStringFree(str);} str = NULL;
 	
@@ -334,6 +338,7 @@ void WorkingCursor(gboolean on, gboolean verbose)
 				 XmNtopWidget,     line1,
 				 XmNrightAttachment, XmATTACH_FORM,
 				 XmNleftAttachment,  XmATTACH_FORM,
+				 XmNfontList, textFontList, // Set font 
 				 NULL);
 	if (str) {XmStringFree(str);} str = NULL;
 	
@@ -344,6 +349,7 @@ void WorkingCursor(gboolean on, gboolean verbose)
 						XmNbottomAttachment,XmATTACH_FORM,
 						XmNrightAttachment, XmATTACH_FORM,
 						XmNleftAttachment,  XmATTACH_FORM,
+						XmNfontList, textFontList, // Set font 
 						NULL);
 	XtAddCallback (CancelButton, XmNactivateCallback, 
 		       StopFITSLoadButCB,  NULL);

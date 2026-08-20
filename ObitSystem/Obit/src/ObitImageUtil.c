@@ -548,6 +548,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   gboolean doGPUGrid=FALSE, doCalSelect=FALSE, initGPU=TRUE, *chDone=NULL;
   ObitIOAccess access;
   union ObitInfoListEquiv InfoReal; 
+  gchar doStokes[5]="    ";
   gchar *routine = "ObitImageUtilMakeImage";
 
   /* error checks */
@@ -604,8 +605,11 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
       } /* end check device */
      gpumem[0]      = ObitGPUGridSetGPU (cuda_device[0]); /* initialize */
     }
-    if (err->prtLv>=2)
-      Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding with %d GPUs",num_GPU);
+    if (err->prtLv>=2) {
+      /* Tell what's happening */
+      ObitInfoListGetTest(inUV->info, "Stokes", &type, (gint32*)dim, &doStokes);
+      Obit_log_error(err, OBIT_InfoErr, "Gridding Stokes %swith %d GPUs",doStokes,num_GPU);
+    }
   } /* end using GPU */
 
   /* Need new gridding member? */
@@ -1055,7 +1059,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ObitUVGridClassInfo *gridClass;
   ObitImageClassInfo *imgClass;
   gboolean doGPUGrid=FALSE, doneBeam=FALSE;
-  union ObitInfoListEquiv InfoReal; 
+  union ObitInfoListEquiv InfoReal;
+  gchar doStokes[5]="    ";
   gchar *routine = "ObitImageUtilMakeImagePar";
 
   /* error checks */
@@ -1101,8 +1106,11 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       } /* end check device */
       gpumem[0]      = ObitGPUGridSetGPU (cuda_device[0]); /* initialize */
     }
-    if (err->prtLv>=2)
-      Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding  with %d GPUs",num_GPU);
+    if (err->prtLv>=2) {
+      /* Tell what's happening */
+      ObitInfoListGetTest(inUV->info, "Stokes", &type, (gint32*)dim, &doStokes);
+      Obit_log_error(err, OBIT_InfoErr, "Gridding Stokes %swith %d GPUs",doStokes,num_GPU);
+    }
   } /* end using GPU */
 
   /* Need new gridding member? */

@@ -1,7 +1,7 @@
 /* $Id$ */
 /* TextFile routines for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1999, 2002-2022
+*  Copyright (C) 1996,1999, 2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -26,7 +26,7 @@
 #include "messagebox.h" 
 #include "helpbox.h" 
 #include "obitview.h" 
-/* a bit of uglyness for saving directories */
+/* a bit of ugliness for saving directories */
 
 /* define file types */
 #define TEXTTYPE    1   /* Unix text file (LF only) */
@@ -110,12 +110,12 @@ void TextFileFind (int inout, TextFilePtr TFilePtr, TextFileProc OKfunc,
   XmString     wierdstring = NULL;
   Arg          wargs[5]; 
 
-/* save function pointesr */
+  /* save function pointers */
   TFilePtr->OKfunc = OKfunc;
   TFilePtr->CancelFunc = CancelFunc;
   TFilePtr->State = inout; /* input or output? */
 
-/* bring up selection box */
+  /* bring up selection box */
   filebox = (Widget) XmCreateFileSelectionDialog (TFilePtr->w, 
 						  "text_file", NULL, 0);
   XtAddCallback (filebox, XmNokCallback, TextFileOKCB, (XtPointer)TFilePtr);
@@ -124,7 +124,38 @@ void TextFileFind (int inout, TextFilePtr TFilePtr, TextFileProc OKfunc,
   XtAddCallback (filebox, XmNhelpCallback, HelpBoxTopicCB, 
 		   (XtPointer)"Browser");
 
-/* set directory if it is defined */
+  // Set font - one component at a time :"{
+  XtVaSetValues (filebox,  XmNfontList, textFontList, NULL);
+  Widget textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_TEXT);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_SELECTION);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_SELECTION_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_APPLY_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_CANCEL_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_HELP_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_OK_BUTTON);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_LIST_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_DIR_LIST);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_DIR_LIST_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_FILTER_LABEL);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+  textWidget = XmFileSelectionBoxGetChild(filebox, XmDIALOG_FILTER_TEXT);
+  XtVaSetValues(textWidget, XmNfontList, textFontList, NULL);
+
+  /* set directory if it is defined */
   if (TFilePtr->directory) {
     wierdstring = XmStringCreateSimple (TFilePtr->directory);
     XtSetArg (wargs[0], XmNdirectory, wierdstring);

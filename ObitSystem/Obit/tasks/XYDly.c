@@ -1102,8 +1102,8 @@ ObitTableSN* ObitUVXYDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  row->TimeI  = solInt;
 	  if (numPol>1) {
 	    if (snr[jif]>snrmin) {  
-	      row->Real2[jif]  =  cos(phase[jif]); row->Imag2[jif]   = -sin(phase[jif]); 
-	      row->Delay2[jif] = -delay[jif];      row->Weight2[jif] =  snr[jif]; 
+	      row->Real2[jif]  = cos(phase[jif]); row->Imag2[jif]   = -sin(phase[jif]); 
+	      row->Delay2[jif] = delay[jif];      row->Weight2[jif] =  snr[jif]; 
 	    } else {
 	      row->Real2[jif]  = 1.0; row->Imag2[jif]   = 0.0;
 	      row->Delay2[jif] = 0.0; row->Weight2[jif] = 1.0; 

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* about dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2022
+*  Copyright (C) 1998-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -18,7 +18,9 @@
 #include <stdio.h>
 #include "obitview.h"
 #include "scrolltext.h"
+#include <Xm/Text.h>
 #include <ObitVersion.h>
+#include "obitview.h"
 #include "imagedisp.h"
 
 /**
@@ -41,7 +43,6 @@ void HelpAboutCB (Widget w, XtPointer clientData, XtPointer callData)
   ScrollTextPtr STextPtr;
   /* make ScrollText */
   STextPtr = ScrollTextMake (Display_shell, "About ObitView");
-  
   /* copy text */
   if (STextPtr) HelpAbout(STextPtr, IDdata);
   /* final setup */
@@ -54,7 +55,7 @@ void HelpAboutCB (Widget w, XtPointer clientData, XtPointer callData)
  */
 void HelpAbout (ScrollTextPtr STextPtr, ImageDisplay* IDdata)  
 {
-  int loop, next, length;
+  int loop, next;
   char *ver = ObitVersion();
   char label[80], label2[80];
   g_snprintf (label,79,"ObitView %s Viewer for images in FITS or AIPS format", 
@@ -64,7 +65,7 @@ void HelpAbout (ScrollTextPtr STextPtr, ImageDisplay* IDdata)
   char *line[] = {
     "ObitView 1.3 Viewer for images in FITS or AIPS format ",
     "   ",
-    "Copyright NRAO/AUI 2005-2022 ",
+    "Copyright NRAO/AUI 2005-2026 ",
     " ",
     "   This software is distributed free of charge by NRAO. ",
     "The (USA) National Radio Astronomy Observatory (http://www.nrao.edu/) ",
@@ -87,16 +88,17 @@ void HelpAbout (ScrollTextPtr STextPtr, ImageDisplay* IDdata)
   line[1] = label2;  /* port info */
   loop = 0;
   next = STextPtr->num_lines;
+  XmTextPosition lastPosition;
   while (1) { /* loop till done */
     if (!strcmp (line[loop], "*** FINISHED ***")) break; /* Finished */
-    if (next>=MAX_LINE) break;
-    /* copy */
-    length = strlen(line[loop]);
-    STextPtr->lines[next] = (char*)g_malloc(length+1);
-    strcpy (STextPtr->lines[next], line[loop]);
+    /* copy - lifted from google */
+    lastPosition = XmTextGetLastPosition(STextPtr->TextDraw);
+    XmTextInsert(STextPtr->TextDraw, lastPosition,  line[loop]);
+    XmTextInsert(STextPtr->TextDraw, XmTextGetLastPosition(STextPtr->TextDraw), "\n");
     loop++; next++;
   } /* end loop loading info */
   STextPtr->num_lines = next; /* save number in ScrollText */
+  XFlush(XtDisplay(STextPtr->TextDraw));  // redraw
 } /* end HelpAbout */
 
 

@@ -3,7 +3,7 @@
 /* adopted from "Power programming Motif" by E. F. Johnson and
    K. Reichard, 1993, MIS Press, New York */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2022
+*  Copyright (C) 1998-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -29,6 +29,7 @@
 #include <X11/IntrinsicP.h>
 #include <glib.h>
 #include <stdio.h>
+#include "obitview.h"
 #include "helpbox.h"
 #include <ObitVersion.h>
 
@@ -125,27 +126,29 @@ Boolean HelpBoxCreate (Widget parent,
   XFreeFontInfo(NULL, XFont, 0);
   
   /* text ~80 char x 20 lines, topics ~25 char wide */
-  topicWid = 35*cwid;
-  textWid = 80*cwid;
-  textHei = 20*chei;
+  topicWid = (int)(35*cwid*sizeFactor);
+  textWid = (int)(80*cwid*sizeFactor);
+  textHei = (int)(20*chei*sizeFactor);
   
   if (gc) {XFreeGC(XtDisplay(parent), gc);} gc = NULL;
   
   n = 0;
   XtSetArg(args[n], XmNallowResize, True); n++;
   XtSetArg(args[n], XmNtitle, "FITSview Help"); n++;
+  XtSetArg(args[n], XmNfontList,textFontList); 
   help_dialog = XmCreateFormDialog(parent, "helpbox", args, n);
   
   /* create button area at bottom */
   /* Note: the stuff at the bottom needs to be put in first due to the
      adjustlast policy of the RowColumn widget */
-  dismiss = XtVaCreateManagedWidget("dismiss",
+  dismiss = XtVaCreateManagedWidget("Dismiss",
 				    xmPushButtonWidgetClass, help_dialog,
 				    /*XmNtopAttachment,   XmATTACH_WIDGET,
 				      XmNtopWidget,       sep,*/
 				    XmNleftAttachment,  XmATTACH_FORM,
 				    XmNrightAttachment,  XmATTACH_FORM,
 				    XmNbottomAttachment, XmATTACH_FORM,
+				    XmNfontList,textFontList,   // The custom font size
 				    NULL);
   XtAddCallback(dismiss, XmNactivateCallback, 
 		(XtCallbackProc)unmanage_helpdialogCB, (XtPointer)NULL);
@@ -162,6 +165,7 @@ Boolean HelpBoxCreate (Widget parent,
 			 XmNorientation, XmHORIZONTAL,
 			 XmNwidth, textWid+topicWid+20,
 			 XmNresizeHeight, True,
+			 XmNfontList,textFontList,   // The custom font size
 			 NULL);
   
   /* Create scrolled list of help topics */
@@ -173,6 +177,7 @@ Boolean HelpBoxCreate (Widget parent,
   XtSetArg(args[n], XmNwidth, topicWid); n++;
   XtSetArg(args[n], XmNresizeHeight, True); n++;
   XtSetArg(args[n], XmNeditable, False); n++;
+  XtSetArg(args[n], XmNfontList,textFontList); 
   help_topic = XmCreateScrolledList(row, "help_topic", args, n);
   XtAddCallback(help_topic, XmNsingleSelectionCallback,
 		topic_callback, topic_data);
@@ -180,7 +185,11 @@ Boolean HelpBoxCreate (Widget parent,
 		help_callback, help_topic_data);
   XtAddCallback(XtParent(help_topic), XmNhelpCallback,
 		help_callback, help_topic_data);
-  
+  // set fonts
+  XtVaSetValues(help_topic,
+		XmNfontList, textFontList,
+		NULL);
+
   /* Create text Widget to display help */
   n = 0;
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
@@ -193,6 +202,7 @@ Boolean HelpBoxCreate (Widget parent,
   XtSetArg(args[n], XmNwidth, textWid); n++;
   XtSetArg(args[n], XmNresizeHeight, True); n++;
   XtSetArg(args[n], XmNeditable, False); n++;
+  XtSetArg(args[n], XmNfontList,textFontList); n++;
   help_text = XmCreateScrolledText (row, "help_text", args, n);
   XtAddCallback(help_text, XmNhelpCallback,
 		help_callback, help_topic_data);
@@ -207,6 +217,7 @@ Boolean HelpBoxCreate (Widget parent,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_WIDGET,
 		 XmNbottomWidget,       sep,
+		 XmNfontList,     textFontList, 
 		 NULL);
   
   XtManageChild(help_topic);
@@ -306,7 +317,6 @@ void HelpBoxShowTopic( char* topic) {
   /* in case it's not already visible */
   if (!XtIsManaged(help_dialog)) XtManageChild(help_dialog);
   if (XtIsRealized (help_text)) XtMapWidget(help_text);
-  
   
   if (xmstring) {XmStringFree(xmstring);} xmstring = NULL;/* release structure */
 } /* end HelpBoxAddTopic */
@@ -508,6 +518,29 @@ void InitHelpText(void) {
     "was copied to the Blink image and the current setup for the second \n",
     "(current) (normal display) image before the blink began.  The 'Swap \n",
     "Blink and Current' item swaps the current and blink images. \n",
+    "*** FINISHED ***"} ; /* end of text */
+
+  /* Fonts */
+ static  char *font_text[] = {
+    "--------------------------- Setting Font --------------------------------- \n",
+    "  \n",
+    "  \n",
+    "   With high resolution displays, the default font can make the text \n",
+    "in ObitView hard to read. This can be remedied by suitable entries in \n",
+    "your ~/.Xresources file.  The font to use and a scaling factor for \n",
+    "widgets and text boxes can be specified as: \n",
+    "! ObitView \n",
+    "ObitView.textFont: -misc-fixed-medium-r-normal--20-*-*-*-c-*-* \n",
+    "ObitView.sizeFactor: 1.625 \n",
+    "  \n",
+    "The available fonts can be determined using the shell command: \n",
+    "% xlsfonts | grep fixed \n",
+    "It is recommended to use a 'fixed' (width) font. \n",
+    "A change in the scaling factor may be needed.\n",
+    "Once the ~/.Xresources file is modified (or created), it can be \n",
+    "applied using: \n",
+    "% xrdb -merge ~/.Xresources \n",
+    "   \n",
     "*** FINISHED ***"} ; /* end of text */   
   
   /* file menu */
@@ -1353,6 +1386,10 @@ void InitHelpText(void) {
   /* Browser  */
   topic_title[number_topics] = "Browser";
   topic_text[number_topics++] = browser_text;
+  
+  /* Font  */
+  topic_title[number_topics] = "Text Font";
+  topic_text[number_topics++] = font_text;
   
   /* file menu */
   topic_title[number_topics] = "File menu";

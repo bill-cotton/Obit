@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Display widget for images for ObitView allows zoom and scroll       */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2022
+*  Copyright (C) 1996,1997,1999,2002-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -380,7 +380,7 @@ void SetDisplay (ImageDisplay* IDdata)
 
   cwid = (Dimension)it[0];
   chei = (Dimension)it[2];
-  /*     cwid = cwid - CONTROLWIDTH;  leave room for control panel */
+  /*     cwid = cwid - (int)(CONTROLWIDTH*sizeFactor);  leave room for control panel */
   IDdata->disp_wid = cwid;
   IDdata->disp_hei = chei;
   
@@ -801,7 +801,7 @@ ImageDisplay* MakeDisplay (Widget parent, Widget shell)
 		 NULL);
   cwid = (Dimension)it[0];
   chei = (Dimension)it[2];
-  cwid = cwid - CONTROLWIDTH; /* leave room for control panel */
+  cwid = cwid - (int)(CONTROLWIDTH*sizeFactor); /* leave room for control panel */
   /*  chei = chei - 40; */
   
   IDdata->disp_wid = cwid;

@@ -40,7 +40,7 @@ dataClass     = band+"Band"           # AIPS class of raw uv data
 logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
 isUVTAB       = len('@DATAFILE@')>0   # Is input UVTAB format?
 doEdit        = isUVTAB               # Use Obit data flagging, needed for isUVTAB
-doRecal       = isUVTAB               # Do second pass at calibration?
+do2Pass       = isUVTAB               # Need 2 pass calibration/flagging?
 
 # Archive data parameters by input type
 if isUVTAB:
@@ -48,7 +48,7 @@ if isUVTAB:
    parms["DataFile"] = '@DATAFILE@' # Name of Raw Data uvtab FITS file
    parms["DCalFile"] = '@DCALFILE@' # Name of DelayCal Raw Data FITS uvtab file
    inUV = UV.newPFUV('Raw',parms["DataFile"], 0, True, err)
-elif (len('@DATAName@')>0) and (@DATADISK@>0):
+elif (len('@DATANAME@')>0) and (@DATADISK@>0):
    parms["DataDisk"] = @DATADISK@   # AIPS disk of Data
    parms["DCalDisk"] = @DCALDISK@   # AIPS disk of DelayCal data
    parms["DataName"] = '@DATANAME@' # AIPS name of Data
@@ -152,23 +152,23 @@ parms["Stokes"]  = "@STOKES@"    # Stokes to image
 parms["doMB"] = True # MeerKAT always wideband
 
 ################## The following might need fiddling #######################
-parms["doFD1"]       = doEdit       # Do initial frequency domain flagging
+parms["doFD1"]       = True         # Do initial frequency domain flagging
 parms["FD1widMW"]    = 55           # Width of the initial FD median window
 parms["FD1maxRes"]   = 10.0         # Clipping level in sigma
 parms["FD1TimeAvg"]  = 2.0          # time averaging in min. for initial FD flagging
 parms["FD1baseSel"]   = [0,0,0,0]   # Channels for baseline fit (start, end, increment, IF)
 
-parms["doMedn"]      = doEdit       # Median editing?
+parms["doMedn"]      = True         # Median editing?
 parms["mednSigma"]   = 10.0         # Median sigma clipping level
 parms["timeWind"]    = 2.0          # Median window width in min for median flagging
 parms["avgTime"]     = 10.0/60.     # Averaging time in min
 parms["avgFreq"]     = 1            # 1=>avg chAvg chans, 2=>avg all chan, 3=> avg chan and IFs
 if isUVTAB:
-   parms["chAvg"]       = 2         # number of channels to average
+   parms["chAvg"]       = 2            # number of channels to average
 else:
-   parms["chAvg"]       = 1         # No averaging if APS Directory input
+   parms["chAvg"]       = 1            # No averaging if AIPS Directory input
 
-parms["doRMSAvg"]    = doEdit       # Edit calibrators by RMSAvg?
+parms["doRMSAvg"]    = True         # Edit calibrators by RMSAvg?
 parms["RMSAvg"]      = 5.0          # AutoFlag Max RMS/Avg for time domain RMS filtering
 parms["RMSTimeAvg"]  = 1.0          # AutoFlag time averaging in min.
 
@@ -205,12 +205,21 @@ parms["doBPCal"]       = T        # Determine Bandpass calibration
 parms["doAmpPhaseCal"] = T        # Amplitude/phase calibration
 parms["doAutoFlag"]    = doEdit   # Autoflag editing after final calibration?
 parms["doClipCals"]    = doEdit   # Autoflag Clipping on Calibrators
-parms["doRecal"]       = doRecal  # Redo calibration after editing
-parms["doNDCal2"]      = doRecal  # 2nd  Noise Diode calibration?  Only for doPol
-parms["doDelayCal2"]   = doRecal  # Group Delay calibration of averaged data?, 2nd pass
-parms["doBPCal2"]      = doRecal  # Determine Bandpass calibration, 2nd pass
-parms["doAmpPhaseCal2"]= doRecal  # Amplitude/phase calibration, 2nd pass
-parms["doAutoFlag2"]   = doEdit   # Autoflag editing after final calibration?
+# Is second pass of calibration/editing needed?
+if do2Pass:
+   parms["doRecal"]       = T        # Redo calibration after editing
+   parms["doNDCal2"]      = T        # 2nd  Noise Diode calibration?  Only for doPol
+   parms["doDelayCal2"]   = T        # Group Delay calibration of averaged data?, 2nd pass
+   parms["doBPCal2"]      = T        # Determine Bandpass calibration, 2nd pass
+   parms["doAmpPhaseCal2"]= T        # Amplitude/phase calibration, 2nd pass
+   parms["doAutoFlag2"]   = doEdit   # Autoflag editing after final calibration?
+else:
+   parms["doRecal"]       = F        # Redo calibration after editing
+   parms["doNDCal2"]      = F        # 2nd  Noise Diode calibration?  Only for doPol
+   parms["doDelayCal2"]   = F        # Group Delay calibration of averaged data?, 2nd pass
+   parms["doBPCal2"]      = F        # Determine Bandpass calibration, 2nd pass
+   parms["doAmpPhaseCal2"]= F        # Amplitude/phase calibration, 2nd pass
+   parms["doAutoFlag2"]   = F        # Autoflag editing after final calibration?
 if isUVTAB:
    parms["doCalAvg"]   = "BL"     # Calibrate and baseline dependent average data
                                   # "BL"=> bl dependent, "Splat"=> no time averaging.
