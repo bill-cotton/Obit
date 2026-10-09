@@ -3,12 +3,13 @@
 #exec(open('PipePlots.py').read())
 MKPlotXYBPTab=None; MKPlotBPTab=None; MKPlotPDTab=None;  VisPlot=None;
 PlotSNTab=None; PlotSNDlyTab=None; isCirc=None
+PlotXYPhCor=None
 
 import UV, Image, OErr, RMFit, OSystem, Table, ObitTask
 import ImageDesc, FArray, OPlot
 from OTObit import setname, addParam
 import math
-from math import isnan, degrees, radians, atan2, cos, sin
+from math import isnan, degrees, radians, atan2, cos, sin, pi
 from UVPolnUtil import GetFreqArr
 from PipeUtil import ProjMetadata
 from PipeUtil import printMess
@@ -487,6 +488,8 @@ def VisPlot(uv, label, plotfile, err, selAnt=1, XPol=False,
                     continue
                 timeStr = day2dhms(rparm[idd['iloct']])[0:12]
                 vis= np.frombuffer(buff,offset=nrparm*4,dtype=np.float32)
+                if len(vis)<=0: # Sanity check
+                    continue
                 if (XPol):  # Cross hand?
                     P_Real=vis[6::lrec]; P_Imag=vis[7::lrec];  P_Wt=vis[8::lrec]
                     Q_Real=vis[9::lrec]; Q_Imag=vis[10::lrec]; Q_Wt=vis[11::lrec]
@@ -500,9 +503,18 @@ def VisPlot(uv, label, plotfile, err, selAnt=1, XPol=False,
                 re = np.where(P_Wt<=0.0,np.nan, P_Real)
                 im = np.where(P_Wt<=0.0,np.nan, P_Imag)
                 amp = (re*re+im*im)**0.5; phs = np.degrees(np.arctan2(im,re))
+                # Phase max/min
+                phsmax = np.nanmax(phs); phsmin = np.nanmin(phs); 
+                if phsmax-phsmin>180.:  # Wraps at 180
+                    phs[phs<0.0] += 360. # add 360 where negative
+                    #for ii in range(1,len(phs)): # Range 0-360
+                    #    if phs[ii]<0.:
+                    #        phs[ii] += 360.
                 fig, ax = plt.subplots(nrows=2*nstok,sharex='col')
                 ax[0].scatter(f, amp, marker="+")
                 ax[1].scatter(f, phs, marker="+")
+                if max(a1,a2)>=len(meta['anNames']):  # Sanity check
+                    continue
                 ax[0].set_title(label+" bl "+str(a1)+"-"+str(a2)+\
                                 " ("+meta['anNames'][a1-1]+"-"+meta['anNames'][a2-1]+") "+
                                 timeStr)
@@ -513,6 +525,13 @@ def VisPlot(uv, label, plotfile, err, selAnt=1, XPol=False,
                     re = np.where(Q_Wt<=0.0,np.nan, Q_Real)
                     im = np.where(Q_Wt<=0.0,np.nan, Q_Imag)
                     amp = (re*re+im*im)**0.5; phs = np.degrees(np.arctan2(im,re))
+                    # Phase max/min
+                    phsmax = np.nanmax(phs); phsmin = np.nanmin(phs); 
+                    if phsmax-phsmin>180.:  # Wraps at 180
+                        phs[phs<0.0] += 360. # add 360 where negative
+                        #for ii in range(1,len(phs)): # Range 0-360
+                        #    if phs[ii]<0.:
+                        #        phs[ii] += 360.
                     ax[2].scatter(f, amp, marker="+")
                     ax[3].scatter(f, phs, marker="+")
                     ax[2].set_ylabel(Q+" Amp (Jy)")
@@ -773,6 +792,71 @@ def PlotSNDlyTab(uv, SNVer, plotfile, err,
         return False
 # end PlotSNDlyTab
 
+del PlotXYPhCor
+def PlotXYPhCor(uv, label, plotfile, err, SNVer=1, Ant=1):
+    """
+    * Plot XY Delay/Phase correction spectrum
+    # Expands the piecewise in the SN table to a spectrum
+    * Only matplotlib supported
+    * uv       = UV data object to plot
+    * label    = string to label plot titles
+    * PlotFile = root of plot file, ".pdf" added
+    * err      = Obit error/message stack
+    * SNVer    = AIPS SN table to use (from XYDly)
+    * Ant      = Antenna number, they should all be the same, 1 rel
+    * Returns True if successful, else failed
+    """
+    ################################################################
+    # Get IF frequencies
+    d=uv.Desc.Dict; nif = d['inaxes'][d['jlocif']]; nchan=d['inaxes'][d['jlocf']];
+    refFreq = d['crval'][d['jlocf']];  # Reference frequency
+    delFreq = d['cdelt'][d['jlocf']];  # Channel width
+    rpixFreq = d['crpix'][d['jlocf']]; # Freq ref. pixel
+    
+    fqtab=uv.NewTable(Table.READONLY, "AIPS FQ", 1,err)
+    fqtab.Open(Table.READONLY, err)
+    fqrow=fqtab.ReadRow(1,err)
+    IFOff=fqrow['IF FREQ']  # Offset per IF
+    IFChw=fqrow['CH WIDTH'] # Channel width per IF
+    
+    # Delay solutions should be the same for all antennas
+    sntab=uv.NewTable(Table.READONLY, "AIPS SN", SNVer, err)
+    sntab.Open(Table.READONLY, err)
+    snrow=sntab.ReadRow(Ant,err)
+    SNDly2 = snrow['DELAY 2'] # Y delay per IF
+    SNRe2  = snrow['REAL2']   # Y real per IF
+    SNIm2  = snrow['IMAG2']   # Y imaginary per IF
+    
+    # XY (HV) spectrum (degrees)
+    # Only nonzero values in Y
+    HVSpec=[]; Freq=[]
+    for iif in range(0,nif):
+        if SNDly2[iif]!=0.0:
+            for ichan in range(0,nchan):
+                yph=degrees(atan2(SNIm2[iif],SNRe2[iif])+ichan*2*pi*SNDly2[iif]*IFChw[iif])
+                HVSpec.append(-yph)
+                Freq.append(1.0e-6*(refFreq+IFOff[iif]+ichan*IFChw[iif])) # MHz
+                
+    # End loops
+    fqtab.Close(err); sntab.Close(err)
+    try:
+        import matplotlib
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        ax.set_title("HV phase corr "+label)
+        ax.set_xlabel("Freq (MHz)"); 
+        ax.set_ylabel("X-Y phase (deg)"); 
+        ax.scatter(Freq,HVSpec,marker="+")
+        # ax.scatter(Freq,HVSpec,marker="+",c="blue")
+        matplotlib.pyplot.savefig(plotfile+".pdf")
+        return True
+    except Exception as exception:
+        print(exception)
+        OErr.printErrMsg(err, "Error plotting XY Phase corr.")
+        OErr.PClear(err)     # Clear any message/error
+        return False         # Indicate failure
+# end PlotXYPhCor
+
 del isCirc
 def isCirc(uv):
     """
@@ -783,3 +867,4 @@ def isCirc(uv):
     ################################################################
     return uv.Desc.Dict['crval'][uv.Desc.Dict['jlocs']]>-4
 # end isCirc
+

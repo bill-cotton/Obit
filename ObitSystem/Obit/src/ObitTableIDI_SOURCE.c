@@ -439,7 +439,7 @@ ObitTableIDI_SOURCE* newObitTableIDI_SOURCEValue (gchar* name, ObitData *file, o
   optional = TRUE;
   if ((8 > 0) || (!optional)) {
     desc->FieldName[colNo] = g_strdup("EQUINOX  ");
-    desc->FieldUnit[colNo] = g_strdup("");
+    desc->FieldUnit[colNo] = g_strdup("YEAR");
     desc->type[colNo] = OBIT_string;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
     desc->dim[colNo][0] = 8;
@@ -448,7 +448,7 @@ ObitTableIDI_SOURCE* newObitTableIDI_SOURCEValue (gchar* name, ObitData *file, o
   optional = TRUE;
   if ((8 > 0) || (!optional)) {
     desc->FieldName[colNo] = g_strdup("EPOCH   ");
-    desc->FieldUnit[colNo] = g_strdup("");
+    desc->FieldUnit[colNo] = g_strdup("YEAR");
     desc->type[colNo] = OBIT_string;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
     desc->dim[colNo][0] = 8;
@@ -513,11 +513,6 @@ ObitTableIDI_SOURCE* newObitTableIDI_SOURCEValue (gchar* name, ObitData *file, o
   desc->FieldName[colNo] = g_strdup("PARALLAX");
   desc->FieldUnit[colNo] = g_strdup("ARCSEC");
   desc->type[colNo] = OBIT_float;
-  for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-  colNo++;
-  desc->FieldName[colNo] = g_strdup("EPOCH");
-  desc->FieldUnit[colNo] = g_strdup("YEAR");
-  desc->type[colNo] = OBIT_double;
   for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
   colNo++;
   /* Add _status column at end */
@@ -1389,7 +1384,9 @@ static void ObitTableIDI_SOURCEUpdate (ObitTableIDI_SOURCE *in, ObitErr *err)
       if (!strncmp (desc->FieldName[i], "EPOCH   ", 8)) {
 	 in->VLBAEquinoxOff = desc->offset[i];
  	 in->VLBAEquinoxCol = i;
-      }
+ 	 in->EpochOff = desc->offset[i];
+ 	 in->EpochCol = i;
+     }
       if (!strncmp (desc->FieldName[i], "RAAPP   ", 8)) {
 	 in->RAAppOff = desc->offset[i];
  	 in->RAAppCol = i;
@@ -1425,10 +1422,6 @@ static void ObitTableIDI_SOURCEUpdate (ObitTableIDI_SOURCE *in, ObitErr *err)
       if (!strncmp (desc->FieldName[i], "PARALLAX", 8)) {
 	 in->parallaxOff = desc->offset[i];
  	 in->parallaxCol = i;
-      }
-      if (!strncmp (desc->FieldName[i], "EPOCH", 5)) {
-	 in->EpochOff = desc->offset[i];
- 	 in->EpochCol = i;
       }
      }
   }

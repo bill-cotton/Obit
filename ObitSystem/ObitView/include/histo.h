@@ -3,7 +3,7 @@
 /*  Histogram equalization is an attempt to have equal numbers of pixels
     in each of the allowed color index states */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2020
+*  Copyright (C) 1998-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -21,7 +21,7 @@
 #include "ObitFArray.h" 
 #ifndef HISTO_H
 #define HISTO_H 
-#define MAXCOLOR 128     /* number of colors in display 
+#define MAXCOLOR 256     /* number of colors in display 
 			  also defined in obitview.h */
 /* get plane max and min pixel values
    pixels = array for which to find extrema
@@ -34,9 +34,10 @@ olong get_extrema (ObitFArray *pixels, ofloat *max, ofloat *min);
    pixels = array for which to find extrema
    max (returned) = maximum pixel value.
    min (returned) = minimum pixel value
+   asinh_a (returned) = asinh  Stretch factor
    Returns 0 if worked else failed */
 olong get_range (ObitFArray *pixels, olong mapFunc,
-		ofloat *max, ofloat *min);
+		 ofloat *max, ofloat *min, ofloat *asinh_a);
 
 /* compute histogram equalization mapping function, this must be called
    before map_pixel;  after the image is opened (LoadFImage) and before

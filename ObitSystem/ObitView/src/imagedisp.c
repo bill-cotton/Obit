@@ -67,7 +67,7 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
   olong yaddr, addr=0, yaddr2, addr2, nxin, nxout, xMin, xMax, yMin, yMax, ival;
   XImage *work;
   unsigned long cval;
-  gchar *pixarray, *gpharray, *work_data;
+  guchar *pixarray, *gpharray, *work_data;
   
   /*  debug */
   /*
@@ -96,12 +96,12 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
   /* Lock */
   ObitThreadLock (image[CurImag].thread);
   
- pixarray = image[CurImag].pixarray;
+  pixarray = image[CurImag].pixarray;
   gpharray = image[CurImag].gpharray;
   nxin = image[CurImag].nxArray;
   work = IDdata->work;
   nxout = work->bytes_per_line;
-  work_data = work->data;
+  work_data = (guchar*)work->data;
   /* set increment, multiples in pixel array */
   if (IDdata->zoom>=1) /* no zoom or zoom in */
     { xinc = 1;
@@ -215,7 +215,7 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
   olong yaddr, addr, nxin, xMin, xMax, yMin, yMax, ival;
   unsigned long cval;
   XImage *work;
-  gchar *pixarray, *gpharray;
+  guchar *pixarray, *gpharray;
   
   /*  debug */
   /*  Dimension cwid,chei;
@@ -294,7 +294,8 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
 	  /* Graphics or image? */
 	  if ((*(gpharray + addr))>0) 
 	    ival = (*(gpharray + addr)) + IDdata->ncolors-1;  /* graph */
-	  else ival = *(pixarray + addr);                     /* Image */
+	  else ival = *(pixarray + addr);
+	  /* Image */
 	  cval = IDdata->coltab[ival];
 	  for (i=0; i<xrep; i++)
 	    {iix++;

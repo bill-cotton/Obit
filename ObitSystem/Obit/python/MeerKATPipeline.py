@@ -715,7 +715,15 @@ if parms["doXYDelay"] and uvc:
                         check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError("Error in X-Y delay calibration")
-    
+    # Plot XY Phase corrections table?
+    if parms["doPDPlot"]:
+        plotFile = fileRoot+"_XYPhaseCor"
+        # Refresh header
+        uvc = UV.newPAUV("AIPS UV DATA", data_name, avgClass[0:6], data_disk,  data_seq, True, err)
+        retCode=PipePlots.PlotXYPhCor(uvc, fileRoot, plotFile, SNVer=2)
+        # Tolerate failure
+        OErr.PClear(err)     # Clear any message/error
+   
 
 if parms["doSaveTab"]:
     filename = project+".CalTab.uvtab"

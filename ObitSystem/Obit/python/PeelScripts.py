@@ -3,7 +3,7 @@ Routines for peeling a source at a specified position
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2017-2021
+#  Copyright (C) 2017-2026
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ def SelectCC(im, inCC, outCC, radius, peelPos, err):
         dx = row['DELTAX'][0]; dy = row['DELTAY'][0]; 
         [ierr,xpos,ypos] = SkyGeom.PWorldPosLM(dx, dy, xref, yref, xinc, yinc, rot, imtype)
         # Small angle approximation
-        dra = (xpos-peelPos[0])*cos(radians(xpos))
+        dra = (xpos-peelPos[0])*cos(radians(ypos))
         delta = ((dra)**2+(ypos-peelPos[1])**2)**0.5
         if delta>radius:
             outTab.WriteRow(orow, row, err); orow += 1
@@ -167,7 +167,7 @@ def inSelectCC(im, inCC, outCC, radius, peelPos, err):
         dx = row['DELTAX'][0]; dy = row['DELTAY'][0]; 
         [ierr,xpos,ypos] = SkyGeom.PWorldPosLM(dx, dy, xref, yref, xinc, yinc, rot, imtype)
         # Small angle approximation
-        dra = (xpos-peelPos[0])*cos(radians(xpos))
+        dra = (xpos-peelPos[0])*cos(radians(ypos))
         delta = ((dra)**2+(ypos-peelPos[1])**2)**0.5
         if delta<=radius:
             outTab.WriteRow(orow, row, err); orow += 1

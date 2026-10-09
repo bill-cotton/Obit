@@ -830,6 +830,12 @@ def FArrayRandom(mean, sigma):
 def FArrayRandomFill(in1, mean, sigma):
     return _Obit.FArrayRandomFill(in1, mean, sigma)
 
+def FArrayRectFill(in1, win, value):
+    return _Obit.FArrayRectFill(in1, win, value)
+
+def FArrayRoundFill(in1, win, value):
+    return _Obit.FArrayRoundFill(in1, win, value)
+
 def FArrayGetList(_in):
     return _Obit.FArrayGetList(_in)
 

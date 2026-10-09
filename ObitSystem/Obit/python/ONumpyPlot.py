@@ -169,7 +169,8 @@ try:
             def PPlotImage (inImage, plotfile, err, \
                             color='gray', title=None, scale=1.0, vmin=None, vmax=None, \
                             blc=[1,1,1,1], trc=[0,0,0,0], doColorBar=False, doAsinh=False, \
-                            barLocation='right', barLabel='Jy/beam', dpi=100, fontsize=10):
+                            knee=None, barLocation='right', barLabel='Jy/beam', \
+                            dpi=100, fontsize=10):
                 """
                 Plot an image in a pdf file
                 
@@ -188,6 +189,8 @@ try:
                 * trc       = Top right corner pixel (1-rel), 0=> all
                 * doColorBar= Show colorbar?
                 * doAsinh   = Use Asinh (nonlinear) stretch?
+                * knee      = Asinh transition from linear to logarithmic
+                              default 10% of the way from the minimum to maximum.
                 * barLocation = location of color bar "top", "right","lerft","bottom"
                 * barLabel  = label for colorbar
                 * dpi       = Output resolution in dots per inch
@@ -213,6 +216,9 @@ try:
                 if not vmax:
                     pos = [0,0]
                     vvmax = FArray.PMax(ff,pos)
+                # default knee for asinh
+                if knee==None:
+                    knee = vvmin + 0.10*(vvmax-vvmin)
                 # Clip data
                 FArray.PInClip(ff, -1.0e10, vvmin, vvmin)
                 FArray.PInClip(ff, vvmax, 1.0e10, vvmax)
@@ -226,24 +232,39 @@ try:
                 fig = plt.figure(figsize=[xsize,ysize])
                 ax = fig.add_subplot(111, projection=wcs)
                 cblabel = barLabel
-                if doAsinh:
-                    # Create asinh normalization
-                    norm = ImageNormalize(ss, stretch=AsinhStretch(a=0.1))
-                    im=ax.imshow(ss, norm=norm,cmap=color,origin='lower')
-                else:
-                    im=ax.imshow(ss, cmap=color,origin='lower',vmin=vvmin,vmax=vvmax)
                 labx = d['ctype'][0][0:4].replace('-','')+" (J2000)";
                 laby = d['ctype'][1][0:4].replace('-','')+" (J2000)";
                 z=plt.xlabel(labx); z=plt.ylabel(laby); z=plt.title(ttitle);
-                if doColorBar:
-                    z=plt.colorbar(im,label=cblabel,shrink=0.8,location=barLocation)
+                if doAsinh:
+                    # Create asinh version
+                    linear_width = knee/vvmax
+                    stretched_data = np.arcsinh(ss / linear_width)
+                    im=ax.imshow(stretched_data, cmap=color,origin='lower')
+                    if doColorBar:
+                        # 4. Set up the colorbar (google suggests)
+                        cbar = plt.colorbar(im)
+                        # 5. FIX THE LABELS: Define ideal tick marks based on your ORIGINAL data values
+                        # Pick values that represent the scale of your real data
+                        original_ticks = [0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100, 300] 
+                        
+                        # Map those original values into the stretched space to find where they belong
+                        stretched_ticks = np.arcsinh(np.array(original_ticks) / linear_width)
+                        
+                        # Apply the positions and the original strings to the colorbar
+                        cbar.set_ticks(stretched_ticks)
+                        cbar.set_ticklabels([str(x) for x in original_ticks])
+                        cbar.set_label(cblabel+' (asinh stretch)')
+                else:
+                    im=ax.imshow(ss, cmap=color,origin='lower',vmin=vvmin,vmax=vvmax)
+                    if doColorBar:
+                        z=plt.colorbar(im,label=cblabel,shrink=0.8,location=barLocation)
                 matplotlib.pyplot.savefig(plotfile+".pdf",bbox_inches="tight",dpi=dpi)
                 plt.close()  # Free resources
             # end  PPlotImage
             
             del PPlotHueInt
             def PPlotHueInt (inInt, inHue, plotfile, err, \
-                             color='gray', title=None, scale=1.0, \
+                             color='gray', hcolor='rainbow', title=None, scale=1.0, \
                              vminI=None, vmaxI=None,  vminH=None, vmaxH=None, \
                              blc=[1,1,1,1], trc=[0,0,0,0], doAsinh=False, \
                              doColorBar=True, barLabelI='Jy/beam', barLabelH='Spectral Index ($\\alpha$)', \
@@ -256,7 +277,8 @@ try:
                 * inHue     = Hue image python ObitImage (or ObitImageMF) object
                 * plotfile  = root of plot file, ".pdf" added
                 * err       = Obit error/message object
-                * color     = scheme "gray", "plasma", "inferno"
+                * color     = intensity scheme "gray", "plasma", "inferno"; "gray" best
+                * hcolor    = hue color scheme "twilight_shifted" for cyclic, e,g, EVPA
                               import matplotlib.pyplot as plt
                               see help(plt.colormaps)
                 * title     = plot title, defaults to image object
@@ -329,8 +351,7 @@ try:
                 sHue=np.frombuffer(FArray.PGetBuf(fff),dtype=np.float32).reshape(nx,ny,order='F')
                 HueArr=sHue.transpose()  # Get it right way around
                 # Hue color mapping
-                #cmap_hue = plt.get_cmap('coolwarm').reversed()
-                cmap_hue = plt.get_cmap('rainbow').reversed()
+                cmap_hue = plt.get_cmap(hcolor).reversed()
                 norm_hue = mcolors.Normalize(vmin=vmin_hue, vmax=vmax_hue)
                 rgb_colors = cmap_hue(norm_hue(HueArr))[:, :, :3]
                 defective = False
@@ -445,9 +466,9 @@ try:
                     cbar_int = fig.colorbar(sm_int, ax=ax, orientation='horizontal', pad=0.10, shrink=0.75)
                     #cbar_int = fig.colorbar(sm_int, ax=ax, orientation='horizontal', pad=0.15, shrink=0.8)
                     if doAsinh:
-                        cbar_int.set_label(barLabelI+" (asinh scale)", fontsize=11)
+                        cbar_int.set_label(barLabelI+" (asinh scale)", fontsize=fontsize)
                     else:
-                        cbar_int.set_label(barLabelI, fontsize=11)
+                        cbar_int.set_label(barLabelI+" fract. of max.", fontsize=fontsize)
                    
                     # DEFINE CHOSEN TICK LOCATIONS (In your original physical data units)
                     if doAsinh:

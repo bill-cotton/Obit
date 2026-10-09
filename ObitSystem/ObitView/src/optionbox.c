@@ -301,7 +301,7 @@ void ReadDim6CB (Widget w, XtPointer clientData, XtPointer callData)
 /**
  * Callback for mapping function type
  * \param w      widget activated
- * \param which  =0=>linear, 1=>nonlinear, 2=>hist. eq.
+ * \param which  =0=>linear, 1=>nonlinear, 2=asinh, 3=>hist. eq.
  * \param state  button state
  */
 void MapFnCB (Widget w, int which, XmToggleButtonCallbackStruct *state)
@@ -448,7 +448,7 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   Widget radio=NULL, sep=NULL;
   Widget OKbutton=NULL, CancelButton=NULL, RefreshButton=NULL, ReloadButton=NULL;
   XmString     label = NULL, minpix = NULL, maxpix = NULL, pixran = NULL, higher = NULL;
-  XmString     labelto = NULL, linear = NULL, nonlinear = NULL, histEq=NULL;
+  XmString     labelto = NULL, linear = NULL, nlSqrt = NULL, nlAsinh = NULL, histEq=NULL;
   XmString     plalab = NULL, PixelStr = NULL, wierdstring = NULL;
   char         valuestr[61];
   ImageDisplay *IDdata = (ImageDisplay*)clientData;
@@ -527,7 +527,8 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   maxpix    = XmStringCreateSimple ("Maximum pixel value");
   pixran    = XmStringCreateSimple ("Pixel range in plane");
   linear    = XmStringCreateSimple ("linear");
-  nonlinear = XmStringCreateSimple ("nonlinear");
+  nlSqrt    = XmStringCreateSimple ("sqrt");
+  nlAsinh   = XmStringCreateSimple ("asinh");
   histEq    = XmStringCreateSimple ("Histogram Equalization");
   higher    = XmStringCreateSimple ("Higher dimensions");
   /* mark as active */
@@ -736,12 +737,13 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 				   XmNtopWidget,     sep,
 				   XmNleftAttachment,  XmATTACH_FORM,
 				   XmVaRADIOBUTTON, linear, NULL, NULL, NULL,
-				   XmVaRADIOBUTTON, nonlinear, NULL,NULL,NULL,
+				   XmVaRADIOBUTTON, nlSqrt, NULL,NULL,NULL,
+				   XmVaRADIOBUTTON, nlAsinh, NULL,NULL,NULL,
 				   XmVaRADIOBUTTON, histEq, NULL,NULL,NULL,
 				   XmNfontList, textFontList, // Set font 
 				   NULL);
   XtManageChild(radio);
-  // set fonts on radio buttons with help from Mr. Google:
+  // set fonts on radio buttons with help from Dr. Google:
   WidgetList children;
   Cardinal numChildren;
   int iii;
@@ -811,7 +813,8 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   if (maxpix)    {XmStringFree(maxpix);}    maxpix = NULL;
   if (pixran)    {XmStringFree(pixran);}    pixran = NULL;
   if (linear)    {XmStringFree(linear);}    linear = NULL;
-  if (nonlinear) {XmStringFree(nonlinear);} nonlinear = NULL;
+  if (nlSqrt)    {XmStringFree(nlSqrt);}    nlSqrt = NULL;
+  if (nlAsinh)   {XmStringFree(nlAsinh);}   nlAsinh= NULL;
   if (histEq)    {XmStringFree(histEq);}    histEq = NULL;
   if (plalab)    {XmStringFree(plalab);}    plalab = NULL;
   if (PixelStr)  {XmStringFree(PixelStr);}  PixelStr = NULL;

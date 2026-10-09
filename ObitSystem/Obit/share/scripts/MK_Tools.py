@@ -114,7 +114,7 @@ def ImageA2F (img, err, dir="./"):
 # end ImageA2F
   
 del RMFitQU
-def RMFitQU (name, imQ, imU, err, doRMSyn=True, nThreads=16, maxRM=100.):
+def RMFitQU (name, imQ, imU, err, doRMSyn=True, nThreads=16, deltRM=0.5, maxRM=100.):
     """
     Faraday synthesis of a Q/U image cube pair
 
@@ -126,6 +126,7 @@ def RMFitQU (name, imQ, imU, err, doRMSyn=True, nThreads=16, maxRM=100.):
     * doRMSyn  = If True use peak of RM spectrum, 
                  else least squares
     * nThreads = Number of threads to use
+    * deltRM   = search increment rad/m^2
     * maxRM    = search +/- maxRM rad/m^2
     returns RM Obit Image object
     """
@@ -134,14 +135,14 @@ def RMFitQU (name, imQ, imU, err, doRMSyn=True, nThreads=16, maxRM=100.):
     fit = RMFit.PCreate('Fitter')
     fit.List.set('doError',True);    fit.List.set('doRMSyn',doRMSyn)
     fit.List.set('minRMSyn',-maxRM); fit.List.set('maxRMSyn',+maxRM)
-    fit.List.set('delRMSyn',0.5);    fit.List.set('maxChi2',10000.0)
+    fit.List.set('delRMSyn',deltRM); fit.List.set('maxChi2',10000.0)
     fit.List.set('minQUSNR',1.0);    fit.List.set('minFrac',0.25);   
-    fit.List.set('refLamb2',1.0e-6);  
+    fit.List.set('refLamb2',1.0e-8);  
     # which method?
     if doRMSyn:
         outRM = Image.newPFImage('RM', name+'_RMSyn.fits',0,False,err)
     else:
-        outRM = Image.newPFImage('RM', oname+'_RMLSQ.fits',0,False,err)
+        outRM = Image.newPFImage('RM', name+'_RMLSQ.fits',0,False,err)
     fit.Cube(imQ, imU, outRM, err)
     OErr.printErr(err)
     del fit

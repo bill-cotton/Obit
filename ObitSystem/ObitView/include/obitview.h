@@ -1,7 +1,7 @@
 /* $Id$ */
 /* ObitView header file */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2013
+*  Copyright (C) 2005-2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -28,7 +28,7 @@
 #include "ObitInfoList.h"
 #ifndef OBITVIEW
 #define OBITVIEW
-#define MAXCOLOR 128     /* number of colors in display  
+#define MAXCOLOR 256     /* number of colors in display  
 			  also defined in histo.h */
 #define MAXGRAPH 6       /* Number of graphics colors */
 
@@ -40,9 +40,9 @@ typedef struct {
   ObitImageDesc *myDesc;   /* Image descriptor */
   ObitFArray    *myPixels; /* Image pixels */
   ObitDConCleanWindow *edtWindow;  /* Clean window being edited */
-  gchar   *pixarray; /* image pixel array, 1 byte per pixel */
+  guchar  *pixarray; /* image pixel array, 1 byte per pixel */
                      /* ordered by rows then column */
-  gchar   *gpharray; /* image graphs array, 1 byte per pixel */
+  guchar  *gpharray; /* image graphs array, 1 byte per pixel */
                      /* ordered by rows then column */
   olong   nxArray, nyArray; /* Dimensions of pixarray and gpharray */
   ObitIOType DataType;/* Type of Image, OBIT_IO_FITS, OBIT_IO_AIPS */
@@ -64,7 +64,7 @@ typedef struct {
   ofloat fYpixel;    /* fitted Y pixel number 1-rel*/
   ofloat fBpixel;    /* fitted peak brightness */
   ofloat PixRange[2];/* range of pixel values to display */
-  olong  mapFunc;    /* mapping: 0=>linear, 1=>sqrt, 2=>histo. Eq. */
+  olong  mapFunc;    /* mapping: 0=>linear, 1=>sqrt, 2=asinh, 3=>histo. Eq.*/
   olong PlaneNo;     /* image plane to display 0 rel */
   olong hiDim[3];    /* image dimensions 4-6 to display 0 rel */
   ObitThread *thread;   /* Thread to lock access */

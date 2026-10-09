@@ -52,14 +52,16 @@ olong get_extrema (ObitFArray *pixels, ofloat *max, ofloat *min)
  *            (output) maximum pixel value to display
  * \param min (input)  minimum value in image, if blanked determine
  *            (output) minimum pixel value to display
+  * \param asinh_a (output) = asinh Stretch factor
  * \return returns 0 if OK else failed.
  */
 olong get_range (ObitFArray *pixels, olong mapFunc,
-		ofloat *max, ofloat *min) 
+		 ofloat *max, ofloat *min, ofloat *asinh_a) 
 {
   ofloat lmax, lmin, lmode, lrms;
   ofloat blanked = ObitMagicF();
 
+  *asinh_a = 0.0;  /* Default output */
   if (!pixels) return -1; /* sanity check */
   if (!max) return -1;
   if (!min) return -1;
@@ -74,6 +76,7 @@ olong get_range (ObitFArray *pixels, olong mapFunc,
   /* get rms, mode */
   lrms  = ObitFArrayRMS(pixels);
   lmode = ObitFArrayMode(pixels);
+  *asinh_a = lrms;  /* 1 sigma */
   /*fprintf (stderr, "image rms %g, mode %g, max %g min %g\n", lrms, lmode, lmax, lmin);  DEBUG*/
   /* Sanity check */
   if ((lmode+5*lrms)>lmax) lmode = 0.0;
@@ -81,12 +84,17 @@ olong get_range (ObitFArray *pixels, olong mapFunc,
   if (mapFunc==0) { /* linear*/
     *min = lmode - lrms;
     *max = lmode + 0.1 * MAXCOLOR * lrms;
- } else if (mapFunc==1) { /* non linear */
+ } else if (mapFunc==1) { /* non linear (sqrt) */
     *min = lmode;
-    *max = lmode + 0.3 * MAXCOLOR * lrms;
-  } else if (mapFunc==2) { /* histogram equalization*/
+    *max = lmode + 0.5 * MAXCOLOR * lrms;
+  } else if (mapFunc==3) { /* histogram equalization*/
     *min = lmode - lrms;
     *max = lmode + 0.5 * MAXCOLOR * lrms;
+  } else if (mapFunc==2) { /* asinh */
+    *min     = lmode - lrms;
+    *asinh_a = lrms; /* 1 sigma */
+    /**max     = lmode + 5* MAXCOLOR * lrms;*/
+    *max     = lmax; /* Do it all */
   }
   /* clip to range in image */
   if (*min<lmin) *min = lmin;

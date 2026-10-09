@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2019                                          */
+/*;  Copyright (C) 2004-2024                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -457,6 +457,18 @@ extern float FArrayRandom (float mean, float sigma) {
 
 extern void FArrayRandomFill (ObitFArray* in1, float mean, float sigma) {
    ObitFArrayRandomFill (in1, (ofloat)mean, (ofloat)sigma);
+}
+
+extern void FArrayRectFill (ObitFArray* in1, long* win, float value) {
+   olong lwin[4], i;
+   for (i=0; i<4; i++) lwin[i] = (olong)win[i];
+   ObitFArrayRectFill (in1, lwin, (ofloat)value);
+}
+
+extern void FArrayRoundFill (ObitFArray* in1, long* win, float value) {
+   olong lwin[3], i;
+   for (i=0; i<3; i++) lwin[i] = (olong)win[i];
+   ObitFArrayRoundFill (in1, lwin, (ofloat)value);
 }
 
 extern ObitInfoList* FArrayGetList (ObitFArray* in) {

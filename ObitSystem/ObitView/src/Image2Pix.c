@@ -59,6 +59,7 @@ ObitImage *workImage;  /* in case load stopps */
 void WorkingCursor(gboolean on, gboolean verbose);
 Boolean CheckForCancel();
 void* ReadImage (void *arg);
+ofloat asinh_str(ofloat x, ofloat a, ofloat b, ofloat maxx);
 
 /*---------------Public functions ----------------*/
 
@@ -77,7 +78,7 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
   olong     dims[2];
   unsigned long pasize, yaddr, addr;
   olong      i, j, jj, nx, ny, icol;
-  ofloat    val, valmin, valmax;
+  ofloat    val, valmin, valmax, asinh_a;
   ofloat    *valP, blanked, irange, c1, c2, *eq_map=NULL;
   gboolean  newRange, bugOut;
   olong      oldType;
@@ -168,19 +169,23 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
     image->gpharray=NULL;
     /* create new pix map */
     pasize = dims[0] * dims[1]; /* keep as 8 bit */
-    image->pixarray = (gchar*) ObitMemAlloc0 (pasize);
+    image->pixarray = (guchar*) ObitMemAlloc0 (pasize);
     /* graphics plane */
-    image->gpharray = (gchar*) ObitMemAlloc0 (pasize);
+    image->gpharray = (guchar*) ObitMemAlloc0 (pasize);
   } /* end of (re)build pixarray/gpharray  */
   
   /* specify initial pixel range */
   get_extrema (image->myPixels, &valmax, &valmin);
+  if (image->mapFunc==2) /* if asinh, need asinh_a */
+    get_range (image->myPixels, image->mapFunc, &valmax, &valmin, &asinh_a);
   image->maxVal = valmax;
   image->minVal = valmin;
   newRange = TRUE;
-  if (((image->PixRange[0]!=0.0) || 
-       (image->PixRange[1]!=0.0))){ /*  User selected range */
+  if (image->PixRange[0]!=0.0) { /*  User selected range */
     valmin = image->PixRange[0]; 
+    newRange = FALSE;
+  }
+ if (image->PixRange[1]!=0.0) { /*  User selected range */
     valmax = image->PixRange[1];
     newRange = FALSE;
   }
@@ -188,7 +193,7 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
   /* setup for pixel conversion */
   bugOut = 0;
   if (newRange) { /* find plausible range? */
-    bugOut = get_range (image->myPixels, image->mapFunc, &valmax, &valmin);
+    bugOut = get_range (image->myPixels, image->mapFunc, &valmax, &valmin, &asinh_a);
   }
   if (image->mapFunc==2) { /* histogram equalization */
     bugOut = bugOut || equalize (image->myPixels, &valmax, &valmax, &eq_map);
@@ -212,7 +217,9 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
     irange = 1.0 / irange;
   c1 = (MAXCOLOR - 1.0) * irange;
   c2 = valmin * c1 - 0.5;
-  
+
+  /* Debug
+  printf("mapFunc %d a %g min %f max %f\n",image->mapFunc,asinh_a,valmin,valmax); */
   /* Convert to pixarray */
   valP = image->myPixels->array;  /* pointer in pixel array */
   nx = image->myDesc->inaxes[0]; 
@@ -231,10 +238,13 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
 	  if (val<valmin) val=valmin;
 	  icol =  (((MAXCOLOR)-1.0) *
 		   sqrt(((val-valmin) * irange))+0.5);
-	} else if (image->mapFunc==2) { /* histogram equalization */
+	} else if (image->mapFunc==2) { /* asinh */
+	  icol = (((MAXCOLOR)-1.0) * asinh_str(val,asinh_a,valmin,valmax))+0.5;
+	} else if (image->mapFunc==3) { /* histogram equalization */
 	  icol = map_pixel (eq_map, val);
-	} else  /* Linear */
+	} else { /* Linear */
 	  icol = c1 * val - c2;
+	}
 	if (icol<1) icol = 1;  /* minimum color = 1 */
 	if (icol>MAXCOLOR-1) icol = MAXCOLOR-1;
       } else
@@ -581,3 +591,20 @@ void* ReadImage (void *arg)
   ReadFail = FALSE;
   return NULL;
 } /* end ReadImage */
+
+/**
+ * Routine calculate asinh stretch
+ * \li x    = pixel value
+ * \li a    = Stretch factor
+ * \li b    = black level (minimum x)
+ * \li maxx =  maximum value for x
+ * returns value in range [0,1]
+ */
+ofloat asinh_str(ofloat x, ofloat a, ofloat b, ofloat maxx)
+{
+  ofloat d, n, out;
+  n = asinhf((x-b)/a);
+  d = asinhf((maxx-b)/a);
+  out = n/d;
+  return out;
+} /* end asinh_str */

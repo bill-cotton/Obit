@@ -56,14 +56,14 @@ void MessageShow (char *message)
     } /* end create ScrollText */
   
   /* add text */
-  XmTextPosition last_pos = XmTextGetLastPosition(MessScroll->ScrollBox);
-  XmTextInsert(MessScroll->ScrollBox, last_pos, message);
-  last_pos = XmTextGetLastPosition(MessScroll->ScrollBox);
-  XmTextInsert(MessScroll->ScrollBox, last_pos, "\n");
-  last_pos = XmTextGetLastPosition(MessScroll->ScrollBox);
-  XmTextShowPosition(MessScroll->ScrollBox, last_pos);  // show end of window 
+  XmTextPosition last_pos = XmTextGetLastPosition(MessScroll->TextDraw);
+  XmTextInsert(MessScroll->TextDraw, last_pos, message);
+  last_pos = XmTextGetLastPosition(MessScroll->TextDraw);
+  XmTextInsert(MessScroll->TextDraw, last_pos, "\n");
+  last_pos = XmTextGetLastPosition(MessScroll->TextDraw);
+  XmTextShowPosition(MessScroll->TextDraw, last_pos);  // show end of window 
   // grumble XtManageChild(MessScroll->ScrollBox);      // Show it
-  XtManageChild(XtParent(MessScroll->ScrollBox));       // And its parent too
+  XtManageChild(XtParent(MessScroll->TextDraw));       // And its parent too
   
 } /* end MessageShow */
 
@@ -101,9 +101,9 @@ void MessageRefresh (void)
   
   /*  setup */
   ScrollTextInit (MessScroll);
-  if (XtIsRealized (MessScroll->ScrollBox))
+  if (XtIsRealized (MessScroll->TextDraw))
     XMapRaised (XtDisplay(MessScroll->Parent), 
-		XtWindow(MessScroll->ScrollBox));
+		XtWindow(MessScroll->TextDraw));
   /* redraw */
-  STextExposeCB (MessScroll->ScrollBox, (XtPointer)MessScroll, NULL);
+  STextExposeCB (MessScroll->TextDraw, (XtPointer)MessScroll, NULL);
 } /* end MessageRefresh */

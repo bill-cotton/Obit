@@ -492,8 +492,8 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   olong i, ia1, ia2, isou;
 
-  dcomplex SPA, DPA, SPAc, DPAc, ct1, ct2, ct3;
-  dcomplex S[4], S0[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
+  dcomplex SPA, ct1, ct2, ct3;
+  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
   dcomplex SM1, SM2, SM3, SM4, ggPD;
   ofloat chi1, chi2, PD;
 
@@ -505,9 +505,7 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
   chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
   COMPLEX_EXP (SPA,(chi1+chi2));
-  COMPLEX_EXP (DPA,chi1-chi2);
-  COMPLEX_CONJUGATE (SPAc, SPA);
-  COMPLEX_CONJUGATE (DPAc, DPA);
+  /*COMPLEX_EXP (DPA,chi1-chi2);*/
   
   isou  = MAX (0, args->souNo[idata]);    /* Source number */
   
@@ -519,17 +517,16 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   qpol = souParm[isou*4+1];
   upol = souParm[isou*4+2];
   vpol = souParm[isou*4+3];
-  /* Complex Stokes array  */
-  COMPLEX_SET (S0[0], ipol+vpol, 0.0);
-  COMPLEX_SET (S0[1], qpol,  upol);
-  COMPLEX_SET (S0[2], qpol, -upol);
-  COMPLEX_SET (S0[3], ipol-vpol, 0.0);
-
-  /* Rotate Stokes by parallactic angle */
+  /* Complex Stokes array - linear feeds */
+  COMPLEX_SET (S[0], ipol+qpol*SPA.real+upol*SPA.imag, 0.0);
+  COMPLEX_SET (S[1], -qpol*SPA.imag+upol*SPA.real,  vpol);
+  COMPLEX_SET (S[2], -qpol*SPA.imag+upol*SPA.real, -vpol);
+  COMPLEX_SET (S[3], ipol-qpol*SPA.real-upol*SPA.imag, 0.0);
+  /* Rotate Stokes by parallactic angle - no
   COMPLEX_MUL2(S[0], DPAc, S0[0]);
   COMPLEX_MUL2(S[1], SPAc, S0[1]);
   COMPLEX_MUL2(S[2], SPA,  S0[2]);
-  COMPLEX_MUL2(S[3], DPA,  S0[3]);
+  COMPLEX_MUL2(S[3], DPA,  S0[3]); */
 
    /* Injest model factorize into antenna components - 
      data in order 0: Orientation X, 1: Elipticity X, 2: Orientation Y, 3: Elipticity Y */
@@ -4218,7 +4215,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
-  dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP, DFDP2;
+  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP, DFDP2;
   dcomplex SM1, SM2, SM3, SM4;
 
   /* DEBUG */
@@ -4231,10 +4228,6 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
   COMPLEX_SET (S[3], 0.0, 0.0);
-  COMPLEX_SET (S0[0], 0.0, 0.0);
-  COMPLEX_SET (S0[1], 0.0, 0.0);
-  COMPLEX_SET (S0[2], 0.0, 0.0);
-  COMPLEX_SET (S0[3], 0.0, 0.0);
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
@@ -4328,18 +4321,18 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 	PPol = args->PPol[isou] + args->dPPol[isou]*(args->curFreq-args->refFreq);
 	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
-      /* Complex Stokes array */
-      COMPLEX_SET (S0[0], ipol+vpol, 0.0);
-      COMPLEX_SET (S0[1], qpol,  upol);
-      COMPLEX_SET (S0[2], qpol, -upol);
-      COMPLEX_SET (S0[3], ipol-vpol, 0.0);
+      /* Complex Stokes array - linear feeds */
+      COMPLEX_SET (S[0], ipol+qpol*SPA.real+upol*SPA.imag, 0.0);
+      COMPLEX_SET (S[1], -qpol*SPA.imag+upol*SPA.real,  vpol);
+      COMPLEX_SET (S[2], -qpol*SPA.imag+upol*SPA.real, -vpol);
+      COMPLEX_SET (S[3], ipol-qpol*SPA.real-upol*SPA.imag, 0.0);
     }
 
-    /* Rotate Stokes by parallactic angle */
+    /* Rotate Stokes by parallactic angle - no
     COMPLEX_MUL2(S[0], DPAc, S0[0]);
     COMPLEX_MUL2(S[1], SPAc, S0[1]);
     COMPLEX_MUL2(S[2], SPA,  S0[2]);
-    COMPLEX_MUL2(S[3], DPA,  S0[3]);
+    COMPLEX_MUL2(S[3], DPA,  S0[3]); */
     
     /* Calculate residals -  XX */
   if (wt[idata*4]>0.0) {
@@ -4732,6 +4725,11 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
     sum += isigma * residR * residR; sumwt += isigma;
     residI = VXY.imag - data[idata*10+7];
     sum += isigma * residI * residI; sumwt += isigma;
+    /* DEBUG */
+    if ((idata==2000) && (VXY.real>0.2) ) {
+      printf ("DEBUG S[0] %f resid %f %f \n", S[0].real, residR, residI);
+    }
+    /* END DEBUG */
     nXobs++;
     sumXResid += residR * residR + residI * residI;
     /* Derivatives */
@@ -8306,9 +8304,9 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   odouble residR, residI, modelR, modelI, isigma;
   olong k, kk, iant, ia1, ia2, isou, idata;
   olong isouLast=-999;
-  dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
+  dcomplex  SPA, ggPD;
   dcomplex ct1, ct2, ct5;
-  dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
+  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
   dcomplex SM1, SM2, SM3, SM4;
   size_t i, j;
 
@@ -8322,10 +8320,6 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
   COMPLEX_SET (S[3], 0.0, 0.0);
-  COMPLEX_SET (S0[0], 0.0, 0.0);
-  COMPLEX_SET (S0[1], 0.0, 0.0);
-  COMPLEX_SET (S0[2], 0.0, 0.0);
-  COMPLEX_SET (S0[3], 0.0, 0.0);
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
@@ -8414,9 +8408,7 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
     COMPLEX_EXP (SPA,(chi1+chi2));
-    COMPLEX_EXP (DPA,chi1-chi2);
-    COMPLEX_CONJUGATE (SPAc, SPA);
-    COMPLEX_CONJUGATE (DPAc, DPA);
+    /*COMPLEX_EXP (DPA,chi1-chi2);*/
 
     isou  = MAX (0, args->souNo[idata]);    /* Source number */
     /* New source? get parameters */
@@ -8436,18 +8428,18 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
 	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
 	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
-       /* Complex Stokes array */
-      COMPLEX_SET (S0[0], ipol+vpol, 0.0);
-      COMPLEX_SET (S0[1], qpol,  upol);
-      COMPLEX_SET (S0[2], qpol, -upol);
-      COMPLEX_SET (S0[3], ipol-vpol, 0.0);
+      /* Complex Stokes array - linear feeds */
+      COMPLEX_SET (S[0], ipol+qpol*SPA.real+upol*SPA.imag, 0.0);
+      COMPLEX_SET (S[1], -qpol*SPA.imag+upol*SPA.real,  vpol);
+      COMPLEX_SET (S[2], -qpol*SPA.imag+upol*SPA.real, -vpol);
+      COMPLEX_SET (S[3], ipol-qpol*SPA.real-upol*SPA.imag, 0.0);
     }
 
-    /* Rotate Stokes by parallactic angle */
+    /* Rotate Stokes by parallactic angle - no
     COMPLEX_MUL2(S[0], DPAc, S0[0]);
     COMPLEX_MUL2(S[1], SPAc, S0[1]);
     COMPLEX_MUL2(S[2], SPA,  S0[2]);
-    COMPLEX_MUL2(S[3], DPA,  S0[3]);
+    COMPLEX_MUL2(S[3], DPA,  S0[3]);*/
  
     /* Antenna parameters */
     ia1    = args->antNo[idata*2+0];
@@ -8625,8 +8617,8 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
-  dcomplex S0[4], S[4], VXY, VYX, MC1, MC2, MC3, MC4, DFDP;
-  dcomplex VXX, VYY;
+  dcomplex S[4], VXY, VYX, MC1, MC2, MC3, MC4, DFDP;
+  /*dcomplex VXX, VYY;*/
   dcomplex SM1, SM2, SM3, SM4;
   size_t i, j;
 
@@ -8640,16 +8632,12 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
   COMPLEX_SET (S[3], 0.0, 0.0);
-  COMPLEX_SET (S0[0], 0.0, 0.0);
-  COMPLEX_SET (S0[1], 0.0, 0.0);
-  COMPLEX_SET (S0[2], 0.0, 0.0);
-  COMPLEX_SET (S0[3], 0.0, 0.0);
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
   COMPLEX_SET (MC4, 0.0, 0.0);
-  COMPLEX_SET (VXX, 0.0, 0.0);
-  COMPLEX_SET (VYY, 0.0, 0.0);
+  /* COMPLEX_SET (VXX, 0.0, 0.0);
+     COMPLEX_SET (VYY, 0.0, 0.0);*/
   COMPLEX_SET (VYX, 0.0, 0.0);
   COMPLEX_SET (VXY, 0.0, 0.0);
   COMPLEX_SET (Jm,  0.0,-1.0);
@@ -8760,18 +8748,18 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
 	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
-       /* Complex Stokes array */
-      COMPLEX_SET (S0[0], ipol+vpol, 0.0);
-      COMPLEX_SET (S0[1], qpol,  upol);
-      COMPLEX_SET (S0[2], qpol, -upol);
-      COMPLEX_SET (S0[3], ipol-vpol, 0.0);
+      /* Complex Stokes array - linear feeds */
+      COMPLEX_SET (S[0], ipol+qpol*SPA.real+upol*SPA.imag, 0.0);
+      COMPLEX_SET (S[1], -qpol*SPA.imag+upol*SPA.real,  vpol);
+      COMPLEX_SET (S[2], -qpol*SPA.imag+upol*SPA.real, -vpol);
+      COMPLEX_SET (S[3], ipol-qpol*SPA.real-upol*SPA.imag, 0.0);
     }
 
-    /* Rotate Stokes by parallactic angle */
+    /* Rotate Stokes by parallactic angle -no 
     COMPLEX_MUL2(S[0], DPAc, S0[0]);
     COMPLEX_MUL2(S[1], SPAc, S0[1]);
     COMPLEX_MUL2(S[2], SPA,  S0[2]);
-    COMPLEX_MUL2(S[3], DPA,  S0[3]);
+    COMPLEX_MUL2(S[3], DPA,  S0[3]);*/
   
     /* Antenna parameters */
     ia1    = args->antNo[idata*2+0];
@@ -8790,17 +8778,18 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		    S[2] * SX[ia1] * CXc[ia2]  + 
 		    S[3] * SX[ia1] * SXc[ia2]} * g1X * g2X ;
 	  */
-	  COMPLEX_MUL2 (MC1, CX[ia1], CXc[ia2]);
-	  COMPLEX_MUL2 (MC2, CX[ia1], SXc[ia2]);
-	  COMPLEX_MUL2 (MC3, SX[ia1], CXc[ia2]);
-	  COMPLEX_MUL2 (MC4, SX[ia1], SXc[ia2]);
-	  COMPLEX_MUL2 (SM1, S[0], MC1);
-	  COMPLEX_MUL2 (SM2, S[1], MC2);
-	  COMPLEX_MUL2 (SM3, S[2], MC3);
-	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
-	  COMPLEX_SET (ggPD,  antGain[ia1*2+0]*antGain[ia2*2+0], 0);
-	  COMPLEX_MUL2 (VXX, ct5, ggPD);
+	  /* Not needed
+	     COMPLEX_MUL2 (MC1, CX[ia1], CXc[ia2]);
+	     COMPLEX_MUL2 (MC2, CX[ia1], SXc[ia2]);
+	     COMPLEX_MUL2 (MC3, SX[ia1], CXc[ia2]);
+	     COMPLEX_MUL2 (MC4, SX[ia1], SXc[ia2]);
+	     COMPLEX_MUL2 (SM1, S[0], MC1);
+	     COMPLEX_MUL2 (SM2, S[1], MC2);
+	     COMPLEX_MUL2 (SM3, S[2], MC3);
+	     COMPLEX_MUL2 (SM4, S[3], MC4);
+	     COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
+	     COMPLEX_SET (ggPD,  antGain[ia1*2+0]*antGain[ia2*2+0], 0);
+	     COMPLEX_MUL2 (VXX, ct5, ggPD);*/
 	}
 	
 	/* Loop over first antenna parameters */
@@ -9085,17 +9074,18 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		    S[2] * CY[ia1] * SYc[ia2] + 
 		    S[3] * CY[ia1] * CYc[ia2]} * g1Y * g2Y ;
 	  */
-	  COMPLEX_MUL2 (MC1, SY[ia1], SYc[ia2]);
-	  COMPLEX_MUL2 (MC2, SY[ia1], CYc[ia2]);
-	  COMPLEX_MUL2 (MC3, CY[ia1], SYc[ia2]);
-	  COMPLEX_MUL2 (MC4, CY[ia1], CYc[ia2]);
-	  COMPLEX_MUL2 (SM1, S[0], MC1);
-	  COMPLEX_MUL2 (SM2, S[1], MC2);
-	  COMPLEX_MUL2 (SM3, S[2], MC3);
-	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
-	  COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
-	  COMPLEX_MUL2 (VYY, ct5, ggPD);
+	  /* Not needed
+	     COMPLEX_MUL2 (MC1, SY[ia1], SYc[ia2]);
+	     COMPLEX_MUL2 (MC2, SY[ia1], CYc[ia2]);
+	     COMPLEX_MUL2 (MC3, CY[ia1], SYc[ia2]);
+	     COMPLEX_MUL2 (MC4, CY[ia1], CYc[ia2]);
+	     COMPLEX_MUL2 (SM1, S[0], MC1);
+	     COMPLEX_MUL2 (SM2, S[1], MC2);
+	     COMPLEX_MUL2 (SM3, S[2], MC3);
+	     COMPLEX_MUL2 (SM4, S[3], MC4);
+	     COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
+	     COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
+	     COMPLEX_MUL2 (VYY, ct5, ggPD);*/
 	} 
 	  
 	/* Loop over first antenna parameters */
@@ -10047,7 +10037,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
-  dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP;
+  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP;
   dcomplex SM1, SM2, SM3, SM4;
   size_t i, j;
 
@@ -10063,10 +10053,6 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
   COMPLEX_SET (S[3], 0.0, 0.0);
-  COMPLEX_SET (S0[0], 0.0, 0.0);
-  COMPLEX_SET (S0[1], 0.0, 0.0);
-  COMPLEX_SET (S0[2], 0.0, 0.0);
-  COMPLEX_SET (S0[3], 0.0, 0.0);
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
@@ -10183,18 +10169,18 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
 	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
-      /* Complex Stokes array */
-      COMPLEX_SET (S0[0], ipol+vpol, 0.0);
-      COMPLEX_SET (S0[1], qpol,  upol);
-      COMPLEX_SET (S0[2], qpol, -upol);
-      COMPLEX_SET (S0[3], ipol-vpol, 0.0);
+      /* Complex Stokes array - linear feeds */
+      COMPLEX_SET (S[0], ipol+qpol*SPA.real+upol*SPA.imag, 0.0);
+      COMPLEX_SET (S[1], -qpol*SPA.imag+upol*SPA.real,  vpol);
+      COMPLEX_SET (S[2], -qpol*SPA.imag+upol*SPA.real, -vpol);
+      COMPLEX_SET (S[3], ipol-qpol*SPA.real-upol*SPA.imag, 0.0);
     }
 
-    /* Rotate Stokes by parallactic angle */
+    /* Rotate Stokes by parallactic angle -no
     COMPLEX_MUL2(S[0], DPAc, S0[0]);
     COMPLEX_MUL2(S[1], SPAc, S0[1]);
     COMPLEX_MUL2(S[2], SPA,  S0[2]);
-    COMPLEX_MUL2(S[3], DPA,  S0[3]);
+    COMPLEX_MUL2(S[3], DPA,  S0[3]);*/
  
     /* Antenna parameters */
     ia1    = args->antNo[idata*2+0];

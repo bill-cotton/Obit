@@ -1,7 +1,7 @@
 /* $Id$ */
 /*   Graphics overlay plane functions */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005,2022
+*  Copyright (C) 2005,2022,2026
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -61,7 +61,7 @@ void GraphDrawLine (ImageData *ImgData, olong blc[2], olong trc[2], olong gcolor
   olong ix, iy, nx, ny, is, ie;
   olong addr, i, n;
   ofloat slope, interc, dx, dy, x, y, d;
-  gchar   *gpharray = ImgData->gpharray;
+  guchar *gpharray = ImgData->gpharray;
   gchar errMsg[121];
 
   /* Range check */
@@ -146,7 +146,7 @@ void GraphDrawCircle (ImageData *ImgData, olong center[2], olong radius, olong g
   olong ix, iy, nx, ny;
   olong addr, i, n;
   ofloat x0, y0, x, y, r2, arg;
-  gchar   *gpharray = ImgData->gpharray;
+  guchar *gpharray = ImgData->gpharray;
   gchar errMsg[121];
 
   /* Color Range check */
@@ -208,7 +208,7 @@ void GraphDrawCircle (ImageData *ImgData, olong center[2], olong radius, olong g
 void GraphClear (ImageData *ImgData)
 {
   olong   i, n;
-  gchar   *gpharray = ImgData->gpharray;
+  guchar *gpharray = ImgData->gpharray;
 
   if (!gpharray) return;         /* anything to clear? */
   if (!ImgData->myDesc) return;  /* anything to clear? */

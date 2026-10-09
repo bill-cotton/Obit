@@ -5000,6 +5000,18 @@ extern void FArrayRandomFill (ObitFArray* in1, float mean, float sigma) {
    ObitFArrayRandomFill (in1, (ofloat)mean, (ofloat)sigma);
 }
 
+extern void FArrayRectFill (ObitFArray* in1, long* win, float value) {
+   olong lwin[4], i;
+   for (i=0; i<4; i++) lwin[i] = (olong)win[i];
+   ObitFArrayRectFill (in1, lwin, (ofloat)value);
+}
+
+extern void FArrayRoundFill (ObitFArray* in1, long* win, float value) {
+   olong lwin[3], i;
+   for (i=0; i<3; i++) lwin[i] = (olong)win[i];
+   ObitFArrayRoundFill (in1, lwin, (ofloat)value);
+}
+
 extern ObitInfoList* FArrayGetList (ObitFArray* in) {
   return ObitInfoListRef(in->info);
 }
@@ -27170,6 +27182,122 @@ SWIGINTERN PyObject *_wrap_FArrayRandomFill(PyObject *SWIGUNUSEDPARM(self), PyOb
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_FArrayRectFill(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitFArray *arg1 = (ObitFArray *) 0 ;
+  long *arg2 = (long *) 0 ;
+  float arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  float val3 ;
+  int ecode3 = 0 ;
+  PyObject *swig_obj[3] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "FArrayRectFill", 3, 3, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitFArray, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FArrayRectFill" "', argument " "1"" of type '" "ObitFArray *""'"); 
+  }
+  arg1 = (ObitFArray *)(argp1);
+  {
+    if (PyList_Check(swig_obj[1])) {
+      int size = PyList_Size(swig_obj[1]);
+      int i = 0;
+      arg2 = (long*) malloc((size+1)*sizeof(long));
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[1],i);
+        if (PyLong_Check(o)) {
+          arg2[i] = PyLong_AsLong(o);
+        } else if (PyInt_Check(o)) {
+          arg2[i] = PyInt_AsLong(o);
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain longs or ints");
+          free(arg2);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
+  }
+  ecode3 = SWIG_AsVal_float(swig_obj[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "FArrayRectFill" "', argument " "3"" of type '" "float""'");
+  } 
+  arg3 = (float)(val3);
+  FArrayRectFill(arg1,arg2,arg3);
+  resultobj = SWIG_Py_Void();
+  {
+    free((long *) arg2);
+  }
+  return resultobj;
+fail:
+  {
+    free((long *) arg2);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_FArrayRoundFill(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitFArray *arg1 = (ObitFArray *) 0 ;
+  long *arg2 = (long *) 0 ;
+  float arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  float val3 ;
+  int ecode3 = 0 ;
+  PyObject *swig_obj[3] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "FArrayRoundFill", 3, 3, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitFArray, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FArrayRoundFill" "', argument " "1"" of type '" "ObitFArray *""'"); 
+  }
+  arg1 = (ObitFArray *)(argp1);
+  {
+    if (PyList_Check(swig_obj[1])) {
+      int size = PyList_Size(swig_obj[1]);
+      int i = 0;
+      arg2 = (long*) malloc((size+1)*sizeof(long));
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[1],i);
+        if (PyLong_Check(o)) {
+          arg2[i] = PyLong_AsLong(o);
+        } else if (PyInt_Check(o)) {
+          arg2[i] = PyInt_AsLong(o);
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain longs or ints");
+          free(arg2);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
+  }
+  ecode3 = SWIG_AsVal_float(swig_obj[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "FArrayRoundFill" "', argument " "3"" of type '" "float""'");
+  } 
+  arg3 = (float)(val3);
+  FArrayRoundFill(arg1,arg2,arg3);
+  resultobj = SWIG_Py_Void();
+  {
+    free((long *) arg2);
+  }
+  return resultobj;
+fail:
+  {
+    free((long *) arg2);
+  }
   return NULL;
 }
 
@@ -73535,6 +73663,8 @@ static PyMethodDef SwigMethods[] = {
 	 { "FArrayPow", _wrap_FArrayPow, METH_VARARGS, NULL},
 	 { "FArrayRandom", _wrap_FArrayRandom, METH_VARARGS, NULL},
 	 { "FArrayRandomFill", _wrap_FArrayRandomFill, METH_VARARGS, NULL},
+	 { "FArrayRectFill", _wrap_FArrayRectFill, METH_VARARGS, NULL},
+	 { "FArrayRoundFill", _wrap_FArrayRoundFill, METH_VARARGS, NULL},
 	 { "FArrayGetList", _wrap_FArrayGetList, METH_O, NULL},
 	 { "FArrayGetName", _wrap_FArrayGetName, METH_O, NULL},
 	 { "FArrayGetNdim", _wrap_FArrayGetNdim, METH_O, NULL},

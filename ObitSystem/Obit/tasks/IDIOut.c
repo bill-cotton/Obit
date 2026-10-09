@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert Obit UV to FITS IDI format                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2022                                          */
+/*;  Copyright (C) 2009-2026                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -522,7 +522,7 @@ ObitUV* setInputData (ObitInfoList *myInput, ObitErr *err)
       
     /* input AIPS class */
     if (ObitInfoListGetP(myInput, "inClass", &type, dim, (gpointer)&strTemp)) {
-      strncpy (Aclass, strTemp, 7);
+      memcpy (Aclass, strTemp, 7);
     } else { /* Didn't find */
       strncpy (Aclass, "NoClas", 7);
     }
@@ -732,9 +732,9 @@ void PutFrequencyInfo (ObitUV *inData, ObitData *outData, ObitErr *err)
   outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
   outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
   lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_FREQUENCY);
-  strncpy (outTable->obscode,   inData->myDesc->observer, 8);
+  memcpy (outTable->obscode,   inData->myDesc->observer, 8);
   lim = MIN (MAXKEYCHARTABLEIDI_FREQUENCY, UVLEN_VALUE);
-  strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);
+  memcpy (outTable->RefDate, inData->myDesc->obsdat, lim);
   outTable->myStatus = OBIT_Modified; /* Mark as modified */
   
   /* Initialize output row */
@@ -905,12 +905,12 @@ void PutAntennaInfo (ObitInfoList *myInput, ObitUV *inData,
     out2Table->ArrayY   = inTable->ArrayY;
     out2Table->ArrayZ   = inTable->ArrayZ;
     lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
-    strncpy (out2Table->obscode, inData->myDesc->observer, 8);
+    memcpy (out2Table->obscode, inData->myDesc->observer, 8);
     lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, MAXKEYCHARTABLEAN);
-    strncpy (out2Table->RefDate, inTable->RefDate, lim);
-    strncpy (out2Table->TimeSys, inTable->TimeSys, lim);
-    strncpy (out2Table->ArrName, inTable->ArrName, lim);
-    strncpy (out2Table->frame,   "GEOCENTRIC", lim);
+    memcpy (out2Table->RefDate, inTable->RefDate, lim);
+    memcpy (out2Table->TimeSys, inTable->TimeSys, lim);
+    memcpy (out2Table->ArrName, inTable->ArrName, lim);
+    memcpy (out2Table->frame,   "GEOCENTRIC", 10);
     out2Table->myStatus = OBIT_Modified; /* Mark as modified */
     
     /* Initialize output row */
@@ -1045,14 +1045,14 @@ void PutAntennaInfo (ObitInfoList *myInput, ObitUV *inData,
       outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
       outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
       lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
-      strncpy (outTable->obscode,   inData->myDesc->observer, 8);
+      memcpy (outTable->obscode,   inData->myDesc->observer, 8);
       lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, MAXKEYCHARTABLEAN);
-      strncpy (outTable->RefDate, inTable->RefDate, lim);
+      memcpy (outTable->RefDate, inTable->RefDate, lim);
       /*strncpy (outTable->ArrName, inTable->ArrName, lim);*/
       if (doPol)  /* Applying cal? */
-	strncpy (outTable->polType, "        ", lim);
+	memcpy (outTable->polType, "        ", 8);
       else
-	strncpy (outTable->polType, inTable->polType, lim);
+	memcpy (outTable->polType, inTable->polType, lim);
       outTable->myStatus = OBIT_Modified; /* Mark as modified */
       
       /* Initialize output row */
@@ -1211,7 +1211,7 @@ void PutSourceInfo (ObitUV *inData, ObitData *outData, ObitErr *err)
   outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
   outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
   lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
-  strncpy (outTable->obscode,   inData->myDesc->observer, 8);
+  memcpy (outTable->obscode,   inData->myDesc->observer, 8);
   lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
   /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
   outTable->myStatus = OBIT_Modified; /* Mark as modified */
@@ -1259,10 +1259,10 @@ void PutSourceInfo (ObitUV *inData, ObitData *outData, ObitErr *err)
     outRow->DecApp    = inRow->DecApp;
     outRow->PMRa      = inRow->PMRa;
     outRow->PMDec     = inRow->PMDec;
-    strncpy(outRow->VelTyp, inTable->velType, 8);
-    strncpy(outRow->VelDef, inTable->velDef, 8);
-    if (inRow->Epoch>1975.) strncpy (outRow->Equinox, "J2000",8);
-    else  strncpy (outRow->Equinox, "B1950",8);
+    memcpy(outRow->VelTyp, inTable->velType, 8);
+    memcpy(outRow->VelDef, inTable->velDef, 8);
+    if (inRow->Epoch>1975.) memcpy (outRow->Equinox, "J2000   ",8);
+    else  memcpy (outRow->Equinox, "B1950   ",8);
     lim = MIN(inTable->myDesc->repeat[inTable->SourceCol], 
 	      outTable->myDesc->repeat[outTable->SourceCol]);
     for (i=0; i<lim; i++) 
@@ -1404,7 +1404,7 @@ void PutFlagInfo (ObitInfoList *myInput, ObitUV *inData, ObitData *outData,
     outTable->ref_freq = inData->myDesc->crval[inData->myDesc->jlocf];
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
-    strncpy (outTable->obscode,   inData->myDesc->observer, 8);
+    memcpy (outTable->obscode,   inData->myDesc->observer, 8);
     /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
@@ -1569,7 +1569,7 @@ void PutCalibrationInfo (ObitInfoList *myInput, ObitUV *inData,
     outTable->ref_freq = inData->myDesc->crval[inData->myDesc->jlocf];
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
-    strncpy (outTable->obscode,   inData->myDesc->observer, 8);
+    memcpy (outTable->obscode,   inData->myDesc->observer, 8);
     /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
@@ -1757,7 +1757,7 @@ void PutBandpassInfo (ObitInfoList *myInput, ObitUV *inData,
     outTable->ref_freq = inData->myDesc->crval[inData->myDesc->jlocf];
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
-    strncpy (outTable->obscode,   inData->myDesc->observer, 8);
+    memcpy (outTable->obscode,   inData->myDesc->observer, 8);
     /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
@@ -1913,7 +1913,7 @@ void PutTSysInfo (ObitInfoList *myInput, ObitUV *inData, ObitData *outData,
     outTable->ref_freq = inData->myDesc->crval[inData->myDesc->jlocf];
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
-    strncpy (outTable->obscode,   inData->myDesc->observer, 8);
+    memcpy (outTable->obscode,   inData->myDesc->observer, 8);
     /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
@@ -2066,9 +2066,9 @@ void PutWeatherInfo (ObitInfoList *myInput, ObitUV *inData,
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
     lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
-    strncpy (outTable->obscode,   inData->myDesc->observer, 8);
+    memcpy (outTable->obscode,   inData->myDesc->observer, 8);
     lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
-    strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);
+    memcpy (outTable->RefDate, inData->myDesc->obsdat, lim);
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
     /* Initialize output row */
@@ -2187,9 +2187,9 @@ void PutData (ObitUV *inData, ObitData *outData,
   outTable->chan_bw  = desc->cdelt[desc->jlocf];
   outTable->ref_pixl = desc->crpix[desc->jlocf];
   lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
-  strncpy (outTable->obscode,   desc->observer, 8);
+  memcpy (outTable->obscode,   desc->observer, 8);
   lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);    
-  strncpy (outTable->RefDate, desc->obsdat, lim);
+  memcpy (outTable->RefDate, desc->obsdat, lim);
   
   /* Create output row */
   outRow = newObitTableIDI_UV_DATARow (outTable);
@@ -2241,11 +2241,15 @@ void PutData (ObitUV *inData, ObitData *outData,
       outRow->Baseline = ant1*256+ant2;  /* Problem in no. ants>255 */
       outRow->Array    = suba;
     }
-    if (desc->ilocsu>=0) outRow->Source = (olong)inData->buffer[desc->ilocsu];
+    if (desc->ilocsu>=0) outRow->Source = (olong)inData->buffer[desc->ilocsu]; /*???*/
     if (desc->ilocfq>=0) outRow->FreqID = (olong)inData->buffer[desc->ilocfq];
     if (desc->ilocit>=0) outRow->IntTim = inData->buffer[desc->ilocit];
     /* Copy correlation data */
-    for (i=0; i<desc->ncorr*3; i++) outRow->Flux[i] = inData->buffer[desc->nrparm+i];
+    for (i=0; i<desc->ncorr*3; i+=3) {
+      outRow->Flux[i]   =  inData->buffer[desc->nrparm+i];
+      outRow->Flux[i+1] = -inData->buffer[desc->nrparm+i+1];  /* Flip sign of phases */
+      outRow->Flux[i+2] =  inData->buffer[desc->nrparm+i+2];
+    }
 
     /* Write FITS IDI */
     oRow = -1;
@@ -2404,15 +2408,15 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
   out->ref_freq = 1.0;
   out->chan_bw = 1.0;
   out->ref_pixl = 1.0;
-  strncpy (out->obscode, uvDesc->observer, MAXKEYCHARTABLEIDI_UV_DATA );
-  strncpy (out->observer, uvDesc->observer, MAXKEYCHARTABLEIDI_UV_DATA );
-  strncpy (out->teles, uvDesc->teles, MAXKEYCHARTABLEIDI_UV_DATA );
-  strncpy (out->RefDate, uvDesc->obsdat, MAXKEYCHARTABLEIDI_UV_DATA );
+  memcpy (out->obscode, uvDesc->observer, MAXKEYCHARTABLEIDI_UV_DATA );
+  memcpy (out->observer, uvDesc->observer, MAXKEYCHARTABLEIDI_UV_DATA );
+  memcpy (out->teles, uvDesc->teles, MAXKEYCHARTABLEIDI_UV_DATA );
+  memcpy (out->RefDate, uvDesc->obsdat, MAXKEYCHARTABLEIDI_UV_DATA );
   out->nmatrix = 1;
   out->maxis = uvDesc->naxis;
-  strncpy (out->Equinox, "J2000   ", MAXKEYCHARTABLEIDI_UV_DATA );
-  strncpy (out->WeighTyp, "NORMAL", MAXKEYCHARTABLEIDI_UV_DATA );
-  strncpy (out->dateObs, uvDesc->obsdat, MAXKEYCHARTABLEIDI_UV_DATA );
+  memcpy (out->Equinox, "J2000   ", 8);
+  memcpy (out->WeighTyp, "NORMAL  ", 8);
+  memcpy (out->dateObs, uvDesc->obsdat, MAXKEYCHARTABLEIDI_UV_DATA );
   out->visScale = 1.0;
 
   /* initialize descriptor */
@@ -2512,7 +2516,7 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
     out->cdelt1 = uvDesc->cdelt[0];
     out->crpix1 = uvDesc->crpix[0];
     out->crval1 = uvDesc->crval[0];
-    strncpy (out->ctype1, uvDesc->ctype[0], 8);
+    memcpy (out->ctype1, uvDesc->ctype[0], 8);
   }
   if (uvDesc->naxis>=2) {
     out->maxis2 = MAX (0, uvDesc->inaxes[1]);
@@ -2520,7 +2524,7 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
     out->cdelt2 = uvDesc->cdelt[1];
     out->crpix2 = uvDesc->crpix[1];
     out->crval2 = uvDesc->crval[1];
-    strncpy (out->ctype2, uvDesc->ctype[1], 8);
+    memcpy (out->ctype2, uvDesc->ctype[1], 8);
  }
   if (uvDesc->naxis>=3) {
     out->maxis3 = MAX (0, uvDesc->inaxes[2]);
@@ -2528,7 +2532,7 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
     out->cdelt3 = uvDesc->cdelt[2];
     out->crpix3 = uvDesc->crpix[2];
     out->crval3 = uvDesc->crval[2];
-    strncpy (out->ctype3, uvDesc->ctype[2], 8);
+    memcpy (out->ctype3, uvDesc->ctype[2], 8);
 }
   if (uvDesc->naxis>=4) {
     out->maxis4 = MAX (0, uvDesc->inaxes[3]);
@@ -2536,7 +2540,7 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
     out->cdelt4 = uvDesc->cdelt[3];
     out->crpix4 = uvDesc->crpix[3];
     out->crval4 = uvDesc->crval[3];
-    strncpy (out->ctype4, uvDesc->ctype[3], 8);
+    memcpy (out->ctype4, uvDesc->ctype[3], 8);
   }
   if (uvDesc->naxis>=5) {
     out->maxis5 = MAX (0, uvDesc->inaxes[4]);
@@ -2544,7 +2548,7 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
     out->cdelt5 = uvDesc->cdelt[4];
     out->crpix5 = uvDesc->crpix[4];
     out->crval5 = uvDesc->crval[4];
-    strncpy (out->ctype5, uvDesc->ctype[4], 8);
+    memcpy (out->ctype5, uvDesc->ctype[4], 8);
  }
   if (uvDesc->naxis>=6) {
     out->maxis6 = MAX (0, uvDesc->inaxes[5]);
@@ -2552,7 +2556,7 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
     out->cdelt6 = uvDesc->cdelt[5];
     out->crpix6 = uvDesc->crpix[5];
     out->crval6 = uvDesc->crval[5];
-    strncpy (out->ctype6, uvDesc->ctype[5], 8);
+    memcpy (out->ctype6, uvDesc->ctype[5], 8);
  }
   if (uvDesc->naxis>=7) {
     out->maxis7 = MAX (0, uvDesc->inaxes[6]);
@@ -2560,7 +2564,7 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
     out->cdelt7 = uvDesc->cdelt[6];
     out->crpix7 = uvDesc->crpix[6];
     out->crval7 = uvDesc->crval[6];
-    strncpy (out->ctype7, uvDesc->ctype[6], 8);
+    memcpy (out->ctype7, uvDesc->ctype[6], 8);
  }
   colNo++;
   /* Mark data matrix */
